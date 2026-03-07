@@ -1,0 +1,127 @@
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { prisma } from '../config/database';
+import { config } from '../config/env';
+import { UnauthorizedError } from '../utils/errors';
+import { AuthPayload } from '../middleware/auth';
+
+export class AuthService {
+    static async login(email: string, password: string) {
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user || !user.active) {
+            throw new UnauthorizedError('Invalid credentials');
+        }
+
+        const valid = await bcrypt.compare(password, user.password);
+        if (!valid) {
+            throw new UnauthorizedError('Invalid credentials');
+        }
+
+        const accessToken = this.generateAccessToken(user);
+        const refreshToken = await this.generateRefreshToken(user.id);
+
+        return {
+            accessToken,
+            refreshToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                theme: user.theme,
+            },
+        };
+    }
+
+    static async refresh(refreshTokenStr: string) {
+        const stored = await prisma.refreshToken.findUnique({
+            where: { token: refreshTokenStr },
+            include: { user: true },
+        });
+
+        if (!stored || stored.expiresAt < new Date() || !stored.user.active) {
+            if (stored) {
+                await prisma.refreshToken.delete({ where: { id: stored.id } });
+            }
+            throw new UnauthorizedError('Invalid refresh token');
+        }
+
+        // Rotate refresh token
+        await prisma.refreshToken.delete({ where: { id: stored.id } });
+
+        const accessToken = this.generateAccessToken(stored.user);
+        const newRefreshToken = await this.generateRefreshToken(stored.user.id);
+
+        return {
+            accessToken,
+            refreshToken: newRefreshToken,
+            user: {
+                id: stored.user.id,
+                email: stored.user.email,
+                name: stored.user.name,
+                role: stored.user.role,
+                theme: stored.user.theme,
+            },
+        };
+    }
+
+    static async logout(refreshTokenStr: string) {
+        await prisma.refreshToken.deleteMany({ where: { token: refreshTokenStr } });
+    }
+
+    static async changePassword(userId: string, currentPassword: string, newPassword: string) {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new UnauthorizedError('User not found');
+
+        const valid = await bcrypt.compare(currentPassword, user.password);
+        if (!valid) throw new UnauthorizedError('Current password is incorrect');
+
+        const hashed = await bcrypt.hash(newPassword, 12);
+        await prisma.user.update({ where: { id: userId }, data: { password: hashed } });
+
+        // Invalidate all refresh tokens for this user
+        await prisma.refreshToken.deleteMany({ where: { userId } });
+    }
+
+    private static generateAccessToken(user: { id: string; email: string; role: string }) {
+        const payload: AuthPayload = {
+            userId: user.id,
+            email: user.email,
+            role: user.role as any,
+        };
+        return jwt.sign(payload, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRY as any });
+    }
+
+    private static async generateRefreshToken(userId: string): Promise<string> {
+        const token = crypto.randomBytes(64).toString('hex');
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+
+        await prisma.refreshToken.create({
+            data: { token, userId, expiresAt },
+        });
+
+        return token;
+    }
+
+    static async seedOwner() {
+        const existing = await prisma.user.findFirst({ where: { role: 'OWNER' } });
+        if (existing) {
+            console.log('✅ Owner already exists, skipping seed');
+            return;
+        }
+
+        const hashed = await bcrypt.hash(config.OWNER_PASSWORD, 12);
+        await prisma.user.create({
+            data: {
+                email: config.OWNER_EMAIL,
+                name: config.OWNER_NAME,
+                password: hashed,
+                role: 'OWNER',
+                active: true,
+            },
+        });
+        console.log(`✅ Owner account created: ${config.OWNER_EMAIL}`);
+    }
+}

@@ -1,0 +1,61 @@
+
+> @ngocky/api@1.0.0 db:seed
+> tsx prisma/seed.ts
+
+🌱 Seeding database...
+
+DEBUG: __dirname: /Users/cong.bui/Kael/20-Projects/NgocKy/apps/api/prisma
+DEBUG: envPath: /Users/cong.bui/Kael/20-Projects/NgocKy/apps/.env
+DEBUG: envExists: false
+DEBUG: dotenv result: {
+  parsed: {},
+  error: Error: ENOENT: no such file or directory, open '/Users/cong.bui/Kael/20-Projects/NgocKy/apps/.env'
+      at Object.readFileSync (node:fs:442:20)
+      at Object.configDotenv (/Users/cong.bui/Kael/20-Projects/NgocKy/node_modules/dotenv/lib/main.js:244:44)
+      at Object.config (/Users/cong.bui/Kael/20-Projects/NgocKy/node_modules/dotenv/lib/main.js:291:25)
+      at bcrypt (/Users/cong.bui/Kael/20-Projects/NgocKy/apps/api/prisma/seed.ts:10:23)
+      at Object.<anonymous> (/Users/cong.bui/Kael/20-Projects/NgocKy/apps/api/prisma/seed.ts:345:6)
+      at Module._compile (node:internal/modules/cjs/loader:1554:14)
+      at Object.transformer (/Users/cong.bui/Kael/20-Projects/NgocKy/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+      at Module.load (node:internal/modules/cjs/loader:1289:32)
+      at Function._load (node:internal/modules/cjs/loader:1108:12)
+      at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/Users/cong.bui/Kael/20-Projects/NgocKy/apps/.env'
+  }
+}
+DEBUG: DATABASE_URL from process.env: undefined
+❌ Seed error: PrismaClientInitializationError: 
+Invalid `prisma.user.upsert()` invocation in
+/Users/cong.bui/Kael/20-Projects/NgocKy/apps/api/prisma/seed.ts:24:37
+
+  21 
+  22 // ─── Owner ────────────────────────────────────────
+  23 const ownerPassword = await bcrypt.hash(process.env.OWNER_PASSWORD || 'ChangeMe123!', 12);
+→ 24 const owner = await prisma.user.upsert(
+error: Environment variable not found: DATABASE_URL.
+  -->  schema.prisma:7
+   | 
+ 6 |   provider = "postgresql"
+ 7 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at ei.handleRequestError (/Users/cong.bui/Kael/20-Projects/NgocKy/node_modules/@prisma/client/src/runtime/RequestHandler.ts:242:13)
+    at ei.handleAndLogRequestError (/Users/cong.bui/Kael/20-Projects/NgocKy/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/cong.bui/Kael/20-Projects/NgocKy/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/Users/cong.bui/Kael/20-Projects/NgocKy/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async main (/Users/cong.bui/Kael/20-Projects/NgocKy/apps/api/prisma/seed.ts:24:19) {
+  clientVersion: '6.19.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+npm error Lifecycle script `db:seed` failed with error:
+npm error code 1
+npm error path /Users/cong.bui/Kael/20-Projects/NgocKy/apps/api
+npm error workspace @ngocky/api@1.0.0
+npm error location /Users/cong.bui/Kael/20-Projects/NgocKy/apps/api
+npm error command failed
+npm error command sh -c tsx prisma/seed.ts

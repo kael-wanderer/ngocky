@@ -1,0 +1,31 @@
+
+> @ngocky/api@1.0.0 db:seed
+> tsx prisma/seed.ts
+
+🌱 Seeding database...
+
+❌ Seed error: PrismaClientInitializationError: 
+Invalid `prisma.user.upsert()` invocation in
+/Users/cong.bui/Kael/20-Projects/NgocKy/apps/api/prisma/seed.ts:16:37
+
+  13 
+  14 // ─── Owner ────────────────────────────────────────
+  15 const ownerPassword = await bcrypt.hash(process.env.OWNER_PASSWORD || 'ChangeMe123!', 12);
+→ 16 const owner = await prisma.user.upsert(
+User was denied access on the database `(not available)`
+    at ei.handleRequestError (/Users/cong.bui/Kael/20-Projects/NgocKy/node_modules/@prisma/client/src/runtime/RequestHandler.ts:242:13)
+    at ei.handleAndLogRequestError (/Users/cong.bui/Kael/20-Projects/NgocKy/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/cong.bui/Kael/20-Projects/NgocKy/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/Users/cong.bui/Kael/20-Projects/NgocKy/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async main (/Users/cong.bui/Kael/20-Projects/NgocKy/apps/api/prisma/seed.ts:16:19) {
+  clientVersion: '6.19.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+npm error Lifecycle script `db:seed` failed with error:
+npm error code 1
+npm error path /Users/cong.bui/Kael/20-Projects/NgocKy/apps/api
+npm error workspace @ngocky/api@1.0.0
+npm error location /Users/cong.bui/Kael/20-Projects/NgocKy/apps/api
+npm error command failed
+npm error command sh -c tsx prisma/seed.ts

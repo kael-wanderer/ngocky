@@ -1,0 +1,109 @@
+name: Deploy NgocKy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push API
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and Push Web
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/web:latest
+          build-args: |
+            VITE_API_URL=https://api.ngocky.kael.io.vn
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Copy Docker Compose to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          port: ${{ secrets.VPS_PORT }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          passphrase: ${{ secrets.VPS_SSH_PASSPHRASE }}
+          source: "docker-compose.prod.yml"
+          target: "/opt/ngocky"
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          port: ${{ secrets.VPS_PORT }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          passphrase: ${{ secrets.VPS_SSH_PASSPHRASE }}
+          script: |
+            cd /opt/ngocky
+
+            # Safely rewrite production .env using GitHub Secrets
+            cat <<EOF > .env
+            APP_PORT=3001
+            APP_VERSION=1.0.0
+            NODE_ENV=production
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DATABASE_URL=postgresql://ngocky:${{ secrets.DB_PASSWORD }}@postgres:5432/ngocky?schema=public
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+            JWT_EXPIRY=15m
+            JWT_REFRESH_EXPIRY=7d
+            OWNER_NAME="${{ secrets.OWNER_NAME }}"
+            OWNER_EMAIL="${{ secrets.OWNER_EMAIL }}"
+            OWNER_PASSWORD="${{ secrets.OWNER_PASSWORD }}"
+            CORS_ORIGIN=https://ngocky.kael.io.vn
+            VITE_API_URL=https://api.ngocky.kael.io.vn
+            EOF
+
+            # Rename prod compose to the one docker uses by default
+            mv -f docker-compose.prod.yml docker-compose.yml
+
+            # Update GITHUB_REPOSITORY placeholder in compose file
+            sed -i "s/\${GITHUB_REPOSITORY}/${{ github.repository }}/g" docker-compose.yml
+
+            # Deploy
+            docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+            docker compose pull
+            docker compose up -d --remove-orphans
+
+            # Run DB operations
+            docker exec ngocky-api npx prisma migrate deploy
+            docker exec ngocky-api npm run db:seed
+
+            echo "✅ NgocKy deployed and seeded successfully"

@@ -1,0 +1,23 @@
+
+> @ngocky/api@1.0.0 db:seed
+> tsx prisma/seed.ts
+
+🌱 Seeding database...
+
+✅ Owner: owner@ngocky.local
+✅ Admin: admin@ngocky.local
+✅ User: user@ngocky.local
+✅ 3 goals created
+✅ Check-ins created
+✅ 4 projects created
+✅ 4 housework items created
+✅ 3 calendar events created
+✅ 6 expenses created
+✅ Assets and maintenance records created
+
+🎉 Seeding complete!
+
+Test accounts:
+  Owner: owner@ngocky.local / ChangeMe123!
+  Admin: admin@ngocky.local / Admin123!
+  User:  user@ngocky.local  / User1234!

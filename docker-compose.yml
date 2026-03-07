@@ -1,0 +1,60 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: ngocky-api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ngocky
+      - caddy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: /api
+    container_name: ngocky-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - ngocky
+      - caddy
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ngocky-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ngocky
+      POSTGRES_USER: ngocky
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ngocky_secret}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ngocky" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ngocky
+
+volumes:
+  pgdata:
+
+
+networks:
+  ngocky:
+    driver: bridge
+  caddy:
+    external: true

@@ -1,0 +1,36 @@
+# Implementation Plan: Staging & Manual Verification
+
+This plan outlines how to perform final manual verification of the **NgocKy** frontend before full production rollout.
+
+## Testing Options
+
+### Option A: DB on VPS, API & Web Local
+*Best if you want to keep the development environment exactly as is, but with a persistent remote database.*
+
+1. **VPS**: Run only the Postgres container (expose port `5432`).
+2. **Local API**: Update [.env](file:///Users/cong.bui/Kael/20-Projects/NgocKy/.env) with `DATABASE_URL=postgresql://ngocky:password@<VPS_IP>:5432/ngocky`.
+3. **Local Web**: Run `npm run dev` as usual.
+
+### Option B: DB & API on VPS, Web Local (Recommended)
+*Best for testing network performance and ensuring the API is production-ready.*
+
+1. **VPS**: Run **both** Postgres and API using the provided Docker Compose.
+2. **Local Web**: In `apps/web/.env`, set `VITE_API_URL=http://<VPS_IP>:3001/api`.
+3. **Seeding**: Run `docker exec ngocky-api npm run db:seed` on the VPS to get test data.
+
+## Proposed Changes
+
+### [Infrastructure] Staging Docker Compose
+
+#### [NEW] docker-compose.vps.yml (`/Users/cong.bui/Kael/20-Projects/NgocKy/docker-compose.vps.yml`)
+
+A configuration that exposes the API port for remote testing.
+
+## Verification Plan
+
+### Manual Checklist
+- [ ] **Login**: Verify JWT and refresh token flow against the live DB.
+- [ ] **Assets**: Check Phase 2 features (Assets, Maintenance).
+- [ ] **Data Persistence**: Ensure items created on one machine (e.g., your laptop) persist correctly in the VPS database.
+- [ ] **n8n Connectivity**: Verify the `/api/reports/notifications/due-items` works with a real token.
+

@@ -1,0 +1,422 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/test/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./test.db"
+}
+
+// ─── Enums ──────────────────────────────────────────
+
+enum Role {
+  OWNER
+  ADMIN
+  USER
+}
+
+enum PeriodType {
+  WEEKLY
+  MONTHLY
+}
+
+enum ProjectStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+  ARCHIVED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum FrequencyType {
+  ONE_TIME
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  HALF_YEARLY
+  YEARLY
+  CUSTOM
+}
+
+enum IdeaStatus {
+  OPEN
+  REVIEWING
+  ARCHIVED
+}
+
+enum ExpenseScope {
+  PERSONAL
+  FAMILY
+}
+
+enum NotificationChannel {
+  EMAIL
+  TELEGRAM
+  BOTH
+}
+
+enum AlertFrequency {
+  DAILY
+  WEEKLY
+}
+
+enum ReportFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum Theme {
+  BLUE_PURPLE
+  GREY_BLACK
+  RED_ACCENT
+}
+
+// ─── User ───────────────────────────────────────────
+
+model User {
+  id                  String              @id @default(cuid())
+  email               String              @unique
+  name                String
+  password            String
+  role                Role                @default(USER)
+  active              Boolean             @default(true)
+  theme               Theme               @default(BLUE_PURPLE)
+  notificationEnabled Boolean             @default(true)
+  notificationChannel NotificationChannel @default(EMAIL)
+  notificationEmail   String?
+  telegramChatId      String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  // Relations
+  goals               Goal[]
+  goalCheckIns        GoalCheckIn[]
+  projects            Project[]           @relation("ProjectAssignee")
+  createdProjects     Project[]           @relation("ProjectCreator")
+  learningItems       LearningItem[]
+  ideas               Idea[]
+  houseworkItems      HouseworkItem[]     @relation("HouseworkAssignee")
+  createdHousework    HouseworkItem[]     @relation("HouseworkCreator")
+  assets              Asset[]
+  maintenanceRecords  MaintenanceRecord[]
+  calendarEvents      CalendarEvent[]     @relation("EventCreator")
+  eventParticipants   EventParticipant[]
+  expenses            Expense[]
+  alertRules          AlertRule[]
+  scheduledReports    ScheduledReport[]
+  budgetSettings      BudgetSetting[]
+  refreshTokens       RefreshToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Goals ──────────────────────────────────────────
+
+model Goal {
+  id                  String     @id @default(cuid())
+  title               String
+  description         String?
+  userId              String
+  periodType          PeriodType
+  targetCount         Int
+  currentCount        Int        @default(0)
+  currentPeriodStart  DateTime
+  startDate           DateTime   @default(now())
+  active              Boolean    @default(true)
+  notificationEnabled Boolean    @default(false)
+  pinToDashboard      Boolean    @default(false)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkIns GoalCheckIn[]
+
+  @@index([userId])
+}
+
+model GoalCheckIn {
+  id        String   @id @default(cuid())
+  goalId    String
+  userId    String
+  quantity  Int      @default(1)
+  note      String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+  @@index([userId])
+}
+
+// ─── Projects ───────────────────────────────────────
+
+model Project {
+  id                  String        @id @default(cuid())
+  title               String
+  description         String?
+  category            String?
+  deadline            DateTime?
+  priority            Priority      @default(MEDIUM)
+  status              ProjectStatus @default(PLANNED)
+  assigneeId          String?
+  createdById         String
+  notificationEnabled Boolean       @default(false)
+  pinToDashboard      Boolean       @default(false)
+  kanbanOrder         Int           @default(0)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  assignee  User? @relation("ProjectAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy User  @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([assigneeId])
+  @@index([createdById])
+  @@index([status])
+}
+
+// ─── Learning ───────────────────────────────────────
+
+model LearningItem {
+  id                  String        @id @default(cuid())
+  title               String
+  description         String?
+  subject             String?
+  target              String?
+  progress            Int           @default(0)
+  deadline            DateTime?
+  status              ProjectStatus @default(PLANNED)
+  userId              String
+  notificationEnabled Boolean       @default(false)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Ideas ──────────────────────────────────────────
+
+model Idea {
+  id        String     @id @default(cuid())
+  title     String
+  content   String?
+  category  String?
+  tags      String?
+  status    IdeaStatus @default(OPEN)
+  userId    String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Housework ──────────────────────────────────────
+
+model HouseworkItem {
+  id                  String        @id @default(cuid())
+  title               String
+  description         String?
+  assigneeId          String?
+  createdById         String
+  frequencyType       FrequencyType @default(ONE_TIME)
+  customIntervalDays  Int?
+  nextDueDate         DateTime?
+  lastCompletedDate   DateTime?
+  estimatedCost       Float?
+  notificationEnabled Boolean       @default(false)
+  pinToDashboard      Boolean       @default(false)
+  active              Boolean       @default(true)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  assignee  User? @relation("HouseworkAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy User  @relation("HouseworkCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([assigneeId])
+  @@index([createdById])
+}
+
+// ─── Assets & Maintenance ───────────────────────────
+
+model Asset {
+  id           String              @id @default(cuid())
+  name         String
+  type         String?
+  brand        String?
+  model        String?
+  serialNumber String?
+  purchaseDate DateTime?
+  note         String?
+  userId       String
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  maintenanceRecords MaintenanceRecord[]
+
+  @@index([userId])
+}
+
+model MaintenanceRecord {
+  id                      String    @id @default(cuid())
+  assetId                 String
+  serviceDate             DateTime
+  description             String
+  serviceType             String?
+  cost                    Float?
+  vendor                  String?
+  nextRecommendedDate     DateTime?
+  userId                  String
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([userId])
+}
+
+// ─── Calendar ───────────────────────────────────────
+
+model CalendarEvent {
+  id          String             @id @default(cuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  allDay      Boolean            @default(false)
+  location    String?
+  color       String?
+  category    String?
+  isShared    Boolean            @default(true)
+  createdById String
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  createdBy    User               @relation("EventCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  participants EventParticipant[]
+
+  @@index([createdById])
+  @@index([startDate])
+}
+
+model EventParticipant {
+  id      String @id @default(cuid())
+  eventId String
+  userId  String
+
+  event CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+}
+
+// ─── Expenses ───────────────────────────────────────
+
+model Expense {
+  id          String       @id @default(cuid())
+  date        DateTime
+  description String
+  amount      Float
+  category    String?
+  scope       ExpenseScope @default(PERSONAL)
+  note        String?
+  recurring   Boolean      @default(false)
+  userId      String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@index([category])
+}
+
+// ─── Alert Rules ────────────────────────────────────
+
+model AlertRule {
+  id                  String              @id @default(cuid())
+  name                String
+  moduleType          String
+  frequency           AlertFrequency      @default(DAILY)
+  conditionType       String
+  conditionValue      String?
+  notificationChannel NotificationChannel @default(EMAIL)
+  active              Boolean             @default(true)
+  userId              String
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Scheduled Reports ──────────────────────────────
+
+model ScheduledReport {
+  id                  String              @id @default(cuid())
+  reportType          String
+  dateRangePreset     String?
+  frequency           ReportFrequency     @default(WEEKLY)
+  dayOfWeek           Int?
+  time                String?
+  notificationChannel NotificationChannel @default(EMAIL)
+  recipients          String?
+  active              Boolean             @default(true)
+  userId              String
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Budget Settings ────────────────────────────────
+
+model BudgetSetting {
+  id       String       @id @default(cuid())
+  category String
+  period   BudgetPeriod @default(MONTHLY)
+  amount   Float
+  active   Boolean      @default(true)
+  userId   String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

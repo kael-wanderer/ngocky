@@ -1,0 +1,85 @@
+# NgocKy: Verification & Walkthrough
+
+## Phase 2 Modules & Automated Testing Implementation
+
+I have completed the implementation of several key Phase 2 modules and established a robust automated testing baseline for the NgocKy application.
+
+### Phase 2 Frontend Implementation
+
+The following modules now have functional frontend interfaces:
+
+- **Assets & Maintenance**: Track household assets (vehicles, appliances) and log service history.
+- **Learning & Ideas**: Simple tracker for educational goals and a bank for future projects.
+- **Alerts & Reports**: Manage automated notifications and report schedules.
+
+---
+
+### Automated Testing Suite
+
+A comprehensive integration test suite has been established using **Vitest** and **Supertest**.
+
+#### Test Environment
+
+- **Provider**: SQLite (isolated from production Postgres).
+- **Strategy**: Each test file runs sequentially with localized database cleanup to ensure 100% reproducibility.
+- **Client**: Dedicated Prisma client generated specifically for the test environment.
+
+#### Coverage
+
+- **Authentication**: Login, token refresh, and protected route access.
+- **Goals & Check-ins**: Goal creation, progress tracking, and check-in management.
+- **Housework**: Recurring item management and auto-advancing due dates.
+- **Phase 2 Assets**: Asset creation and maintenance record tracking.
+
+### Verification Results
+
+All tests are currently passing:
+
+```bash
+> @ngocky/api@1.0.0 test
+> vitest run
+
+ RUN  v4.0.18 /Users/cong.bui/Kael/20-Projects/NgocKy/apps/api
+
+ ✓ src/test/auth.test.ts (5 tests)
+ ✓ src/test/goals.test.ts (4 tests)
+ ✓ src/test/housework.test.ts (3 tests)
+ ✓ src/test/phase2.test.ts (2 tests)
+
+ Test Files  4 passed (4)
+      Tests  14 passed (14)
+   Start at  16:49:05
+   Duration  9.42s
+```
+
+### Production Security Hardening
+
+I have implemented **HTTP-only cookies** for refresh token management:
+- **Backend**: Configured `cookie-parser` and updated auth routes to set secure, http-only cookies for refresh tokens.
+- **Frontend**: Updated the Axios client to use `withCredentials: true` and removed manual `localStorage` handling for sensitive tokens.
+- **Benefit**: This significantly reduces the risk of XSS-based token theft.
+
+---
+
+### Verification Results
+
+All tests are currently passing, and both API and Web packages build successfully:
+
+```bash
+# API Build
+> @ngocky/api@1.0.0 build
+> tsc
+
+# Web Build
+dist/index.html                   0.86 kB
+dist/assets/index-BV6hirBy.css   28.54 kB
+dist/assets/index-DLG3sRVV.js   865.65 kB
+✓ built in 2.04s
+```
+
+### Next Steps Recommendation
+
+1. **Staging Setup**: Follow the [staging_plan.md](file:///Users/cong.bui/.gemini/antigravity/brain/6ec12f61-563c-4722-88e7-6106de4c7722/staging_plan.md) to deploy the backend to your VPS.
+2. **n8n**: Configure final webhook URLs in the Alerts & Reports module.
+3. **CI/CD**: Integrate `npm run test` into the GitHub Actions pipeline.
+

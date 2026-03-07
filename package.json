@@ -1,0 +1,20 @@
+{
+  "name": "ngocky",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NgocKy – Family Productivity App",
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w apps/api",
+    "dev:web": "npm run dev -w apps/web",
+    "build:api": "npm run build -w apps/api",
+    "build:web": "npm run build -w apps/web",
+    "db:migrate": "npm run db:migrate -w apps/api",
+    "db:seed": "npm run db:seed -w apps/api",
+    "db:generate": "npm run db:generate -w apps/api",
+    "lint": "npm run lint -w apps/api && npm run lint -w apps/web"
+  }
+}
