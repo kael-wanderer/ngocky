@@ -6,6 +6,7 @@ export const createGoalSchema = z.object({
     periodType: z.enum(['WEEKLY', 'MONTHLY']),
     targetCount: z.number().int().positive(),
     unit: z.string().optional().default('times'),
+    trackingType: z.enum(['BY_QUANTITY', 'BY_FREQUENCY']).optional().default('BY_FREQUENCY'),
     startDate: z.string().datetime().optional(),
     notificationEnabled: z.boolean().optional(),
     pinToDashboard: z.boolean().optional(),

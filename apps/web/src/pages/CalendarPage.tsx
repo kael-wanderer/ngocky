@@ -61,7 +61,7 @@ export default function CalendarPage() {
                             else delete body.endDate;
                             createMut.mutate(body);
                         }} className="space-y-4">
-                            <div><label className="label">Title</label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                            <div><label className="label">Title <span className="text-red-500">*</span></label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div><label className="label">Start</label><input type="datetime-local" className="input" required value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></div>
                                 <div><label className="label">End</label><input type="datetime-local" className="input" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></div>

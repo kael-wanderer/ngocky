@@ -55,11 +55,11 @@ export default function HouseworkPage() {
                             if (body.nextDueDate) body.nextDueDate = new Date(body.nextDueDate).toISOString(); else delete body.nextDueDate;
                             createMut.mutate(body);
                         }} className="space-y-4">
-                            <div><label className="label">Title</label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                            <div><label className="label">Title <span className="text-red-500">*</span></label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
                             <div><label className="label">Description</label><textarea className="input" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="label">Frequency</label>
+                                    <label className="label">Frequency <span className="text-red-500">*</span></label>
                                     <select className="input" value={form.frequencyType} onChange={(e) => setForm({ ...form, frequencyType: e.target.value })}>
                                         {Object.entries(freqLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                                     </select>

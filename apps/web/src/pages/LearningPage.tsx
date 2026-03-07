@@ -154,16 +154,16 @@ export default function LearningPage() {
                             className="space-y-4"
                         >
                             <div>
-                                <label className="label">Title</label>
+                                <label className="label">Title <span className="text-red-500">*</span></label>
                                 <input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Course name or Topic" required />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="label">Subject</label>
-                                    <input className="input" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="e.g. Cooking, AI" />
+                                    <label className="label">Subject <span className="text-red-500">*</span></label>
+                                    <input className="input" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="e.g. Cooking, AI" required />
                                 </div>
                                 <div>
-                                    <label className="label">Status</label>
+                                    <label className="label">Status <span className="text-red-500">*</span></label>
                                     <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                                         <option value="PLANNING">Planning</option>
                                         <option value="IN_PROGRESS">In Progress</option>

@@ -207,7 +207,7 @@ export default function AssetsPage() {
                         >
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
-                                    <label className="label">Name</label>
+                                    <label className="label">Name <span className="text-red-500">*</span></label>
                                     <input className="input" value={assetForm.name} onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })} placeholder="e.g. Family Van, Fridge" required />
                                 </div>
                                 <div>

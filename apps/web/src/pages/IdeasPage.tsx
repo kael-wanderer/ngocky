@@ -115,11 +115,11 @@ export default function IdeasPage() {
                         </div>
                         <form onSubmit={(e) => { e.preventDefault(); createMut.mutate(form); }} className="space-y-4">
                             <div>
-                                <label className="label">Title</label>
+                                <label className="label">Title <span className="text-red-500">*</span></label>
                                 <input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="What's the idea?" required />
                             </div>
                             <div>
-                                <label className="label">Content</label>
+                                <label className="label">Content <span className="text-red-500">*</span></label>
                                 <textarea className="input" rows={4} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="Describe your idea in detail..." required />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
