@@ -101,6 +101,9 @@ jobs:
             docker compose pull api web
             docker compose up -d postgres
 
+            # Ensure DB role password matches the deployment secret (handles drift on persistent volumes)
+            docker exec ngocky-db psql -U ngocky -d postgres -c "ALTER ROLE ngocky WITH PASSWORD '${{ secrets.DB_PASSWORD }}';"
+
             # Run DB operations in one-off containers to avoid OOM from docker exec on running api
             docker compose run --rm api npx prisma migrate deploy
             docker compose run --rm api npm run db:seed
