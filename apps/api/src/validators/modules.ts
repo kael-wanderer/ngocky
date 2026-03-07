@@ -32,6 +32,7 @@ export const createCheckInSchema = z.object({
 export const createProjectSchema = z.object({
     name: z.string().min(1).max(200),
     description: z.string().optional(),
+    isShared: z.boolean().optional(),
 });
 
 export const updateProjectSchema = createProjectSchema.partial();

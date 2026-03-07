@@ -9,14 +9,22 @@ import { NotFoundError, ForbiddenError } from '../utils/errors';
 const router = Router();
 router.use(authenticate);
 
+const canAccessBoard = (board: { ownerId: string; isShared?: boolean }, userId: string) =>
+    board.ownerId === userId || !!board.isShared;
+
 // --- Project Boards ---
 
-// List project boards (only owned by current user)
+// List project boards (owned by current user OR shared)
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
         const boards = await prisma.project.findMany({
-            where: { ownerId: userId },
+            where: {
+                OR: [
+                    { ownerId: userId },
+                    { isShared: true },
+                ],
+            },
             include: { _count: { select: { tasks: true } } },
             orderBy: { createdAt: 'desc' },
         });
@@ -37,7 +45,7 @@ router.post('/', validate(createProjectSchema), async (req: Request, res: Respon
     } catch (err) { next(err); }
 });
 
-// Get board details with tasks — ONLY owner can access
+// Get board details with tasks — owner or shared access
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
@@ -54,18 +62,18 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
             },
         });
         if (!board) throw new NotFoundError('Project Board');
-        if (board.ownerId !== userId) throw new ForbiddenError('You do not have access to this project board');
+        if (!canAccessBoard(board as any, userId)) throw new ForbiddenError('You do not have access to this project board');
         sendSuccess(res, board);
     } catch (err) { next(err); }
 });
 
-// Update board — only owner
+// Update board — owner or shared access
 router.patch('/:id', validate(updateProjectSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
         const board = await prisma.project.findUnique({ where: { id: req.params.id } });
         if (!board) throw new NotFoundError('Project Board');
-        if (board.ownerId !== userId) throw new ForbiddenError('You do not have access to this project board');
+        if (!canAccessBoard(board as any, userId)) throw new ForbiddenError('You do not have access to this project board');
         const updated = await prisma.project.update({
             where: { id: req.params.id },
             data: req.body,
@@ -95,9 +103,14 @@ router.get('/tasks/all', async (req: Request, res: Response, next: NextFunction)
         const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
         const userId = req.user!.userId;
 
-        // Only return tasks from boards owned by the current user
+        // Return tasks from boards owned by current user OR shared boards
         const where: any = {
-            project: { ownerId: userId },
+            project: {
+                OR: [
+                    { ownerId: userId },
+                    { isShared: true },
+                ],
+            },
         };
         if (req.query.status) where.status = req.query.status;
 
@@ -114,13 +127,13 @@ router.get('/tasks/all', async (req: Request, res: Response, next: NextFunction)
     } catch (err) { next(err); }
 });
 
-// Create task in a board — must own the board
+// Create task in a board — owner or shared access
 router.post('/tasks', validate(createTaskSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
         const board = await prisma.project.findUnique({ where: { id: req.body.projectId } });
         if (!board) throw new NotFoundError('Project Board');
-        if (board.ownerId !== userId) throw new ForbiddenError('You do not have access to this project board');
+        if (!canAccessBoard(board as any, userId)) throw new ForbiddenError('You do not have access to this project board');
 
         const task = await prisma.projectTask.create({
             data: {
@@ -134,16 +147,16 @@ router.post('/tasks', validate(createTaskSchema), async (req: Request, res: Resp
     } catch (err) { next(err); }
 });
 
-// Update task — only board owner
+// Update task — owner or shared access
 router.patch('/tasks/:id', validate(updateTaskSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
         const existing = await prisma.projectTask.findUnique({
             where: { id: req.params.id },
-            include: { project: { select: { ownerId: true } } },
+            include: { project: { select: { ownerId: true, isShared: true } } },
         });
         if (!existing) throw new NotFoundError('Task');
-        if (existing.project.ownerId !== userId) throw new ForbiddenError('You do not have access to this task');
+        if (!canAccessBoard(existing.project as any, userId)) throw new ForbiddenError('You do not have access to this task');
 
         const task = await prisma.projectTask.update({
             where: { id: req.params.id },
@@ -160,7 +173,15 @@ router.patch('/tasks/:id', validate(updateTaskSchema), async (req: Request, res:
 // Reorder task (Kanban)
 router.patch('/tasks/:id/reorder', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = req.user!.userId;
         const { kanbanOrder, status } = req.body;
+        const existing = await prisma.projectTask.findUnique({
+            where: { id: req.params.id },
+            include: { project: { select: { ownerId: true, isShared: true } } },
+        });
+        if (!existing) throw new NotFoundError('Task');
+        if (!canAccessBoard(existing.project as any, userId)) throw new ForbiddenError('You do not have access to this task');
+
         const task = await prisma.projectTask.update({
             where: { id: req.params.id },
             data: { kanbanOrder, ...(status && { status }) },
@@ -169,16 +190,16 @@ router.patch('/tasks/:id/reorder', async (req: Request, res: Response, next: Nex
     } catch (err) { next(err); }
 });
 
-// Delete task — only board owner
+// Delete task — owner or shared access
 router.delete('/tasks/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
         const existing = await prisma.projectTask.findUnique({
             where: { id: req.params.id },
-            include: { project: { select: { ownerId: true } } },
+            include: { project: { select: { ownerId: true, isShared: true } } },
         });
         if (!existing) throw new NotFoundError('Task');
-        if (existing.project.ownerId !== userId) throw new ForbiddenError('You do not have access to this task');
+        if (!canAccessBoard(existing.project as any, userId)) throw new ForbiddenError('You do not have access to this task');
 
         await prisma.projectTask.delete({ where: { id: req.params.id } });
         sendMessage(res, 'Task deleted');

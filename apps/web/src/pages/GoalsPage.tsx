@@ -12,6 +12,80 @@ const emptyForm = {
     trackingType: 'BY_FREQUENCY',
 };
 
+type GoalFormState = typeof emptyForm;
+
+function GoalForm({
+    form,
+    setForm,
+    onSubmit,
+    loading,
+    isEdit,
+}: {
+    form: GoalFormState;
+    setForm: React.Dispatch<React.SetStateAction<GoalFormState>>;
+    onSubmit: (f: GoalFormState) => void;
+    loading: boolean;
+    isEdit: boolean;
+}) {
+    return (
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-4">
+            <div>
+                <label className="label">Goal Title <span className="text-red-500">*</span></label>
+                <input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required placeholder="e.g. Go to gym" />
+            </div>
+            <div>
+                <label className="label">Description</label>
+                <textarea className="input" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional notes about this goal" />
+            </div>
+
+            <div>
+                <label className="label">How to track progress? <span className="text-red-500">*</span></label>
+                <select className="input" value={form.trackingType} onChange={(e) => {
+                    const t = e.target.value;
+                    setForm({ ...form, trackingType: t, unit: t === 'BY_FREQUENCY' ? 'times' : form.unit });
+                }}>
+                    <option value="BY_FREQUENCY">By times — count each check-in as +1 (e.g. gym 3×/week)</option>
+                    <option value="BY_QUANTITY">By amount — sum what you enter (e.g. run 50 km/month)</option>
+                </select>
+                {form.trackingType === 'BY_FREQUENCY' && (
+                    <p className="text-xs mt-1 text-indigo-600">✓ Each time you check in = +1 to your count. You can still log exercise duration for reporting.</p>
+                )}
+                {form.trackingType === 'BY_QUANTITY' && (
+                    <p className="text-xs mt-1 text-orange-600">✓ The number you type when checking in gets added to your total (e.g. type 5 km → total increases by 5 km).</p>
+                )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="label">
+                        Target {form.trackingType === 'BY_FREQUENCY' ? '(times)' : `(${form.unit || 'amount'})`} <span className="text-red-500">*</span>
+                    </label>
+                    <input type="number" className="input" min={1} value={form.targetCount} onChange={(e) => setForm({ ...form, targetCount: parseInt(e.target.value) || 1 })} required />
+                </div>
+                <div>
+                    <label className="label">Unit <span className="text-red-500">*</span></label>
+                    <input className="input" value={form.unit}
+                        onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                        placeholder={form.trackingType === 'BY_FREQUENCY' ? 'times' : 'km, mins, pages…'}
+                        required />
+                </div>
+            </div>
+
+            <div>
+                <label className="label">Reset Period <span className="text-red-500">*</span></label>
+                <select className="input" value={form.periodType} onChange={(e) => setForm({ ...form, periodType: e.target.value })}>
+                    <option value="WEEKLY">Weekly (resets every Monday)</option>
+                    <option value="MONTHLY">Monthly (resets on 1st of month)</option>
+                </select>
+            </div>
+
+            <button type="submit" className="btn-primary w-full" disabled={loading}>
+                {loading ? 'Saving...' : (isEdit ? 'Save Changes' : 'Create Goal')}
+            </button>
+        </form>
+    );
+}
+
 export default function GoalsPage() {
     const qc = useQueryClient();
     const [showCreate, setShowCreate] = useState(false);
@@ -145,64 +219,6 @@ export default function GoalsPage() {
         checkInMut.mutate(payload);
     };
 
-    const GoalForm = ({ onSubmit, loading }: { onSubmit: (f: typeof form) => void; loading: boolean }) => (
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-4">
-            <div>
-                <label className="label">Goal Title <span className="text-red-500">*</span></label>
-                <input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required placeholder="e.g. Go to gym" />
-            </div>
-            <div>
-                <label className="label">Description</label>
-                <textarea className="input" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional notes about this goal" />
-            </div>
-
-            <div>
-                <label className="label">How to track progress? <span className="text-red-500">*</span></label>
-                <select className="input" value={form.trackingType} onChange={(e) => {
-                    const t = e.target.value;
-                    setForm({ ...form, trackingType: t, unit: t === 'BY_FREQUENCY' ? 'times' : form.unit });
-                }}>
-                    <option value="BY_FREQUENCY">By times — count each check-in as +1 (e.g. gym 3×/week)</option>
-                    <option value="BY_QUANTITY">By amount — sum what you enter (e.g. run 50 km/month)</option>
-                </select>
-                {form.trackingType === 'BY_FREQUENCY' && (
-                    <p className="text-xs mt-1 text-indigo-600">✓ Each time you check in = +1 to your count. You can still log exercise duration for reporting.</p>
-                )}
-                {form.trackingType === 'BY_QUANTITY' && (
-                    <p className="text-xs mt-1 text-orange-600">✓ The number you type when checking in gets added to your total (e.g. type 5 km → total increases by 5 km).</p>
-                )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="label">
-                        Target {form.trackingType === 'BY_FREQUENCY' ? '(times)' : `(${form.unit || 'amount'})`} <span className="text-red-500">*</span>
-                    </label>
-                    <input type="number" className="input" min={1} value={form.targetCount} onChange={(e) => setForm({ ...form, targetCount: parseInt(e.target.value) || 1 })} required />
-                </div>
-                <div>
-                    <label className="label">Unit <span className="text-red-500">*</span></label>
-                    <input className="input" value={form.unit}
-                        onChange={(e) => setForm({ ...form, unit: e.target.value })}
-                        placeholder={form.trackingType === 'BY_FREQUENCY' ? 'times' : 'km, mins, pages…'}
-                        required />
-                </div>
-            </div>
-
-            <div>
-                <label className="label">Reset Period <span className="text-red-500">*</span></label>
-                <select className="input" value={form.periodType} onChange={(e) => setForm({ ...form, periodType: e.target.value })}>
-                    <option value="WEEKLY">Weekly (resets every Monday)</option>
-                    <option value="MONTHLY">Monthly (resets on 1st of month)</option>
-                </select>
-            </div>
-
-            <button type="submit" className="btn-primary w-full" disabled={loading}>
-                {loading ? 'Saving...' : (editGoal ? 'Save Changes' : 'Create Goal')}
-            </button>
-        </form>
-    );
-
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center justify-between">
@@ -223,7 +239,13 @@ export default function GoalsPage() {
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Create New Goal</h3>
                             <button onClick={() => setShowCreate(false)}><X className="w-5 h-5" /></button>
                         </div>
-                        <GoalForm onSubmit={(f) => createMut.mutate(f)} loading={createMut.isPending} />
+                        <GoalForm
+                            form={form}
+                            setForm={setForm}
+                            onSubmit={(f) => createMut.mutate(f)}
+                            loading={createMut.isPending}
+                            isEdit={false}
+                        />
                     </div>
                 </div>
             )}
@@ -236,7 +258,13 @@ export default function GoalsPage() {
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Edit Goal</h3>
                             <button onClick={() => setEditGoal(null)}><X className="w-5 h-5" /></button>
                         </div>
-                        <GoalForm onSubmit={(f) => updateMut.mutate({ id: editGoal.id, body: f })} loading={updateMut.isPending} />
+                        <GoalForm
+                            form={form}
+                            setForm={setForm}
+                            onSubmit={(f) => updateMut.mutate({ id: editGoal.id, body: f })}
+                            loading={updateMut.isPending}
+                            isEdit={true}
+                        />
                     </div>
                 </div>
             )}
@@ -406,7 +434,7 @@ export default function GoalsPage() {
                                         />
                                     </div>
                                     <span className="text-sm font-bold whitespace-nowrap" style={{ color: completed ? '#059669' : 'var(--color-primary)' }}>
-                                        {goal.currentCount}/{goal.targetCount} {goal.unit}
+                                        {Math.round(progressPct)}%
                                     </span>
                                 </div>
 
@@ -419,9 +447,6 @@ export default function GoalsPage() {
                                         >
                                             <Check className="w-3 h-3" /> Check-in
                                         </button>
-                                        <span className="text-xs font-bold" style={{ color: progressPct >= 100 ? '#059669' : 'var(--color-text-secondary)' }}>
-                                            {Math.round(progressPct)}%
-                                        </span>
                                     </div>
                                     {completed && (
                                         <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">

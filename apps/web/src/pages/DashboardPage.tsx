@@ -76,7 +76,9 @@ export default function DashboardPage() {
                         {(data?.goals || []).length === 0 && (
                             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No active goals</p>
                         )}
-                        {(data?.goals || []).map((g: any) => (
+                        {(data?.goals || []).map((g: any) => {
+                            const progressPct = g.targetCount > 0 ? (g.currentCount / g.targetCount) * 100 : 0;
+                            return (
                             <div key={g.id} className="flex items-center gap-3">
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{g.title}</p>
@@ -85,7 +87,7 @@ export default function DashboardPage() {
                                             <div
                                                 className="h-full rounded-full transition-all duration-500"
                                                 style={{
-                                                    width: `${Math.min(100, (g.currentCount / g.targetCount) * 100)}%`,
+                                                    width: `${Math.min(100, progressPct)}%`,
                                                     background: g.currentCount >= g.targetCount
                                                         ? 'linear-gradient(90deg, #059669, #10b981)'
                                                         : 'linear-gradient(90deg, var(--color-primary), #7c3aed)',
@@ -93,7 +95,7 @@ export default function DashboardPage() {
                                             />
                                         </div>
                                         <span className="text-xs font-medium whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }}>
-                                            {g.currentCount}/{g.targetCount}
+                                            {Math.round(progressPct)}%
                                         </span>
                                     </div>
                                 </div>
@@ -101,7 +103,7 @@ export default function DashboardPage() {
                                     <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                                 )}
                             </div>
-                        ))}
+                        )})}
                     </div>
                 </div>
 

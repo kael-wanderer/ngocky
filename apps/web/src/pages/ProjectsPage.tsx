@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, MoreVertical, Trash2 } from 'lucide-react';
+import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, Trash2, Pencil, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
+import { useAuthStore } from '../stores/auth';
 
 const STATUS_COLS = ['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED'] as const;
 const statusLabels: Record<string, string> = { PLANNED: 'Planned', IN_PROGRESS: 'In Progress', DONE: 'Done', ARCHIVED: 'Archived' };
@@ -11,13 +12,16 @@ const priorityColors: Record<string, string> = { LOW: '#94a3b8', MEDIUM: '#3b82f
 
 export default function ProjectsPage() {
     const qc = useQueryClient();
+    const { user } = useAuthStore();
     const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
     const [view, setView] = useState<'kanban' | 'list'>('kanban');
     const [showCreateBoard, setShowCreateBoard] = useState(false);
+    const [editingBoard, setEditingBoard] = useState<any>(null);
     const [showCreateTask, setShowCreateTask] = useState(false);
     const [editingTask, setEditingTask] = useState<any>(null);
+    const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
 
-    const [boardForm, setBoardForm] = useState({ name: '', description: '' });
+    const [boardForm, setBoardForm] = useState({ name: '', description: '', isShared: false });
     const [taskForm, setTaskForm] = useState({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '' });
 
     // Queries
@@ -35,7 +39,7 @@ export default function ProjectsPage() {
     // Mutations
     const createBoardMut = useMutation({
         mutationFn: (body: any) => api.post('/projects', body),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setShowCreateBoard(false); setBoardForm({ name: '', description: '' }); },
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setShowCreateBoard(false); setBoardForm({ name: '', description: '', isShared: false }); },
     });
 
     const deleteBoardMut = useMutation({
@@ -43,19 +47,49 @@ export default function ProjectsPage() {
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setSelectedBoardId(null); },
     });
 
+    const updateBoardMut = useMutation({
+        mutationFn: ({ id, data }: { id: string; data: any }) => api.patch(`/projects/${id}`, data),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['project_boards'] });
+            qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
+            setEditingBoard(null);
+        },
+    });
+
     const createTaskMut = useMutation({
         mutationFn: (body: any) => api.post('/projects/tasks', body),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_board'] }); setShowCreateTask(false); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '' }); },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
+            qc.invalidateQueries({ queryKey: ['project_boards'] });
+            setShowCreateTask(false);
+            setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '' });
+        },
     });
 
     const updateTaskMut = useMutation({
         mutationFn: ({ id, data }: { id: string, data: any }) => api.patch(`/projects/tasks/${id}`, data),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_board'] }); setEditingTask(null); },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
+            qc.invalidateQueries({ queryKey: ['project_boards'] });
+            setEditingTask(null);
+        },
     });
 
     const deleteTaskMut = useMutation({
         mutationFn: (id: string) => api.delete(`/projects/tasks/${id}`),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['project_board'] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
+            qc.invalidateQueries({ queryKey: ['project_boards'] });
+        },
+    });
+
+    const moveTaskMut = useMutation({
+        mutationFn: ({ id, status }: { id: string; status: string }) =>
+            api.patch(`/projects/tasks/${id}/reorder`, { status, kanbanOrder: 0 }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
+            qc.invalidateQueries({ queryKey: ['project_boards'] });
+        },
     });
 
     const handleDeleteTask = (id: string) => {
@@ -66,6 +100,29 @@ export default function ProjectsPage() {
         if (window.confirm(`Delete project "${name}" and all its tasks?`)) deleteBoardMut.mutate(id);
     };
 
+    const openEditBoard = () => {
+        if (!activeBoard) return;
+        setBoardForm({ name: activeBoard.name || '', description: activeBoard.description || '', isShared: !!activeBoard.isShared });
+        setEditingBoard(activeBoard);
+    };
+
+    const refreshBoard = () => {
+        if (!selectedBoardId) return;
+        qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
+        qc.invalidateQueries({ queryKey: ['project_boards'] });
+    };
+
+    const handleDropStatus = (status: string) => {
+        if (!draggingTaskId) return;
+        const dragged = tasks.find((t: any) => t.id === draggingTaskId);
+        if (!dragged || dragged.status === status) {
+            setDraggingTaskId(null);
+            return;
+        }
+        moveTaskMut.mutate({ id: draggingTaskId, status });
+        setDraggingTaskId(null);
+    };
+
     if (!selectedBoardId) {
         return (
             <div className="space-y-6">
@@ -74,7 +131,7 @@ export default function ProjectsPage() {
                         <FolderKanban className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                         <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Project Boards</h2>
                     </div>
-                    <button className="btn-primary" onClick={() => setShowCreateBoard(true)}><Plus className="w-4 h-4" /> New Board</button>
+                    <button className="btn-primary" onClick={() => { setBoardForm({ name: '', description: '', isShared: false }); setShowCreateBoard(true); }}><Plus className="w-4 h-4" /> New Board</button>
                 </div>
 
                 {boardsLoading ? (
@@ -87,20 +144,43 @@ export default function ProjectsPage() {
                             <div key={b.id} className="card p-5 hover:shadow-lg transition-all group cursor-pointer" onClick={() => setSelectedBoardId(b.id)}>
                                 <div className="flex justify-between items-start mb-2">
                                     <h3 className="font-bold text-lg" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id, b.name); }}
-                                        className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setBoardForm({ name: b.name || '', description: b.description || '', isShared: !!b.isShared });
+                                                setEditingBoard(b);
+                                            }}
+                                            className="p-1 hover:text-indigo-500"
+                                            title="Edit board"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        {b.ownerId === user?.id && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id, b.name); }}
+                                                className="p-1 hover:text-red-500"
+                                                title="Delete board"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                                 <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>
                                     {b.description || 'No description provided.'}
                                 </p>
                                 <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
-                                        {b._count?.tasks || 0} tasks
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
+                                            {b._count?.tasks || 0} tasks
+                                        </span>
+                                        {b.isShared && (
+                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                                                Shared
+                                            </span>
+                                        )}
+                                    </div>
                                     <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>
                                         Updated {format(new Date(b.updatedAt), 'MMM d')}
                                     </span>
@@ -111,7 +191,7 @@ export default function ProjectsPage() {
                 )}
 
                 {showCreateBoard && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowCreateBoard(false)}>
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowCreateBoard(false); }}>
                         <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold">Create Project Board</h3>
@@ -126,6 +206,14 @@ export default function ProjectsPage() {
                                     <label className="label">Description</label>
                                     <textarea className="input" rows={3} value={boardForm.description} onChange={(e) => setBoardForm({ ...boardForm, description: e.target.value })} placeholder="What is this project about?" />
                                 </div>
+                                <label className="flex items-center gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={boardForm.isShared}
+                                        onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })}
+                                    />
+                                    Share with all family users
+                                </label>
                                 <button type="submit" className="btn-primary w-full" disabled={createBoardMut.isPending}>
                                     {createBoardMut.isPending ? 'Creating...' : 'Create Board'}
                                 </button>
@@ -133,6 +221,7 @@ export default function ProjectsPage() {
                         </div>
                     </div>
                 )}
+
             </div>
         );
     }
@@ -157,13 +246,58 @@ export default function ProjectsPage() {
                         <button onClick={() => setView('kanban')} className={`p-2 ${view === 'kanban' ? 'bg-gray-100' : ''}`}><LayoutGrid className="w-4 h-4" /></button>
                         <button onClick={() => setView('list')} className={`p-2 ${view === 'list' ? 'bg-gray-100' : ''}`}><List className="w-4 h-4" /></button>
                     </div>
+                    <button className="p-2 rounded-lg border hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--color-border)' }} onClick={openEditBoard} title="Edit board">
+                        <Pencil className="w-4 h-4" />
+                    </button>
+                    <button className="p-2 rounded-lg border hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--color-border)' }} onClick={refreshBoard} title="Refresh board">
+                        <RefreshCw className={`w-4 h-4 ${activeBoardLoading || moveTaskMut.isPending ? 'animate-spin' : ''}`} />
+                    </button>
                     <button className="btn-primary" onClick={() => setShowCreateTask(true)}><Plus className="w-4 h-4" /> New Task</button>
                 </div>
             </div>
 
+            {/* Edit Board Modal */}
+            {editingBoard && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingBoard(null); }}>
+                    <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">Edit Project Board</h3>
+                            <button onClick={() => setEditingBoard(null)}><X className="w-5 h-5" /></button>
+                        </div>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                updateBoardMut.mutate({ id: editingBoard.id, data: boardForm });
+                            }}
+                            className="space-y-4"
+                        >
+                            <div>
+                                <label className="label">Board Name <span className="text-red-500">*</span></label>
+                                <input className="input" required value={boardForm.name} onChange={(e) => setBoardForm({ ...boardForm, name: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="label">Description</label>
+                                <textarea className="input" rows={3} value={boardForm.description} onChange={(e) => setBoardForm({ ...boardForm, description: e.target.value })} />
+                            </div>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    checked={boardForm.isShared}
+                                    onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })}
+                                />
+                                Share with all family users
+                            </label>
+                            <button type="submit" className="btn-primary w-full" disabled={updateBoardMut.isPending}>
+                                {updateBoardMut.isPending ? 'Saving...' : 'Save Board'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* Task Modal */}
             {(showCreateTask || editingTask) && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => { setShowCreateTask(false); setEditingTask(null); }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreateTask(false); setEditingTask(null); } }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">{editingTask ? 'Edit Task' : 'Create Task'}</h3>
@@ -222,11 +356,18 @@ export default function ProjectsPage() {
                                     {tasks.filter((t: any) => t.status === status).length}
                                 </span>
                             </div>
-                            <div className="space-y-2 min-h-[200px] p-2 rounded-xl bg-gray-50/50 border border-dashed" style={{ borderColor: 'var(--color-border)' }}>
+                            <div
+                                className="space-y-2 min-h-[200px] p-2 rounded-xl bg-gray-50/50 border border-dashed"
+                                style={{ borderColor: 'var(--color-border)' }}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={() => handleDropStatus(status)}
+                            >
                                 {tasks.filter((t: any) => t.status === status).map((t: any) => (
                                     <div
                                         key={t.id}
                                         className="card p-3 cursor-pointer hover:shadow-md transition-shadow relative group"
+                                        draggable
+                                        onDragStart={() => setDraggingTaskId(t.id)}
                                         onClick={() => {
                                             setEditingTask(t);
                                             setTaskForm({
