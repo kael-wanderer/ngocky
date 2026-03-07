@@ -211,12 +211,12 @@ export default function AlertsPage() {
                         </div>
                         <form onSubmit={(e) => { e.preventDefault(); createRuleMut.mutate(ruleForm); }} className="space-y-4">
                             <div>
-                                <label className="label">Rule Name</label>
+                                <label className="label">Rule Name <span className="text-red-500">*</span></label>
                                 <input className="input" value={ruleForm.name} onChange={(e) => setRuleForm({ ...ruleForm, name: e.target.value })} placeholder="e.g. Overdue Tasks Daily" required />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="label">Module</label>
+                                    <label className="label">Module <span className="text-red-500">*</span></label>
                                     <select className="input" value={ruleForm.moduleType} onChange={(e) => setRuleForm({ ...ruleForm, moduleType: e.target.value })}>
                                         <option value="GOAL">Goals</option>
                                         <option value="TASK">Tasks</option>
@@ -225,7 +225,7 @@ export default function AlertsPage() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="label">Condition</label>
+                                    <label className="label">Condition <span className="text-red-500">*</span></label>
                                     <select className="input" value={ruleForm.conditionType} onChange={(e) => setRuleForm({ ...ruleForm, conditionType: e.target.value })}>
                                         <option value="OVERDUE">Overdue</option>
                                         <option value="DUE_TODAY">Due Today</option>
@@ -233,7 +233,7 @@ export default function AlertsPage() {
                                     </select>
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="label">Frequency</label>
+                                    <label className="label">Frequency <span className="text-red-500">*</span></label>
                                     <select className="input" value={ruleForm.frequency} onChange={(e) => setRuleForm({ ...ruleForm, frequency: e.target.value })}>
                                         <option value="INSTANT">Instant</option>
                                         <option value="DAILY">Daily</option>
@@ -241,7 +241,7 @@ export default function AlertsPage() {
                                     </select>
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="label">Notification Channel</label>
+                                    <label className="label">Notification Channel <span className="text-red-500">*</span></label>
                                     <select className="input" value={ruleForm.notificationChannel} onChange={(e) => setRuleForm({ ...ruleForm, notificationChannel: e.target.value })}>
                                         <option value="EMAIL">Email</option>
                                         <option value="PUSH">Push Notification</option>

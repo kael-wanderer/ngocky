@@ -43,16 +43,28 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         // Auto-reset period counts if needed
         const updated = await Promise.all(goals.map(async (g) => {
             const periodStart = getPeriodStart(g.periodType);
-            if (g.currentPeriodStart < periodStart) {
+            const currentPeriodStart = new Date(g.currentPeriodStart);
+
+            if (currentPeriodStart.getTime() < periodStart.getTime()) {
                 // Reset count for new period
-                const checkInsInPeriod = await prisma.goalCheckIn.count({
-                    where: { goalId: g.id, date: { gte: periodStart } },
-                });
+                let checkInsVal = 0;
+                if (g.trackingType === 'BY_FREQUENCY') {
+                    checkInsVal = await prisma.goalCheckIn.count({
+                        where: { goalId: g.id, date: { gte: periodStart } },
+                    });
+                } else {
+                    const result = await prisma.goalCheckIn.aggregate({
+                        where: { goalId: g.id, date: { gte: periodStart } },
+                        _sum: { quantity: true },
+                    });
+                    checkInsVal = result._sum.quantity || 0;
+                }
+
                 await prisma.goal.update({
                     where: { id: g.id },
-                    data: { currentCount: checkInsInPeriod, currentPeriodStart: periodStart },
+                    data: { currentCount: checkInsVal, currentPeriodStart: periodStart },
                 });
-                return { ...g, currentCount: checkInsInPeriod, currentPeriodStart: periodStart };
+                return { ...g, currentCount: checkInsVal, currentPeriodStart: periodStart };
             }
             return g;
         }));

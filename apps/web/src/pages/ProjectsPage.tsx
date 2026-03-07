@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { FolderKanban, Plus, X, LayoutGrid, List } from 'lucide-react';
+import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, MoreVertical, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 const STATUS_COLS = ['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED'] as const;
@@ -11,179 +11,292 @@ const priorityColors: Record<string, string> = { LOW: '#94a3b8', MEDIUM: '#3b82f
 
 export default function ProjectsPage() {
     const qc = useQueryClient();
+    const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
     const [view, setView] = useState<'kanban' | 'list'>('kanban');
-    const [showCreate, setShowCreate] = useState(false);
-    const [editingProject, setEditingProject] = useState<any>(null);
-    const [form, setForm] = useState({ title: '', description: '', category: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '' });
+    const [showCreateBoard, setShowCreateBoard] = useState(false);
+    const [showCreateTask, setShowCreateTask] = useState(false);
+    const [editingTask, setEditingTask] = useState<any>(null);
 
-    const { data, isLoading } = useQuery({
-        queryKey: ['projects'],
-        queryFn: async () => (await api.get('/projects?limit=100')).data.data,
+    const [boardForm, setBoardForm] = useState({ name: '', description: '' });
+    const [taskForm, setTaskForm] = useState({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '' });
+
+    // Queries
+    const { data: boards, isLoading: boardsLoading } = useQuery({
+        queryKey: ['project_boards'],
+        queryFn: async () => (await api.get('/projects')).data.data,
     });
 
-    const createMut = useMutation({
+    const { data: activeBoard, isLoading: activeBoardLoading } = useQuery({
+        queryKey: ['project_board', selectedBoardId],
+        queryFn: async () => (await api.get(`/projects/${selectedBoardId}`)).data.data,
+        enabled: !!selectedBoardId,
+    });
+
+    // Mutations
+    const createBoardMut = useMutation({
         mutationFn: (body: any) => api.post('/projects', body),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['projects'] }); setShowCreate(false); setForm({ title: '', description: '', category: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '' }); },
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setShowCreateBoard(false); setBoardForm({ name: '', description: '' }); },
     });
 
-    const updateMut = useMutation({
-        mutationFn: ({ id, data }: { id: string, data: any }) => api.patch(`/projects/${id}`, data),
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['projects'] });
-            setEditingProject(null);
-        },
+    const deleteBoardMut = useMutation({
+        mutationFn: (id: string) => api.delete(`/projects/${id}`),
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setSelectedBoardId(null); },
     });
 
-    const projects = data || [];
+    const createTaskMut = useMutation({
+        mutationFn: (body: any) => api.post('/projects/tasks', body),
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_board'] }); setShowCreateTask(false); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '' }); },
+    });
+
+    const updateTaskMut = useMutation({
+        mutationFn: ({ id, data }: { id: string, data: any }) => api.patch(`/projects/tasks/${id}`, data),
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_board'] }); setEditingTask(null); },
+    });
+
+    const deleteTaskMut = useMutation({
+        mutationFn: (id: string) => api.delete(`/projects/tasks/${id}`),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['project_board'] }),
+    });
+
+    const handleDeleteTask = (id: string) => {
+        if (window.confirm('Delete this task?')) deleteTaskMut.mutate(id);
+    };
+
+    const handleDeleteBoard = (id: string, name: string) => {
+        if (window.confirm(`Delete project "${name}" and all its tasks?`)) deleteBoardMut.mutate(id);
+    };
+
+    if (!selectedBoardId) {
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <FolderKanban className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                        <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Project Boards</h2>
+                    </div>
+                    <button className="btn-primary" onClick={() => setShowCreateBoard(true)}><Plus className="w-4 h-4" /> New Board</button>
+                </div>
+
+                {boardsLoading ? (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {[...Array(3)].map((_, i) => <div key={i} className="card h-32 animate-pulse bg-gray-100" />)}
+                    </div>
+                ) : (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {boards?.map((b: any) => (
+                            <div key={b.id} className="card p-5 hover:shadow-lg transition-all group cursor-pointer" onClick={() => setSelectedBoardId(b.id)}>
+                                <div className="flex justify-between items-start mb-2">
+                                    <h3 className="font-bold text-lg" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id, b.name); }}
+                                        className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                                    {b.description || 'No description provided.'}
+                                </p>
+                                <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
+                                        {b._count?.tasks || 0} tasks
+                                    </span>
+                                    <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>
+                                        Updated {format(new Date(b.updatedAt), 'MMM d')}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {showCreateBoard && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowCreateBoard(false)}>
+                        <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold">Create Project Board</h3>
+                                <button onClick={() => setShowCreateBoard(false)}><X className="w-5 h-5" /></button>
+                            </div>
+                            <form onSubmit={(e) => { e.preventDefault(); createBoardMut.mutate(boardForm); }} className="space-y-4">
+                                <div>
+                                    <label className="label">Board Name <span className="text-red-500">*</span></label>
+                                    <input className="input" required value={boardForm.name} onChange={(e) => setBoardForm({ ...boardForm, name: e.target.value })} placeholder="e.g. My Startup" />
+                                </div>
+                                <div>
+                                    <label className="label">Description</label>
+                                    <textarea className="input" rows={3} value={boardForm.description} onChange={(e) => setBoardForm({ ...boardForm, description: e.target.value })} placeholder="What is this project about?" />
+                                </div>
+                                <button type="submit" className="btn-primary w-full" disabled={createBoardMut.isPending}>
+                                    {createBoardMut.isPending ? 'Creating...' : 'Create Board'}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // --- Task View ---
+    const tasks = activeBoard?.tasks || [];
 
     return (
-        <div className="space-y-6 pb-20 lg:pb-0">
+        <div className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-2">
-                    <FolderKanban className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Projects</h2>
+                <div className="flex items-center gap-4">
+                    <button onClick={() => setSelectedBoardId(null)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
+                    <div>
+                        <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeBoard?.name}</h2>
+                        <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Project Management</p>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
                         <button onClick={() => setView('kanban')} className={`p-2 ${view === 'kanban' ? 'bg-gray-100' : ''}`}><LayoutGrid className="w-4 h-4" /></button>
                         <button onClick={() => setView('list')} className={`p-2 ${view === 'list' ? 'bg-gray-100' : ''}`}><List className="w-4 h-4" /></button>
                     </div>
-                    <button className="btn-primary" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4" /> New Project</button>
+                    <button className="btn-primary" onClick={() => setShowCreateTask(true)}><Plus className="w-4 h-4" /> New Task</button>
                 </div>
             </div>
 
-            {/* Create / Edit Modal */}
-            {(showCreate || editingProject) && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => { setShowCreate(false); setEditingProject(null); }}>
+            {/* Task Modal */}
+            {(showCreateTask || editingTask) && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => { setShowCreateTask(false); setEditingTask(null); }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">{editingProject ? 'Edit Project' : 'Create Project'}</h3>
-                            <button onClick={() => { setShowCreate(false); setEditingProject(null); }}><X className="w-5 h-5" /></button>
+                            <h3 className="text-lg font-semibold">{editingTask ? 'Edit Task' : 'Create Task'}</h3>
+                            <button onClick={() => { setShowCreateTask(false); setEditingTask(null); }}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
-                            const body: any = { ...form };
+                            const body: any = { ...taskForm, projectId: selectedBoardId };
                             if (body.deadline) body.deadline = new Date(body.deadline).toISOString();
                             else delete body.deadline;
 
-                            if (editingProject) {
-                                updateMut.mutate({ id: editingProject.id, data: body });
+                            if (editingTask) {
+                                updateTaskMut.mutate({ id: editingTask.id, data: body });
                             } else {
-                                createMut.mutate(body);
+                                createTaskMut.mutate(body);
                             }
                         }} className="space-y-4">
-                            <div><label className="label">Title</label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-                            <div><label className="label">Description</label><textarea className="input" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+                            <div><label className="label">Title <span className="text-red-500">*</span></label><input className="input" required value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} /></div>
+                            <div><label className="label">Description</label><textarea className="input" rows={2} value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} /></div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div><label className="label">Category</label><input className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></div>
+                                <div><label className="label">Category</label><input className="input" value={taskForm.category} onChange={(e) => setTaskForm({ ...taskForm, category: e.target.value })} placeholder="e.g. Design" /></div>
                                 <div>
-                                    <label className="label">Priority</label>
-                                    <select className="input" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+                                    <label className="label">Priority <span className="text-red-500">*</span></label>
+                                    <select className="input" value={taskForm.priority} onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}>
                                         <option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="URGENT">Urgent</option>
                                     </select>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="label">Status</label>
-                                    <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                                    <label className="label">Status <span className="text-red-500">*</span></label>
+                                    <select className="input" value={taskForm.status} onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value })}>
                                         <option value="PLANNED">Planned</option><option value="IN_PROGRESS">In Progress</option><option value="DONE">Done</option><option value="ARCHIVED">Archived</option>
                                     </select>
                                 </div>
-                                <div><label className="label">Deadline</label><input type="date" className="input" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} /></div>
+                                <div><label className="label">Deadline</label><input type="date" className="input" value={taskForm.deadline} onChange={(e) => setTaskForm({ ...taskForm, deadline: e.target.value })} /></div>
                             </div>
-                            <button type="submit" className="btn-primary w-full" disabled={createMut.isPending || updateMut.isPending}>
-                                {createMut.isPending || updateMut.isPending ? 'Saving...' : (editingProject ? 'Save Changes' : 'Create Project')}
+                            <button type="submit" className="btn-primary w-full" disabled={createTaskMut.isPending || updateTaskMut.isPending}>
+                                {createTaskMut.isPending || updateTaskMut.isPending ? 'Saving...' : (editingTask ? 'Save Changes' : 'Create Task')}
                             </button>
                         </form>
                     </div>
                 </div>
             )}
 
-            {isLoading ? (
+            {activeBoardLoading ? (
                 <div className="animate-pulse space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="card h-20" />)}</div>
             ) : view === 'kanban' ? (
-                /* Kanban View */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {STATUS_COLS.map((status) => (
                         <div key={status} className="space-y-3">
                             <div className="flex items-center gap-2 px-1">
                                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: statusColors[status] }} />
                                 <h4 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{statusLabels[status]}</h4>
-                                <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100" style={{ color: 'var(--color-text-secondary)' }}>
-                                    {projects.filter((p: any) => p.status === status).length}
+                                <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-200" style={{ color: 'var(--color-text-secondary)' }}>
+                                    {tasks.filter((t: any) => t.status === status).length}
                                 </span>
                             </div>
-                            <div className="space-y-2 min-h-[100px] p-2 rounded-lg" style={{ backgroundColor: 'var(--color-bg)' }}>
-                                {projects.filter((p: any) => p.status === status).map((p: any) => (
+                            <div className="space-y-2 min-h-[200px] p-2 rounded-xl bg-gray-50/50 border border-dashed" style={{ borderColor: 'var(--color-border)' }}>
+                                {tasks.filter((t: any) => t.status === status).map((t: any) => (
                                     <div
-                                        key={p.id}
-                                        className="card p-3 cursor-pointer hover:shadow-md transition-shadow block"
+                                        key={t.id}
+                                        className="card p-3 cursor-pointer hover:shadow-md transition-shadow relative group"
                                         onClick={() => {
-                                            setEditingProject(p);
-                                            setForm({
-                                                title: p.title || '',
-                                                description: p.description || '',
-                                                category: p.category || '',
-                                                priority: p.priority || 'MEDIUM',
-                                                status: p.status || 'PLANNED',
-                                                deadline: p.deadline ? new Date(p.deadline).toISOString().split('T')[0] : ''
+                                            setEditingTask(t);
+                                            setTaskForm({
+                                                title: t.title || '',
+                                                description: t.description || '',
+                                                category: t.category || '',
+                                                priority: t.priority || 'MEDIUM',
+                                                status: t.status || 'PLANNED',
+                                                deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : ''
                                             });
                                         }}
                                     >
-                                        <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text)' }}>{p.title}</p>
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="badge" style={{ backgroundColor: `${priorityColors[p.priority]}20`, color: priorityColors[p.priority] }}>
-                                                {p.priority}
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteTask(t.id); }}
+                                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                        <p className="text-sm font-medium pr-5" style={{ color: 'var(--color-text)' }}>{t.title}</p>
+                                        <div className="flex items-center gap-2 flex-wrap mt-2">
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: `${priorityColors[t.priority]}20`, color: priorityColors[t.priority] }}>
+                                                {t.priority}
                                             </span>
-                                            {p.category && <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{p.category}</span>}
-                                            {p.deadline && (
-                                                <span className="text-[10px]" style={{ color: new Date(p.deadline) < new Date() ? '#dc2626' : 'var(--color-text-secondary)' }}>
-                                                    📅 {format(new Date(p.deadline), 'MMM d')}
+                                            {t.category && <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{t.category}</span>}
+                                            {t.deadline && (
+                                                <span className="text-[10px]" style={{ color: new Date(t.deadline) < new Date() ? '#dc2626' : 'var(--color-text-secondary)' }}>
+                                                    📅 {format(new Date(t.deadline), 'MMM d')}
                                                 </span>
                                             )}
                                         </div>
-                                        {p.assignee && <p className="text-[10px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>👤 {p.assignee.name}</p>}
                                     </div>
                                 ))}
+                                {tasks.filter((t: any) => t.status === status).length === 0 && (
+                                    <p className="text-[10px] text-center italic py-4" style={{ color: 'var(--color-text-secondary)' }}>No tasks here</p>
+                                )}
                             </div>
                         </div>
                     ))}
                 </div>
             ) : (
-                /* List View */
                 <div className="card overflow-hidden">
                     <div className="table-container">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Title</th><th>Status</th><th>Priority</th><th>Category</th><th>Assignee</th><th>Deadline</th>
+                                    <th>Title</th><th>Status</th><th>Priority</th><th>Category</th><th>Deadline</th><th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {projects.map((p: any) => (
-                                    <tr
-                                        key={p.id}
-                                        className="cursor-pointer hover:bg-gray-50 transition-colors"
-                                        onClick={() => {
-                                            setEditingProject(p);
-                                            setForm({
-                                                title: p.title || '',
-                                                description: p.description || '',
-                                                category: p.category || '',
-                                                priority: p.priority || 'MEDIUM',
-                                                status: p.status || 'PLANNED',
-                                                deadline: p.deadline ? new Date(p.deadline).toISOString().split('T')[0] : ''
-                                            });
-                                        }}
-                                    >
-                                        <td className="font-medium" style={{ color: 'var(--color-text)' }}>{p.title}</td>
-                                        <td><span className="badge" style={{ backgroundColor: `${statusColors[p.status]}20`, color: statusColors[p.status] }}>{statusLabels[p.status]}</span></td>
-                                        <td><span className="badge" style={{ backgroundColor: `${priorityColors[p.priority]}20`, color: priorityColors[p.priority] }}>{p.priority}</span></td>
-                                        <td style={{ color: 'var(--color-text-secondary)' }}>{p.category || '-'}</td>
-                                        <td style={{ color: 'var(--color-text-secondary)' }}>{p.assignee?.name || '-'}</td>
-                                        <td style={{ color: p.deadline && new Date(p.deadline) < new Date() ? '#dc2626' : 'var(--color-text-secondary)' }}>
-                                            {p.deadline ? format(new Date(p.deadline), 'MMM d, yyyy') : '-'}
+                                {tasks.map((t: any) => (
+                                    <tr key={t.id} className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => {
+                                        setEditingTask(t);
+                                        setTaskForm({
+                                            title: t.title || '',
+                                            description: t.description || '',
+                                            category: t.category || '',
+                                            priority: t.priority || 'MEDIUM',
+                                            status: t.status || 'PLANNED',
+                                            deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : ''
+                                        });
+                                    }}>
+                                        <td className="font-medium">{t.title}</td>
+                                        <td><span className="badge" style={{ backgroundColor: `${statusColors[t.status]}20`, color: statusColors[t.status] }}>{statusLabels[t.status]}</span></td>
+                                        <td><span className="badge" style={{ backgroundColor: `${priorityColors[t.priority]}20`, color: priorityColors[t.priority] }}>{t.priority}</span></td>
+                                        <td>{t.category || '-'}</td>
+                                        <td style={{ color: t.deadline && new Date(t.deadline) < new Date() ? '#dc2626' : undefined }}>
+                                            {t.deadline ? format(new Date(t.deadline), 'MMM d, yyyy') : '-'}
+                                        </td>
+                                        <td>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(t.id); }} className="p-1 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                                         </td>
                                     </tr>
                                 ))}

@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createCheckInSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated } from '../utils/response';
+import { NotFoundError } from '../utils/errors';
 
 const router = Router();
 router.use(authenticate);
@@ -36,6 +37,9 @@ router.post('/', validate(createCheckInSchema), async (req: Request, res: Respon
     try {
         const { goalId, quantity, note, date } = req.body;
 
+        const goal = await prisma.goal.findUnique({ where: { id: goalId } });
+        if (!goal) throw new NotFoundError('Goal');
+
         const checkIn = await prisma.goalCheckIn.create({
             data: {
                 goalId,
@@ -46,13 +50,13 @@ router.post('/', validate(createCheckInSchema), async (req: Request, res: Respon
             },
         });
 
-        // Increment goal current count
-        await prisma.goal.update({
-            where: { id: goalId },
-            data: { currentCount: { increment: quantity || 1 } },
-        });
+        // Increment goal current count based on tracking type
+        const increment = goal.trackingType === 'BY_FREQUENCY' ? 1 : (quantity || 1);
 
-        const updatedGoal = await prisma.goal.findUnique({ where: { id: goalId } });
+        const updatedGoal = await prisma.goal.update({
+            where: { id: goalId },
+            data: { currentCount: { increment } },
+        });
 
         sendCreated(res, { checkIn, goal: updatedGoal });
     } catch (err) { next(err); }

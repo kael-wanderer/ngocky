@@ -20,6 +20,11 @@ enum PeriodType {
   MONTHLY
 }
 
+enum GoalTrackingType {
+  BY_QUANTITY
+  BY_FREQUENCY
+}
+
 enum ProjectStatus {
   PLANNED
   IN_PROGRESS
@@ -104,12 +109,12 @@ model User {
   // Relations
   goals               Goal[]
   goalCheckIns        GoalCheckIn[]
-  projects            Project[]           @relation("ProjectAssignee")
-  createdProjects     Project[]           @relation("ProjectCreator")
   learningItems       LearningItem[]
   ideas               Idea[]
   houseworkItems      HouseworkItem[]     @relation("HouseworkAssignee")
   createdHousework    HouseworkItem[]     @relation("HouseworkCreator")
+  projectTasks        ProjectTask[]       @relation("TaskAssignee")
+  createdTasks        ProjectTask[]       @relation("TaskCreator")
   assets              Asset[]
   maintenanceRecords  MaintenanceRecord[]
   calendarEvents      CalendarEvent[]     @relation("EventCreator")
@@ -119,6 +124,7 @@ model User {
   scheduledReports    ScheduledReport[]
   budgetSettings      BudgetSetting[]
   refreshTokens       RefreshToken[]
+  ownedProjectBoards  Project[]           @relation("ProjectBoardOwner")
 }
 
 model RefreshToken {
@@ -142,14 +148,16 @@ model Goal {
   userId              String
   periodType          PeriodType
   targetCount         Int
-  currentCount        Int        @default(0)
+  currentCount        Int              @default(0)
+  unit                String?          @default("times")
+  trackingType        GoalTrackingType @default(BY_FREQUENCY)
   currentPeriodStart  DateTime
-  startDate           DateTime   @default(now())
-  active              Boolean    @default(true)
-  notificationEnabled Boolean    @default(false)
-  pinToDashboard      Boolean    @default(false)
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+  startDate           DateTime         @default(now())
+  active              Boolean          @default(true)
+  notificationEnabled Boolean          @default(false)
+  pinToDashboard      Boolean          @default(false)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
   user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   checkIns GoalCheckIn[]
@@ -176,9 +184,24 @@ model GoalCheckIn {
 // ─── Projects ───────────────────────────────────────
 
 model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner User          @relation("ProjectBoardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  tasks ProjectTask[]
+
+  @@index([ownerId])
+}
+
+model ProjectTask {
   id                  String        @id @default(cuid())
   title               String
   description         String?
+  projectId           String
   category            String?
   deadline            DateTime?
   priority            Priority      @default(MEDIUM)
@@ -191,9 +214,11 @@ model Project {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
-  assignee  User? @relation("ProjectAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  createdBy User  @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee  User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy User    @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
 
+  @@index([projectId])
   @@index([assigneeId])
   @@index([createdById])
   @@index([status])

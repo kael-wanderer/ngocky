@@ -175,17 +175,17 @@ export default function SettingsPage() {
                                 setPwForm({ currentPassword: '', newPassword: '', confirm: '' });
                             }} className="space-y-4 max-w-sm">
                                 <div>
-                                    <label className="label">Current Password</label>
+                                    <label className="label">Current Password <span className="text-red-500">*</span></label>
                                     <input type="password" className="input" required value={pwForm.currentPassword}
                                         onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
                                 </div>
                                 <div>
-                                    <label className="label">New Password</label>
+                                    <label className="label">New Password <span className="text-red-500">*</span></label>
                                     <input type="password" className="input" required minLength={8} value={pwForm.newPassword}
                                         onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
                                 </div>
                                 <div>
-                                    <label className="label">Confirm New Password</label>
+                                    <label className="label">Confirm New Password <span className="text-red-500">*</span></label>
                                     <input type="password" className="input" required value={pwForm.confirm}
                                         onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })} />
                                 </div>

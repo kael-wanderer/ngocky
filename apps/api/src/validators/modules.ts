@@ -5,6 +5,7 @@ export const createGoalSchema = z.object({
     description: z.string().optional(),
     periodType: z.enum(['WEEKLY', 'MONTHLY']),
     targetCount: z.number().int().positive(),
+    unit: z.string().optional().default('times'),
     startDate: z.string().datetime().optional(),
     notificationEnabled: z.boolean().optional(),
     pinToDashboard: z.boolean().optional(),
@@ -18,12 +19,26 @@ export const createCheckInSchema = z.object({
     goalId: z.string().min(1),
     quantity: z.number().int().positive().default(1),
     note: z.string().optional(),
-    date: z.string().datetime().optional(),
+    date: z.string().datetime().refine((val) => {
+        const d = new Date(val);
+        const now = new Date();
+        const fortyFiveDaysAgo = new Date();
+        fortyFiveDaysAgo.setDate(now.getDate() - 45);
+        return d <= now && d >= fortyFiveDaysAgo;
+    }, { message: "Date must be within the last 45 days and not in the future" }).optional(),
 });
 
 export const createProjectSchema = z.object({
+    name: z.string().min(1).max(200),
+    description: z.string().optional(),
+});
+
+export const updateProjectSchema = createProjectSchema.partial();
+
+export const createTaskSchema = z.object({
     title: z.string().min(1).max(200),
     description: z.string().optional(),
+    projectId: z.string().min(1),
     category: z.string().optional(),
     deadline: z.string().datetime().optional(),
     priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
@@ -34,7 +49,7 @@ export const createProjectSchema = z.object({
     kanbanOrder: z.number().int().optional(),
 });
 
-export const updateProjectSchema = createProjectSchema.partial();
+export const updateTaskSchema = createTaskSchema.partial();
 
 export const createHouseworkSchema = z.object({
     title: z.string().min(1).max(200),

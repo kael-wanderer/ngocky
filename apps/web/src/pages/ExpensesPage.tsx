@@ -81,20 +81,20 @@ export default function ExpensesPage() {
                             e.preventDefault();
                             createMut.mutate({ ...form, amount: parseFloat(form.amount), date: new Date(form.date).toISOString() });
                         }} className="space-y-4">
-                            <div><label className="label">Description</label><input className="input" required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+                            <div><label className="label">Description <span className="text-red-500">*</span></label><input className="input" required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div><label className="label">Amount</label><input type="number" step="0.01" className="input" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
-                                <div><label className="label">Date</label><input type="date" className="input" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+                                <div><label className="label">Amount <span className="text-red-500">*</span></label><input type="number" step="0.01" className="input" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
+                                <div><label className="label">Date <span className="text-red-500">*</span></label><input type="date" className="input" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="label">Category</label>
+                                    <label className="label">Category <span className="text-red-500">*</span></label>
                                     <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                                         {categories.map((c) => <option key={c}>{c}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="label">Scope</label>
+                                    <label className="label">Scope <span className="text-red-500">*</span></label>
                                     <select className="input" value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })}>
                                         <option value="PERSONAL">Personal</option>
                                         <option value="FAMILY">Family</option>
