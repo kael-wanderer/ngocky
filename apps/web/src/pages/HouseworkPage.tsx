@@ -12,7 +12,6 @@ const freqLabels: Record<string, string> = {
     QUARTERLY: 'Quarterly',
     HALF_YEARLY: 'Half yearly',
     YEARLY: 'Yearly',
-    CUSTOM: 'Custom',
 };
 
 const weekdayLabels: Record<string, string> = {
@@ -25,7 +24,7 @@ const weekdayLabels: Record<string, string> = {
     '7': 'Sunday',
 };
 
-const frequencyOptions = ['ONE_TIME', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY', 'CUSTOM'];
+const frequencyOptions = ['ONE_TIME', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY'];
 
 type HouseworkFormState = {
     title: string;

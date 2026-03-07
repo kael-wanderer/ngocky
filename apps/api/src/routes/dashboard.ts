@@ -6,15 +6,48 @@ import { sendSuccess } from '../utils/response';
 const router = Router();
 router.use(authenticate);
 
+type TimeRangeKey = 'THIS_WEEK' | 'NEXT_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH';
+
+function getWeekStart(now: Date): Date {
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset);
+}
+
+function getTimeRange(now: Date, rangeKey: TimeRangeKey) {
+    const weekStart = getWeekStart(now);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    const nextWeekEnd = new Date(weekEnd);
+    nextWeekEnd.setDate(nextWeekEnd.getDate() + 7);
+
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const monthAfterNextStart = new Date(now.getFullYear(), now.getMonth() + 2, 1);
+
+    switch (rangeKey) {
+        case 'NEXT_WEEK':
+            return { start: weekEnd, end: nextWeekEnd };
+        case 'THIS_MONTH':
+            return { start: monthStart, end: nextMonthStart };
+        case 'NEXT_MONTH':
+            return { start: nextMonthStart, end: monthAfterNextStart };
+        case 'THIS_WEEK':
+        default:
+            return { start: weekStart, end: weekEnd };
+    }
+}
+
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const now = new Date();
         const userId = req.user!.userId;
+        const rawRange = String(req.query.timeRange || 'THIS_WEEK').toUpperCase();
+        const timeRange = (['THIS_WEEK', 'NEXT_WEEK', 'THIS_MONTH', 'NEXT_MONTH'].includes(rawRange) ? rawRange : 'THIS_WEEK') as TimeRangeKey;
+        const { start: filterStart, end: filterEnd } = getTimeRange(now, timeRange);
 
         // Week boundaries (Mon-Sun)
-        const dayOfWeek = now.getDay();
-        const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-        const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset);
+        const weekStart = getWeekStart(now);
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 7);
 
@@ -25,7 +58,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const [
             tasksThisWeek, tasksThisMonth,
             houseworkThisWeek, houseworkThisMonth,
-            upcomingEvents, recentExpenses,
+            upcomingEvents, dueTasks,
+            dueHousework, expensesInRange, dueAssets,
             overdueHousework, overdueProjects,
             pinnedGoals, pinnedProjects, pinnedHousework,
             goals,
@@ -48,16 +82,50 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             }),
             // Upcoming events (next 7 days)
             prisma.calendarEvent.findMany({
-                where: { startDate: { gte: now, lt: weekEnd } },
+                where: { startDate: { gte: filterStart, lt: filterEnd } },
                 orderBy: { startDate: 'asc' },
                 take: 10,
                 include: { createdBy: { select: { name: true } } },
             }),
-            // Recent expenses
+            // Project tasks with closest deadlines
+            prisma.projectTask.findMany({
+                where: {
+                    deadline: { gte: filterStart, lt: filterEnd },
+                    status: { notIn: ['DONE', 'ARCHIVED'] },
+                },
+                orderBy: { deadline: 'asc' },
+                take: 50,
+                include: {
+                    assignee: { select: { name: true } },
+                    project: { select: { name: true } },
+                },
+            }),
+            // Housework due in selected range
+            prisma.houseworkItem.findMany({
+                where: {
+                    nextDueDate: { gte: filterStart, lt: filterEnd },
+                    active: true,
+                },
+                orderBy: { nextDueDate: 'asc' },
+                take: 10,
+                include: { assignee: { select: { name: true } } },
+            }),
+            // Expenses in selected range
             prisma.expense.findMany({
-                orderBy: { date: 'desc' },
-                take: 5,
+                where: { date: { gte: filterStart, lt: filterEnd } },
+                orderBy: { date: 'asc' },
+                take: 20,
                 include: { user: { select: { name: true } } },
+            }),
+            // Asset maintenance due in selected range
+            prisma.maintenanceRecord.findMany({
+                where: { nextRecommendedDate: { gte: filterStart, lt: filterEnd } },
+                orderBy: { nextRecommendedDate: 'asc' },
+                take: 20,
+                include: {
+                    asset: { select: { name: true } },
+                    user: { select: { name: true } },
+                },
             }),
             // Overdue housework
             prisma.houseworkItem.count({
@@ -69,31 +137,98 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             }),
             // Pinned goals
             prisma.goal.findMany({
-                where: { pinToDashboard: true, active: true },
+                where: { pinToDashboard: true, active: true, startDate: { gte: filterStart, lt: filterEnd } },
                 take: 10,
                 include: { user: { select: { name: true } } },
             }),
             // Pinned tasks
             prisma.projectTask.findMany({
-                where: { pinToDashboard: true, status: { not: 'ARCHIVED' } },
+                where: {
+                    pinToDashboard: true,
+                    status: { notIn: ['DONE', 'ARCHIVED'] },
+                    deadline: { gte: filterStart, lt: filterEnd },
+                },
                 take: 10,
-                include: { assignee: { select: { name: true } } },
+                include: {
+                    assignee: { select: { name: true } },
+                    project: { select: { name: true } },
+                },
             }),
             // Pinned housework
             prisma.houseworkItem.findMany({
-                where: { pinToDashboard: true, active: true },
+                where: {
+                    pinToDashboard: true,
+                    active: true,
+                    nextDueDate: { gte: filterStart, lt: filterEnd },
+                },
                 take: 10,
                 include: { assignee: { select: { name: true } } },
             }),
             // Active goals for current user
             prisma.goal.findMany({
-                where: { userId, active: true },
+                where: { userId, active: true, startDate: { gte: filterStart, lt: filterEnd } },
                 take: 10,
                 include: { _count: { select: { checkIns: true } } },
             }),
         ]);
 
+        const dueProjects = Array.from(
+            dueTasks.reduce((acc: Map<string, any>, task: any) => {
+                const key = task.projectId;
+                const current = acc.get(key);
+                if (!current) {
+                    acc.set(key, {
+                        id: key,
+                        name: task.project?.name || 'Project',
+                        earliestDeadline: task.deadline,
+                        dueTaskCount: 1,
+                    });
+                    return acc;
+                }
+                current.dueTaskCount += 1;
+                if (task.deadline && (!current.earliestDeadline || new Date(task.deadline).getTime() < new Date(current.earliestDeadline).getTime())) {
+                    current.earliestDeadline = task.deadline;
+                }
+                return acc;
+            }, new Map<string, any>()).values()
+        ).sort((a: any, b: any) => {
+            const ta = a.earliestDeadline ? new Date(a.earliestDeadline).getTime() : Number.MAX_SAFE_INTEGER;
+            const tb = b.earliestDeadline ? new Date(b.earliestDeadline).getTime() : Number.MAX_SAFE_INTEGER;
+            return ta - tb;
+        }).slice(0, 10);
+
+        const pinnedItems = [
+            ...pinnedGoals.map((g: any) => ({
+                id: g.id,
+                type: 'GOAL',
+                title: g.title,
+                date: g.startDate,
+                meta: g.user?.name || null,
+            })),
+            ...pinnedProjects.map((t: any) => ({
+                id: t.id,
+                type: 'TASK',
+                title: t.title,
+                date: t.deadline,
+                meta: [t.project?.name, t.assignee?.name].filter(Boolean).join(' · ') || null,
+            })),
+            ...pinnedHousework.map((h: any) => ({
+                id: h.id,
+                type: 'HOUSEWORK',
+                title: h.title,
+                date: h.nextDueDate,
+                meta: h.assignee?.name || null,
+            })),
+        ].sort((a, b) => {
+            const ta = a.date ? new Date(a.date).getTime() : Number.MAX_SAFE_INTEGER;
+            const tb = b.date ? new Date(b.date).getTime() : Number.MAX_SAFE_INTEGER;
+            return ta - tb;
+        });
+
         sendSuccess(res, {
+            timeRange,
+            filterStart,
+            filterEnd,
             summary: {
                 tasksThisWeek,
                 tasksThisMonth,
@@ -104,10 +239,15 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 overdueTasks: overdueProjects,
             },
             upcomingEvents,
-            recentExpenses,
+            dueTasks,
+            dueProjects,
+            dueHousework,
+            expenses: expensesInRange,
+            dueAssets,
             pinnedGoals,
             pinnedTasks: pinnedProjects,
             pinnedHousework,
+            pinnedItems,
             goals,
         });
     } catch (err) { next(err); }

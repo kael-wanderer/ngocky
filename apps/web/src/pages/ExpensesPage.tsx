@@ -5,6 +5,7 @@ import { DollarSign, Plus, X, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 
 const categories = ['Food', 'Utilities', 'Health', 'Shopping', 'Transport', 'Entertainment', 'Education', 'Other'];
+const formatVND = (amount: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(amount);
 
 export default function ExpensesPage() {
     const qc = useQueryClient();
@@ -66,7 +67,7 @@ export default function ExpensesPage() {
             {/* Total */}
             <div className="card p-4 flex items-center justify-between">
                 <span className="font-medium" style={{ color: 'var(--color-text-secondary)' }}>Total ({expenses.length} items)</span>
-                <span className="text-xl font-bold" style={{ color: 'var(--color-danger)' }}>${total.toFixed(2)}</span>
+                <span className="text-xl font-bold" style={{ color: 'var(--color-danger)' }}>{formatVND(total)}</span>
             </div>
 
             {/* Create Modal */}
@@ -83,7 +84,7 @@ export default function ExpensesPage() {
                         }} className="space-y-4">
                             <div><label className="label">Description <span className="text-red-500">*</span></label><input className="input" required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div><label className="label">Amount <span className="text-red-500">*</span></label><input type="number" step="0.01" className="input" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
+                                <div><label className="label">Amount (VND) <span className="text-red-500">*</span></label><input type="number" step="1000" min="0" className="input" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
                                 <div><label className="label">Date <span className="text-red-500">*</span></label><input type="date" className="input" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -126,7 +127,7 @@ export default function ExpensesPage() {
                                         <td><span className="badge-primary">{e.category || '-'}</span></td>
                                         <td><span className={`badge ${e.scope === 'FAMILY' ? 'badge-success' : 'badge-warning'}`}>{e.scope}</span></td>
                                         <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{e.user?.name}</td>
-                                        <td className="text-right font-semibold" style={{ color: 'var(--color-danger)' }}>${e.amount.toFixed(2)}</td>
+                                        <td className="text-right font-semibold" style={{ color: 'var(--color-danger)' }}>{formatVND(e.amount)}</td>
                                     </tr>
                                 ))}
                             </tbody>

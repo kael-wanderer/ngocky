@@ -5,6 +5,7 @@ import { BarChart3 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const COLORS = ['#4f46e5', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2', '#db2777', '#84cc16'];
+const formatVND = (amount: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(amount);
 
 export default function ReportsPage() {
     const [activeTab, setActiveTab] = useState('tasks');
@@ -138,7 +139,7 @@ export default function ReportsPage() {
                                 <Pie data={expenseSummary || []} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={100} label>
                                     {(expenseSummary || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                                 </Pie>
-                                <Tooltip formatter={(v: any) => `$${Number(v).toFixed(2)}`} />
+                                <Tooltip formatter={(v: any) => formatVND(Number(v))} />
                                 <Legend />
                             </PieChart>
                         </ResponsiveContainer>
@@ -150,7 +151,7 @@ export default function ReportsPage() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                                 <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip formatter={(v: any) => `$${Number(v).toFixed(2)}`} />
+                                <Tooltip formatter={(v: any) => formatVND(Number(v))} />
                                 <Bar dataKey="total" fill="#d97706" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
