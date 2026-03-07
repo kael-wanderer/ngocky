@@ -65,12 +65,17 @@ router.post('/', validate(createCheckInSchema), async (req: Request, res: Respon
 // Delete check-in
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const checkIn = await prisma.goalCheckIn.findUnique({ where: { id: req.params.id } });
+        const checkIn = await prisma.goalCheckIn.findUnique({
+            where: { id: req.params.id },
+            include: { goal: true },
+        });
         if (checkIn) {
             await prisma.goalCheckIn.delete({ where: { id: req.params.id } });
+            // Mirror the creation logic: BY_FREQUENCY always counts as 1
+            const decrement = checkIn.goal.trackingType === 'BY_FREQUENCY' ? 1 : checkIn.quantity;
             await prisma.goal.update({
                 where: { id: checkIn.goalId },
-                data: { currentCount: { decrement: checkIn.quantity } },
+                data: { currentCount: { decrement } },
             });
         }
         sendSuccess(res, { deleted: true });
