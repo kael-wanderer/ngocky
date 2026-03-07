@@ -153,10 +153,25 @@ All endpoints require Bearer token authentication.
 
 - **Dashboard** – Summary cards, active goals, upcoming events, recent expenses, pinned items
 - **Goals** – Recurring goals (weekly/monthly) with check-in tracking and progress bars
-- **Projects** – Kanban board + list view with priorities, deadlines, and assignees
+- **Projects** – Kanban board + list view with priorities, deadlines, assignees, drag-and-drop status updates, board edit/refresh, and shared family boards
 - **Housework** – Recurring housework with auto-advancing due dates on completion
 - **Calendar** – Month view with event dots, day detail panel, color-coded events
 - **Expenses** – Filtered table with category/scope/date filters and totals
 - **Reports** – Charts (bar, pie) for tasks, goals, housework, and expenses
 - **Settings** – Profile, notifications, theme picker (3 themes), password change
 - **User Management** – Admin-only user creation, role assignment, activate/deactivate
+
+## Project Sharing Rules
+
+- Boards support `isShared` toggle ("Share with all family users").
+- Shared boards are visible to all users.
+- Shared boards allow all users to read board details and create/edit/reorder/delete tasks.
+- Board deletion is owner-only, even when board is shared.
+
+## Project Sharing Verification Checklist
+
+1. Login as board owner and create/edit a board with `isShared = true`.
+2. Login as another user and verify the shared board appears in `/projects`.
+3. As non-owner, create and update a task in the shared board.
+4. As non-owner, verify board delete action is not available/forbidden.
+5. As owner, verify board delete still works.

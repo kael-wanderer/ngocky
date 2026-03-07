@@ -57,13 +57,10 @@ export default function AppLayout() {
             >
                 {/* Logo */}
                 <div className="flex items-center gap-3 px-5 h-16 border-b" style={{ borderColor: 'var(--color-border)' }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-                        style={{ background: 'linear-gradient(135deg, var(--color-primary), #7c3aed)' }}>
-                        N
-                    </div>
+                    <img src="/ladybug-logo.svg" alt="NgốcKý logo" className="w-8 h-8" />
                     {!collapsed && (
                         <span className="font-bold text-lg tracking-tight" style={{ color: 'var(--color-text)' }}>
-                            NgocKy
+                            NgốcKý
                         </span>
                     )}
                     <button

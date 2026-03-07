@@ -34,11 +34,12 @@ export default function LoginPage() {
             <div className="w-full max-w-md animate-slide-up">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-white text-2xl font-bold mb-4 shadow-lg"
-                        style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}>
-                        N
-                    </div>
-                    <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>NgocKy</h1>
+                    <img
+                        src="/ladybug-logo.svg"
+                        alt="NgốcKý logo"
+                        className="w-16 h-16 mb-4 inline-block"
+                    />
+                    <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>NgốcKý</h1>
                     <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>Family Productivity Hub</p>
                 </div>
 

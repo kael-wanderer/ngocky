@@ -41,6 +41,7 @@ enum Priority {
 
 enum FrequencyType {
   ONE_TIME
+  DAILY
   WEEKLY
   MONTHLY
   QUARTERLY
@@ -273,6 +274,10 @@ model HouseworkItem {
   assigneeId          String?
   createdById         String
   frequencyType       FrequencyType @default(ONE_TIME)
+  dayOfWeek           Int?
+  dayOfMonth          Int?
+  monthOfPeriod       Int?
+  monthOfYear         Int?
   customIntervalDays  Int?
   nextDueDate         DateTime?
   lastCompletedDate   DateTime?

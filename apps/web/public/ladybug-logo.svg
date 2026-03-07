@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Ladybug logo">
+  <g fill="none" stroke-linecap="round" stroke="#2f2f35" stroke-width="12">
+    <path d="M180 95c-10-18-22-31-36-42"/>
+    <path d="M332 95c10-18 22-31 36-42"/>
+    <path d="M118 197c-8 28 8 47 26 62"/>
+    <path d="M394 197c8 28-8 47-26 62"/>
+    <path d="M98 309c-12 21-9 37 1 53"/>
+    <path d="M414 309c12 21 9 37-1 53"/>
+    <path d="M142 378c-12 22-12 39-4 54"/>
+    <path d="M370 378c12 22 12 39 4 54"/>
+  </g>
+  <circle cx="256" cy="150" r="72" fill="#2f2f35"/>
+  <ellipse cx="230" cy="142" rx="14" ry="11" fill="#e8eef5" transform="rotate(-20 230 142)"/>
+  <ellipse cx="282" cy="142" rx="14" ry="11" fill="#e8eef5" transform="rotate(20 282 142)"/>
+  <ellipse cx="256" cy="304" rx="138" ry="148" fill="#e31d23"/>
+  <path d="M256 268l-18 184h36z" fill="#0d0f14"/>
+  <g fill="#0d0f14">
+    <circle cx="256" cy="205" r="16"/>
+    <circle cx="190" cy="240" r="16"/>
+    <circle cx="322" cy="240" r="16"/>
+    <circle cx="176" cy="306" r="16"/>
+    <circle cx="336" cy="306" r="16"/>
+    <circle cx="182" cy="368" r="16"/>
+    <circle cx="330" cy="368" r="16"/>
+  </g>
+</svg>
