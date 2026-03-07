@@ -80,6 +80,7 @@ router.post('/', validate(createGoalSchema), async (req: Request, res: Response,
         const goal = await prisma.goal.create({
             data: {
                 ...req.body,
+                trackingType: req.body.trackingType || 'BY_FREQUENCY', // always default to BY_FREQUENCY
                 startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
                 currentPeriodStart: periodStart,
                 userId: req.user!.userId,
@@ -115,6 +116,35 @@ router.patch('/:id', validate(updateGoalSchema), async (req: Request, res: Respo
     } catch (err) { next(err); }
 });
 
+// Reset / recalculate currentCount from actual check-in history
+// Useful to fix corrupted counts from old goals
+router.post('/:id/reset', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const goal = await prisma.goal.findUnique({ where: { id: req.params.id } });
+        if (!goal) throw new NotFoundError('Goal');
+
+        const periodStart = getPeriodStart(goal.periodType);
+        let currentCount = 0;
+        if (goal.trackingType === 'BY_FREQUENCY') {
+            currentCount = await prisma.goalCheckIn.count({
+                where: { goalId: goal.id, date: { gte: periodStart } },
+            });
+        } else {
+            const result = await prisma.goalCheckIn.aggregate({
+                where: { goalId: goal.id, date: { gte: periodStart } },
+                _sum: { quantity: true },
+            });
+            currentCount = result._sum.quantity || 0;
+        }
+
+        const updated = await prisma.goal.update({
+            where: { id: goal.id },
+            data: { currentCount, currentPeriodStart: periodStart },
+        });
+        sendSuccess(res, updated);
+    } catch (err) { next(err); }
+});
+
 // Delete goal
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -124,3 +154,4 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
 });
 
 export default router;
+
