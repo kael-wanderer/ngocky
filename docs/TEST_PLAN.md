@@ -67,3 +67,6 @@ This document outlines manual and planned automated test cases for verifying the
 | AL-1 | Create Rule | Create daily alert for Overdue Tasks. | Rule appears in 'Alert Rules' list. |
 | AL-2 | Toggle Rule | Click 'ENABLED' badge. | Rule toggles to 'DISABLED'. |
 | AL-3 | Schedule Report | Create weekly summary for 8:00 AM. | Schedule appears in 'Scheduled Reports' list. |
+
+
+test
