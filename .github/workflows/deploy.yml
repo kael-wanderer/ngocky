@@ -97,14 +97,16 @@ jobs:
             mv -f docker-compose.prod.yml docker-compose.yml
 
             # Deploy
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            echo "${{ secrets.GH_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
             docker compose pull api web
+            docker compose up -d postgres
+
+            # Run DB operations in one-off containers to avoid OOM from docker exec on running api
+            docker compose run --rm api npx prisma migrate deploy
+            docker compose run --rm api npm run db:seed
+
             docker compose up -d --remove-orphans
             docker compose ps
             docker ps --filter "name=^/ngocky-api$" --format '{{.Names}}' | grep -q '^ngocky-api$'
-
-            # Run DB operations
-            docker exec ngocky-api npx prisma migrate deploy
-            docker exec ngocky-api npm run db:seed
 
             echo "✅ NgocKy deployed and seeded successfully"
