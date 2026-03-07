@@ -8,8 +8,14 @@
     "apps/web"
   ],
   "scripts": {
+    "dev": "npm run dev:api & npm run dev:web",
     "dev:api": "npm run dev -w apps/api",
     "dev:web": "npm run dev -w apps/web",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:restart": "pm2 restart ecosystem.config.cjs --update-env",
+    "pm2:logs": "pm2 logs ngocky-api ngocky-web",
+    "pm2:stop": "pm2 stop ngocky-api ngocky-web",
+    "pm2:delete": "pm2 delete ngocky-api ngocky-web",
     "build:api": "npm run build -w apps/api",
     "build:web": "npm run build -w apps/web",
     "db:migrate": "npm run db:migrate -w apps/api",
