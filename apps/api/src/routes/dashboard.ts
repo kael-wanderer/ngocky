@@ -31,11 +31,11 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             goals,
         ] = await Promise.all([
             // Tasks (projects) due this week
-            prisma.project.count({
+            prisma.projectTask.count({
                 where: { deadline: { gte: weekStart, lt: weekEnd }, status: { not: 'DONE' } },
             }),
             // Tasks due this month
-            prisma.project.count({
+            prisma.projectTask.count({
                 where: { deadline: { gte: monthStart, lt: monthEnd }, status: { not: 'DONE' } },
             }),
             // Housework due this week
@@ -63,8 +63,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             prisma.houseworkItem.count({
                 where: { nextDueDate: { lt: now }, active: true },
             }),
-            // Overdue projects
-            prisma.project.count({
+            // Overdue tasks
+            prisma.projectTask.count({
                 where: { deadline: { lt: now }, status: { notIn: ['DONE', 'ARCHIVED'] } },
             }),
             // Pinned goals
@@ -73,8 +73,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 take: 10,
                 include: { user: { select: { name: true } } },
             }),
-            // Pinned projects
-            prisma.project.findMany({
+            // Pinned tasks
+            prisma.projectTask.findMany({
                 where: { pinToDashboard: true, status: { not: 'ARCHIVED' } },
                 take: 10,
                 include: { assignee: { select: { name: true } } },
@@ -101,12 +101,12 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 houseworkThisMonth,
                 upcomingEventsCount: upcomingEvents.length,
                 overdueHousework,
-                overdueProjects,
+                overdueTasks: overdueProjects,
             },
             upcomingEvents,
             recentExpenses,
             pinnedGoals,
-            pinnedProjects,
+            pinnedTasks: pinnedProjects,
             pinnedHousework,
             goals,
         });

@@ -33,7 +33,7 @@ export default function DashboardPage() {
         { label: 'Tasks This Week', value: s.tasksThisWeek, icon: FolderKanban, color: '#4f46e5', bg: '#eef2ff' },
         { label: 'Housework Due', value: s.houseworkThisWeek, icon: Home, color: '#059669', bg: '#ecfdf5' },
         { label: 'Upcoming Events', value: s.upcomingEventsCount, icon: Calendar, color: '#7c3aed', bg: '#f5f3ff' },
-        { label: 'Overdue Items', value: (s.overdueProjects || 0) + (s.overdueHousework || 0), icon: AlertTriangle, color: '#dc2626', bg: '#fef2f2' },
+        { label: 'Overdue Items', value: (s.overdueTasks || 0) + (s.overdueHousework || 0), icon: AlertTriangle, color: '#dc2626', bg: '#fef2f2' },
     ];
 
     return (
@@ -155,17 +155,17 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Pinned Projects */}
+                {/* Pinned Tasks */}
                 <div className="card p-5">
                     <div className="flex items-center gap-2 mb-4">
                         <FolderKanban className="w-5 h-5" style={{ color: '#4f46e5' }} />
-                        <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Pinned Projects</h3>
+                        <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Pinned Tasks</h3>
                     </div>
                     <div className="space-y-3">
-                        {(data?.pinnedProjects || []).length === 0 && (
-                            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No pinned projects</p>
+                        {(data?.pinnedTasks || []).length === 0 && (
+                            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No pinned tasks</p>
                         )}
-                        {(data?.pinnedProjects || []).map((p: any) => (
+                        {(data?.pinnedTasks || []).map((p: any) => (
                             <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{p.title}</p>

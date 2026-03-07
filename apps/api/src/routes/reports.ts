@@ -9,7 +9,7 @@ router.use(authenticate);
 // Tasks by status
 router.get('/tasks-by-status', async (_req: Request, res: Response, next: NextFunction) => {
     try {
-        const result = await prisma.project.groupBy({
+        const result = await prisma.projectTask.groupBy({
             by: ['status'],
             _count: { id: true },
         });
@@ -20,7 +20,7 @@ router.get('/tasks-by-status', async (_req: Request, res: Response, next: NextFu
 // Overdue tasks
 router.get('/overdue-tasks', async (_req: Request, res: Response, next: NextFunction) => {
     try {
-        const tasks = await prisma.project.findMany({
+        const tasks = await prisma.projectTask.findMany({
             where: { deadline: { lt: new Date() }, status: { notIn: ['DONE', 'ARCHIVED'] } },
             include: { assignee: { select: { name: true } } },
             orderBy: { deadline: 'asc' },
@@ -117,7 +117,7 @@ router.get('/expense-summary', async (req: Request, res: Response, next: NextFun
 // CSV export for tasks
 router.get('/export/tasks', async (_req: Request, res: Response, next: NextFunction) => {
     try {
-        const tasks = await prisma.project.findMany({
+        const tasks = await prisma.projectTask.findMany({
             include: { assignee: { select: { name: true } }, createdBy: { select: { name: true } } },
             orderBy: { createdAt: 'desc' },
         });
@@ -169,8 +169,8 @@ router.get('/notifications/due-items', async (_req: Request, res: Response, next
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
-        const [dueProjects, dueHousework, dueGoals] = await Promise.all([
-            prisma.project.findMany({
+        const [dueProjectTasks, dueHousework, dueGoals] = await Promise.all([
+            prisma.projectTask.findMany({
                 where: { deadline: { lte: tomorrow }, status: { notIn: ['DONE', 'ARCHIVED'] }, notificationEnabled: true },
                 include: { assignee: { select: { id: true, name: true, notificationChannel: true, notificationEmail: true, telegramChatId: true } } },
             }),
@@ -184,7 +184,7 @@ router.get('/notifications/due-items', async (_req: Request, res: Response, next
             }),
         ]);
 
-        sendSuccess(res, { dueProjects, dueHousework, dueGoals });
+        sendSuccess(res, { dueProjects: dueProjectTasks, dueHousework, dueGoals });
     } catch (err) { next(err); }
 });
 
