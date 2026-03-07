@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-const CATEGORY_OPTIONS = ['goal', 'project', 'housework', 'calendar', 'expense', 'assets'] as const;
+const CATEGORY_OPTIONS = ['goal', 'project', 'housework', 'calendar', 'expense', 'assets', 'learning'] as const;
 type Category = typeof CATEGORY_OPTIONS[number];
 const categoryLabels: Record<Category, string> = {
     goal: 'Goal',
@@ -17,6 +17,7 @@ const categoryLabels: Record<Category, string> = {
     calendar: 'Calendar',
     expense: 'Expense',
     assets: 'Assets',
+    learning: 'Learning',
 };
 
 const TIME_OPTIONS = [
@@ -27,17 +28,35 @@ const TIME_OPTIONS = [
 ] as const;
 
 type TimeRange = typeof TIME_OPTIONS[number]['value'];
+type StatusFilter = 'PENDING' | 'COMPLETED' | 'OVERDUE';
+const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
+    { value: 'PENDING', label: 'Pending' },
+    { value: 'COMPLETED', label: 'Completed' },
+    { value: 'OVERDUE', label: 'Overdue' },
+];
 
 const formatVND = (amount: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(amount);
+const getHouseworkStatus = (nextDueDate?: string | null) => {
+    if (!nextDueDate) return { label: 'Unscheduled', color: '#6b7280', bg: '#f3f4f6' };
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const due = new Date(nextDueDate);
+    if (due < todayStart) return { label: 'Overdue', color: '#b91c1c', bg: '#fee2e2' };
+    if (due < tomorrowStart) return { label: 'Due today', color: '#92400e', bg: '#fef3c7' };
+    return { label: 'Upcoming', color: '#065f46', bg: '#d1fae5' };
+};
 
 export default function DashboardPage() {
     const { user } = useAuthStore();
     const [timeRange, setTimeRange] = useState<TimeRange>('THIS_WEEK');
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>('PENDING');
     const [categories, setCategories] = useState<Category[]>([...CATEGORY_OPTIONS]);
 
     const { data, isLoading } = useQuery({
-        queryKey: ['dashboard', timeRange],
-        queryFn: async () => (await api.get(`/dashboard?timeRange=${timeRange}`)).data.data,
+        queryKey: ['dashboard', timeRange, statusFilter],
+        queryFn: async () => (await api.get(`/dashboard?timeRange=${timeRange}&status=${statusFilter}`)).data.data,
     });
 
     const s = data?.summary || {};
@@ -46,7 +65,7 @@ export default function DashboardPage() {
         { label: 'Tasks This Week', value: s.tasksThisWeek, icon: FolderKanban, color: '#4f46e5', bg: '#eef2ff' },
         { label: 'Housework Due', value: s.houseworkThisWeek, icon: Home, color: '#059669', bg: '#ecfdf5' },
         { label: 'Upcoming Events', value: s.upcomingEventsCount, icon: Calendar, color: '#7c3aed', bg: '#f5f3ff' },
-        { label: 'Overdue Items', value: (s.overdueTasks || 0) + (s.overdueHousework || 0), icon: AlertTriangle, color: '#dc2626', bg: '#fef2f2' },
+        { label: 'Overdue Items', value: s.overdueItemsTotal || 0, icon: AlertTriangle, color: '#dc2626', bg: '#fef2f2' },
     ];
 
     const sectionVisible = (category: Category) => categories.includes(category);
@@ -58,6 +77,17 @@ export default function DashboardPage() {
     const toggleCategory = (c: Category) => {
         setCategories((prev) => prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]);
     };
+
+    const overdueByCategory = (type: string): Category => {
+        if (type === 'PROJECT') return 'project';
+        if (type === 'HOUSEWORK') return 'housework';
+        if (type === 'CALENDAR') return 'calendar';
+        if (type === 'ASSET') return 'assets';
+        if (type === 'LEARNING') return 'learning';
+        return 'project';
+    };
+
+    const filteredOverdueItems = (data?.overdueItems || []).filter((item: any) => categories.includes(overdueByCategory(item.type)));
 
     if (isLoading) {
         return (
@@ -81,11 +111,19 @@ export default function DashboardPage() {
                     {format(new Date(), 'EEEE, MMMM d, yyyy')}
                 </p>
 
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className="label">Time</label>
                         <select className="input" value={timeRange} onChange={(e) => setTimeRange(e.target.value as TimeRange)}>
                             {TIME_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="label">Status</label>
+                        <select className="input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}>
+                            {STATUS_OPTIONS.map((opt) => (
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
                         </select>
@@ -134,6 +172,33 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            <div className="card p-5 border border-red-200 bg-red-50/40">
+                <div className="flex items-center gap-2 mb-4">
+                    <AlertTriangle className="w-5 h-5 text-red-600" />
+                    <h3 className="font-semibold text-red-700">Overdue</h3>
+                </div>
+                <div className="space-y-3">
+                    {filteredOverdueItems.length === 0 && (
+                        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No overdue items for selected categories.</p>
+                    )}
+                    {filteredOverdueItems.map((o: any) => (
+                        <div key={`${o.type}-${o.id}`} className="flex items-center justify-between py-1 gap-3">
+                            <div className="min-w-0">
+                                <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{o.title}</p>
+                                <p className="text-xs text-red-700">
+                                    {o.type}{o.meta ? ` · ${o.meta}` : ''}
+                                </p>
+                            </div>
+                            {o.date && (
+                                <span className="text-xs font-semibold whitespace-nowrap text-red-700">
+                                    {format(new Date(o.date), 'MMM d')}
+                                </span>
+                            )}
+                        </div>
+                    ))}
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -277,9 +342,20 @@ export default function DashboardPage() {
                                 <div key={h.id} className="flex items-center justify-between py-1 gap-3">
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{h.title}</p>
-                                        <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                                            {h.assignee?.name || 'Unassigned'}
-                                        </p>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                                {h.assignee?.name || 'Unassigned'}
+                                            </p>
+                                            <span
+                                                className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                                                style={{
+                                                    color: getHouseworkStatus(h.nextDueDate).color,
+                                                    backgroundColor: getHouseworkStatus(h.nextDueDate).bg,
+                                                }}
+                                            >
+                                                {getHouseworkStatus(h.nextDueDate).label}
+                                            </span>
+                                        </div>
                                     </div>
                                     {h.nextDueDate && (
                                         <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(h.nextDueDate) < new Date() ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
@@ -369,6 +445,35 @@ export default function DashboardPage() {
                                     {a.nextRecommendedDate && (
                                         <span className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }}>
                                             {format(new Date(a.nextRecommendedDate), 'MMM d')}
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {sectionVisible('learning') && (
+                    <div className="card p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Target className="w-5 h-5" style={{ color: '#0f766e' }} />
+                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Learning</h3>
+                        </div>
+                        <div className="space-y-3">
+                            {(data?.dueLearning || []).length === 0 && (
+                                <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No learning deadlines in selected time</p>
+                            )}
+                            {(data?.dueLearning || []).map((l: any) => (
+                                <div key={l.id} className="flex items-center justify-between py-1 gap-3">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{l.title}</p>
+                                        <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                            {l.subject || 'Learning item'}{l.user?.name ? ` · ${l.user.name}` : ''}
+                                        </p>
+                                    </div>
+                                    {l.deadline && (
+                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(l.deadline) < new Date() ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                                            {format(new Date(l.deadline), 'MMM d')}
                                         </span>
                                     )}
                                 </div>

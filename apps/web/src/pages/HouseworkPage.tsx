@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2 } from 'lucide-react';
-import { format, isPast } from 'date-fns';
+import { format } from 'date-fns';
 
 const freqLabels: Record<string, string> = {
     ONE_TIME: 'One time',
@@ -276,6 +276,85 @@ export default function HouseworkPage() {
         if (window.confirm('Delete this housework item?')) deleteMut.mutate(id);
     };
 
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+    const getDueBucket = (nextDueDate?: string | null): 'overdue' | 'today' | 'upcoming' | 'unscheduled' => {
+        if (!nextDueDate) return 'unscheduled';
+        const due = new Date(nextDueDate);
+        if (due < todayStart) return 'overdue';
+        if (due < tomorrowStart) return 'today';
+        return 'upcoming';
+    };
+
+    const allItems = data || [];
+    const overdueItems = allItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'overdue');
+    const todayItems = allItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'today');
+    const upcomingItems = allItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'upcoming');
+    const unscheduledItems = allItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'unscheduled');
+
+    const renderItem = (item: any, tone: 'normal' | 'overdue' = 'normal') => {
+        const overdue = tone === 'overdue';
+        const recurrenceLabel = buildRecurrenceLabel(item);
+        return (
+            <div key={item.id} className={`card p-4 flex items-center gap-4 animate-slide-up ${overdue ? 'border-red-200' : ''}`}>
+                <button
+                    onClick={() => completeMut.mutate(item.id)}
+                    disabled={completeMut.isPending}
+                    className={`btn-primary flex-shrink-0 text-xs ${overdue ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                    title="Mark complete"
+                >
+                    <CheckCircle2 className="w-4 h-4" /> Mark Complete
+                </button>
+
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                        <p className="font-medium truncate" style={{ color: 'var(--color-text)' }}>{item.title}</p>
+                        {overdue && <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />}
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 flex-wrap">
+                        <span className="badge-primary text-[10px]">{freqLabels[item.frequencyType]}</span>
+                        {item.nextDueDate && (
+                            <span className="text-xs" style={{ color: overdue ? '#dc2626' : 'var(--color-text-secondary)' }}>
+                                Due: {format(new Date(item.nextDueDate), 'MMM d, yyyy')}
+                            </span>
+                        )}
+                        {recurrenceLabel && (
+                            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{recurrenceLabel}</span>
+                        )}
+                        {item.assignee && (
+                            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>👤 {item.assignee.name}</span>
+                        )}
+                        {item.estimatedCost && (
+                            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>💰 ${item.estimatedCost}</span>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => openEdit(item)}
+                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        title="Edit item"
+                    >
+                        <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => handleDelete(item.id)}
+                        className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
+                        title="Delete item"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+
+                {!item.active && <span className="badge bg-gray-100 text-gray-500">Inactive</span>}
+            </div>
+        );
+    };
+
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center justify-between">
@@ -327,66 +406,42 @@ export default function HouseworkPage() {
             {isLoading ? (
                 <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="card p-5 h-20 animate-pulse bg-gray-100" />)}</div>
             ) : (
-                <div className="space-y-3">
-                    {(data || []).map((item: any) => {
-                        const overdue = item.nextDueDate && isPast(new Date(item.nextDueDate));
-                        const recurrenceLabel = buildRecurrenceLabel(item);
-                        return (
-                            <div key={item.id} className={`card p-4 flex items-center gap-4 animate-slide-up ${overdue ? 'border-red-200' : ''}`}>
-                                <button
-                                    onClick={() => completeMut.mutate(item.id)}
-                                    disabled={completeMut.isPending}
-                                    className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all hover:scale-105"
-                                    style={{ borderColor: overdue ? '#dc2626' : '#059669' }}
-                                >
-                                    <CheckCircle2 className="w-5 h-5" style={{ color: overdue ? '#dc2626' : '#059669' }} />
-                                </button>
+                <div className="space-y-5">
+                    <div>
+                        <h3 className="text-sm font-semibold mb-2 text-red-600">Overdue ({overdueItems.length})</h3>
+                        <div className="space-y-3">
+                            {overdueItems.length === 0
+                                ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No overdue housework</p>
+                                : overdueItems.map((item: any) => renderItem(item, 'overdue'))}
+                        </div>
+                    </div>
 
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <p className="font-medium truncate" style={{ color: 'var(--color-text)' }}>{item.title}</p>
-                                        {overdue && <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />}
-                                    </div>
-                                    <div className="flex items-center gap-3 mt-1 flex-wrap">
-                                        <span className="badge-primary text-[10px]">{freqLabels[item.frequencyType]}</span>
-                                        {item.nextDueDate && (
-                                            <span className="text-xs" style={{ color: overdue ? '#dc2626' : 'var(--color-text-secondary)' }}>
-                                                Due: {format(new Date(item.nextDueDate), 'MMM d, yyyy')}
-                                            </span>
-                                        )}
-                                        {recurrenceLabel && (
-                                            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{recurrenceLabel}</span>
-                                        )}
-                                        {item.assignee && (
-                                            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>👤 {item.assignee.name}</span>
-                                        )}
-                                        {item.estimatedCost && (
-                                            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>💰 ${item.estimatedCost}</span>
-                                        )}
-                                    </div>
-                                </div>
+                    <div>
+                        <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Due Today ({todayItems.length})</h3>
+                        <div className="space-y-3">
+                            {todayItems.length === 0
+                                ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No housework due today</p>
+                                : todayItems.map((item: any) => renderItem(item))}
+                        </div>
+                    </div>
 
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        onClick={() => openEdit(item)}
-                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                                        title="Edit item"
-                                    >
-                                        <Pencil className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(item.id)}
-                                        className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
-                                        title="Delete item"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
+                    <div>
+                        <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Upcoming ({upcomingItems.length})</h3>
+                        <div className="space-y-3">
+                            {upcomingItems.length === 0
+                                ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No upcoming housework</p>
+                                : upcomingItems.map((item: any) => renderItem(item))}
+                        </div>
+                    </div>
 
-                                {!item.active && <span className="badge bg-gray-100 text-gray-500">Inactive</span>}
+                    {unscheduledItems.length > 0 && (
+                        <div>
+                            <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Unscheduled ({unscheduledItems.length})</h3>
+                            <div className="space-y-3">
+                                {unscheduledItems.map((item: any) => renderItem(item))}
                             </div>
-                        );
-                    })}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
