@@ -5,17 +5,38 @@ import { validate } from '../middleware/validate';
 import { createEventSchema, updateEventSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
-import { addDays, addMonths, addWeeks, endOfDay } from 'date-fns';
 
 const router = Router();
 router.use(authenticate);
+
+function addDaysLocal(date: Date, amount: number) {
+    const next = new Date(date);
+    next.setDate(next.getDate() + amount);
+    return next;
+}
+
+function addWeeksLocal(date: Date, amount: number) {
+    return addDaysLocal(date, amount * 7);
+}
+
+function addMonthsLocal(date: Date, amount: number) {
+    const next = new Date(date);
+    next.setMonth(next.getMonth() + amount);
+    return next;
+}
+
+function endOfDayLocal(date: Date) {
+    const next = new Date(date);
+    next.setHours(23, 59, 59, 999);
+    return next;
+}
 
 function expandRecurringEvent(event: any, rangeStart?: Date, rangeEnd?: Date) {
     if (!event.repeatFrequency || !rangeStart || !rangeEnd) return [event];
 
     const instances: any[] = [];
     let cursor = new Date(event.startDate);
-    const until = event.repeatEndType === 'ON_DATE' && event.repeatUntil ? endOfDay(new Date(event.repeatUntil)) : null;
+    const until = event.repeatEndType === 'ON_DATE' && event.repeatUntil ? endOfDayLocal(new Date(event.repeatUntil)) : null;
     const durationMs = event.endDate ? new Date(event.endDate).getTime() - new Date(event.startDate).getTime() : 0;
 
     while (cursor <= rangeEnd) {
@@ -30,9 +51,9 @@ function expandRecurringEvent(event: any, rangeStart?: Date, rangeEnd?: Date) {
             });
         }
 
-        if (event.repeatFrequency === 'DAILY') cursor = addDays(cursor, 1);
-        else if (event.repeatFrequency === 'WEEKLY') cursor = addWeeks(cursor, 1);
-        else cursor = addMonths(cursor, 1);
+        if (event.repeatFrequency === 'DAILY') cursor = addDaysLocal(cursor, 1);
+        else if (event.repeatFrequency === 'WEEKLY') cursor = addWeeksLocal(cursor, 1);
+        else cursor = addMonthsLocal(cursor, 1);
 
         if (!until && instances.length > 366) break;
     }
