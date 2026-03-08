@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const createGoalSchema = z.object({
     title: z.string().min(1).max(200),
     description: z.string().optional(),
+    isShared: z.boolean().optional(),
     periodType: z.enum(['WEEKLY', 'MONTHLY']),
     targetCount: z.number().int().positive(),
     unit: z.string().optional().default('times'),
@@ -33,6 +34,7 @@ export const createProjectSchema = z.object({
     name: z.string().min(1).max(200),
     description: z.string().optional(),
     isShared: z.boolean().optional(),
+    pinToDashboard: z.boolean().optional(),
 });
 
 export const updateProjectSchema = createProjectSchema.partial();
@@ -145,6 +147,7 @@ export const createEventSchema = z.object({
     color: z.string().optional(),
     category: z.string().optional(),
     isShared: z.boolean().optional(),
+    pinToDashboard: z.boolean().optional(),
     participantIds: z.array(z.string()).optional(),
 });
 

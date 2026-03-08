@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, Trash2, Pencil, RefreshCw } from 'lucide-react';
+import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, Trash2, Pencil, RefreshCw, Copy, Pin } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuthStore } from '../stores/auth';
 import { useSearchParams } from 'react-router-dom';
@@ -16,6 +16,7 @@ export default function ProjectsPage() {
     const { user } = useAuthStore();
     const [searchParams, setSearchParams] = useSearchParams();
     const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
+    const [boardListView, setBoardListView] = useState<'grid' | 'list'>('grid');
     const [view, setView] = useState<'kanban' | 'list'>('kanban');
     const [showCreateBoard, setShowCreateBoard] = useState(false);
     const [editingBoard, setEditingBoard] = useState<any>(null);
@@ -23,8 +24,8 @@ export default function ProjectsPage() {
     const [editingTask, setEditingTask] = useState<any>(null);
     const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
 
-    const [boardForm, setBoardForm] = useState({ name: '', description: '', isShared: false });
-    const [taskForm, setTaskForm] = useState({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false });
+    const [boardForm, setBoardForm] = useState({ name: '', description: '', isShared: false, pinToDashboard: false });
+    const [taskForm, setTaskForm] = useState({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false, pinToDashboard: false });
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const boardIdParam = searchParams.get('boardId');
@@ -45,7 +46,7 @@ export default function ProjectsPage() {
     // Mutations
     const createBoardMut = useMutation({
         mutationFn: (body: any) => api.post('/projects', body),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setShowCreateBoard(false); setBoardForm({ name: '', description: '', isShared: false }); },
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setShowCreateBoard(false); setBoardForm({ name: '', description: '', isShared: false, pinToDashboard: false }); },
     });
 
     const deleteBoardMut = useMutation({
@@ -68,7 +69,7 @@ export default function ProjectsPage() {
             qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
             qc.invalidateQueries({ queryKey: ['project_boards'] });
             setShowCreateTask(false);
-            setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false });
+            setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false, pinToDashboard: false });
         },
     });
 
@@ -108,7 +109,7 @@ export default function ProjectsPage() {
 
     const openEditBoard = () => {
         if (!activeBoard) return;
-        setBoardForm({ name: activeBoard.name || '', description: activeBoard.description || '', isShared: !!activeBoard.isShared });
+        setBoardForm({ name: activeBoard.name || '', description: activeBoard.description || '', isShared: !!activeBoard.isShared, pinToDashboard: !!activeBoard.pinToDashboard });
         setEditingBoard(activeBoard);
     };
 
@@ -127,6 +128,21 @@ export default function ProjectsPage() {
         }
         moveTaskMut.mutate({ id: draggingTaskId, status });
         setDraggingTaskId(null);
+    };
+
+    const duplicateTask = (task: any) => {
+        setEditingTask(null);
+        setTaskForm({
+            title: `${task.title} (Copy)`,
+            description: task.description || '',
+            category: task.category || '',
+            priority: task.priority || 'MEDIUM',
+            status: task.status || 'PLANNED',
+            deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
+            isShared: !!task.isShared,
+            pinToDashboard: !!task.pinToDashboard,
+        });
+        setShowCreateTask(true);
     };
 
     useEffect(() => {
@@ -148,18 +164,25 @@ export default function ProjectsPage() {
             status: task.status || 'PLANNED',
             deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
             isShared: !!task.isShared,
+            pinToDashboard: !!task.pinToDashboard,
         });
     }, [taskIdParam, activeBoard]);
 
     if (!selectedBoardId) {
         return (
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-2">
                         <FolderKanban className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                         <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Project Boards</h2>
                     </div>
-                    <button className="btn-primary" onClick={() => { setBoardForm({ name: '', description: '', isShared: false }); setShowCreateBoard(true); }}><Plus className="w-4 h-4" /> New Board</button>
+                    <div className="flex items-center gap-2">
+                        <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
+                            <button onClick={() => setBoardListView('grid')} className={`p-2 ${boardListView === 'grid' ? 'bg-gray-100' : ''}`}><LayoutGrid className="w-4 h-4" /></button>
+                            <button onClick={() => setBoardListView('list')} className={`p-2 ${boardListView === 'list' ? 'bg-gray-100' : ''}`}><List className="w-4 h-4" /></button>
+                        </div>
+                        <button className="btn-primary" onClick={() => { setBoardForm({ name: '', description: '', isShared: false, pinToDashboard: false }); setShowCreateBoard(true); }}><Plus className="w-4 h-4" /> New Board</button>
+                    </div>
                 </div>
 
                 {boardsLoading ? (
@@ -167,16 +190,26 @@ export default function ProjectsPage() {
                         {[...Array(3)].map((_, i) => <div key={i} className="card h-32 animate-pulse bg-gray-100" />)}
                     </div>
                 ) : (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className={boardListView === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}>
                         {boards?.map((b: any) => (
-                            <div key={b.id} className="card p-5 hover:shadow-lg transition-all group cursor-pointer" onClick={() => setSelectedBoardId(b.id)}>
+                            <div key={b.id} className={`card p-5 hover:shadow-lg transition-all group cursor-pointer ${boardListView === 'list' ? 'flex items-center justify-between gap-4' : ''}`} onClick={() => setSelectedBoardId(b.id)}>
                                 <div className="flex justify-between items-start mb-2">
                                     <h3 className="font-bold text-lg" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
                                     <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setBoardForm({ name: b.name || '', description: b.description || '', isShared: !!b.isShared });
+                                                updateBoardMut.mutate({ id: b.id, data: { pinToDashboard: !b.pinToDashboard } });
+                                            }}
+                                            className={`p-1 ${b.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`}
+                                            title="Pin board"
+                                        >
+                                            <Pin className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setBoardForm({ name: b.name || '', description: b.description || '', isShared: !!b.isShared, pinToDashboard: !!b.pinToDashboard });
                                                 setEditingBoard(b);
                                             }}
                                             className="p-1 hover:text-indigo-500"
@@ -206,6 +239,11 @@ export default function ProjectsPage() {
                                         {b.isShared && (
                                             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
                                                 Shared
+                                            </span>
+                                        )}
+                                        {b.pinToDashboard && (
+                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                                                Pinned
                                             </span>
                                         )}
                                     </div>
@@ -241,6 +279,14 @@ export default function ProjectsPage() {
                                         onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })}
                                     />
                                     Share with all family users
+                                </label>
+                                <label className="flex items-center gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={boardForm.pinToDashboard}
+                                        onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })}
+                                    />
+                                    Pin to dashboard
                                 </label>
                                 <button type="submit" className="btn-primary w-full" disabled={createBoardMut.isPending}>
                                     {createBoardMut.isPending ? 'Creating...' : 'Create Board'}
@@ -280,7 +326,7 @@ export default function ProjectsPage() {
                     <button className="p-2 rounded-lg border hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--color-border)' }} onClick={refreshBoard} title="Refresh board">
                         <RefreshCw className={`w-4 h-4 ${activeBoardLoading || moveTaskMut.isPending ? 'animate-spin' : ''}`} />
                     </button>
-                    <button className="btn-primary" onClick={() => { setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false }); setShowCreateTask(true); }}><Plus className="w-4 h-4" /> New Task</button>
+                    <button className="btn-primary" onClick={() => { setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false, pinToDashboard: false }); setShowCreateTask(true); }}><Plus className="w-4 h-4" /> New Task</button>
                 </div>
             </div>
 
@@ -308,12 +354,12 @@ export default function ProjectsPage() {
                                 <textarea className="input" rows={3} value={boardForm.description} onChange={(e) => setBoardForm({ ...boardForm, description: e.target.value })} />
                             </div>
                             <label className="flex items-center gap-2 text-sm">
-                                <input
-                                    type="checkbox"
-                                    checked={boardForm.isShared}
-                                    onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })}
-                                />
+                                <input type="checkbox" checked={boardForm.isShared} onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })} />
                                 Share with all family users
+                            </label>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={boardForm.pinToDashboard} onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })} />
+                                Pin to dashboard
                             </label>
                             <button type="submit" className="btn-primary w-full" disabled={updateBoardMut.isPending}>
                                 {updateBoardMut.isPending ? 'Saving...' : 'Save Board'}
@@ -325,11 +371,11 @@ export default function ProjectsPage() {
 
             {/* Task Modal */}
             {(showCreateTask || editingTask) && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreateTask(false); setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false }); } }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreateTask(false); setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false, pinToDashboard: false }); } }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">{editingTask ? 'Edit Task' : 'Create Task'}</h3>
-                            <button onClick={() => { setShowCreateTask(false); setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false }); }}><X className="w-5 h-5" /></button>
+                            <button onClick={() => { setShowCreateTask(false); setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false, pinToDashboard: false }); }}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
@@ -370,6 +416,14 @@ export default function ProjectsPage() {
                                     onChange={(e) => setTaskForm({ ...taskForm, isShared: e.target.checked })}
                                 />
                                 Share with all users
+                            </label>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    checked={taskForm.pinToDashboard}
+                                    onChange={(e) => setTaskForm({ ...taskForm, pinToDashboard: e.target.checked })}
+                                />
+                                Pin to dashboard
                             </label>
                             <button type="submit" className="btn-primary w-full" disabled={createTaskMut.isPending || updateTaskMut.isPending}>
                                 {createTaskMut.isPending || updateTaskMut.isPending ? 'Saving...' : (editingTask ? 'Save Changes' : 'Create Task')}
@@ -414,9 +468,14 @@ export default function ProjectsPage() {
                                             status: t.status || 'PLANNED',
                                             deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : '',
                                             isShared: !!t.isShared,
+                                            pinToDashboard: !!t.pinToDashboard,
                                         });
                                     }}
                                     >
+                                        <div className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
+                                            <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: t.id, data: { pinToDashboard: !t.pinToDashboard } }); }} className={`p-1 ${t.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`}><Pin className="w-3.5 h-3.5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); duplicateTask(t); }} className="p-1 hover:text-sky-500 transition-all"><Copy className="w-3.5 h-3.5" /></button>
+                                        </div>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleDeleteTask(t.id); }}
                                             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all"
@@ -432,6 +491,11 @@ export default function ProjectsPage() {
                                             {t.isShared && (
                                                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">
                                                     Shared
+                                                </span>
+                                            )}
+                                            {t.pinToDashboard && (
+                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">
+                                                    Pinned
                                                 </span>
                                             )}
                                             {t.deadline && (
@@ -470,6 +534,7 @@ export default function ProjectsPage() {
                                             status: t.status || 'PLANNED',
                                             deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : '',
                                             isShared: !!t.isShared,
+                                            pinToDashboard: !!t.pinToDashboard,
                                         });
                                     }}>
                                         <td className="font-medium">{t.title}</td>
@@ -479,12 +544,15 @@ export default function ProjectsPage() {
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <span>{t.category || '-'}</span>
                                                 {t.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                                {t.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                                             </div>
                                         </td>
                                         <td style={{ color: t.deadline && new Date(t.deadline) < todayStart ? '#dc2626' : undefined }}>
                                             {t.deadline ? format(new Date(t.deadline), 'MMM d, yyyy') : '-'}
                                         </td>
                                         <td>
+                                            <button onClick={(e) => { e.stopPropagation(); duplicateTask(t); }} className="p-1 hover:text-sky-500"><Copy className="w-4 h-4" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: t.id, data: { pinToDashboard: !t.pinToDashboard } }); }} className={`p-1 ${t.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`}><Pin className="w-4 h-4" /></button>
                                             <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(t.id); }} className="p-1 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                                         </td>
                                     </tr>

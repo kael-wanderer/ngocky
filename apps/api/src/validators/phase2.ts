@@ -20,6 +20,7 @@ export const createMaintenanceRecordSchema = z.object({
     cost: z.number().nonnegative().optional(),
     vendor: z.string().optional(),
     nextRecommendedDate: z.string().datetime().nullable().optional(),
+    pinToDashboard: z.boolean().optional(),
 });
 
 export const updateMaintenanceRecordSchema = createMaintenanceRecordSchema.partial().omit({ assetId: true });

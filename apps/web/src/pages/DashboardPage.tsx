@@ -37,6 +37,21 @@ const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
 ];
 
 const formatVND = (amount: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(amount);
+const statusBadge = (label: string, tone: 'normal' | 'success' | 'warning' | 'danger' = 'normal') => {
+    const colors = {
+        normal: { color: '#475569', bg: '#f1f5f9' },
+        success: { color: '#047857', bg: '#d1fae5' },
+        warning: { color: '#92400e', bg: '#fef3c7' },
+        danger: { color: '#b91c1c', bg: '#fee2e2' },
+    }[tone];
+
+    return (
+        <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ color: colors.color, backgroundColor: colors.bg }}>
+            {label}
+        </span>
+    );
+};
+
 const getHouseworkStatus = (nextDueDate?: string | null) => {
     if (!nextDueDate) return { label: 'Unscheduled', color: '#6b7280', bg: '#f3f4f6' };
     const now = new Date();
@@ -75,7 +90,7 @@ export default function DashboardPage() {
     const sectionVisible = (category: Category) => categories.includes(category);
 
     const showPinnedItems = useMemo(() => {
-        return categories.some((c) => c === 'goal' || c === 'project' || c === 'housework');
+        return categories.some((c) => c === 'goal' || c === 'project' || c === 'housework' || c === 'calendar' || c === 'assets');
     }, [categories]);
 
     const toggleCategory = (c: Category) => {
@@ -303,14 +318,17 @@ export default function DashboardPage() {
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{p.name}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                                            {p.dueTaskCount} task{p.dueTaskCount > 1 ? 's' : ''} due
+                                            {p.sampleTaskTitle || `${p.dueTaskCount} task${p.dueTaskCount > 1 ? 's' : ''}`}
                                         </p>
                                     </div>
-                                    {p.earliestDeadline && (
-                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(p.earliestDeadline) < todayStart ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
-                                            {format(new Date(p.earliestDeadline), 'MMM d')}
-                                        </span>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                        {p.sampleTaskStatus && statusBadge(p.sampleTaskStatus, p.sampleTaskStatus === 'DONE' ? 'success' : 'normal')}
+                                        {p.earliestDeadline && (
+                                            <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(p.earliestDeadline) < todayStart ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                                                {format(new Date(p.earliestDeadline), 'MMM d')}
+                                            </span>
+                                        )}
+                                    </div>
                                 </button>
                             ))}
                         </div>
@@ -335,11 +353,14 @@ export default function DashboardPage() {
                                             {t.project?.name || 'Project'}{t.assignee?.name ? ` · ${t.assignee.name}` : ''}
                                         </p>
                                     </div>
-                                    {t.deadline && (
-                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(t.deadline) < todayStart ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
-                                            {format(new Date(t.deadline), 'MMM d')}
-                                        </span>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                        {statusBadge(t.status, t.status === 'DONE' ? 'success' : (t.deadline && new Date(t.deadline) < todayStart) ? 'danger' : 'normal')}
+                                        {t.deadline && (
+                                            <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(t.deadline) < todayStart ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                                                {format(new Date(t.deadline), 'MMM d')}
+                                            </span>
+                                        )}
+                                    </div>
                                 </button>
                             ))}
                         </div>
@@ -364,15 +385,19 @@ export default function DashboardPage() {
                                             <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                                                 {h.assignee?.name || 'Unassigned'}
                                             </p>
-                                            <span
-                                                className="text-[10px] px-1.5 py-0.5 rounded font-medium"
-                                                style={{
-                                                    color: getHouseworkStatus(h.nextDueDate).color,
-                                                    backgroundColor: getHouseworkStatus(h.nextDueDate).bg,
-                                                }}
-                                            >
-                                                {getHouseworkStatus(h.nextDueDate).label}
-                                            </span>
+                                            {h.lastCompletedDate
+                                                ? statusBadge('Completed', 'success')
+                                                : (
+                                                    <span
+                                                        className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                                                        style={{
+                                                            color: getHouseworkStatus(h.nextDueDate).color,
+                                                            backgroundColor: getHouseworkStatus(h.nextDueDate).bg,
+                                                        }}
+                                                    >
+                                                        {getHouseworkStatus(h.nextDueDate).label}
+                                                    </span>
+                                                )}
                                         </div>
                                     </div>
                                     {h.nextDueDate && (
@@ -402,8 +427,11 @@ export default function DashboardPage() {
                                     className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1"
                                     onClick={() => {
                                         if (p.type === 'GOAL') navigate(`/goals?editId=${p.id}`);
-                                        else if (p.type === 'TASK') navigate('/projects');
+                                        else if (p.type === 'TASK') navigate(`/projects?boardId=${p.projectId || ''}&taskId=${p.id}`);
+                                        else if (p.type === 'PROJECT') navigate(`/projects?boardId=${p.id}`);
                                         else if (p.type === 'HOUSEWORK') navigate(`/housework?editId=${p.id}`);
+                                        else if (p.type === 'CALENDAR') navigate(`/calendar?eventId=${p.id}`);
+                                        else if (p.type === 'ASSET') navigate(`/assets?assetId=${p.assetId || ''}`);
                                     }}
                                 >
                                     <div className="min-w-0">

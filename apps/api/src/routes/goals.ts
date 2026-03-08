@@ -25,10 +25,18 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const page = Math.max(1, parseInt(req.query.page as string) || 1);
         const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
-        const userId = req.query.userId as string || req.user!.userId;
+        const currentUserId = req.user!.userId;
+        const userId = req.query.userId as string;
         const active = req.query.active !== undefined ? req.query.active === 'true' : undefined;
 
-        const where: any = { userId };
+        const where: any = userId
+            ? { userId }
+            : {
+                OR: [
+                    { userId: currentUserId },
+                    { isShared: true },
+                ],
+            };
         if (active !== undefined) where.active = active;
 
         const [goals, total] = await Promise.all([
@@ -101,6 +109,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
             },
         });
         if (!goal) throw new NotFoundError('Goal');
+        if (goal.userId !== req.user!.userId && !goal.isShared) throw new NotFoundError('Goal');
         sendSuccess(res, goal);
     } catch (err) { next(err); }
 });
@@ -108,6 +117,9 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 // Update goal
 router.patch('/:id', validate(updateGoalSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const existing = await prisma.goal.findUnique({ where: { id: req.params.id } });
+        if (!existing) throw new NotFoundError('Goal');
+        if (existing.userId !== req.user!.userId) throw new NotFoundError('Goal');
         const goal = await prisma.goal.update({
             where: { id: req.params.id },
             data: req.body,
@@ -148,10 +160,12 @@ router.post('/:id/reset', async (req: Request, res: Response, next: NextFunction
 // Delete goal
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const existing = await prisma.goal.findUnique({ where: { id: req.params.id } });
+        if (!existing) throw new NotFoundError('Goal');
+        if (existing.userId !== req.user!.userId) throw new NotFoundError('Goal');
         await prisma.goal.delete({ where: { id: req.params.id } });
         sendMessage(res, 'Goal deleted');
     } catch (err) { next(err); }
 });
 
 export default router;
-

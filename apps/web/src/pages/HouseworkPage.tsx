@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2 } from 'lucide-react';
+import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
 
@@ -32,6 +32,7 @@ type HouseworkFormState = {
     description: string;
     frequencyType: string;
     nextDueDate: string;
+    pinToDashboard: boolean;
     dayOfWeek: string;
     dayOfMonth: string;
     monthOfPeriod: string;
@@ -43,6 +44,7 @@ const emptyForm: HouseworkFormState = {
     description: '',
     frequencyType: 'WEEKLY',
     nextDueDate: '',
+    pinToDashboard: false,
     dayOfWeek: '1',
     dayOfMonth: '1',
     monthOfPeriod: '1',
@@ -192,6 +194,11 @@ function HouseworkForm({
 
             <RecurrenceRuleFields form={form} setForm={setForm} />
 
+            <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} />
+                Pin to dashboard
+            </label>
+
             <button type="submit" className="btn-primary w-full" disabled={loading}>{submitLabel}</button>
         </form>
     );
@@ -203,6 +210,8 @@ export default function HouseworkPage() {
     const [showCreate, setShowCreate] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
     const [form, setForm] = useState({ ...emptyForm });
+    const [showCompleted, setShowCompleted] = useState(true);
+    const [frequencyFilter, setFrequencyFilter] = useState<string>('ALL');
     const editIdParam = searchParams.get('editId');
 
     const { data, isLoading } = useQuery({
@@ -246,6 +255,7 @@ export default function HouseworkPage() {
         };
 
         if (form.nextDueDate) body.nextDueDate = new Date(form.nextDueDate).toISOString();
+        body.pinToDashboard = form.pinToDashboard;
 
         if (form.frequencyType === 'WEEKLY') body.dayOfWeek = Number(form.dayOfWeek);
         if (form.frequencyType === 'MONTHLY') body.dayOfMonth = Number(form.dayOfMonth);
@@ -268,6 +278,7 @@ export default function HouseworkPage() {
             description: item.description || '',
             frequencyType: item.frequencyType || 'WEEKLY',
             nextDueDate: item.nextDueDate ? new Date(item.nextDueDate).toISOString().split('T')[0] : '',
+            pinToDashboard: !!item.pinToDashboard,
             dayOfWeek: String(item.dayOfWeek || '1'),
             dayOfMonth: String(item.dayOfMonth || '1'),
             monthOfPeriod: String(item.monthOfPeriod || '1'),
@@ -304,11 +315,12 @@ export default function HouseworkPage() {
         return 'upcoming';
     };
 
-    const allItems = data || [];
+    const allItems = (data || []).filter((item: any) => frequencyFilter === 'ALL' || item.frequencyType === frequencyFilter);
     const overdueItems = allItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'overdue');
     const todayItems = allItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'today');
     const upcomingItems = allItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'upcoming');
     const unscheduledItems = allItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'unscheduled');
+    const completedItems = allItems.filter((item: any) => !!item.lastCompletedDate);
 
     const renderItem = (item: any, tone: 'normal' | 'overdue' = 'normal') => {
         const overdue = tone === 'overdue';
@@ -342,13 +354,26 @@ export default function HouseworkPage() {
                         {item.assignee && (
                             <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>👤 {item.assignee.name}</span>
                         )}
+                        {item.lastCompletedDate && (
+                            <span className="text-xs" style={{ color: '#059669' }}>Completed: {format(new Date(item.lastCompletedDate), 'MMM d, yyyy')}</span>
+                        )}
                         {item.estimatedCost && (
                             <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>💰 ${item.estimatedCost}</span>
+                        )}
+                        {item.pinToDashboard && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>
                         )}
                     </div>
                 </div>
 
                 <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } })}
+                        className={`p-2 rounded-lg transition-colors ${item.pinToDashboard ? 'text-amber-500 hover:bg-amber-50' : 'hover:bg-gray-100'}`}
+                        title="Pin item"
+                    >
+                        <Pin className="w-4 h-4" />
+                    </button>
                     <button
                         onClick={() => openEdit(item)}
                         className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -372,14 +397,24 @@ export default function HouseworkPage() {
 
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2">
                     <Home className="w-6 h-6" style={{ color: '#059669' }} />
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Housework</h2>
                 </div>
-                <button className="btn-primary" onClick={() => { setForm({ ...emptyForm }); setShowCreate(true); }}>
-                    <Plus className="w-4 h-4" /> New Item
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <select className="input min-w-[180px]" value={frequencyFilter} onChange={(e) => setFrequencyFilter(e.target.value)}>
+                        <option value="ALL">All frequencies</option>
+                        {frequencyOptions.map((k) => <option key={k} value={k}>{freqLabels[k]}</option>)}
+                    </select>
+                    <label className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
+                        <input type="checkbox" checked={showCompleted} onChange={(e) => setShowCompleted(e.target.checked)} />
+                        Show completed
+                    </label>
+                    <button className="btn-primary" onClick={() => { setForm({ ...emptyForm }); setShowCreate(true); }}>
+                        <Plus className="w-4 h-4" /> New Item
+                    </button>
+                </div>
             </div>
 
             {showCreate && (
@@ -454,6 +489,17 @@ export default function HouseworkPage() {
                             <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Unscheduled ({unscheduledItems.length})</h3>
                             <div className="space-y-3">
                                 {unscheduledItems.map((item: any) => renderItem(item))}
+                            </div>
+                        </div>
+                    )}
+
+                    {showCompleted && (
+                        <div>
+                            <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Completed ({completedItems.length})</h3>
+                            <div className="space-y-3">
+                                {completedItems.length === 0
+                                    ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No completed housework yet</p>
+                                    : completedItems.map((item: any) => renderItem(item))}
                             </div>
                         </div>
                     )}

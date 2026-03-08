@@ -67,6 +67,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 { isShared: true },
             ],
         };
+        const visibleGoalWhere = {
+            OR: [
+                { userId },
+                { isShared: true },
+            ],
+            active: true,
+        };
         const visibleExpenseWhere = {
             OR: [
                 { userId },
@@ -81,7 +88,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             dueHousework, dueLearning, expensesInRange, dueAssets,
             overdueHousework, overdueProjects, overdueLearning, overdueAssets, overdueEvents,
             overdueTaskItems, overdueHouseworkItems, overdueLearningItems, overdueAssetItems, overdueEventItems,
-            pinnedGoals, pinnedProjects, pinnedHousework,
+            pinnedGoals, pinnedProjects, pinnedHousework, pinnedBoards, pinnedEvents, pinnedAssets,
             goals,
         ] = await Promise.all([
             // Tasks (projects) due this week
@@ -265,7 +272,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             }),
             // Pinned goals
             prisma.goal.findMany({
-                where: { pinToDashboard: true, active: true, startDate: { gte: filterStart, lt: filterEnd } },
+                where: { ...visibleGoalWhere, pinToDashboard: true },
                 take: 10,
                 include: { user: { select: { name: true } } },
             }),
@@ -288,18 +295,56 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 where: {
                     pinToDashboard: true,
                     active: true,
-                    nextDueDate: { gte: filterStart, lt: filterEnd },
                 },
                 take: 10,
                 include: { assignee: { select: { name: true } } },
             }),
+            prisma.project.findMany({
+                where: {
+                    OR: [
+                        { ownerId: userId },
+                        { isShared: true },
+                    ],
+                    pinToDashboard: true,
+                },
+                take: 10,
+                include: { _count: { select: { tasks: true } } },
+            }),
+            prisma.calendarEvent.findMany({
+                where: {
+                    pinToDashboard: true,
+                    OR: [
+                        { createdById: userId },
+                        { isShared: true },
+                    ],
+                },
+                take: 10,
+                include: { createdBy: { select: { name: true } } },
+            }),
+            prisma.maintenanceRecord.findMany({
+                where: {
+                    userId,
+                    pinToDashboard: true,
+                },
+                take: 10,
+                include: {
+                    asset: { select: { name: true } },
+                    user: { select: { name: true } },
+                },
+            }),
             // Active goals for current user
             prisma.goal.findMany({
-                where: { userId, active: true, startDate: { gte: filterStart, lt: filterEnd } },
-                take: 10,
+                where: visibleGoalWhere,
+                take: 50,
                 include: { _count: { select: { checkIns: true } } },
             }),
         ]);
+
+        const filteredGoals = goals.filter((goal: any) => {
+            if (statusFilter === 'COMPLETED') return goal.currentCount >= goal.targetCount;
+            if (statusFilter === 'PENDING') return goal.currentCount < goal.targetCount;
+            return false;
+        }).slice(0, 10);
 
         const dueProjects = Array.from(
             dueTasks.reduce((acc: Map<string, any>, task: any) => {
@@ -311,12 +356,16 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                         name: task.project?.name || 'Project',
                         earliestDeadline: task.deadline,
                         dueTaskCount: 1,
+                        sampleTaskTitle: task.title,
+                        sampleTaskStatus: task.status,
                     });
                     return acc;
                 }
                 current.dueTaskCount += 1;
                 if (task.deadline && (!current.earliestDeadline || new Date(task.deadline).getTime() < new Date(current.earliestDeadline).getTime())) {
                     current.earliestDeadline = task.deadline;
+                    current.sampleTaskTitle = task.title;
+                    current.sampleTaskStatus = task.status;
                 }
                 return acc;
             }, new Map<string, any>()).values()
@@ -339,14 +388,37 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 type: 'TASK',
                 title: t.title,
                 date: t.deadline,
-                meta: [t.project?.name, t.assignee?.name].filter(Boolean).join(' · ') || null,
+                projectId: t.projectId,
+                meta: [t.project?.name, t.status, t.assignee?.name].filter(Boolean).join(' · ') || null,
             })),
             ...pinnedHousework.map((h: any) => ({
                 id: h.id,
                 type: 'HOUSEWORK',
                 title: h.title,
                 date: h.nextDueDate,
-                meta: h.assignee?.name || null,
+                meta: [h.assignee?.name, h.lastCompletedDate ? 'Completed' : 'Pending'].filter(Boolean).join(' · ') || null,
+            })),
+            ...pinnedBoards.map((p: any) => ({
+                id: p.id,
+                type: 'PROJECT',
+                title: p.name,
+                date: p.updatedAt,
+                meta: `${p._count?.tasks || 0} tasks`,
+            })),
+            ...pinnedEvents.map((e: any) => ({
+                id: e.id,
+                type: 'CALENDAR',
+                title: e.title,
+                date: e.startDate,
+                meta: e.createdBy?.name || null,
+            })),
+            ...pinnedAssets.map((a: any) => ({
+                id: a.id,
+                type: 'ASSET',
+                title: a.asset?.name || 'Asset',
+                assetId: a.assetId,
+                date: a.nextRecommendedDate || a.serviceDate,
+                meta: [a.description, a.user?.name].filter(Boolean).join(' · ') || null,
             })),
         ].sort((a, b) => {
             const ta = a.date ? new Date(a.date).getTime() : Number.MAX_SAFE_INTEGER;
@@ -426,7 +498,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             pinnedTasks: pinnedProjects,
             pinnedHousework,
             pinnedItems,
-            goals,
+            goals: filteredGoals,
         };
 
         if (debug) {

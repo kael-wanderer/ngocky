@@ -108,9 +108,13 @@ router.post('/:id/maintenance', validate(createMaintenanceRecordSchema.omit({ as
 router.get('/:id/maintenance', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const assetId = paramStr(req, 'id');
+        const sortBy = String(req.query.sortBy || 'time');
+        const sortOrder = String(req.query.sortOrder || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
         const records = await prisma.maintenanceRecord.findMany({
             where: { assetId, userId: req.user!.userId },
-            orderBy: { serviceDate: 'desc' },
+            orderBy: sortBy === 'cost'
+                ? [{ cost: sortOrder }, { serviceDate: 'desc' }]
+                : [{ serviceDate: sortOrder }, { createdAt: 'desc' }],
         });
         sendSuccess(res, records);
     } catch (err) { next(err); }

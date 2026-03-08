@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Calendar, Copy, Package, Pencil, Plus, Trash2, Wrench, X } from 'lucide-react';
+import { Calendar, Copy, Package, Pencil, Pin, Plus, Trash2, Wrench, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
 
@@ -22,6 +22,7 @@ const emptyRecordForm = () => ({
     cost: '',
     vendor: '',
     nextRecommendedDate: '',
+    pinToDashboard: false,
 });
 
 const formatVND = (amount: number) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(amount)} VND`;
@@ -36,6 +37,8 @@ export default function AssetsPage() {
     const [editingRecord, setEditingRecord] = useState<any>(null);
     const [assetForm, setAssetForm] = useState(emptyAssetForm());
     const [recordForm, setRecordForm] = useState(emptyRecordForm());
+    const [recordSortBy, setRecordSortBy] = useState<'time' | 'cost'>('time');
+    const [recordSortOrder, setRecordSortOrder] = useState<'asc' | 'desc'>('desc');
     const assetIdParam = searchParams.get('assetId');
 
     const { data: assets, isLoading: assetsLoading } = useQuery({
@@ -44,8 +47,8 @@ export default function AssetsPage() {
     });
 
     const { data: records, isLoading: recordsLoading } = useQuery({
-        queryKey: ['maintenance', selectedAsset?.id],
-        queryFn: async () => (await api.get(`/assets/${selectedAsset.id}/maintenance`)).data.data,
+        queryKey: ['maintenance', selectedAsset?.id, recordSortBy, recordSortOrder],
+        queryFn: async () => (await api.get(`/assets/${selectedAsset.id}/maintenance?sortBy=${recordSortBy}&sortOrder=${recordSortOrder}`)).data.data,
         enabled: !!selectedAsset,
     });
 
@@ -177,6 +180,7 @@ export default function AssetsPage() {
             cost: record.cost ? String(Math.round(record.cost)) : '',
             vendor: record.vendor || '',
             nextRecommendedDate: record.nextRecommendedDate ? format(new Date(record.nextRecommendedDate), 'yyyy-MM-dd') : '',
+            pinToDashboard: !!record.pinToDashboard,
         });
         setShowRecordModal(true);
     }
@@ -198,6 +202,7 @@ export default function AssetsPage() {
                 cost: typeof record.cost === 'number' ? record.cost : undefined,
                 vendor: record.vendor || '',
                 nextRecommendedDate: record.nextRecommendedDate || null,
+                pinToDashboard: !!record.pinToDashboard,
             },
         });
     }
@@ -219,6 +224,7 @@ export default function AssetsPage() {
             cost: parsedCost,
             vendor: recordForm.vendor,
             nextRecommendedDate: recordForm.nextRecommendedDate ? new Date(`${recordForm.nextRecommendedDate}T00:00:00`).toISOString() : null,
+            pinToDashboard: (recordForm as any).pinToDashboard || false,
         };
 
         if (editingRecord) {
@@ -344,9 +350,21 @@ export default function AssetsPage() {
                                 )}
 
                                 <div className="space-y-4">
-                                    <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
+                                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                                        <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
                                         <Wrench className="w-4 h-4 text-orange-500" /> Maintenance History
-                                    </h4>
+                                        </h4>
+                                        <div className="flex items-center gap-2">
+                                            <select className="input min-w-[120px]" value={recordSortBy} onChange={(e) => setRecordSortBy(e.target.value as 'time' | 'cost')}>
+                                                <option value="time">Sort by time</option>
+                                                <option value="cost">Sort by cost</option>
+                                            </select>
+                                            <select className="input min-w-[100px]" value={recordSortOrder} onChange={(e) => setRecordSortOrder(e.target.value as 'asc' | 'desc')}>
+                                                <option value="desc">Desc</option>
+                                                <option value="asc">Asc</option>
+                                            </select>
+                                        </div>
+                                    </div>
 
                                     {recordsLoading ? (
                                         <div className="space-y-3 pt-2">{[...Array(2)].map((_, i) => <div key={i} className="h-12 w-full animate-pulse bg-gray-50 rounded-lg" />)}</div>
@@ -367,6 +385,9 @@ export default function AssetsPage() {
                                                                 <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-primary)' }}>Vendor: {record.vendor}</p>
                                                             )}
                                                             <div className="flex items-center gap-2 mt-2">
+                                                                <button type="button" className={`inline-flex items-center gap-1 text-xs hover:opacity-80 ${record.pinToDashboard ? 'text-amber-600' : ''}`} onClick={() => updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: record.id, body: { pinToDashboard: !record.pinToDashboard } })}>
+                                                                    <Pin className="w-3.5 h-3.5" /> {record.pinToDashboard ? 'Pinned' : 'Pin'}
+                                                                </button>
                                                                 <button type="button" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={() => openEditRecord(record)}>
                                                                     <Pencil className="w-3.5 h-3.5" /> Edit
                                                                 </button>
@@ -387,6 +408,11 @@ export default function AssetsPage() {
                                                             {record.nextRecommendedDate && (
                                                                 <span className="text-[10px] text-orange-600 font-medium mt-1 inline-flex items-center gap-1">
                                                                     <Calendar className="w-3 h-3" /> Next: {new Date(record.nextRecommendedDate).toLocaleDateString()}
+                                                                </span>
+                                                            )}
+                                                            {record.pinToDashboard && (
+                                                                <span className="text-[10px] font-medium mt-1 inline-flex items-center gap-1 text-amber-600">
+                                                                    <Pin className="w-3 h-3" /> Pinned
                                                                 </span>
                                                             )}
                                                         </div>
@@ -495,6 +521,10 @@ export default function AssetsPage() {
                                     <input type="date" className="input" value={recordForm.nextRecommendedDate} onChange={(e) => setRecordForm({ ...recordForm, nextRecommendedDate: e.target.value })} />
                                 </div>
                             </div>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={(recordForm as any).pinToDashboard || false} onChange={(e) => setRecordForm({ ...(recordForm as any), pinToDashboard: e.target.checked })} />
+                                Pin to dashboard
+                            </label>
                             <button type="submit" className="btn-primary w-full" disabled={createRecordMut.isPending || updateRecordMut.isPending}>
                                 {editingRecord ? 'Save Log' : 'Create Log'}
                             </button>

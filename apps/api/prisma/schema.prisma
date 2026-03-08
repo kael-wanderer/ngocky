@@ -156,6 +156,7 @@ model Goal {
   title               String
   description         String?
   userId              String
+  isShared            Boolean          @default(false)
   periodType          PeriodType
   targetCount         Int
   currentCount        Int              @default(0)
@@ -199,6 +200,7 @@ model Project {
   description String?
   ownerId     String
   isShared    Boolean  @default(false)
+  pinToDashboard Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -370,6 +372,7 @@ model MaintenanceRecord {
   vendor                  String?
   nextRecommendedDate     DateTime?
   userId                  String
+  pinToDashboard          Boolean   @default(false)
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
@@ -393,6 +396,7 @@ model CalendarEvent {
   color       String?
   category    String?
   isShared    Boolean            @default(true)
+  pinToDashboard Boolean         @default(false)
   createdById String
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt

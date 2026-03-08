@@ -1,32 +1,51 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Calendar as CalIcon, Plus, X, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
+import { Calendar as CalIcon, Plus, X, ChevronLeft, ChevronRight, Pencil, Trash2, Pin } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
+
+type CalendarView = 'today' | 'week' | 'month';
 
 export default function CalendarPage() {
     const qc = useQueryClient();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [view, setView] = useState<CalendarView>('month');
+    const [currentDate, setCurrentDate] = useState(new Date());
     const [showCreate, setShowCreate] = useState(false);
     const [editingEvent, setEditingEvent] = useState<any>(null);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const [form, setForm] = useState({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true });
+    const [form, setForm] = useState({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true, pinToDashboard: false });
     const eventIdParam = searchParams.get('eventId');
     const dateParam = searchParams.get('date');
 
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(currentMonth);
+    const range = useMemo(() => {
+        if (view === 'today') {
+            const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+            const end = new Date(start);
+            end.setDate(end.getDate() + 1);
+            return { start, end };
+        }
+        if (view === 'week') {
+            return {
+                start: startOfWeek(currentDate, { weekStartsOn: 1 }),
+                end: endOfWeek(currentDate, { weekStartsOn: 1 }),
+            };
+        }
+        return {
+            start: startOfMonth(currentDate),
+            end: endOfMonth(currentDate),
+        };
+    }, [currentDate, view]);
 
     const { data } = useQuery({
-        queryKey: ['calendar', format(currentMonth, 'yyyy-MM')],
-        queryFn: async () => (await api.get(`/calendar?startFrom=${monthStart.toISOString()}&startTo=${monthEnd.toISOString()}&limit=100`)).data.data,
+        queryKey: ['calendar', view, format(range.start, 'yyyy-MM-dd'), format(range.end, 'yyyy-MM-dd')],
+        queryFn: async () => (await api.get(`/calendar?startFrom=${range.start.toISOString()}&startTo=${range.end.toISOString()}&limit=200`)).data.data,
     });
 
     const createMut = useMutation({
         mutationFn: (body: any) => api.post('/calendar', body),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['calendar'] }); setShowCreate(false); setForm({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true }); },
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['calendar'] }); setShowCreate(false); setForm({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true, pinToDashboard: false }); },
     });
 
     const updateMut = useMutation({
@@ -34,7 +53,7 @@ export default function CalendarPage() {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['calendar'] });
             setEditingEvent(null);
-            setForm({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true });
+            setForm({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true, pinToDashboard: false });
         },
     });
 
@@ -44,14 +63,16 @@ export default function CalendarPage() {
     });
 
     const events = data || [];
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
     const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
     const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
     const days = eachDayOfInterval({ start: calStart, end: calEnd });
     const today = new Date();
 
     const getEventsForDay = (day: Date) => events.filter((e: any) => isSameDay(new Date(e.startDate), day));
-
     const selectedEvents = selectedDate ? getEventsForDay(selectedDate) : [];
+    const weekDays = eachDayOfInterval({ start: startOfWeek(currentDate, { weekStartsOn: 1 }), end: endOfWeek(currentDate, { weekStartsOn: 1 }) });
 
     const openCreate = () => {
         setEditingEvent(null);
@@ -64,6 +85,7 @@ export default function CalendarPage() {
             location: '',
             color: '#4f46e5',
             isShared: true,
+            pinToDashboard: false,
         });
         setShowCreate(true);
     };
@@ -80,6 +102,7 @@ export default function CalendarPage() {
             location: event.location || '',
             color: event.color || '#4f46e5',
             isShared: !!event.isShared,
+            pinToDashboard: !!event.pinToDashboard,
         });
     };
 
@@ -87,12 +110,16 @@ export default function CalendarPage() {
         if (window.confirm('Delete this event?')) deleteMut.mutate(id);
     };
 
+    const togglePin = (event: any) => {
+        updateMut.mutate({ id: event.id, body: { pinToDashboard: !event.pinToDashboard } });
+    };
+
     useEffect(() => {
         if (dateParam) {
             const parsed = new Date(dateParam);
             if (!Number.isNaN(parsed.getTime())) {
                 setSelectedDate(parsed);
-                setCurrentMonth(parsed);
+                setCurrentDate(parsed);
             }
         }
     }, [dateParam]);
@@ -102,7 +129,7 @@ export default function CalendarPage() {
         const event = events.find((e: any) => e.id === eventIdParam);
         if (!event) return;
         setSelectedDate(new Date(event.startDate));
-        setCurrentMonth(new Date(event.startDate));
+        setCurrentDate(new Date(event.startDate));
         openEdit(event);
     }, [eventIdParam, events]);
 
@@ -112,6 +139,24 @@ export default function CalendarPage() {
         }
     }, [showCreate, editingEvent, eventIdParam, dateParam, setSearchParams]);
 
+    const headerLabel = view === 'today'
+        ? format(currentDate, 'EEEE, MMMM d, yyyy')
+        : view === 'week'
+            ? `${format(weekDays[0], 'MMM d')} - ${format(weekDays[6], 'MMM d, yyyy')}`
+            : format(currentDate, 'MMMM yyyy');
+
+    const shiftBackward = () => {
+        if (view === 'today') setCurrentDate(addDays(currentDate, -1));
+        else if (view === 'week') setCurrentDate(addDays(currentDate, -7));
+        else setCurrentDate(subMonths(currentDate, 1));
+    };
+
+    const shiftForward = () => {
+        if (view === 'today') setCurrentDate(addDays(currentDate, 1));
+        else if (view === 'week') setCurrentDate(addDays(currentDate, 7));
+        else setCurrentDate(addMonths(currentDate, 1));
+    };
+
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center justify-between flex-wrap gap-3">
@@ -119,12 +164,16 @@ export default function CalendarPage() {
                     <CalIcon className="w-6 h-6" style={{ color: '#7c3aed' }} />
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Calendar</h2>
                 </div>
-                <button className="btn-primary" onClick={openCreate}>
-                    <Plus className="w-4 h-4" /> New Event
-                </button>
+                <div className="flex items-center gap-2">
+                    <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
+                        {(['today', 'week', 'month'] as CalendarView[]).map((mode) => (
+                            <button key={mode} onClick={() => setView(mode)} className={`px-3 py-2 text-sm ${view === mode ? 'bg-gray-100' : ''}`}>{mode[0].toUpperCase() + mode.slice(1)}</button>
+                        ))}
+                    </div>
+                    <button className="btn-primary" onClick={openCreate}><Plus className="w-4 h-4" /> New Event</button>
+                </div>
             </div>
 
-            {/* Create / Edit Modal */}
             {(showCreate || editingEvent) && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => { setShowCreate(false); setEditingEvent(null); }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
@@ -148,112 +197,113 @@ export default function CalendarPage() {
                             <div><label className="label">Location</label><input className="input" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div><label className="label">Color</label><input type="color" className="input h-10 p-1" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} /></div>
-                                <div className="flex items-end gap-2 pb-1">
-                                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <input type="checkbox" checked={form.allDay} onChange={(e) => setForm({ ...form, allDay: e.target.checked })} className="rounded" /> All day
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} className="rounded" /> Shared
-                                    </label>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.allDay} onChange={(e) => setForm({ ...form, allDay: e.target.checked })} className="rounded" /> All day</label>
+                                    <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} className="rounded" /> Shared</label>
+                                    <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} className="rounded" /> Pin to dashboard</label>
                                 </div>
                             </div>
-                            <button type="submit" className="btn-primary w-full" disabled={createMut.isPending || updateMut.isPending}>
-                                {editingEvent ? 'Save Changes' : 'Create Event'}
-                            </button>
+                            <button type="submit" className="btn-primary w-full" disabled={createMut.isPending || updateMut.isPending}>{editingEvent ? 'Save Changes' : 'Create Event'}</button>
                         </form>
                     </div>
                 </div>
             )}
 
-            {/* Month Navigation */}
             <div className="flex items-center justify-between">
-                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="btn-ghost p-2"><ChevronLeft className="w-5 h-5" /></button>
-                <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{format(currentMonth, 'MMMM yyyy')}</h3>
-                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="btn-ghost p-2"><ChevronRight className="w-5 h-5" /></button>
+                <button onClick={shiftBackward} className="btn-ghost p-2"><ChevronLeft className="w-5 h-5" /></button>
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{headerLabel}</h3>
+                <button onClick={shiftForward} className="btn-ghost p-2"><ChevronRight className="w-5 h-5" /></button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Calendar Grid */}
-                <div className="lg:col-span-2 card p-4">
-                    <div className="grid grid-cols-7 gap-px mb-2">
-                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
-                            <div key={d} className="text-center text-xs font-semibold py-2" style={{ color: 'var(--color-text-secondary)' }}>{d}</div>
-                        ))}
-                    </div>
-                    <div className="grid grid-cols-7 gap-px">
-                        {days.map((day) => {
-                            const dayEvents = getEventsForDay(day);
-                            const isToday = isSameDay(day, today);
-                            const inMonth = isSameMonth(day, currentMonth);
-                            const isSelected = selectedDate && isSameDay(day, selectedDate);
-                            return (
-                                <button
-                                    key={day.toISOString()}
-                                    onClick={() => setSelectedDate(day)}
-                                    className={`aspect-square p-1 rounded-lg text-sm transition-all relative ${isSelected ? 'ring-2 ring-offset-1' : 'hover:bg-gray-50'
-                                        }`}
-                                    style={{
-                                        color: inMonth ? 'var(--color-text)' : 'var(--color-text-secondary)',
-                                        opacity: inMonth ? 1 : 0.4,
-                                        ...(isSelected ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}),
-                                    }}
-                                >
-                                    <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium ${isToday ? 'text-white' : ''
-                                        }`} style={isToday ? { backgroundColor: 'var(--color-primary)' } : {}}>
-                                        {format(day, 'd')}
-                                    </span>
-                                    {dayEvents.length > 0 && (
-                                        <div className="flex justify-center gap-0.5 mt-0.5">
-                                            {dayEvents.slice(0, 3).map((e: any, i: number) => (
-                                                <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: e.color || 'var(--color-primary)' }} />
-                                            ))}
-                                        </div>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Day Detail */}
-                <div className="card p-4">
-                    <h4 className="font-semibold mb-3" style={{ color: 'var(--color-text)' }}>
-                        {selectedDate ? format(selectedDate, 'EEEE, MMMM d') : 'Select a day'}
-                    </h4>
-                    {selectedDate && selectedEvents.length === 0 && (
-                        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No events</p>
-                    )}
-                    <div className="space-y-2">
-                        {selectedEvents.map((e: any) => (
-                            <div key={e.id} className="p-3 rounded-lg border-l-4" style={{ borderColor: e.color || 'var(--color-primary)', backgroundColor: 'var(--color-bg)' }}>
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{e.title}</p>
-                                        {e.createdBy?.name && (
-                                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
-                                                Owner: {e.createdBy.name}
-                                            </p>
+            {view === 'month' && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 card p-4">
+                        <div className="grid grid-cols-7 gap-px mb-2">
+                            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+                                <div key={d} className="text-center text-xs font-semibold py-2" style={{ color: 'var(--color-text-secondary)' }}>{d}</div>
+                            ))}
+                        </div>
+                        <div className="grid grid-cols-7 gap-px">
+                            {days.map((day) => {
+                                const dayEvents = getEventsForDay(day);
+                                const isToday = isSameDay(day, today);
+                                const inMonth = isSameMonth(day, currentDate);
+                                const isSelected = selectedDate && isSameDay(day, selectedDate);
+                                return (
+                                    <button key={day.toISOString()} onClick={() => setSelectedDate(day)} className={`aspect-square p-1 rounded-lg text-sm transition-all relative ${isSelected ? 'ring-2 ring-offset-1' : 'hover:bg-gray-50'}`} style={{ color: inMonth ? 'var(--color-text)' : 'var(--color-text-secondary)', opacity: inMonth ? 1 : 0.4, ...(isSelected ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}) }}>
+                                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium ${isToday ? 'text-white' : ''}`} style={isToday ? { backgroundColor: 'var(--color-primary)' } : {}}>{format(day, 'd')}</span>
+                                        {dayEvents.length > 0 && (
+                                            <div className="flex justify-center gap-0.5 mt-0.5">{dayEvents.slice(0, 3).map((e: any, i: number) => (<div key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: e.color || 'var(--color-primary)' }} />))}</div>
                                         )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="card p-4">
+                        <h4 className="font-semibold mb-3" style={{ color: 'var(--color-text)' }}>{selectedDate ? format(selectedDate, 'EEEE, MMMM d') : 'Select a day'}</h4>
+                        {selectedDate && selectedEvents.length === 0 && <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No events</p>}
+                        <div className="space-y-2">
+                            {selectedEvents.map((e: any) => (
+                                <div key={e.id} className="p-3 rounded-lg border-l-4" style={{ borderColor: e.color || 'var(--color-primary)', backgroundColor: 'var(--color-bg)' }}>
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{e.title}</p>
+                                                {e.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
+                                            </div>
+                                            {e.createdBy?.name && <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Owner: {e.createdBy.name}</p>}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <button className={`p-1 ${e.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin event" onClick={() => togglePin(e)}><Pin className="w-3.5 h-3.5" /></button>
+                                            <button className="p-1 hover:text-indigo-500" title="Edit event" onClick={() => openEdit(e)}><Pencil className="w-3.5 h-3.5" /></button>
+                                            <button className="p-1 hover:text-red-500" title="Delete event" onClick={() => handleDelete(e.id)}><Trash2 className="w-3.5 h-3.5" /></button>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        <button className="p-1 hover:text-indigo-500" title="Edit event" onClick={() => openEdit(e)}>
-                                            <Pencil className="w-3.5 h-3.5" />
-                                        </button>
-                                        <button className="p-1 hover:text-red-500" title="Delete event" onClick={() => handleDelete(e.id)}>
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
+                                    <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>{e.allDay ? 'All day' : format(new Date(e.startDate), 'h:mm a')}{e.endDate && !e.allDay && ` - ${format(new Date(e.endDate), 'h:mm a')}`}</p>
+                                    {e.location && <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Location: {e.location}</p>}
                                 </div>
-                                <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                    {e.allDay ? 'All day' : format(new Date(e.startDate), 'h:mm a')}
-                                    {e.endDate && !e.allDay && ` – ${format(new Date(e.endDate), 'h:mm a')}`}
-                                </p>
-                                {e.location && <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>📍 {e.location}</p>}
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
+
+            {(view === 'today' || view === 'week') && (
+                <div className="card p-5 space-y-4">
+                    {(view === 'today' ? [currentDate] : weekDays).map((day) => {
+                        const items = getEventsForDay(day);
+                        return (
+                            <div key={day.toISOString()} className="space-y-2">
+                                <h4 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{format(day, view === 'today' ? 'EEEE, MMMM d' : 'EEE, MMM d')}</h4>
+                                {items.length === 0 ? (
+                                    <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No events</p>
+                                ) : items.map((e: any) => (
+                                    <div key={e.id} className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{e.title}</p>
+                                                    {e.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
+                                                </div>
+                                                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{e.allDay ? 'All day' : format(new Date(e.startDate), 'h:mm a')}{e.endDate && !e.allDay ? ` - ${format(new Date(e.endDate), 'h:mm a')}` : ''}</p>
+                                                {e.createdBy?.name && <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Owner: {e.createdBy.name}</p>}
+                                                {e.location && <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Location: {e.location}</p>}
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <button className={`p-1 ${e.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={() => togglePin(e)}><Pin className="w-3.5 h-3.5" /></button>
+                                                <button className="p-1 hover:text-indigo-500" onClick={() => openEdit(e)}><Pencil className="w-3.5 h-3.5" /></button>
+                                                <button className="p-1 hover:text-red-500" onClick={() => handleDelete(e.id)}><Trash2 className="w-3.5 h-3.5" /></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 }
