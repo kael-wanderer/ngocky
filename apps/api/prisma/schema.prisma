@@ -536,6 +536,7 @@ model ScheduledReport {
   dateRangePreset     String?
   frequency           ReportFrequency     @default(WEEKLY)
   dayOfWeek           Int?
+  dayOfMonth          Int?
   time                String?
   notificationChannel NotificationChannel @default(EMAIL)
   recipients          String[]

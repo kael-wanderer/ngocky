@@ -17,6 +17,7 @@ const emptyReportForm = () => ({
     reportType: 'WEEKLY_SUMMARY',
     frequency: 'WEEKLY',
     dayOfWeek: 1,
+    dayOfMonth: 1,
     time: '08:00',
     active: true,
 });
@@ -126,6 +127,7 @@ export default function AlertsPage() {
             reportType: report.reportType || 'WEEKLY_SUMMARY',
             frequency: report.frequency || 'WEEKLY',
             dayOfWeek: report.dayOfWeek ?? 1,
+            dayOfMonth: report.dayOfMonth ?? 1,
             time: report.time || '08:00',
             active: report.active ?? true,
         });
@@ -137,6 +139,7 @@ export default function AlertsPage() {
             reportType: report.reportType,
             frequency: report.frequency,
             dayOfWeek: report.dayOfWeek,
+            dayOfMonth: report.dayOfMonth,
             time: report.time,
             active: report.active,
         });
@@ -237,7 +240,13 @@ export default function AlertsPage() {
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-sm" style={{ color: 'var(--color-text)' }}>{report.reportType === 'WEEKLY_SUMMARY' || report.reportType === 'SUMMARY' ? 'Weekly Summary' : report.reportType === 'NEXT_WEEK_TASKS' ? 'Next Week Tasks' : report.reportType}</h4>
-                                            <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Every {report.frequency.toLowerCase()} at {report.time}</p>
+                                            <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                                {report.frequency === 'WEEKLY'
+                                                    ? `Every ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][report.dayOfWeek ?? 1]} at ${report.time}`
+                                                    : report.frequency === 'MONTHLY'
+                                                    ? `Monthly on day ${report.dayOfMonth ?? 1} at ${report.time}`
+                                                    : `Daily at ${report.time}`}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -357,6 +366,30 @@ export default function AlertsPage() {
                                     <label className="label">Time</label>
                                     <input type="time" className="input" value={reportForm.time} onChange={(e) => setReportForm({ ...reportForm, time: e.target.value })} />
                                 </div>
+                                {reportForm.frequency === 'WEEKLY' && (
+                                    <div className="col-span-2">
+                                        <label className="label">Day of Week</label>
+                                        <select className="input" value={reportForm.dayOfWeek} onChange={(e) => setReportForm({ ...reportForm, dayOfWeek: Number(e.target.value) })}>
+                                            <option value={1}>Monday</option>
+                                            <option value={2}>Tuesday</option>
+                                            <option value={3}>Wednesday</option>
+                                            <option value={4}>Thursday</option>
+                                            <option value={5}>Friday</option>
+                                            <option value={6}>Saturday</option>
+                                            <option value={0}>Sunday</option>
+                                        </select>
+                                    </div>
+                                )}
+                                {reportForm.frequency === 'MONTHLY' && (
+                                    <div className="col-span-2">
+                                        <label className="label">Day of Month</label>
+                                        <select className="input" value={reportForm.dayOfMonth} onChange={(e) => setReportForm({ ...reportForm, dayOfMonth: Number(e.target.value) })}>
+                                            {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                                                <option key={d} value={d}>{d}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
                             <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                                 Delivered via your notification channel in Settings.
