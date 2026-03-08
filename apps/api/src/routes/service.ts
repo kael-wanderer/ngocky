@@ -89,7 +89,7 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
             };
         }
 
-        if (report.reportType === 'WEEKLY_SUMMARY') {
+        if (report.reportType === 'WEEKLY_SUMMARY' || report.reportType === 'SUMMARY') {
             const { start, end } = getWeekRange(0);
 
             const [goals, tasks, housework, calendar, expenses] = await Promise.all([
