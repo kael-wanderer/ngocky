@@ -13,6 +13,12 @@ All notable changes to this project will be documented in this file.
 - **Goal Management**: Added deletion and long-term history tracking support.
 - **Project Sharing**: Added `isShared` board flag to share projects with all family users while keeping board deletion owner-only.
 - **Project UX Controls**: Added board edit, manual refresh, and Kanban drag-and-drop status move support.
+- **Housework Actions**: Added per-item `Edit` and `Delete` actions.
+- **Housework Recurrence Rules**: Added `DAILY` frequency and rule fields (`dayOfWeek`, `dayOfMonth`, `monthOfPeriod`, `monthOfYear`) with rule-based next due scheduling.
+- **Housework Status Buckets**: Added explicit Housework sections (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`) with clear `Mark Complete` action.
+- **Dashboard Filters**: Added `Time`, `Status`, and multi-select `Category` filters.
+- **Dashboard Coverage**: Added/updated sections for `Project`, `Task`, `Pinned Items`, `Expense`, `Assets`, `Learning`, and dedicated `Overdue` feed.
+- **Branding Assets**: Added ladybug logo in Login, sidebar brand, and browser tab favicon.
 
 ### Changed
 
@@ -20,6 +26,9 @@ All notable changes to this project will be documented in this file.
 - **Dashboard UI**: Renamed "Pinned Projects" and "Overdue Projects" to "Tasks" for better architectural consistency.
 - **Deployment**: Enhanced GitHub Actions for more reliable VPS secret injection and build caching.
 - **Goal/Project Progress Display**: Switched progress labels from raw counts to percentage in Goals and Dashboard widgets.
+- **Dashboard Data Model**: `GET /api/dashboard` now accepts query params (`timeRange`, `status`) and returns filtered due/overdue datasets.
+- **Expense Currency Display**: Switched UI amount formatting from USD to VND.
+- **Housework Frequency UI**: Removed `Custom` option from Housework frequency dropdown.
 
 ### Fixed
 
@@ -27,6 +36,7 @@ All notable changes to this project will be documented in this file.
 - **Zod Validation**: Updated API schemas to allow `unit` and `trackingType` during creation/update.
 - **401 Unauthorized**: Resolved session invalidation on VPS by hardening cookie security.
 - **Projects Modal Focus Bug**: Fixed edit modal unexpectedly closing during text selection by using safer backdrop close handling.
+- **Dashboard Task Visibility**: Fixed issue where due tasks were hidden unless pinned; `Task` now shows due tasks by selected filters and `Project` shows project names with due task counts.
 
 ---
 

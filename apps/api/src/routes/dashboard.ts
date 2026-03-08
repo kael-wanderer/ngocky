@@ -42,6 +42,8 @@ function getTimeRange(now: Date, rangeKey: TimeRangeKey) {
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const debug = String(req.query.debug || '').toLowerCase() === 'true';
         const userId = req.user!.userId;
         const rawRange = String(req.query.timeRange || 'THIS_WEEK').toUpperCase();
         const rawStatus = String(req.query.status || 'PENDING').toUpperCase();
@@ -87,7 +89,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             // Upcoming events (next 7 days)
             prisma.calendarEvent.findMany({
                 where: statusFilter === 'OVERDUE'
-                    ? { startDate: { lt: now } }
+                    ? { startDate: { lt: todayStart } }
                     : statusFilter === 'PENDING'
                         ? { startDate: { gte: filterStart, lt: filterEnd } }
                         : { id: '__none__' },
@@ -99,7 +101,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             prisma.projectTask.findMany({
                 where: statusFilter === 'OVERDUE'
                     ? {
-                        deadline: { lt: now },
+                        deadline: { lt: todayStart },
                         status: { notIn: ['DONE', 'ARCHIVED'] },
                     }
                     : statusFilter === 'COMPLETED'
@@ -122,7 +124,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             prisma.houseworkItem.findMany({
                 where: statusFilter === 'OVERDUE'
                     ? {
-                        nextDueDate: { lt: now },
+                        nextDueDate: { lt: todayStart },
                         active: true,
                     }
                     : statusFilter === 'COMPLETED'
@@ -141,7 +143,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             prisma.learningItem.findMany({
                 where: statusFilter === 'OVERDUE'
                     ? {
-                        deadline: { lt: now },
+                        deadline: { lt: todayStart },
                         status: { notIn: ['DONE', 'ARCHIVED'] },
                     }
                     : statusFilter === 'COMPLETED'
@@ -169,7 +171,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             // Asset maintenance due in selected range
             prisma.maintenanceRecord.findMany({
                 where: statusFilter === 'OVERDUE'
-                    ? { nextRecommendedDate: { lt: now } }
+                    ? { nextRecommendedDate: { lt: todayStart } }
                     : statusFilter === 'PENDING'
                         ? { nextRecommendedDate: { gte: filterStart, lt: filterEnd } }
                         : { id: '__none__' },
@@ -182,27 +184,27 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             }),
             // Overdue housework
             prisma.houseworkItem.count({
-                where: { nextDueDate: { lt: now }, active: true },
+                where: { nextDueDate: { lt: todayStart }, active: true },
             }),
             // Overdue tasks
             prisma.projectTask.count({
-                where: { deadline: { lt: now }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+                where: { deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
             }),
             // Overdue learning
             prisma.learningItem.count({
-                where: { deadline: { lt: now }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+                where: { deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
             }),
             // Overdue asset maintenance
             prisma.maintenanceRecord.count({
-                where: { nextRecommendedDate: { lt: now } },
+                where: { nextRecommendedDate: { lt: todayStart } },
             }),
             // Overdue calendar events (missed start)
             prisma.calendarEvent.count({
-                where: { startDate: { lt: now } },
+                where: { startDate: { lt: todayStart } },
             }),
             // Overdue task items
             prisma.projectTask.findMany({
-                where: { deadline: { lt: now }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+                where: { deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
                 orderBy: { deadline: 'asc' },
                 take: 20,
                 include: {
@@ -212,21 +214,21 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             }),
             // Overdue housework items
             prisma.houseworkItem.findMany({
-                where: { nextDueDate: { lt: now }, active: true },
+                where: { nextDueDate: { lt: todayStart }, active: true },
                 orderBy: { nextDueDate: 'asc' },
                 take: 20,
                 include: { assignee: { select: { name: true } } },
             }),
             // Overdue learning items
             prisma.learningItem.findMany({
-                where: { deadline: { lt: now }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+                where: { deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
                 orderBy: { deadline: 'asc' },
                 take: 20,
                 include: { user: { select: { name: true } } },
             }),
             // Overdue asset maintenance items
             prisma.maintenanceRecord.findMany({
-                where: { nextRecommendedDate: { lt: now } },
+                where: { nextRecommendedDate: { lt: todayStart } },
                 orderBy: { nextRecommendedDate: 'asc' },
                 take: 20,
                 include: {
@@ -236,7 +238,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             }),
             // Overdue calendar events
             prisma.calendarEvent.findMany({
-                where: { startDate: { lt: now } },
+                where: { startDate: { lt: todayStart } },
                 orderBy: { startDate: 'asc' },
                 take: 20,
                 include: { createdBy: { select: { name: true } } },
@@ -373,7 +375,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             return ta - tb;
         });
 
-        sendSuccess(res, {
+        const payload: any = {
             timeRange,
             statusFilter,
             filterStart,
@@ -404,7 +406,29 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             pinnedHousework,
             pinnedItems,
             goals,
-        });
+        };
+
+        if (debug) {
+            payload.debug = {
+                serverNow: now.toISOString(),
+                serverTodayStart: todayStart.toISOString(),
+                timezoneOffsetMinutes: now.getTimezoneOffset(),
+                dueTaskDeadlines: dueTasks.slice(0, 10).map((t: any) => ({
+                    id: t.id,
+                    title: t.title,
+                    deadline: t.deadline ? new Date(t.deadline).toISOString() : null,
+                    classifiedAsOverdue: !!(t.deadline && new Date(t.deadline) < todayStart),
+                })),
+                overdueTaskDeadlines: overdueTaskItems.slice(0, 10).map((t: any) => ({
+                    id: t.id,
+                    title: t.title,
+                    deadline: t.deadline ? new Date(t.deadline).toISOString() : null,
+                    classifiedAsOverdue: !!(t.deadline && new Date(t.deadline) < todayStart),
+                })),
+            };
+        }
+
+        sendSuccess(res, payload);
     } catch (err) { next(err); }
 });
 

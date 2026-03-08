@@ -20,8 +20,10 @@ router.get('/tasks-by-status', async (_req: Request, res: Response, next: NextFu
 // Overdue tasks
 router.get('/overdue-tasks', async (_req: Request, res: Response, next: NextFunction) => {
     try {
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const tasks = await prisma.projectTask.findMany({
-            where: { deadline: { lt: new Date() }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+            where: { deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
             include: { assignee: { select: { name: true } } },
             orderBy: { deadline: 'asc' },
         });
@@ -49,9 +51,10 @@ router.get('/goal-completion', async (_req: Request, res: Response, next: NextFu
 router.get('/housework-status', async (_req: Request, res: Response, next: NextFunction) => {
     try {
         const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const [total, overdue, completed] = await Promise.all([
             prisma.houseworkItem.count({ where: { active: true } }),
-            prisma.houseworkItem.count({ where: { active: true, nextDueDate: { lt: now } } }),
+            prisma.houseworkItem.count({ where: { active: true, nextDueDate: { lt: todayStart } } }),
             prisma.houseworkItem.count({ where: { active: true, lastCompletedDate: { not: null } } }),
         ]);
         sendSuccess(res, { total, overdue, completed, onTrack: total - overdue });

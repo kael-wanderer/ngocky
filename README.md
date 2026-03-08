@@ -1,4 +1,4 @@
-# NgocKy – Family Productivity App
+# NgốcKý – Family Productivity App
 
 A private family productivity web app for managing tasks, goals, housework, expenses, calendars, and reports.
 
@@ -116,7 +116,7 @@ NgocKy/
 | Auth | `POST /api/auth/refresh` | Refresh token |
 | Auth | `GET /api/auth/me` | Current user |
 | Users | `GET/POST /api/users` | User management |
-| Dashboard | `GET /api/dashboard` | Summary data |
+| Dashboard | `GET /api/dashboard` | Summary data (`timeRange`, `status`) |
 | Goals | `GET/POST /api/goals` | Goal CRUD |
 | Check-ins | `POST /api/checkins` | Log check-ins |
 | Projects | `GET/POST /api/projects` | Project CRUD |
@@ -151,15 +151,36 @@ All endpoints require Bearer token authentication.
 
 ## Modules
 
-- **Dashboard** – Summary cards, active goals, upcoming events, recent expenses, pinned items
+- **Dashboard** – Summary cards, filters (`Time`, `Status`, `Category`), overdue feed, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Assets`, `Learning`, `Pinned Items`)
 - **Goals** – Recurring goals (weekly/monthly) with check-in tracking and progress bars
 - **Projects** – Kanban board + list view with priorities, deadlines, assignees, drag-and-drop status updates, board edit/refresh, and shared family boards
-- **Housework** – Recurring housework with auto-advancing due dates on completion
+- **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete` action and grouped states (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`)
 - **Calendar** – Month view with event dots, day detail panel, color-coded events
-- **Expenses** – Filtered table with category/scope/date filters and totals
+- **Expenses** – Filtered table with category/scope/date filters and totals displayed in `VND`
 - **Reports** – Charts (bar, pie) for tasks, goals, housework, and expenses
 - **Settings** – Profile, notifications, theme picker (3 themes), password change
 - **User Management** – Admin-only user creation, role assignment, activate/deactivate
+
+## Dashboard Filters
+
+- **Time**: `THIS_WEEK`, `NEXT_WEEK`, `THIS_MONTH`, `NEXT_MONTH`
+- **Status**:
+  - `PENDING`: not completed yet in selected range
+  - `COMPLETED`: completed items in selected range (where lifecycle supports completion state)
+  - `OVERDUE`: items with due/deadline date before now
+- **Category** (multi-select): `goal`, `project`, `housework`, `calendar`, `expense`, `assets`, `learning`
+
+## Overdue Scope
+
+Dashboard overdue feed currently includes modules with due/deadline fields:
+
+- `ProjectTask.deadline`
+- `HouseworkItem.nextDueDate`
+- `LearningItem.deadline`
+- `MaintenanceRecord.nextRecommendedDate`
+- `CalendarEvent.startDate` (missed start time)
+
+Expense overdue is not computed separately because current schema has payment date only (`Expense.date`), not a dedicated unpaid due date field.
 
 ## Project Sharing Rules
 

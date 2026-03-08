@@ -23,6 +23,8 @@ export default function ProjectsPage() {
 
     const [boardForm, setBoardForm] = useState({ name: '', description: '', isShared: false });
     const [taskForm, setTaskForm] = useState({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '' });
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
     // Queries
     const { data: boards, isLoading: boardsLoading } = useQuery({
@@ -393,7 +395,7 @@ export default function ProjectsPage() {
                                             </span>
                                             {t.category && <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{t.category}</span>}
                                             {t.deadline && (
-                                                <span className="text-[10px]" style={{ color: new Date(t.deadline) < new Date() ? '#dc2626' : 'var(--color-text-secondary)' }}>
+                                                <span className="text-[10px]" style={{ color: new Date(t.deadline) < todayStart ? '#dc2626' : 'var(--color-text-secondary)' }}>
                                                     📅 {format(new Date(t.deadline), 'MMM d')}
                                                 </span>
                                             )}
@@ -433,7 +435,7 @@ export default function ProjectsPage() {
                                         <td><span className="badge" style={{ backgroundColor: `${statusColors[t.status]}20`, color: statusColors[t.status] }}>{statusLabels[t.status]}</span></td>
                                         <td><span className="badge" style={{ backgroundColor: `${priorityColors[t.priority]}20`, color: priorityColors[t.priority] }}>{t.priority}</span></td>
                                         <td>{t.category || '-'}</td>
-                                        <td style={{ color: t.deadline && new Date(t.deadline) < new Date() ? '#dc2626' : undefined }}>
+                                        <td style={{ color: t.deadline && new Date(t.deadline) < todayStart ? '#dc2626' : undefined }}>
                                             {t.deadline ? format(new Date(t.deadline), 'MMM d, yyyy') : '-'}
                                         </td>
                                         <td>

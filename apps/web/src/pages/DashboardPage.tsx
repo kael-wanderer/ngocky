@@ -60,6 +60,8 @@ export default function DashboardPage() {
     });
 
     const s = data?.summary || {};
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
     const cards = [
         { label: 'Tasks This Week', value: s.tasksThisWeek, icon: FolderKanban, color: '#4f46e5', bg: '#eef2ff' },
@@ -289,7 +291,7 @@ export default function DashboardPage() {
                                         </p>
                                     </div>
                                     {p.earliestDeadline && (
-                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(p.earliestDeadline) < new Date() ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(p.earliestDeadline) < todayStart ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
                                             {format(new Date(p.earliestDeadline), 'MMM d')}
                                         </span>
                                     )}
@@ -318,7 +320,7 @@ export default function DashboardPage() {
                                         </p>
                                     </div>
                                     {t.deadline && (
-                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(t.deadline) < new Date() ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(t.deadline) < todayStart ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
                                             {format(new Date(t.deadline), 'MMM d')}
                                         </span>
                                     )}
@@ -358,7 +360,7 @@ export default function DashboardPage() {
                                         </div>
                                     </div>
                                     {h.nextDueDate && (
-                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(h.nextDueDate) < new Date() ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(h.nextDueDate) < todayStart ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
                                             {format(new Date(h.nextDueDate), 'MMM d')}
                                         </span>
                                     )}
@@ -472,7 +474,7 @@ export default function DashboardPage() {
                                         </p>
                                     </div>
                                     {l.deadline && (
-                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(l.deadline) < new Date() ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(l.deadline) < todayStart ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
                                             {format(new Date(l.deadline), 'MMM d')}
                                         </span>
                                     )}

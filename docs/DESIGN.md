@@ -60,3 +60,83 @@ Monitors family and personal spending.
 - **Backend**: Node.js, Express, Prisma (ORM), zod.
 - **Database**: PostgreSQL.
 - **Hosting**: Caddy (Reverse Proxy/SSL), Docker.
+
+---
+
+## Dashboard Filtering & Status Semantics
+
+### Time Filter
+
+Dashboard supports four time ranges:
+
+- `THIS_WEEK`
+- `NEXT_WEEK`
+- `THIS_MONTH`
+- `NEXT_MONTH`
+
+These are applied server-side in `GET /api/dashboard`.
+
+### Status Filter
+
+Dashboard supports:
+
+- `PENDING`: not completed yet in selected range.
+- `COMPLETED`: completed items in selected range, where module lifecycle supports completion.
+- `OVERDUE`: due/deadline before `now`.
+
+### Category Filter
+
+Multi-select categories on Dashboard:
+
+- `goal`
+- `project`
+- `housework`
+- `calendar`
+- `expense`
+- `assets`
+- `learning`
+
+### Overdue Feed Coverage
+
+Unified overdue feed includes modules with due/deadline fields:
+
+- `ProjectTask.deadline`
+- `HouseworkItem.nextDueDate`
+- `LearningItem.deadline`
+- `MaintenanceRecord.nextRecommendedDate`
+- `CalendarEvent.startDate` (missed start)
+
+Expense currently has no separate unpaid due-date field (only payment date), so expense overdue debt is not inferred.
+
+---
+
+## Housework Recurrence & Completion UX
+
+### Frequency Types
+
+- `ONE_TIME`
+- `DAILY`
+- `WEEKLY`
+- `MONTHLY`
+- `QUARTERLY`
+- `HALF_YEARLY`
+- `YEARLY`
+
+(`CUSTOM` removed from UI selection.)
+
+### Recurrence Rule Fields
+
+- `dayOfWeek` for weekly
+- `dayOfMonth` for monthly/yearly/periodic rules
+- `monthOfPeriod` for quarterly/half-yearly
+- `monthOfYear` for yearly
+
+### Completion Flow
+
+- User clicks `Mark Complete` in Housework list.
+- Backend computes next due date by recurrence rule (not by simple +7 in rule-based mode).
+- Housework UI groups items by operational status:
+  - `Overdue`
+  - `Due Today`
+  - `Upcoming`
+  - `Unscheduled`
