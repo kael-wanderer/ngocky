@@ -21,6 +21,7 @@ import learningRoutes from './routes/learning';
 import ideaRoutes from './routes/ideas';
 import alertRoutes from './routes/alerts';
 import scheduledReportRoutes from './routes/scheduled-reports';
+import serviceRoutes from './routes/service';
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use('/api/learning', learningRoutes);
 app.use('/api/ideas', ideaRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/scheduled-reports', scheduledReportRoutes);
+app.use('/api/service', serviceRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
