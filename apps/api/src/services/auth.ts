@@ -47,6 +47,7 @@ export class AuthService {
                 role: user.role,
                 theme: user.theme,
                 mfaEnabled: !!user.mfaEnabled,
+                avatarUrl: user.avatarUrl ?? null,
             },
         };
     }
@@ -71,6 +72,7 @@ export class AuthService {
                 role: user.role,
                 theme: user.theme,
                 mfaEnabled: true,
+                avatarUrl: user.avatarUrl ?? null,
             },
         };
     }
@@ -104,6 +106,7 @@ export class AuthService {
                 role: stored.user.role,
                 theme: stored.user.theme,
                 mfaEnabled: !!stored.user.mfaEnabled,
+                avatarUrl: stored.user.avatarUrl ?? null,
             },
         };
     }

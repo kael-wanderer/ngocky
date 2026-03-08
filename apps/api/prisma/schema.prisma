@@ -538,6 +538,7 @@ model ScheduledReport {
   dayOfWeek           Int?
   dayOfMonth          Int?
   time                String?
+  sections            String[]
   notificationChannel NotificationChannel @default(EMAIL)
   recipients          String[]
   active              Boolean             @default(true)

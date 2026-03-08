@@ -90,6 +90,7 @@ export const createScheduledReportSchema = z.object({
     frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
     dayOfWeek: z.number().int().min(0).max(6).optional(),
     dayOfMonth: z.number().int().min(1).max(31).optional(),
+    sections: z.array(z.string()).optional(),
     time: z.string().optional(),
     notificationChannel: z.enum(['EMAIL', 'TELEGRAM', 'BOTH']).optional(),
     recipients: z.array(z.string()).optional(),

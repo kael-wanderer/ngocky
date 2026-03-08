@@ -123,6 +123,7 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
 
             return sendSuccess(res, {
                 reportType: 'WEEKLY_SUMMARY',
+                sections: report.sections ?? [],
                 user: userInfo,
                 period: { start, end },
                 goals: goals.map(g => ({
@@ -181,6 +182,7 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
 
             return sendSuccess(res, {
                 reportType: 'NEXT_WEEK_TASKS',
+                sections: report.sections ?? [],
                 user: userInfo,
                 period: { start, end },
                 tasks: tasks.map(t => ({

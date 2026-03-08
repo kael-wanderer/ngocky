@@ -13,12 +13,30 @@ const emptyRuleForm = () => ({
     active: true,
 });
 
+const SECTIONS_BY_TYPE: Record<string, { key: string; label: string }[]> = {
+    WEEKLY_SUMMARY: [
+        { key: 'GOALS', label: 'Goals' },
+        { key: 'TASKS_DONE', label: 'Tasks Done' },
+        { key: 'TASKS_IN_PROGRESS', label: 'Tasks In Progress' },
+        { key: 'HOUSEWORK', label: 'Housework' },
+        { key: 'CALENDAR', label: 'Calendar Events' },
+        { key: 'EXPENSES', label: 'Expenses' },
+    ],
+    NEXT_WEEK_TASKS: [
+        { key: 'TASKS', label: 'Tasks' },
+        { key: 'HOUSEWORK', label: 'Housework' },
+        { key: 'CALENDAR', label: 'Calendar Events' },
+        { key: 'GOALS', label: 'Goals' },
+    ],
+};
+
 const emptyReportForm = () => ({
     reportType: 'WEEKLY_SUMMARY',
     frequency: 'WEEKLY',
     dayOfWeek: 1,
     dayOfMonth: 1,
     time: '08:00',
+    sections: [] as string[],
     active: true,
 });
 
@@ -129,6 +147,7 @@ export default function AlertsPage() {
             dayOfWeek: report.dayOfWeek ?? 1,
             dayOfMonth: report.dayOfMonth ?? 1,
             time: report.time || '08:00',
+            sections: report.sections ?? [],
             active: report.active ?? true,
         });
         setShowReportModal(true);
@@ -141,6 +160,7 @@ export default function AlertsPage() {
             dayOfWeek: report.dayOfWeek,
             dayOfMonth: report.dayOfMonth,
             time: report.time,
+            sections: report.sections ?? [],
             active: report.active,
         });
     }
@@ -390,6 +410,36 @@ export default function AlertsPage() {
                                         </select>
                                     </div>
                                 )}
+                                <div className="col-span-2">
+                                    <label className="label">Include Sections <span className="text-xs font-normal" style={{ color: 'var(--color-text-secondary)' }}>(empty = all)</span></label>
+                                    <div className="grid grid-cols-2 gap-2 mt-1">
+                                        {(SECTIONS_BY_TYPE[reportForm.reportType] || []).map(({ key, label }) => {
+                                            const checked = reportForm.sections.length === 0 || reportForm.sections.includes(key);
+                                            const isAllSelected = reportForm.sections.length === 0;
+                                            return (
+                                                <label key={key} className="flex items-center gap-2 text-xs cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={checked}
+                                                        onChange={(e) => {
+                                                            const allKeys = (SECTIONS_BY_TYPE[reportForm.reportType] || []).map(s => s.key);
+                                                            let current = isAllSelected ? [...allKeys] : [...reportForm.sections];
+                                                            if (e.target.checked) {
+                                                                current = [...new Set([...current, key])];
+                                                            } else {
+                                                                current = current.filter(k => k !== key);
+                                                            }
+                                                            // If all checked, store as empty (= all)
+                                                            setReportForm({ ...reportForm, sections: current.length === allKeys.length ? [] : current });
+                                                        }}
+                                                        className="rounded"
+                                                    />
+                                                    <span style={{ color: 'var(--color-text)' }}>{label}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                             </div>
                             <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                                 Delivered via your notification channel in Settings.
