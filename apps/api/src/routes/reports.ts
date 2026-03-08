@@ -61,6 +61,56 @@ router.get('/housework-status', async (_req: Request, res: Response, next: NextF
     } catch (err) { next(err); }
 });
 
+// Learning by status
+router.get('/learning-status', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const result = await prisma.learningItem.groupBy({
+            by: ['status'],
+            _count: { id: true },
+        });
+        sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count.id })));
+    } catch (err) { next(err); }
+});
+
+// Learning by topic
+router.get('/learning-topics', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const topics = await prisma.learningTopic.findMany({
+            include: { _count: { select: { histories: true } } },
+            orderBy: { title: 'asc' },
+        });
+        sendSuccess(res, topics.map((topic) => ({
+            topic: topic.title,
+            count: topic._count.histories,
+        })));
+    } catch (err) { next(err); }
+});
+
+// Ideas by status
+router.get('/ideas-status', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const result = await prisma.idea.groupBy({
+            by: ['status'],
+            _count: { id: true },
+        });
+        sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count.id })));
+    } catch (err) { next(err); }
+});
+
+// Ideas by topic
+router.get('/idea-topics', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const topics = await prisma.ideaTopic.findMany({
+            include: { _count: { select: { logs: true } } },
+            orderBy: { title: 'asc' },
+        });
+        sendSuccess(res, topics.map((topic) => ({
+            topic: topic.title,
+            count: topic._count.logs,
+        })));
+    } catch (err) { next(err); }
+});
+
 // Expense summary by period/category
 router.get('/expense-summary', async (req: Request, res: Response, next: NextFunction) => {
     try {

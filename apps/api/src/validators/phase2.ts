@@ -24,20 +24,35 @@ export const createMaintenanceRecordSchema = z.object({
 
 export const updateMaintenanceRecordSchema = createMaintenanceRecordSchema.partial().omit({ assetId: true });
 
-export const createLearningItemSchema = z.object({
+export const createLearningTopicSchema = z.object({
     title: z.string().min(1).max(200),
     description: z.string().optional(),
-    subject: z.string().optional(),
+});
+
+export const updateLearningTopicSchema = createLearningTopicSchema.partial();
+
+export const createLearningHistorySchema = z.object({
+    topicId: z.string().min(1),
+    title: z.string().min(1).max(200),
+    description: z.string().optional(),
     target: z.string().optional(),
     progress: z.number().int().min(0).max(100).optional(),
-    deadline: z.string().datetime().optional(),
+    deadline: z.string().datetime().nullable().optional(),
     status: z.enum(['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED']).optional(),
     notificationEnabled: z.boolean().optional(),
 });
 
-export const updateLearningItemSchema = createLearningItemSchema.partial();
+export const updateLearningHistorySchema = createLearningHistorySchema.partial().omit({ topicId: true });
 
-export const createIdeaSchema = z.object({
+export const createIdeaTopicSchema = z.object({
+    title: z.string().min(1).max(200),
+    description: z.string().optional(),
+});
+
+export const updateIdeaTopicSchema = createIdeaTopicSchema.partial();
+
+export const createIdeaLogSchema = z.object({
+    topicId: z.string().min(1),
     title: z.string().min(1).max(200),
     content: z.string().optional(),
     category: z.string().optional(),
@@ -45,7 +60,7 @@ export const createIdeaSchema = z.object({
     status: z.enum(['OPEN', 'REVIEWING', 'ARCHIVED']).optional(),
 });
 
-export const updateIdeaSchema = createIdeaSchema.partial();
+export const updateIdeaLogSchema = createIdeaLogSchema.partial().omit({ topicId: true });
 
 export const createAlertRuleSchema = z.object({
     name: z.string().min(1).max(200),

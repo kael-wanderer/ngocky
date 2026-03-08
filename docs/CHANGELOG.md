@@ -21,6 +21,8 @@ All notable changes to this project will be documented in this file.
 - **Branding Assets**: Added ladybug logo in Login, sidebar brand, and browser tab favicon.
 - **Expense Type Model**: Added `PAY` / `RECEIVE` expense type support with expanded scopes (`PERSONAL`, `FAMILY`, `KEO`, `PROJECT`).
 - **Expense Management Actions**: Added per-item `Edit` and `Delete` actions on the Expenses page.
+- **Shared Items**: Added per-item `isShared` support for Expenses and Project Tasks.
+- **Learning Topics**: Added topic-first learning structure so histories are created under a selected topic.
 
 ### Changed
 
@@ -31,8 +33,15 @@ All notable changes to this project will be documented in this file.
 - **Dashboard Data Model**: `GET /api/dashboard` now accepts query params (`timeRange`, `status`) and returns filtered due/overdue datasets.
 - **Expense Currency Display**: Switched UI amount formatting from USD to VND.
 - **Expense UX**: Reordered expense table columns, added type filter, added `Travel`, `Hobby`, and `Home Maintenance` categories, added shorthand amount parsing (for example `82M`), and split totals into income, payment, and remaining fund with type-aware colors.
+- **Expense Sorting**: Added ascending/descending sorting controls on all expense table columns.
+- **Expense Category Logic**: Expense category options now depend on type: `RECEIVE` uses `Salary`, `Top-up`, `Sell`; `PAY` uses spending categories only.
+- **Browser Title**: Updated browser tab branding to `NgốcKy`.
 - **Dev Environment Note**: Documented that localhost web may read the VPS API/database, so backend fixes become visible locally only after VPS deployment in that setup.
 - **Housework Frequency UI**: Removed `Custom` option from Housework frequency dropdown.
+- **Theme Application**: Theme changes now apply immediately after saving settings; logout/login is no longer required.
+- **Ideas Topics**: Reworked Ideas into topic + log structure, matching the asset/log pattern and fixing the add-idea `400` path.
+- **Reports Expansion**: Added Learning and Ideas report views.
+- **Alerts UX**: Added edit/duplicate actions and expanded alert module coverage to `CALENDAR` and `ASSETS`.
 
 ### Fixed
 

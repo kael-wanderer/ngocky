@@ -59,6 +59,20 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         // Month boundaries
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const visibleTaskWhere = {
+            OR: [
+                { createdById: userId },
+                { project: { ownerId: userId } },
+                { project: { isShared: true } },
+                { isShared: true },
+            ],
+        };
+        const visibleExpenseWhere = {
+            OR: [
+                { userId },
+                { isShared: true },
+            ],
+        };
 
         const [
             tasksThisWeek, tasksThisMonth,
@@ -72,11 +86,11 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         ] = await Promise.all([
             // Tasks (projects) due this week
             prisma.projectTask.count({
-                where: { deadline: { gte: weekStart, lt: weekEnd }, status: { not: 'DONE' } },
+                where: { ...visibleTaskWhere, deadline: { gte: weekStart, lt: weekEnd }, status: { not: 'DONE' } },
             }),
             // Tasks due this month
             prisma.projectTask.count({
-                where: { deadline: { gte: monthStart, lt: monthEnd }, status: { not: 'DONE' } },
+                where: { ...visibleTaskWhere, deadline: { gte: monthStart, lt: monthEnd }, status: { not: 'DONE' } },
             }),
             // Housework due this week
             prisma.houseworkItem.count({
@@ -99,20 +113,23 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             }),
             // Project tasks with closest deadlines
             prisma.projectTask.findMany({
-                where: statusFilter === 'OVERDUE'
-                    ? {
-                        deadline: { lt: todayStart },
-                        status: { notIn: ['DONE', 'ARCHIVED'] },
-                    }
-                    : statusFilter === 'COMPLETED'
+                where: {
+                    ...visibleTaskWhere,
+                    ...(statusFilter === 'OVERDUE'
                         ? {
-                            deadline: { gte: filterStart, lt: filterEnd },
-                            status: 'DONE',
-                        }
-                        : {
-                            deadline: { gte: filterStart, lt: filterEnd },
+                            deadline: { lt: todayStart },
                             status: { notIn: ['DONE', 'ARCHIVED'] },
-                        },
+                        }
+                        : statusFilter === 'COMPLETED'
+                            ? {
+                                deadline: { gte: filterStart, lt: filterEnd },
+                                status: 'DONE',
+                            }
+                            : {
+                                deadline: { gte: filterStart, lt: filterEnd },
+                                status: { notIn: ['DONE', 'ARCHIVED'] },
+                            }),
+                },
                 orderBy: { deadline: 'asc' },
                 take: 50,
                 include: {
@@ -143,15 +160,18 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             prisma.learningItem.findMany({
                 where: statusFilter === 'OVERDUE'
                     ? {
+                        userId,
                         deadline: { lt: todayStart },
                         status: { notIn: ['DONE', 'ARCHIVED'] },
                     }
                     : statusFilter === 'COMPLETED'
                         ? {
+                            userId,
                             deadline: { gte: filterStart, lt: filterEnd },
                             status: 'DONE',
                         }
                         : {
+                            userId,
                             deadline: { gte: filterStart, lt: filterEnd },
                             status: { notIn: ['DONE', 'ARCHIVED'] },
                         },
@@ -163,7 +183,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             prisma.expense.findMany({
                 where: statusFilter === 'OVERDUE'
                     ? { id: '__none__' }
-                    : { date: { gte: filterStart, lt: filterEnd } },
+                    : { ...visibleExpenseWhere, date: { gte: filterStart, lt: filterEnd } },
                 orderBy: { date: 'asc' },
                 take: 20,
                 include: { user: { select: { name: true } } },
@@ -188,11 +208,11 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             }),
             // Overdue tasks
             prisma.projectTask.count({
-                where: { deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+                where: { ...visibleTaskWhere, deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
             }),
             // Overdue learning
             prisma.learningItem.count({
-                where: { deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+                where: { userId, deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
             }),
             // Overdue asset maintenance
             prisma.maintenanceRecord.count({
@@ -204,7 +224,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             }),
             // Overdue task items
             prisma.projectTask.findMany({
-                where: { deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+                where: { ...visibleTaskWhere, deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
                 orderBy: { deadline: 'asc' },
                 take: 20,
                 include: {
@@ -221,7 +241,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             }),
             // Overdue learning items
             prisma.learningItem.findMany({
-                where: { deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+                where: { userId, deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
                 orderBy: { deadline: 'asc' },
                 take: 20,
                 include: { user: { select: { name: true } } },
@@ -252,6 +272,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             // Pinned tasks
             prisma.projectTask.findMany({
                 where: {
+                    ...visibleTaskWhere,
                     pinToDashboard: true,
                     status: { notIn: ['DONE', 'ARCHIVED'] },
                     deadline: { gte: filterStart, lt: filterEnd },

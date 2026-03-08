@@ -35,11 +35,33 @@ export default function ReportsPage() {
         queryFn: async () => (await api.get('/reports/expense-summary?groupBy=monthly')).data.data,
     });
 
+    const { data: learningStatus } = useQuery({
+        queryKey: ['reports', 'learning-status'],
+        queryFn: async () => (await api.get('/reports/learning-status')).data.data,
+    });
+
+    const { data: learningTopics } = useQuery({
+        queryKey: ['reports', 'learning-topics'],
+        queryFn: async () => (await api.get('/reports/learning-topics')).data.data,
+    });
+
+    const { data: ideaStatus } = useQuery({
+        queryKey: ['reports', 'idea-status'],
+        queryFn: async () => (await api.get('/reports/ideas-status')).data.data,
+    });
+
+    const { data: ideaTopics } = useQuery({
+        queryKey: ['reports', 'idea-topics'],
+        queryFn: async () => (await api.get('/reports/idea-topics')).data.data,
+    });
+
     const tabs = [
         { id: 'tasks', label: 'Tasks' },
         { id: 'goals', label: 'Goals' },
         { id: 'housework', label: 'Housework' },
         { id: 'expenses', label: 'Expenses' },
+        { id: 'learning', label: 'Learning' },
+        { id: 'ideas', label: 'Ideas' },
     ];
 
     return (
@@ -49,14 +71,12 @@ export default function ReportsPage() {
                 <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Reports</h2>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ backgroundColor: 'var(--color-bg)' }}>
+            <div className="flex gap-1 p-1 rounded-lg flex-wrap" style={{ backgroundColor: 'var(--color-bg)' }}>
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${activeTab === tab.id ? 'shadow-sm' : ''
-                            }`}
+                        className={`py-2 px-4 rounded-md text-sm font-medium transition-all ${activeTab === tab.id ? 'shadow-sm' : ''}`}
                         style={{
                             backgroundColor: activeTab === tab.id ? 'var(--color-surface)' : 'transparent',
                             color: activeTab === tab.id ? 'var(--color-text)' : 'var(--color-text-secondary)',
@@ -67,7 +87,6 @@ export default function ReportsPage() {
                 ))}
             </div>
 
-            {/* Tasks Report */}
             {activeTab === 'tasks' && (
                 <div className="grid gap-6 md:grid-cols-2">
                     <div className="card p-5">
@@ -97,7 +116,6 @@ export default function ReportsPage() {
                 </div>
             )}
 
-            {/* Goals Report */}
             {activeTab === 'goals' && (
                 <div className="card p-5">
                     <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Goal Completion Rates</h3>
@@ -113,7 +131,6 @@ export default function ReportsPage() {
                 </div>
             )}
 
-            {/* Housework Report */}
             {activeTab === 'housework' && houseworkStatus && (
                 <div className="grid gap-4 md:grid-cols-3">
                     {[
@@ -129,7 +146,6 @@ export default function ReportsPage() {
                 </div>
             )}
 
-            {/* Expenses Report */}
             {activeTab === 'expenses' && (
                 <div className="grid gap-6 md:grid-cols-2">
                     <div className="card p-5">
@@ -154,6 +170,64 @@ export default function ReportsPage() {
                                 <Tooltip formatter={(v: any) => formatVND(Number(v))} />
                                 <Bar dataKey="total" fill="#d97706" radius={[4, 4, 0, 0]} />
                             </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'learning' && (
+                <div className="grid gap-6 md:grid-cols-2">
+                    <div className="card p-5">
+                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Learning by Status</h3>
+                        <ResponsiveContainer width="100%" height={280}>
+                            <BarChart data={learningStatus || []}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                <XAxis dataKey="status" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <Tooltip />
+                                <Bar dataKey="count" fill="#0891b2" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <div className="card p-5">
+                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Learning by Topic</h3>
+                        <ResponsiveContainer width="100%" height={280}>
+                            <PieChart>
+                                <Pie data={learningTopics || []} dataKey="count" nameKey="topic" cx="50%" cy="50%" outerRadius={100} label>
+                                    {(learningTopics || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'ideas' && (
+                <div className="grid gap-6 md:grid-cols-2">
+                    <div className="card p-5">
+                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Ideas by Status</h3>
+                        <ResponsiveContainer width="100%" height={280}>
+                            <BarChart data={ideaStatus || []}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                <XAxis dataKey="status" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <Tooltip />
+                                <Bar dataKey="count" fill="#db2777" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <div className="card p-5">
+                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Ideas by Topic</h3>
+                        <ResponsiveContainer width="100%" height={280}>
+                            <PieChart>
+                                <Pie data={ideaTopics || []} dataKey="count" nameKey="topic" cx="50%" cy="50%" outerRadius={100} label>
+                                    {(ideaTopics || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                            </PieChart>
                         </ResponsiveContainer>
                     </div>
                 </div>

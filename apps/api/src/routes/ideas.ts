@@ -2,72 +2,117 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
-import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
+import { sendSuccess, sendCreated, sendMessage } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
-import { paramStr, queryInt } from '../utils/query';
-import { createIdeaSchema, updateIdeaSchema } from '../validators/phase2';
+import {
+    createIdeaTopicSchema,
+    updateIdeaTopicSchema,
+    createIdeaLogSchema,
+    updateIdeaLogSchema,
+} from '../validators/phase2';
 
 const router = Router();
 router.use(authenticate);
 
-router.post('/', validate(createIdeaSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.get('/topics', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const item = await prisma.idea.create({
+        const topics = await prisma.ideaTopic.findMany({
+            where: { userId: req.user!.userId },
+            include: {
+                logs: {
+                    orderBy: { createdAt: 'desc' },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+        sendSuccess(res, topics);
+    } catch (err) { next(err); }
+});
+
+router.post('/topics', validate(createIdeaTopicSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const topic = await prisma.ideaTopic.create({
             data: {
                 ...req.body,
                 userId: req.user!.userId,
             },
+            include: { logs: true },
         });
-        sendCreated(res, item);
+        sendCreated(res, topic);
     } catch (err) { next(err); }
 });
 
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/topics/:id', validate(updateIdeaTopicSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const page = queryInt(req, 'page', 1);
-        const limit = queryInt(req, 'limit', 20);
-        const skip = (page - 1) * limit;
-
-        const [items, total] = await Promise.all([
-            prisma.idea.findMany({
-                where: { userId: req.user!.userId },
-                skip,
-                take: limit,
-                orderBy: { createdAt: 'desc' },
-            }),
-            prisma.idea.count({ where: { userId: req.user!.userId } }),
-        ]);
-
-        sendPaginated(res, items, total, page, limit);
-    } catch (err) { next(err); }
-});
-
-router.patch('/:id', validate(updateIdeaSchema), async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const id = paramStr(req, 'id');
-        const item = await prisma.idea.findFirst({
-            where: { id, userId: req.user!.userId },
+        const existing = await prisma.ideaTopic.findFirst({
+            where: { id: req.params.id, userId: req.user!.userId },
         });
-        if (!item) throw new NotFoundError('Idea not found');
+        if (!existing) throw new NotFoundError('Idea topic not found');
 
-        const updated = await prisma.idea.update({
-            where: { id },
+        const updated = await prisma.ideaTopic.update({
+            where: { id: req.params.id },
             data: req.body,
+            include: { logs: true },
         });
         sendSuccess(res, updated);
     } catch (err) { next(err); }
 });
 
-router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/topics/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id = paramStr(req, 'id');
-        const item = await prisma.idea.findFirst({
-            where: { id, userId: req.user!.userId },
+        const existing = await prisma.ideaTopic.findFirst({
+            where: { id: req.params.id, userId: req.user!.userId },
         });
-        if (!item) throw new NotFoundError('Idea not found');
+        if (!existing) throw new NotFoundError('Idea topic not found');
 
-        await prisma.idea.delete({ where: { id } });
-        sendMessage(res, 'Idea deleted');
+        await prisma.ideaTopic.delete({ where: { id: req.params.id } });
+        sendMessage(res, 'Idea topic deleted');
+    } catch (err) { next(err); }
+});
+
+router.post('/logs', validate(createIdeaLogSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const topic = await prisma.ideaTopic.findFirst({
+            where: { id: req.body.topicId, userId: req.user!.userId },
+        });
+        if (!topic) throw new NotFoundError('Idea topic not found');
+
+        const log = await prisma.idea.create({
+            data: {
+                ...req.body,
+                userId: req.user!.userId,
+            },
+            include: { topic: true },
+        });
+        sendCreated(res, log);
+    } catch (err) { next(err); }
+});
+
+router.patch('/logs/:id', validate(updateIdeaLogSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const existing = await prisma.idea.findFirst({
+            where: { id: req.params.id, userId: req.user!.userId },
+        });
+        if (!existing) throw new NotFoundError('Idea log not found');
+
+        const updated = await prisma.idea.update({
+            where: { id: req.params.id },
+            data: req.body,
+            include: { topic: true },
+        });
+        sendSuccess(res, updated);
+    } catch (err) { next(err); }
+});
+
+router.delete('/logs/:id', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const existing = await prisma.idea.findFirst({
+            where: { id: req.params.id, userId: req.user!.userId },
+        });
+        if (!existing) throw new NotFoundError('Idea log not found');
+
+        await prisma.idea.delete({ where: { id: req.params.id } });
+        sendMessage(res, 'Idea log deleted');
     } catch (err) { next(err); }
 });
 

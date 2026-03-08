@@ -4,7 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createExpenseSchema, updateExpenseSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
-import { NotFoundError } from '../utils/errors';
+import { ForbiddenError, NotFoundError } from '../utils/errors';
 
 const router = Router();
 router.use(authenticate);
@@ -12,6 +12,7 @@ router.use(authenticate);
 // List expenses
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const currentUserId = req.user!.userId;
         const page = Math.max(1, parseInt(req.query.page as string) || 1);
         const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
         const userId = req.query.userId as string;
@@ -21,8 +22,15 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const dateFrom = req.query.dateFrom as string;
         const dateTo = req.query.dateTo as string;
 
-        const where: any = {};
-        if (userId) where.userId = userId;
+        const where: any = {
+            OR: [
+                { userId: currentUserId },
+                { isShared: true },
+            ],
+        };
+        if (userId) {
+            where.AND = [{ userId }];
+        }
         if (type) where.type = type;
         if (category) where.category = category;
         if (scope) where.scope = scope;
@@ -63,11 +71,13 @@ router.post('/', validate(createExpenseSchema), async (req: Request, res: Respon
 // Get expense
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const currentUserId = req.user!.userId;
         const expense = await prisma.expense.findUnique({
             where: { id: req.params.id },
             include: { user: { select: { id: true, name: true } } },
         });
         if (!expense) throw new NotFoundError('Expense');
+        if (expense.userId !== currentUserId && !expense.isShared) throw new ForbiddenError('You do not have access to this expense');
         sendSuccess(res, expense);
     } catch (err) { next(err); }
 });
@@ -75,6 +85,11 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 // Update expense
 router.patch('/:id', validate(updateExpenseSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const currentUserId = req.user!.userId;
+        const existing = await prisma.expense.findUnique({ where: { id: req.params.id } });
+        if (!existing) throw new NotFoundError('Expense');
+        if (existing.userId !== currentUserId) throw new ForbiddenError('Only the owner can update this expense');
+
         const expense = await prisma.expense.update({
             where: { id: req.params.id },
             data: {
@@ -90,6 +105,10 @@ router.patch('/:id', validate(updateExpenseSchema), async (req: Request, res: Re
 // Delete expense
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const currentUserId = req.user!.userId;
+        const existing = await prisma.expense.findUnique({ where: { id: req.params.id } });
+        if (!existing) throw new NotFoundError('Expense');
+        if (existing.userId !== currentUserId) throw new ForbiddenError('Only the owner can delete this expense');
         await prisma.expense.delete({ where: { id: req.params.id } });
         sendMessage(res, 'Expense deleted');
     } catch (err) { next(err); }

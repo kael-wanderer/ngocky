@@ -24,7 +24,7 @@ export default function ProjectsPage() {
     const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
 
     const [boardForm, setBoardForm] = useState({ name: '', description: '', isShared: false });
-    const [taskForm, setTaskForm] = useState({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '' });
+    const [taskForm, setTaskForm] = useState({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false });
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const boardIdParam = searchParams.get('boardId');
@@ -68,7 +68,7 @@ export default function ProjectsPage() {
             qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
             qc.invalidateQueries({ queryKey: ['project_boards'] });
             setShowCreateTask(false);
-            setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '' });
+            setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false });
         },
     });
 
@@ -147,6 +147,7 @@ export default function ProjectsPage() {
             priority: task.priority || 'MEDIUM',
             status: task.status || 'PLANNED',
             deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
+            isShared: !!task.isShared,
         });
     }, [taskIdParam, activeBoard]);
 
@@ -279,7 +280,7 @@ export default function ProjectsPage() {
                     <button className="p-2 rounded-lg border hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--color-border)' }} onClick={refreshBoard} title="Refresh board">
                         <RefreshCw className={`w-4 h-4 ${activeBoardLoading || moveTaskMut.isPending ? 'animate-spin' : ''}`} />
                     </button>
-                    <button className="btn-primary" onClick={() => setShowCreateTask(true)}><Plus className="w-4 h-4" /> New Task</button>
+                    <button className="btn-primary" onClick={() => { setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false }); setShowCreateTask(true); }}><Plus className="w-4 h-4" /> New Task</button>
                 </div>
             </div>
 
@@ -324,11 +325,11 @@ export default function ProjectsPage() {
 
             {/* Task Modal */}
             {(showCreateTask || editingTask) && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreateTask(false); setEditingTask(null); } }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreateTask(false); setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false }); } }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">{editingTask ? 'Edit Task' : 'Create Task'}</h3>
-                            <button onClick={() => { setShowCreateTask(false); setEditingTask(null); }}><X className="w-5 h-5" /></button>
+                            <button onClick={() => { setShowCreateTask(false); setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false }); }}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
@@ -362,6 +363,14 @@ export default function ProjectsPage() {
                                 </div>
                                 <div><label className="label">Deadline</label><input type="date" className="input" value={taskForm.deadline} onChange={(e) => setTaskForm({ ...taskForm, deadline: e.target.value })} /></div>
                             </div>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    checked={taskForm.isShared}
+                                    onChange={(e) => setTaskForm({ ...taskForm, isShared: e.target.checked })}
+                                />
+                                Share with all users
+                            </label>
                             <button type="submit" className="btn-primary w-full" disabled={createTaskMut.isPending || updateTaskMut.isPending}>
                                 {createTaskMut.isPending || updateTaskMut.isPending ? 'Saving...' : (editingTask ? 'Save Changes' : 'Create Task')}
                             </button>
@@ -397,15 +406,16 @@ export default function ProjectsPage() {
                                         onDragStart={() => setDraggingTaskId(t.id)}
                                         onClick={() => {
                                             setEditingTask(t);
-                                            setTaskForm({
-                                                title: t.title || '',
-                                                description: t.description || '',
-                                                category: t.category || '',
-                                                priority: t.priority || 'MEDIUM',
-                                                status: t.status || 'PLANNED',
-                                                deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : ''
-                                            });
-                                        }}
+                                        setTaskForm({
+                                            title: t.title || '',
+                                            description: t.description || '',
+                                            category: t.category || '',
+                                            priority: t.priority || 'MEDIUM',
+                                            status: t.status || 'PLANNED',
+                                            deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : '',
+                                            isShared: !!t.isShared,
+                                        });
+                                    }}
                                     >
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleDeleteTask(t.id); }}
@@ -419,6 +429,11 @@ export default function ProjectsPage() {
                                                 {t.priority}
                                             </span>
                                             {t.category && <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{t.category}</span>}
+                                            {t.isShared && (
+                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">
+                                                    Shared
+                                                </span>
+                                            )}
                                             {t.deadline && (
                                                 <span className="text-[10px]" style={{ color: new Date(t.deadline) < todayStart ? '#dc2626' : 'var(--color-text-secondary)' }}>
                                                     📅 {format(new Date(t.deadline), 'MMM d')}
@@ -453,13 +468,19 @@ export default function ProjectsPage() {
                                             category: t.category || '',
                                             priority: t.priority || 'MEDIUM',
                                             status: t.status || 'PLANNED',
-                                            deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : ''
+                                            deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : '',
+                                            isShared: !!t.isShared,
                                         });
                                     }}>
                                         <td className="font-medium">{t.title}</td>
                                         <td><span className="badge" style={{ backgroundColor: `${statusColors[t.status]}20`, color: statusColors[t.status] }}>{statusLabels[t.status]}</span></td>
                                         <td><span className="badge" style={{ backgroundColor: `${priorityColors[t.priority]}20`, color: priorityColors[t.priority] }}>{t.priority}</span></td>
-                                        <td>{t.category || '-'}</td>
+                                        <td>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span>{t.category || '-'}</span>
+                                                {t.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                            </div>
+                                        </td>
                                         <td style={{ color: t.deadline && new Date(t.deadline) < todayStart ? '#dc2626' : undefined }}>
                                             {t.deadline ? format(new Date(t.deadline), 'MMM d, yyyy') : '-'}
                                         </td>

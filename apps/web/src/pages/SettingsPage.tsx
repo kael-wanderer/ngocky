@@ -161,6 +161,9 @@ export default function SettingsPage() {
                                     </button>
                                 ))}
                             </div>
+                            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                                Theme changes apply immediately. No logout is required.
+                            </p>
                         </div>
                     )}
 

@@ -18,6 +18,12 @@ interface AuthState {
     initialize: () => void;
 }
 
+const applyTheme = (theme?: string) => {
+    document.documentElement.className = '';
+    if (theme === 'GREY_BLACK') document.documentElement.classList.add('theme-grey-black');
+    else if (theme === 'RED_ACCENT') document.documentElement.classList.add('theme-red-accent');
+};
+
 export const useAuthStore = create<AuthState>((set) => ({
     user: null,
     token: null,
@@ -27,11 +33,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         localStorage.setItem('ngocky_token', token);
         localStorage.setItem('ngocky_user', JSON.stringify(user));
         set({ user, token, isAuthenticated: true });
-
-        // Apply theme
-        document.documentElement.className = '';
-        if (user.theme === 'GREY_BLACK') document.documentElement.classList.add('theme-grey-black');
-        else if (user.theme === 'RED_ACCENT') document.documentElement.classList.add('theme-red-accent');
+        applyTheme(user.theme);
     },
 
     logout: async () => {
@@ -51,6 +53,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     setUser: (user) => {
         localStorage.setItem('ngocky_user', JSON.stringify(user));
         set({ user });
+        applyTheme(user.theme);
     },
 
     initialize: () => {
@@ -60,10 +63,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             try {
                 const user = JSON.parse(userStr);
                 set({ user, token, isAuthenticated: true });
-                // Apply theme
-                document.documentElement.className = '';
-                if (user.theme === 'GREY_BLACK') document.documentElement.classList.add('theme-grey-black');
-                else if (user.theme === 'RED_ACCENT') document.documentElement.classList.add('theme-red-accent');
+                applyTheme(user.theme);
             } catch {
                 localStorage.removeItem('ngocky_token');
                 localStorage.removeItem('ngocky_user');

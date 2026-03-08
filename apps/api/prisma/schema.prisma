@@ -118,7 +118,9 @@ model User {
   goals               Goal[]
   goalCheckIns        GoalCheckIn[]
   learningItems       LearningItem[]
+  learningTopics      LearningTopic[]
   ideas               Idea[]
+  ideaTopics          IdeaTopic[]
   houseworkItems      HouseworkItem[]     @relation("HouseworkAssignee")
   createdHousework    HouseworkItem[]     @relation("HouseworkCreator")
   projectTasks        ProjectTask[]       @relation("TaskAssignee")
@@ -217,6 +219,7 @@ model ProjectTask {
   status              ProjectStatus @default(PLANNED)
   assigneeId          String?
   createdById         String
+  isShared            Boolean       @default(false)
   notificationEnabled Boolean       @default(false)
   pinToDashboard      Boolean       @default(false)
   kanbanOrder         Int           @default(0)
@@ -235,6 +238,20 @@ model ProjectTask {
 
 // ─── Learning ───────────────────────────────────────
 
+model LearningTopic {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  userId      String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  histories LearningItem[]
+
+  @@index([userId])
+}
+
 model LearningItem {
   id                  String        @id @default(cuid())
   title               String
@@ -244,17 +261,34 @@ model LearningItem {
   progress            Int           @default(0)
   deadline            DateTime?
   status              ProjectStatus @default(PLANNED)
+  topicId             String?
   userId              String
   notificationEnabled Boolean       @default(false)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic LearningTopic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([topicId])
 }
 
 // ─── Ideas ──────────────────────────────────────────
+
+model IdeaTopic {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs Idea[]
+
+  @@index([userId])
+}
 
 model Idea {
   id        String     @id @default(cuid())
@@ -263,13 +297,16 @@ model Idea {
   category  String?
   tags      String[]
   status    IdeaStatus @default(OPEN)
+  topicId    String?
   userId    String
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic IdeaTopic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([topicId])
 }
 
 // ─── Housework ──────────────────────────────────────
@@ -386,6 +423,7 @@ model Expense {
   description String
   amount      Float
   type        ExpenseType  @default(PAY)
+  isShared    Boolean      @default(false)
   category    String?
   scope       ExpenseScope @default(PERSONAL)
   note        String?

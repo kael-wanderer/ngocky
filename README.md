@@ -153,12 +153,15 @@ All endpoints require Bearer token authentication.
 
 - **Dashboard** – Summary cards, filters (`Time`, `Status`, `Category`), overdue feed, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Assets`, `Learning`, `Pinned Items`)
 - **Goals** – Recurring goals (weekly/monthly) with check-in tracking and progress bars
-- **Projects** – Kanban board + list view with priorities, deadlines, assignees, drag-and-drop status updates, board edit/refresh, and shared family boards
+- **Projects** – Kanban board + list view with priorities, deadlines, assignees, drag-and-drop status updates, board edit/refresh, shared family boards, and per-task sharing
 - **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete` action and grouped states (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`)
 - **Calendar** – Month view with event dots, day detail panel, color-coded events
-- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), expanded scopes (`Personal`, `Family`, `Keo`, `Project`), and running totals for income, payment, and remaining fund in `VND`
-- **Reports** – Charts (bar, pie) for tasks, goals, housework, and expenses
-- **Settings** – Profile, notifications, theme picker (3 themes), password change
+- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, expanded scopes (`Personal`, `Family`, `Keo`, `Project`), per-item sharing, sortable columns, and running totals for income, payment, and remaining fund in `VND`
+- **Learning** – Topic-first learning management: create a topic, select it, then add history entries under that topic
+- **Ideas** – Topic-first idea capture: create an idea topic first, then add logs/history under that topic
+- **Reports** – Charts (bar, pie) for tasks, goals, housework, expenses, learning, and ideas
+- **Alerts** – Rule management with edit/duplicate support and module coverage for goals, projects, housework, learning, calendar, and assets
+- **Settings** – Profile, notifications, theme picker (3 themes) with immediate apply, password change
 - **User Management** – Admin-only user creation, role assignment, activate/deactivate
 
 ## Dashboard Filters
@@ -187,6 +190,11 @@ Expense overdue is not computed separately because current schema has payment da
 - In the current development setup, localhost web may be configured to read the VPS API (and therefore the VPS database) instead of a local API/database.
 - In that mode, backend changes such as overdue logic do not appear in localhost web until the VPS API has been deployed/restarted.
 - Restarting only the local Vite server does not change backend behavior when the frontend is still pointed at the VPS API.
+
+## Expense Type Categories
+
+- `RECEIVE`: `Salary`, `Top-up`, `Sell`
+- `PAY`: `Food`, `Utilities`, `Healthcare`, `Shopping`, `Transport`, `Home Maintenance`, `Education`, `AI`, `Entertainment`, `Other`
 
 ## Project Sharing Rules
 
