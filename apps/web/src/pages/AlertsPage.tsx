@@ -1,15 +1,42 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Bell, BellRing, Copy, FileText, Info, Mail, Pencil, Plus, Settings2, Trash2, X } from 'lucide-react';
+import { Bell, BellRing, Copy, FileText, Info, Mail, Pencil, Plus, Trash2, X } from 'lucide-react';
+
+const CONDITIONS_BY_MODULE: Record<string, { value: string; label: string; hasThreshold?: boolean }[]> = {
+    GOAL: [
+        { value: 'PROGRESS_BELOW', label: 'Progress below (%)', hasThreshold: true },
+        { value: 'OVERDUE', label: 'Overdue' },
+    ],
+    TASK: [
+        { value: 'OVERDUE', label: 'Overdue' },
+        { value: 'DUE_TODAY', label: 'Due Today' },
+    ],
+    HOUSEWORK: [
+        { value: 'OVERDUE', label: 'Overdue' },
+        { value: 'DUE_TODAY', label: 'Due Today' },
+    ],
+    EXPENSE: [
+        { value: 'THRESHOLD_EXCEEDED', label: 'Budget Exceeded', hasThreshold: true },
+    ],
+    CALENDAR: [
+        { value: 'DUE_TODAY', label: 'Due Today' },
+    ],
+    ASSETS: [
+        { value: 'MAINTENANCE_DUE', label: 'Maintenance Due' },
+    ],
+};
 
 const emptyRuleForm = () => ({
     name: '',
     moduleType: 'GOAL',
-    frequency: 'DAILY',
-    conditionType: 'OVERDUE',
-    conditionValue: '',
-    notificationChannel: 'EMAIL',
+    frequency: 'WEEKLY',
+    dayOfWeek: 3,
+    dayOfMonth: 1,
+    time: '08:00',
+    conditionType: 'PROGRESS_BELOW',
+    conditionValue: '50',
+    cooldownHours: 24,
     active: true,
 });
 
@@ -103,13 +130,17 @@ export default function AlertsPage() {
 
     function openEditRule(rule: any) {
         setEditingRule(rule);
+        const mod = rule.moduleType || 'GOAL';
         setRuleForm({
             name: rule.name || '',
-            moduleType: rule.moduleType || 'GOAL',
-            frequency: rule.frequency || 'DAILY',
-            conditionType: rule.conditionType || 'OVERDUE',
+            moduleType: mod,
+            frequency: rule.frequency || 'WEEKLY',
+            dayOfWeek: rule.dayOfWeek ?? 3,
+            dayOfMonth: rule.dayOfMonth ?? 1,
+            time: rule.time || '08:00',
+            conditionType: rule.conditionType || (CONDITIONS_BY_MODULE[mod]?.[0]?.value ?? 'OVERDUE'),
             conditionValue: rule.conditionValue || '',
-            notificationChannel: rule.notificationChannel || 'EMAIL',
+            cooldownHours: rule.cooldownHours ?? 24,
             active: rule.active ?? true,
         });
         setShowRuleModal(true);
@@ -120,9 +151,12 @@ export default function AlertsPage() {
             name: `${rule.name} (Copy)`,
             moduleType: rule.moduleType,
             frequency: rule.frequency,
+            dayOfWeek: rule.dayOfWeek,
+            dayOfMonth: rule.dayOfMonth,
+            time: rule.time,
             conditionType: rule.conditionType,
             conditionValue: rule.conditionValue || '',
-            notificationChannel: rule.notificationChannel,
+            cooldownHours: rule.cooldownHours ?? 24,
             active: rule.active,
         });
     }
@@ -176,10 +210,10 @@ export default function AlertsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     <BellRing className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Schedule Reports</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Reports & Notifications</h2>
                 </div>
                 <div className="flex bg-gray-100 p-1 rounded-lg self-start sm:self-auto">
-                    <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'RULES' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('RULES')} style={activeTab === 'RULES' ? { color: 'var(--color-primary)' } : {}}>Rules</button>
+                    <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'RULES' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('RULES')} style={activeTab === 'RULES' ? { color: 'var(--color-primary)' } : {}}>Notification Settings</button>
                     <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'REPORTS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('REPORTS')} style={activeTab === 'REPORTS' ? { color: 'var(--color-primary)' } : {}}>Scheduled Reports</button>
                 </div>
             </div>
@@ -194,8 +228,8 @@ export default function AlertsPage() {
             {activeTab === 'RULES' ? (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Active Rules</h3>
-                        <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateRule}><Plus className="w-3.5 h-3.5" /> New Rule</button>
+                        <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Notification Rules</h3>
+                        <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateRule}><Plus className="w-3.5 h-3.5" /> New Notification</button>
                     </div>
 
                     {rulesLoading ? (
@@ -219,9 +253,15 @@ export default function AlertsPage() {
                                     <p className="text-[10px] font-medium mt-1 uppercase" style={{ color: 'var(--color-primary)' }}>{rule.moduleType} • {rule.conditionType}</p>
 
                                     <div className="mt-4 pt-4 border-t flex items-center justify-between" style={{ borderColor: 'var(--color-border)' }}>
-                                        <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>{rule.frequency}</span>
-                                        <span className="text-[10px] font-bold flex items-center gap-1" style={{ color: rule.notificationChannel === 'EMAIL' ? '#4f46e5' : '#10b981' }}>
-                                            <Settings2 className="w-3 h-3" /> {rule.notificationChannel}
+                                        <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                                            {rule.frequency === 'WEEKLY'
+                                                ? `Every ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][rule.dayOfWeek ?? 1]} at ${rule.time || '08:00'}`
+                                                : rule.frequency === 'MONTHLY'
+                                                ? `Monthly day ${rule.dayOfMonth ?? 1} at ${rule.time || '08:00'}`
+                                                : `Daily at ${rule.time || '08:00'}`}
+                                        </span>
+                                        <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                                            {rule.cooldownHours ?? 24}h cooldown
                                         </span>
                                     </div>
 
@@ -298,7 +338,7 @@ export default function AlertsPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) closeRuleModal(); }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingRule ? 'Edit Alert Rule' : 'New Alert Rule'}</h3>
+                            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingRule ? 'Edit Notification' : 'New Notification'}</h3>
                             <button onClick={closeRuleModal}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
@@ -307,13 +347,19 @@ export default function AlertsPage() {
                             else createRuleMut.mutate(ruleForm);
                         }} className="space-y-4">
                             <div>
-                                <label className="label">Rule Name <span className="text-red-500">*</span></label>
+                                <label className="label">Name <span className="text-red-500">*</span></label>
                                 <input className="input" value={ruleForm.name} onChange={(e) => setRuleForm({ ...ruleForm, name: e.target.value })} required />
                             </div>
+
+                            {/* Module + Condition */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="label">Module <span className="text-red-500">*</span></label>
-                                    <select className="input" value={ruleForm.moduleType} onChange={(e) => setRuleForm({ ...ruleForm, moduleType: e.target.value })}>
+                                    <select className="input" value={ruleForm.moduleType} onChange={(e) => {
+                                        const mod = e.target.value;
+                                        const firstCond = CONDITIONS_BY_MODULE[mod]?.[0]?.value ?? 'OVERDUE';
+                                        setRuleForm({ ...ruleForm, moduleType: mod, conditionType: firstCond, conditionValue: '' });
+                                    }}>
                                         <option value="GOAL">Goals</option>
                                         <option value="TASK">Tasks</option>
                                         <option value="HOUSEWORK">Housework</option>
@@ -324,30 +370,90 @@ export default function AlertsPage() {
                                 </div>
                                 <div>
                                     <label className="label">Condition <span className="text-red-500">*</span></label>
-                                    <select className="input" value={ruleForm.conditionType} onChange={(e) => setRuleForm({ ...ruleForm, conditionType: e.target.value })}>
-                                        <option value="OVERDUE">Overdue</option>
-                                        <option value="DUE_TODAY">Due Today</option>
-                                        <option value="THRESHOLD_EXCEEDED">Threshold Exceeded</option>
+                                    <select className="input" value={ruleForm.conditionType} onChange={(e) => setRuleForm({ ...ruleForm, conditionType: e.target.value, conditionValue: '' })}>
+                                        {(CONDITIONS_BY_MODULE[ruleForm.moduleType] || []).map(c => (
+                                            <option key={c.value} value={c.value}>{c.label}</option>
+                                        ))}
                                     </select>
                                 </div>
-                                <div className="col-span-2">
+                                {/* Threshold value for conditions that need it */}
+                                {CONDITIONS_BY_MODULE[ruleForm.moduleType]?.find(c => c.value === ruleForm.conditionType)?.hasThreshold && (
+                                    <div className="col-span-2">
+                                        <label className="label">
+                                            {ruleForm.conditionType === 'PROGRESS_BELOW' ? 'Threshold (%)' : 'Threshold Value'}
+                                            <span className="text-red-500"> *</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            className="input"
+                                            min={0}
+                                            max={ruleForm.conditionType === 'PROGRESS_BELOW' ? 100 : undefined}
+                                            value={ruleForm.conditionValue}
+                                            onChange={(e) => setRuleForm({ ...ruleForm, conditionValue: e.target.value })}
+                                            placeholder={ruleForm.conditionType === 'PROGRESS_BELOW' ? 'e.g. 50' : 'e.g. 1000000'}
+                                            required
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Schedule */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
                                     <label className="label">Frequency <span className="text-red-500">*</span></label>
                                     <select className="input" value={ruleForm.frequency} onChange={(e) => setRuleForm({ ...ruleForm, frequency: e.target.value })}>
                                         <option value="DAILY">Daily</option>
                                         <option value="WEEKLY">Weekly</option>
+                                        <option value="MONTHLY">Monthly</option>
                                     </select>
                                 </div>
-                                <div className="col-span-2">
-                                    <label className="label">Notification Channel <span className="text-red-500">*</span></label>
-                                    <select className="input" value={ruleForm.notificationChannel} onChange={(e) => setRuleForm({ ...ruleForm, notificationChannel: e.target.value })}>
-                                        <option value="EMAIL">Email</option>
-                                        <option value="TELEGRAM">Telegram</option>
-                                        <option value="BOTH">Both</option>
-                                    </select>
+                                <div>
+                                    <label className="label">Time</label>
+                                    <input type="time" className="input" value={ruleForm.time} onChange={(e) => setRuleForm({ ...ruleForm, time: e.target.value })} />
                                 </div>
+                                {ruleForm.frequency === 'WEEKLY' && (
+                                    <div className="col-span-2">
+                                        <label className="label">Day of Week</label>
+                                        <select className="input" value={ruleForm.dayOfWeek} onChange={(e) => setRuleForm({ ...ruleForm, dayOfWeek: Number(e.target.value) })}>
+                                            <option value={1}>Monday</option>
+                                            <option value={2}>Tuesday</option>
+                                            <option value={3}>Wednesday</option>
+                                            <option value={4}>Thursday</option>
+                                            <option value={5}>Friday</option>
+                                            <option value={6}>Saturday</option>
+                                            <option value={0}>Sunday</option>
+                                        </select>
+                                    </div>
+                                )}
+                                {ruleForm.frequency === 'MONTHLY' && (
+                                    <div className="col-span-2">
+                                        <label className="label">Day of Month</label>
+                                        <select className="input" value={ruleForm.dayOfMonth} onChange={(e) => setRuleForm({ ...ruleForm, dayOfMonth: Number(e.target.value) })}>
+                                            {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                                                <option key={d} value={d}>{d}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Cooldown */}
+                            <div>
+                                <label className="label">Cooldown (hours)</label>
+                                <input
+                                    type="number"
+                                    className="input"
+                                    min={1}
+                                    value={ruleForm.cooldownHours}
+                                    onChange={(e) => setRuleForm({ ...ruleForm, cooldownHours: Number(e.target.value) })}
+                                />
+                                <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                    Minimum hours between notifications if condition persists.
+                                </p>
+                            </div>
+
                             <button type="submit" className="btn-primary w-full" disabled={createRuleMut.isPending || updateRuleMut.isPending}>
-                                {editingRule ? 'Save Rule' : 'Create Alert Rule'}
+                                {editingRule ? 'Save Notification' : 'Create Notification'}
                             </button>
                         </form>
                     </div>

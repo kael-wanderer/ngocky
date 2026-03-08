@@ -90,6 +90,7 @@ enum NotificationChannel {
 enum AlertFrequency {
   DAILY
   WEEKLY
+  MONTHLY
 }
 
 enum ReportFrequency {
@@ -515,8 +516,13 @@ model AlertRule {
   name                String
   moduleType          String
   frequency           AlertFrequency      @default(DAILY)
+  dayOfWeek           Int?
+  dayOfMonth          Int?
+  time                String?
   conditionType       String
   conditionValue      String?
+  cooldownHours       Int                 @default(24)
+  lastSentAt          DateTime?
   notificationChannel NotificationChannel @default(EMAIL)
   active              Boolean             @default(true)
   userId              String

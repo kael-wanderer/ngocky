@@ -75,10 +75,13 @@ export const updateIdeaLogSchema = createIdeaLogSchema.partial().omit({ topicId:
 export const createAlertRuleSchema = z.object({
     name: z.string().min(1).max(200),
     moduleType: z.string().min(1),
-    frequency: z.enum(['DAILY', 'WEEKLY']).optional(),
+    frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
+    dayOfWeek: z.number().int().min(0).max(6).optional(),
+    dayOfMonth: z.number().int().min(1).max(31).optional(),
+    time: z.string().optional(),
     conditionType: z.string().min(1),
     conditionValue: z.string().optional(),
-    notificationChannel: z.enum(['EMAIL', 'TELEGRAM', 'BOTH']).optional(),
+    cooldownHours: z.number().int().min(1).optional(),
     active: z.boolean().optional(),
 });
 
