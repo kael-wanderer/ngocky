@@ -6,6 +6,29 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameM
 import { useSearchParams } from 'react-router-dom';
 
 type CalendarView = 'today' | 'week' | 'month';
+const reminderUnitOptions = [
+    { value: 'MINUTES', label: 'Mins' },
+    { value: 'HOURS', label: 'Hour' },
+    { value: 'DAYS', label: 'Days' },
+] as const;
+
+const emptyForm = {
+    title: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    allDay: false,
+    location: '',
+    color: '#4f46e5',
+    isShared: true,
+    pinToDashboard: false,
+    repeatFrequency: '',
+    repeatEndType: '',
+    repeatUntil: '',
+    notificationEnabled: false,
+    reminderOffsetUnit: 'DAYS',
+    reminderOffsetValue: 1,
+};
 
 export default function CalendarPage() {
     const qc = useQueryClient();
@@ -15,7 +38,7 @@ export default function CalendarPage() {
     const [showCreate, setShowCreate] = useState(false);
     const [editingEvent, setEditingEvent] = useState<any>(null);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const [form, setForm] = useState({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true, pinToDashboard: false, repeatFrequency: '', repeatEndType: '', repeatUntil: '' });
+    const [form, setForm] = useState({ ...emptyForm });
     const eventIdParam = searchParams.get('eventId');
     const dateParam = searchParams.get('date');
 
@@ -45,7 +68,7 @@ export default function CalendarPage() {
 
     const createMut = useMutation({
         mutationFn: (body: any) => api.post('/calendar', body),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['calendar'] }); setShowCreate(false); setForm({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true, pinToDashboard: false, repeatFrequency: '', repeatEndType: '', repeatUntil: '' }); },
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['calendar'] }); setShowCreate(false); setForm({ ...emptyForm }); },
     });
 
     const updateMut = useMutation({
@@ -53,7 +76,7 @@ export default function CalendarPage() {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['calendar'] });
             setEditingEvent(null);
-            setForm({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true, pinToDashboard: false, repeatFrequency: '', repeatEndType: '', repeatUntil: '' });
+            setForm({ ...emptyForm });
         },
     });
 
@@ -77,18 +100,8 @@ export default function CalendarPage() {
     const openCreate = () => {
         setEditingEvent(null);
         setForm({
-            title: '',
-            description: '',
+            ...emptyForm,
             startDate: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-            endDate: '',
-            allDay: false,
-            location: '',
-            color: '#4f46e5',
-            isShared: true,
-            pinToDashboard: false,
-            repeatFrequency: '',
-            repeatEndType: '',
-            repeatUntil: '',
         });
         setShowCreate(true);
     };
@@ -109,6 +122,9 @@ export default function CalendarPage() {
             repeatFrequency: event.repeatFrequency || '',
             repeatEndType: event.repeatEndType || '',
             repeatUntil: event.repeatUntil ? format(new Date(event.repeatUntil), 'yyyy-MM-dd') : '',
+            notificationEnabled: !!event.notificationEnabled,
+            reminderOffsetUnit: event.reminderOffsetUnit || 'DAYS',
+            reminderOffsetValue: event.reminderOffsetValue || 1,
         });
     };
 
@@ -183,7 +199,7 @@ export default function CalendarPage() {
             </div>
 
             {(showCreate || editingEvent) && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => { setShowCreate(false); setEditingEvent(null); }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreate(false); setEditingEvent(null); } }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">{editingEvent ? 'Edit Event' : 'Create Event'}</h3>
@@ -201,6 +217,8 @@ export default function CalendarPage() {
                             else delete body.endDate;
                             if (form.repeatFrequency && form.repeatEndType === 'ON_DATE' && form.repeatUntil) body.repeatUntil = new Date(`${form.repeatUntil}T23:59:59.999`).toISOString();
                             else body.repeatUntil = null;
+                            body.reminderOffsetUnit = form.notificationEnabled ? form.reminderOffsetUnit : null;
+                            body.reminderOffsetValue = form.notificationEnabled ? form.reminderOffsetValue : null;
                             if (editingEvent) updateMut.mutate({ id: getSourceId(editingEvent), body });
                             else createMut.mutate(body);
                         }} className="space-y-4">
@@ -244,6 +262,21 @@ export default function CalendarPage() {
                                     <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} className="rounded" /> Pin to dashboard</label>
                                 </div>
                             </div>
+                            <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.notificationEnabled} onChange={(e) => setForm({ ...form, notificationEnabled: e.target.checked })} className="rounded" /> Reminder enabled</label>
+                            {form.notificationEnabled && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label">Before deadline</label>
+                                        <select className="input" value={form.reminderOffsetUnit} onChange={(e) => setForm({ ...form, reminderOffsetUnit: e.target.value })}>
+                                            {reminderUnitOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="label">Unit</label>
+                                        <input type="number" min={1} className="input" value={form.reminderOffsetValue} onChange={(e) => setForm({ ...form, reminderOffsetValue: parseInt(e.target.value) || 1 })} />
+                                    </div>
+                                </div>
+                            )}
                             <button type="submit" className="btn-primary w-full" disabled={createMut.isPending || updateMut.isPending}>{editingEvent ? 'Save Changes' : 'Create Event'}</button>
                         </form>
                     </div>

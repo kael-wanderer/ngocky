@@ -9,6 +9,12 @@ const unitOptions = [
     { value: 'minutes', label: 'Minute' },
 ] as const;
 
+const reminderUnitOptions = [
+    { value: 'MINUTES', label: 'Mins' },
+    { value: 'HOURS', label: 'Hour' },
+    { value: 'DAYS', label: 'Days' },
+] as const;
+
 const emptyForm = {
     title: '',
     description: '',
@@ -18,6 +24,9 @@ const emptyForm = {
     targetCount: 3,
     unit: 'times',
     trackingType: 'BY_FREQUENCY',
+    notificationEnabled: false,
+    reminderOffsetUnit: 'DAYS',
+    reminderOffsetValue: 1,
 };
 
 type GoalFormState = typeof emptyForm;
@@ -78,6 +87,24 @@ function GoalForm({
             </div>
 
             <div className="grid grid-cols-1 gap-2">
+                <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={form.notificationEnabled} onChange={(e) => setForm({ ...form, notificationEnabled: e.target.checked })} />
+                    Reminder enabled
+                </label>
+                {form.notificationEnabled && (
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="label">Before deadline</label>
+                            <select className="input" value={form.reminderOffsetUnit} onChange={(e) => setForm({ ...form, reminderOffsetUnit: e.target.value })}>
+                                {reminderUnitOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="label">Unit</label>
+                            <input type="number" min={1} className="input" value={form.reminderOffsetValue} onChange={(e) => setForm({ ...form, reminderOffsetValue: parseInt(e.target.value) || 1 })} />
+                        </div>
+                    </div>
+                )}
                 <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} />
                     Share with all users
@@ -203,6 +230,9 @@ export default function GoalsPage() {
             targetCount: goal.targetCount,
             unit: goal.unit || 'times',
             trackingType: goal.trackingType || 'BY_FREQUENCY',
+            notificationEnabled: !!goal.notificationEnabled,
+            reminderOffsetUnit: goal.reminderOffsetUnit || 'DAYS',
+            reminderOffsetValue: goal.reminderOffsetValue || 1,
         });
     };
 
@@ -217,6 +247,9 @@ export default function GoalsPage() {
             targetCount: goal.targetCount,
             unit: goal.unit || 'times',
             trackingType: goal.trackingType || 'BY_FREQUENCY',
+            notificationEnabled: !!goal.notificationEnabled,
+            reminderOffsetUnit: goal.reminderOffsetUnit || 'DAYS',
+            reminderOffsetValue: goal.reminderOffsetValue || 1,
         });
         setShowCreate(true);
     };
@@ -293,7 +326,7 @@ export default function GoalsPage() {
             </div>
 
             {showCreate && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowCreate(false)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowCreate(false); }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Create New Goal</h3>
@@ -305,7 +338,7 @@ export default function GoalsPage() {
             )}
 
             {editGoal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setEditGoal(null)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setEditGoal(null); }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Edit Goal</h3>
@@ -317,7 +350,7 @@ export default function GoalsPage() {
             )}
 
             {checkInGoalId && selectedGoal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setCheckInGoalId(null)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setCheckInGoalId(null); }}>
                     <div className="card p-6 w-full max-w-sm animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-1">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Check-in</h3>

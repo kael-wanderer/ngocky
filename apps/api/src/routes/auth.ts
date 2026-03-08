@@ -3,8 +3,11 @@ import rateLimit from 'express-rate-limit';
 import { AuthService } from '../services/auth';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
-import { loginSchema, changePasswordSchema, refreshTokenSchema } from '../validators/auth';
+import { loginSchema, changePasswordSchema, verifyMfaSchema } from '../validators/auth';
 import { sendSuccess, sendMessage } from '../utils/response';
+import { prisma } from '../config/database';
+import { verifyTotpCode } from '../utils/mfa';
+import { UnauthorizedError } from '../utils/errors';
 
 const REFRESH_TOKEN_COOKIE = 'ngocky_refresh_token';
 
@@ -34,9 +37,36 @@ const loginLimiter = rateLimit({
 
 router.post('/login', loginLimiter, validate(loginSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { accessToken, refreshToken, user } = await AuthService.login(req.body.email, req.body.password);
+        const loginResult = await AuthService.login(req.body.email, req.body.password);
+        if (loginResult.mfaRequired) {
+            return sendSuccess(res, {
+                mfaRequired: true,
+                mfaToken: loginResult.mfaToken,
+                user: loginResult.user,
+            });
+        }
+        const accessToken = loginResult.accessToken!;
+        const refreshToken = loginResult.refreshToken!;
+        const user = loginResult.user;
         setRefreshTokenCookie(res, refreshToken);
-        sendSuccess(res, { accessToken, user });
+        sendSuccess(res, { accessToken, user, mfaRequired: false });
+    } catch (err) { next(err); }
+});
+
+router.post('/verify-mfa', validate(verifyMfaSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const challenge = AuthService.verifyMfaChallengeToken(req.body.mfaToken);
+        const payload: any = await prisma.user.findUnique({
+            where: { id: challenge.userId },
+            select: { id: true, mfaEnabled: true, mfaSecret: true } as any,
+        });
+        if (!payload?.mfaEnabled || !payload.mfaSecret || !verifyTotpCode(payload.mfaSecret, req.body.code)) {
+            throw new UnauthorizedError('Invalid verification code');
+        }
+
+        const { accessToken, refreshToken, user } = await AuthService.completeMfaLogin(req.body.mfaToken);
+        setRefreshTokenCookie(res, refreshToken);
+        sendSuccess(res, { accessToken, user, mfaRequired: false });
     } catch (err) { next(err); }
 });
 
@@ -72,7 +102,7 @@ router.get('/me', authenticate, async (req: Request, res: Response, next: NextFu
         const { prisma } = await import('../config/database');
         const user = await prisma.user.findUnique({
             where: { id: req.user!.userId },
-            select: { id: true, email: true, name: true, role: true, theme: true, active: true, notificationEnabled: true, notificationChannel: true, notificationEmail: true, telegramChatId: true },
+            select: { id: true, email: true, name: true, role: true, theme: true, active: true, mfaEnabled: true, notificationEnabled: true, notificationChannel: true, notificationEmail: true, telegramChatId: true } as any,
         });
         sendSuccess(res, user);
     } catch (err) { next(err); }

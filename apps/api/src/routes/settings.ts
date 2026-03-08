@@ -3,20 +3,31 @@ import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { sendSuccess, sendMessage } from '../utils/response';
 import { config } from '../config/env';
+import { buildOtpAuthUrl, buildQrCodeUrl, generateTotpSecret, verifyTotpCode } from '../utils/mfa';
+import { UnauthorizedError } from '../utils/errors';
 
 const router = Router();
 router.use(authenticate);
 
+const profileSelect: any = {
+    id: true,
+    email: true,
+    name: true,
+    role: true,
+    theme: true,
+    mfaEnabled: true,
+    notificationEnabled: true,
+    notificationChannel: true,
+    notificationEmail: true,
+    telegramChatId: true,
+} as const;
+
 // Get profile/settings
 router.get('/profile', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await prisma.user.findUnique({
+        const user: any = await prisma.user.findUnique({
             where: { id: req.user!.userId },
-            select: {
-                id: true, email: true, name: true, role: true, theme: true,
-                notificationEnabled: true, notificationChannel: true,
-                notificationEmail: true, telegramChatId: true,
-            },
+            select: profileSelect,
         });
         sendSuccess(res, user);
     } catch (err) { next(err); }
@@ -32,13 +43,105 @@ router.patch('/profile', async (req: Request, res: Response, next: NextFunction)
         const user = await prisma.user.update({
             where: { id: req.user!.userId },
             data,
-            select: {
-                id: true, email: true, name: true, role: true, theme: true,
-                notificationEnabled: true, notificationChannel: true,
-                notificationEmail: true, telegramChatId: true,
-            },
+            select: profileSelect,
         });
         sendSuccess(res, user);
+    } catch (err) { next(err); }
+});
+
+router.get('/mfa', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user: any = await prisma.user.findUnique({
+            where: { id: req.user!.userId },
+            select: { email: true, mfaEnabled: true, mfaPendingSecret: true } as any,
+        });
+        if (!user) throw new UnauthorizedError();
+
+        if (!user.mfaPendingSecret) {
+            return sendSuccess(res, { enabled: !!user.mfaEnabled, pending: false });
+        }
+
+        const appName = 'NgốcKý';
+        const otpauthUrl = buildOtpAuthUrl(user.mfaPendingSecret, user.email, appName);
+        return sendSuccess(res, {
+            enabled: !!user.mfaEnabled,
+            pending: true,
+            manualKey: user.mfaPendingSecret,
+            otpauthUrl,
+            qrCodeUrl: buildQrCodeUrl(otpauthUrl),
+        });
+    } catch (err) { next(err); }
+});
+
+router.post('/mfa/setup', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const existing: any = await prisma.user.findUnique({
+            where: { id: req.user!.userId },
+            select: { email: true, mfaEnabled: true } as any,
+        });
+        if (!existing) throw new UnauthorizedError();
+
+        const secret = generateTotpSecret();
+        await prisma.user.update({
+            where: { id: req.user!.userId },
+            data: { mfaPendingSecret: secret } as any,
+        });
+
+        const appName = 'NgốcKý';
+        const otpauthUrl = buildOtpAuthUrl(secret, existing.email, appName);
+        sendSuccess(res, {
+            enabled: !!existing.mfaEnabled,
+            pending: true,
+            manualKey: secret,
+            otpauthUrl,
+            qrCodeUrl: buildQrCodeUrl(otpauthUrl),
+        });
+    } catch (err) { next(err); }
+});
+
+router.post('/mfa/enable', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const code = String(req.body.code || '');
+        const user: any = await prisma.user.findUnique({
+            where: { id: req.user!.userId },
+            select: { mfaPendingSecret: true } as any,
+        });
+        if (!user?.mfaPendingSecret || !verifyTotpCode(user.mfaPendingSecret, code)) {
+            throw new UnauthorizedError('Invalid verification code');
+        }
+
+        await prisma.user.update({
+            where: { id: req.user!.userId },
+            data: {
+                mfaEnabled: true,
+                mfaSecret: user.mfaPendingSecret,
+                mfaPendingSecret: null,
+            } as any,
+        });
+        sendMessage(res, 'MFA enabled');
+    } catch (err) { next(err); }
+});
+
+router.post('/mfa/disable', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const code = String(req.body.code || '');
+        const user: any = await prisma.user.findUnique({
+            where: { id: req.user!.userId },
+            select: { mfaEnabled: true, mfaSecret: true } as any,
+        });
+        if (!user?.mfaEnabled || !user.mfaSecret || !verifyTotpCode(user.mfaSecret, code)) {
+            throw new UnauthorizedError('Invalid verification code');
+        }
+
+        await prisma.user.update({
+            where: { id: req.user!.userId },
+            data: {
+                mfaEnabled: false,
+                mfaSecret: null,
+                mfaPendingSecret: null,
+            } as any,
+        });
+        sendMessage(res, 'MFA disabled');
     } catch (err) { next(err); }
 });
 

@@ -10,6 +10,25 @@ const STATUS_COLS = ['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED'] as const;
 const statusLabels: Record<string, string> = { PLANNED: 'Planned', IN_PROGRESS: 'In Progress', DONE: 'Done', ARCHIVED: 'Archived' };
 const statusColors: Record<string, string> = { PLANNED: '#64748b', IN_PROGRESS: '#4f46e5', DONE: '#059669', ARCHIVED: '#94a3b8' };
 const priorityColors: Record<string, string> = { LOW: '#94a3b8', MEDIUM: '#3b82f6', HIGH: '#f59e0b', URGENT: '#ef4444' };
+const reminderUnitOptions = [
+    { value: 'MINUTES', label: 'Mins' },
+    { value: 'HOURS', label: 'Hour' },
+    { value: 'DAYS', label: 'Days' },
+] as const;
+
+const emptyTaskForm = {
+    title: '',
+    description: '',
+    priority: 'MEDIUM',
+    status: 'PLANNED',
+    deadline: '',
+    category: '',
+    isShared: false,
+    pinToDashboard: false,
+    notificationEnabled: false,
+    reminderOffsetUnit: 'DAYS',
+    reminderOffsetValue: 1,
+};
 
 export default function ProjectsPage() {
     const qc = useQueryClient();
@@ -25,7 +44,7 @@ export default function ProjectsPage() {
     const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
 
     const [boardForm, setBoardForm] = useState({ name: '', description: '', type: 'PERSONAL', isShared: false, pinToDashboard: false });
-    const [taskForm, setTaskForm] = useState({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false, pinToDashboard: false });
+    const [taskForm, setTaskForm] = useState({ ...emptyTaskForm });
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const boardIdParam = searchParams.get('boardId');
@@ -69,7 +88,7 @@ export default function ProjectsPage() {
             qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
             qc.invalidateQueries({ queryKey: ['project_boards'] });
             setShowCreateTask(false);
-            setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false, pinToDashboard: false });
+            setTaskForm({ ...emptyTaskForm });
         },
     });
 
@@ -141,6 +160,9 @@ export default function ProjectsPage() {
             deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
             isShared: !!task.isShared,
             pinToDashboard: !!task.pinToDashboard,
+            notificationEnabled: !!task.notificationEnabled,
+            reminderOffsetUnit: task.reminderOffsetUnit || 'DAYS',
+            reminderOffsetValue: task.reminderOffsetValue || 1,
         });
         setShowCreateTask(true);
     };
@@ -165,6 +187,9 @@ export default function ProjectsPage() {
             deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
             isShared: !!task.isShared,
             pinToDashboard: !!task.pinToDashboard,
+            notificationEnabled: !!task.notificationEnabled,
+            reminderOffsetUnit: task.reminderOffsetUnit || 'DAYS',
+            reminderOffsetValue: task.reminderOffsetValue || 1,
         });
     }, [taskIdParam, activeBoard]);
 
@@ -338,7 +363,7 @@ export default function ProjectsPage() {
                     <button className="p-2 rounded-lg border hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--color-border)' }} onClick={refreshBoard} title="Refresh board">
                         <RefreshCw className={`w-4 h-4 ${activeBoardLoading || moveTaskMut.isPending ? 'animate-spin' : ''}`} />
                     </button>
-                    <button className="btn-primary" onClick={() => { setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false, pinToDashboard: false }); setShowCreateTask(true); }}><Plus className="w-4 h-4" /> New Task</button>
+                    <button className="btn-primary" onClick={() => { setEditingTask(null); setTaskForm({ ...emptyTaskForm }); setShowCreateTask(true); }}><Plus className="w-4 h-4" /> New Task</button>
                 </div>
             </div>
 
@@ -392,11 +417,11 @@ export default function ProjectsPage() {
 
             {/* Task Modal */}
             {(showCreateTask || editingTask) && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreateTask(false); setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false, pinToDashboard: false }); } }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreateTask(false); setEditingTask(null); setTaskForm({ ...emptyTaskForm }); } }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">{editingTask ? 'Edit Task' : 'Create Task'}</h3>
-                            <button onClick={() => { setShowCreateTask(false); setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false, pinToDashboard: false }); }}><X className="w-5 h-5" /></button>
+                            <button onClick={() => { setShowCreateTask(false); setEditingTask(null); setTaskForm({ ...emptyTaskForm }); }}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
@@ -446,6 +471,28 @@ export default function ProjectsPage() {
                                 />
                                 Pin to dashboard
                             </label>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    checked={taskForm.notificationEnabled}
+                                    onChange={(e) => setTaskForm({ ...taskForm, notificationEnabled: e.target.checked })}
+                                />
+                                Reminder enabled
+                            </label>
+                            {taskForm.notificationEnabled && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label">Before deadline</label>
+                                        <select className="input" value={taskForm.reminderOffsetUnit} onChange={(e) => setTaskForm({ ...taskForm, reminderOffsetUnit: e.target.value })}>
+                                            {reminderUnitOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="label">Unit</label>
+                                        <input type="number" min={1} className="input" value={taskForm.reminderOffsetValue} onChange={(e) => setTaskForm({ ...taskForm, reminderOffsetValue: parseInt(e.target.value) || 1 })} />
+                                    </div>
+                                </div>
+                            )}
                             <button type="submit" className="btn-primary w-full" disabled={createTaskMut.isPending || updateTaskMut.isPending}>
                                 {createTaskMut.isPending || updateTaskMut.isPending ? 'Saving...' : (editingTask ? 'Save Changes' : 'Create Task')}
                             </button>
@@ -490,6 +537,9 @@ export default function ProjectsPage() {
                                             deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : '',
                                             isShared: !!t.isShared,
                                             pinToDashboard: !!t.pinToDashboard,
+                                            notificationEnabled: !!t.notificationEnabled,
+                                            reminderOffsetUnit: t.reminderOffsetUnit || 'DAYS',
+                                            reminderOffsetValue: t.reminderOffsetValue || 1,
                                         });
                                     }}
                                     >
@@ -556,6 +606,9 @@ export default function ProjectsPage() {
                                             deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : '',
                                             isShared: !!t.isShared,
                                             pinToDashboard: !!t.pinToDashboard,
+                                            notificationEnabled: !!t.notificationEnabled,
+                                            reminderOffsetUnit: t.reminderOffsetUnit || 'DAYS',
+                                            reminderOffsetValue: t.reminderOffsetValue || 1,
                                         });
                                     }}>
                                         <td className="font-medium">{t.title}</td>

@@ -22,6 +22,7 @@ const categoryLabels: Record<Category, string> = {
 };
 
 const TIME_OPTIONS = [
+    { value: 'TODAY', label: 'Today' },
     { value: 'THIS_WEEK', label: 'This week' },
     { value: 'NEXT_WEEK', label: 'Next week' },
     { value: 'THIS_MONTH', label: 'This month' },

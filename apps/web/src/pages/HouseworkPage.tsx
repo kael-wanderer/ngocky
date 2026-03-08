@@ -26,6 +26,11 @@ const weekdayLabels: Record<string, string> = {
 };
 
 const frequencyOptions = ['ONE_TIME', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY'];
+const reminderUnitOptions = [
+    { value: 'MINUTES', label: 'Mins' },
+    { value: 'HOURS', label: 'Hour' },
+    { value: 'DAYS', label: 'Days' },
+] as const;
 
 type HouseworkFormState = {
     title: string;
@@ -33,6 +38,9 @@ type HouseworkFormState = {
     frequencyType: string;
     nextDueDate: string;
     pinToDashboard: boolean;
+    notificationEnabled: boolean;
+    reminderOffsetUnit: string;
+    reminderOffsetValue: number;
     dayOfWeek: string;
     dayOfMonth: string;
     monthOfPeriod: string;
@@ -45,6 +53,9 @@ const emptyForm: HouseworkFormState = {
     frequencyType: 'WEEKLY',
     nextDueDate: '',
     pinToDashboard: false,
+    notificationEnabled: false,
+    reminderOffsetUnit: 'DAYS',
+    reminderOffsetValue: 1,
     dayOfWeek: '1',
     dayOfMonth: '1',
     monthOfPeriod: '1',
@@ -198,6 +209,24 @@ function HouseworkForm({
                 <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} />
                 Pin to dashboard
             </label>
+            <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={form.notificationEnabled} onChange={(e) => setForm({ ...form, notificationEnabled: e.target.checked })} />
+                Reminder enabled
+            </label>
+            {form.notificationEnabled && (
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="label">Before deadline</label>
+                        <select className="input" value={form.reminderOffsetUnit} onChange={(e) => setForm({ ...form, reminderOffsetUnit: e.target.value })}>
+                            {reminderUnitOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="label">Unit</label>
+                        <input type="number" min={1} className="input" value={form.reminderOffsetValue} onChange={(e) => setForm({ ...form, reminderOffsetValue: parseInt(e.target.value) || 1 })} />
+                    </div>
+                </div>
+            )}
 
             <button type="submit" className="btn-primary w-full" disabled={loading}>{submitLabel}</button>
         </form>
@@ -256,6 +285,9 @@ export default function HouseworkPage() {
 
         if (form.nextDueDate) body.nextDueDate = new Date(form.nextDueDate).toISOString();
         body.pinToDashboard = form.pinToDashboard;
+        body.notificationEnabled = form.notificationEnabled;
+        body.reminderOffsetUnit = form.notificationEnabled ? form.reminderOffsetUnit : null;
+        body.reminderOffsetValue = form.notificationEnabled ? form.reminderOffsetValue : null;
 
         if (form.frequencyType === 'WEEKLY') body.dayOfWeek = Number(form.dayOfWeek);
         if (form.frequencyType === 'MONTHLY') body.dayOfMonth = Number(form.dayOfMonth);
@@ -279,6 +311,9 @@ export default function HouseworkPage() {
             frequencyType: item.frequencyType || 'WEEKLY',
             nextDueDate: item.nextDueDate ? new Date(item.nextDueDate).toISOString().split('T')[0] : '',
             pinToDashboard: !!item.pinToDashboard,
+            notificationEnabled: !!item.notificationEnabled,
+            reminderOffsetUnit: item.reminderOffsetUnit || 'DAYS',
+            reminderOffsetValue: item.reminderOffsetValue || 1,
             dayOfWeek: String(item.dayOfWeek || '1'),
             dayOfMonth: String(item.dayOfMonth || '1'),
             monthOfPeriod: String(item.monthOfPeriod || '1'),
@@ -418,7 +453,7 @@ export default function HouseworkPage() {
             </div>
 
             {showCreate && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowCreate(false)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowCreate(false); }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">New Housework</h3>
@@ -436,7 +471,7 @@ export default function HouseworkPage() {
             )}
 
             {editingItem && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setEditingItem(null)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingItem(null); }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">Edit Housework</h3>

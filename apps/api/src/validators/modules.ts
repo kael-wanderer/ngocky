@@ -10,11 +10,35 @@ export const createGoalSchema = z.object({
     trackingType: z.enum(['BY_QUANTITY', 'BY_FREQUENCY']).optional().default('BY_FREQUENCY'),
     startDate: z.string().datetime().optional(),
     notificationEnabled: z.boolean().optional(),
+    reminderOffsetValue: z.number().int().positive().optional(),
+    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS']).optional(),
     pinToDashboard: z.boolean().optional(),
+}).superRefine((data, ctx) => {
+    if (data.notificationEnabled) {
+        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
+        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
+    }
 });
 
-export const updateGoalSchema = createGoalSchema.partial().extend({
+export const updateGoalSchema = z.object({
+    title: z.string().min(1).max(200).optional(),
+    description: z.string().optional(),
+    isShared: z.boolean().optional(),
+    periodType: z.enum(['WEEKLY', 'MONTHLY']).optional(),
+    targetCount: z.number().int().positive().optional(),
+    unit: z.string().optional(),
+    trackingType: z.enum(['BY_QUANTITY', 'BY_FREQUENCY']).optional(),
+    startDate: z.string().datetime().optional(),
+    notificationEnabled: z.boolean().optional(),
+    reminderOffsetValue: z.number().int().positive().optional(),
+    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS']).optional(),
+    pinToDashboard: z.boolean().optional(),
     active: z.boolean().optional(),
+}).superRefine((data, ctx) => {
+    if (data.notificationEnabled) {
+        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
+        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
+    }
 });
 
 export const createCheckInSchema = z.object({
@@ -51,11 +75,38 @@ export const createTaskSchema = z.object({
     assigneeId: z.string().optional(),
     isShared: z.boolean().optional(),
     notificationEnabled: z.boolean().optional(),
+    reminderOffsetValue: z.number().int().positive().optional(),
+    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS']).optional(),
     pinToDashboard: z.boolean().optional(),
     kanbanOrder: z.number().int().optional(),
+}).superRefine((data, ctx) => {
+    if (data.notificationEnabled) {
+        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
+        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
+    }
 });
 
-export const updateTaskSchema = createTaskSchema.partial();
+export const updateTaskSchema = z.object({
+    title: z.string().min(1).max(200).optional(),
+    description: z.string().optional(),
+    projectId: z.string().min(1).optional(),
+    category: z.string().optional(),
+    deadline: z.string().datetime().optional(),
+    priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
+    status: z.enum(['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED']).optional(),
+    assigneeId: z.string().optional(),
+    isShared: z.boolean().optional(),
+    notificationEnabled: z.boolean().optional(),
+    reminderOffsetValue: z.number().int().positive().optional(),
+    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS']).optional(),
+    pinToDashboard: z.boolean().optional(),
+    kanbanOrder: z.number().int().optional(),
+}).superRefine((data, ctx) => {
+    if (data.notificationEnabled) {
+        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
+        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
+    }
+});
 
 const houseworkSchemaBase = z.object({
     title: z.string().min(1).max(200),
@@ -70,6 +121,8 @@ const houseworkSchemaBase = z.object({
     nextDueDate: z.string().datetime().optional(),
     estimatedCost: z.number().optional(),
     notificationEnabled: z.boolean().optional(),
+    reminderOffsetValue: z.number().int().positive().optional(),
+    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS']).optional(),
     pinToDashboard: z.boolean().optional(),
 });
 
@@ -99,6 +152,10 @@ export const createHouseworkSchema = houseworkSchemaBase.superRefine((data, ctx)
             break;
         default:
             break;
+    }
+    if (data.notificationEnabled) {
+        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
+        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
     }
 });
 
@@ -136,6 +193,10 @@ export const updateHouseworkSchema = houseworkSchemaBase.partial().extend({
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['dayOfMonth'], message: 'Provide dayOfMonth when changing to YEARLY' });
         }
     }
+    if (data.notificationEnabled) {
+        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
+        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
+    }
 });
 
 const eventSchemaBase = z.object({
@@ -148,6 +209,9 @@ const eventSchemaBase = z.object({
     color: z.string().optional(),
     category: z.string().optional(),
     isShared: z.boolean().optional(),
+    notificationEnabled: z.boolean().optional(),
+    reminderOffsetValue: z.number().int().positive().optional(),
+    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS']).optional(),
     pinToDashboard: z.boolean().optional(),
     repeatFrequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).nullable().optional(),
     repeatEndType: z.enum(['NEVER', 'ON_DATE']).nullable().optional(),
@@ -164,6 +228,10 @@ export const createEventSchema = eventSchemaBase.superRefine((data, ctx) => {
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repeatUntil'], message: 'repeatUntil is required when repeat ends on date' });
         }
     }
+    if (data.notificationEnabled) {
+        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
+        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
+    }
 });
 
 export const updateEventSchema = eventSchemaBase.partial().superRefine((data, ctx) => {
@@ -174,6 +242,10 @@ export const updateEventSchema = eventSchemaBase.partial().superRefine((data, ct
         if (data.repeatEndType === 'ON_DATE' && !data.repeatUntil) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repeatUntil'], message: 'repeatUntil is required when repeat ends on date' });
         }
+    }
+    if (data.notificationEnabled) {
+        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
+        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
     }
 });
 

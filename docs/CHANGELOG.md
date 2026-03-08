@@ -55,6 +55,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **MFA**: Added TOTP MFA in Settings with QR enrollment, manual setup key, verification code activation, and second-step login verification.
+- **Reminder Offsets**: Added reminder controls for Goals, Project Tasks, Housework, and Calendar Events using `notificationEnabled`, `reminderOffsetValue`, and `reminderOffsetUnit`.
+- **Dashboard Today Filter**: Added `Today` to the dashboard time presets.
 - **Project Type**: Added project type values `PERSONAL`, `WORK`, `FOR_FUN`, and `STUDY`.
 - **Calendar Repeat**: Added calendar recurrence support with `DAILY`, `WEEKLY`, and `MONTHLY` plus repeat end modes `NEVER` and `ON_DATE`.
 - **Asset Warranty**: Added `warrantyMonths` at asset level.
@@ -71,6 +74,8 @@ All notable changes to this project will be documented in this file.
 - **Dashboard Semantics**: Reclassified calendar items as `events` and expense/asset-learning-idea logs as `records`.
 - **Overdue Scope**: Dashboard overdue logic now applies only to true deadline-based items (`ProjectTask.deadline`, `HouseworkItem.nextDueDate`).
 - **Dashboard Date Panels**: Calendar events, asset logs, and learning histories are now shown by selected time range only and are no longer classified as `Pending`, `Completed`, or `Overdue`.
+- **Auth Error Handling**: Frontend 401 refresh logic now skips `/auth/login`, `/auth/logout`, and `/auth/refresh`, so failed login attempts surface normally instead of looking like an instant sign-out.
+- **Modal Backdrop Handling**: Dialogs now dismiss only on direct backdrop press, preventing accidental closure during mouse-based text selection inside forms.
 
 ### Documentation
 

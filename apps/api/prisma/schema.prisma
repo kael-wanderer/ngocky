@@ -115,6 +115,12 @@ enum RepeatEndType {
   ON_DATE
 }
 
+enum ReminderUnit {
+  MINUTES
+  HOURS
+  DAYS
+}
+
 // ─── User ───────────────────────────────────────────
 
 model User {
@@ -125,6 +131,9 @@ model User {
   role                Role                @default(USER)
   active              Boolean             @default(true)
   theme               Theme               @default(BLUE_PURPLE)
+  mfaEnabled          Boolean             @default(false)
+  mfaSecret           String?
+  mfaPendingSecret    String?
   notificationEnabled Boolean             @default(true)
   notificationChannel NotificationChannel @default(EMAIL)
   notificationEmail   String?
@@ -184,6 +193,8 @@ model Goal {
   startDate           DateTime         @default(now())
   active              Boolean          @default(true)
   notificationEnabled Boolean          @default(false)
+  reminderOffsetValue Int?
+  reminderOffsetUnit  ReminderUnit?
   pinToDashboard      Boolean          @default(false)
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
@@ -242,6 +253,8 @@ model ProjectTask {
   createdById         String
   isShared            Boolean       @default(false)
   notificationEnabled Boolean       @default(false)
+  reminderOffsetValue Int?
+  reminderOffsetUnit  ReminderUnit?
   pinToDashboard      Boolean       @default(false)
   kanbanOrder         Int           @default(0)
   createdAt           DateTime      @default(now())
@@ -350,6 +363,8 @@ model HouseworkItem {
   lastCompletedDate   DateTime?
   estimatedCost       Float?
   notificationEnabled Boolean       @default(false)
+  reminderOffsetValue Int?
+  reminderOffsetUnit  ReminderUnit?
   pinToDashboard      Boolean       @default(false)
   active              Boolean       @default(true)
   createdAt           DateTime      @default(now())
@@ -419,6 +434,9 @@ model CalendarEvent {
   color       String?
   category    String?
   isShared    Boolean            @default(true)
+  notificationEnabled Boolean    @default(false)
+  reminderOffsetValue Int?
+  reminderOffsetUnit ReminderUnit?
   pinToDashboard Boolean         @default(false)
   repeatFrequency RepeatFrequency?
   repeatEndType RepeatEndType?

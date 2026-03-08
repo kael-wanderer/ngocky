@@ -6,6 +6,7 @@ interface User {
     name: string;
     role: 'OWNER' | 'ADMIN' | 'USER';
     theme: string;
+    mfaEnabled?: boolean;
 }
 
 interface AuthState {

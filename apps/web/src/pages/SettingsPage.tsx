@@ -2,17 +2,24 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
-import { Settings as SettingsIcon, User, Bell, Palette, Lock } from 'lucide-react';
+import { Settings as SettingsIcon, User, Bell, Palette, Lock, Shield } from 'lucide-react';
 
 export default function SettingsPage() {
     const { user, setUser } = useAuthStore();
     const qc = useQueryClient();
     const [tab, setTab] = useState('profile');
     const [msg, setMsg] = useState('');
+    const [mfaEnableCode, setMfaEnableCode] = useState('');
+    const [mfaDisableCode, setMfaDisableCode] = useState('');
 
     const { data: profile } = useQuery({
         queryKey: ['profile'],
         queryFn: async () => (await api.get('/settings/profile')).data.data,
+    });
+
+    const { data: mfaState } = useQuery({
+        queryKey: ['mfa'],
+        queryFn: async () => (await api.get('/settings/mfa')).data.data,
     });
 
     const updateProfile = useMutation({
@@ -31,12 +38,49 @@ export default function SettingsPage() {
         onError: (e: any) => { setMsg(e.response?.data?.message || 'Failed'); },
     });
 
+    const setupMfa = useMutation({
+        mutationFn: () => api.post('/settings/mfa/setup'),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['mfa'] });
+            setMsg('Scan the QR code, then enter the 6-digit code to finish enabling MFA.');
+            setTimeout(() => setMsg(''), 4000);
+        },
+        onError: (e: any) => setMsg(e.response?.data?.message || 'Failed to start MFA setup'),
+    });
+
+    const enableMfa = useMutation({
+        mutationFn: (code: string) => api.post('/settings/mfa/enable', { code }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['mfa'] });
+            qc.invalidateQueries({ queryKey: ['profile'] });
+            setUser({ ...(user as any), mfaEnabled: true });
+            setMfaEnableCode('');
+            setMsg('MFA enabled.');
+            setTimeout(() => setMsg(''), 3000);
+        },
+        onError: (e: any) => setMsg(e.response?.data?.message || 'Failed to enable MFA'),
+    });
+
+    const disableMfa = useMutation({
+        mutationFn: (code: string) => api.post('/settings/mfa/disable', { code }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['mfa'] });
+            qc.invalidateQueries({ queryKey: ['profile'] });
+            setUser({ ...(user as any), mfaEnabled: false });
+            setMfaDisableCode('');
+            setMsg('MFA disabled.');
+            setTimeout(() => setMsg(''), 3000);
+        },
+        onError: (e: any) => setMsg(e.response?.data?.message || 'Failed to disable MFA'),
+    });
+
     const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
 
     const tabs = [
         { id: 'profile', label: 'Profile', icon: User },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'theme', label: 'Theme', icon: Palette },
+        { id: 'security', label: 'Security', icon: Shield },
         { id: 'password', label: 'Password', icon: Lock },
     ];
 
@@ -134,6 +178,88 @@ export default function SettingsPage() {
                                     <input className="input max-w-sm" defaultValue={profile.telegramChatId || ''}
                                         onBlur={(e) => updateProfile.mutate({ telegramChatId: e.target.value || null })}
                                     />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Security */}
+                    {tab === 'security' && profile && (
+                        <div className="space-y-5">
+                            <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Security</h3>
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="rounded"
+                                    checked={!!profile.mfaEnabled || !!mfaState?.pending}
+                                    onChange={(e) => {
+                                        if (e.target.checked) setupMfa.mutate();
+                                    }}
+                                />
+                                <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Enable MFA</span>
+                            </label>
+
+                            {!profile.mfaEnabled && mfaState?.pending && (
+                                <div className="space-y-4 rounded-xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
+                                    <div>
+                                        <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Scan this QR code with your authenticator app</p>
+                                        <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                            Google Authenticator, 1Password, Microsoft Authenticator, or similar apps will work.
+                                        </p>
+                                    </div>
+                                    <img src={mfaState.qrCodeUrl} alt="MFA QR code" className="w-48 h-48 rounded-lg border bg-white p-2" style={{ borderColor: 'var(--color-border)' }} />
+                                    <div>
+                                        <label className="label">Manual setup key</label>
+                                        <div className="input font-mono text-sm break-all">{mfaState.manualKey}</div>
+                                    </div>
+                                    <form onSubmit={(e) => {
+                                        e.preventDefault();
+                                        enableMfa.mutate(mfaEnableCode);
+                                    }} className="space-y-3 max-w-sm">
+                                        <div>
+                                            <label className="label">Verification code</label>
+                                            <input
+                                                className="input tracking-[0.35em] text-center"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
+                                                maxLength={6}
+                                                value={mfaEnableCode}
+                                                onChange={(e) => setMfaEnableCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                                required
+                                            />
+                                        </div>
+                                        <button type="submit" className="btn-primary" disabled={enableMfa.isPending || mfaEnableCode.length !== 6}>
+                                            {enableMfa.isPending ? 'Verifying...' : 'Verify and Enable'}
+                                        </button>
+                                    </form>
+                                </div>
+                            )}
+
+                            {profile.mfaEnabled && (
+                                <div className="space-y-4 rounded-xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
+                                    <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                                        MFA is currently enabled. To turn it off, enter a valid 6-digit code from your authenticator app.
+                                    </p>
+                                    <form onSubmit={(e) => {
+                                        e.preventDefault();
+                                        disableMfa.mutate(mfaDisableCode);
+                                    }} className="space-y-3 max-w-sm">
+                                        <div>
+                                            <label className="label">Verification code</label>
+                                            <input
+                                                className="input tracking-[0.35em] text-center"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
+                                                maxLength={6}
+                                                value={mfaDisableCode}
+                                                onChange={(e) => setMfaDisableCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                                required
+                                            />
+                                        </div>
+                                        <button type="submit" className="btn-danger" disabled={disableMfa.isPending || mfaDisableCode.length !== 6}>
+                                            {disableMfa.isPending ? 'Disabling...' : 'Disable MFA'}
+                                        </button>
+                                    </form>
                                 </div>
                             )}
                         </div>

@@ -6,7 +6,7 @@ import { sendSuccess } from '../utils/response';
 const router = Router();
 router.use(authenticate);
 
-type TimeRangeKey = 'THIS_WEEK' | 'NEXT_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH';
+type TimeRangeKey = 'TODAY' | 'THIS_WEEK' | 'NEXT_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH';
 type StatusFilterKey = 'PENDING' | 'COMPLETED' | 'OVERDUE';
 
 function getWeekStart(now: Date): Date {
@@ -16,6 +16,9 @@ function getWeekStart(now: Date): Date {
 }
 
 function getTimeRange(now: Date, rangeKey: TimeRangeKey) {
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
     const weekStart = getWeekStart(now);
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
@@ -27,6 +30,8 @@ function getTimeRange(now: Date, rangeKey: TimeRangeKey) {
     const monthAfterNextStart = new Date(now.getFullYear(), now.getMonth() + 2, 1);
 
     switch (rangeKey) {
+        case 'TODAY':
+            return { start: todayStart, end: tomorrowStart };
         case 'NEXT_WEEK':
             return { start: weekEnd, end: nextWeekEnd };
         case 'THIS_MONTH':
@@ -47,7 +52,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const userId = req.user!.userId;
         const rawRange = String(req.query.timeRange || 'THIS_WEEK').toUpperCase();
         const rawStatus = String(req.query.status || 'PENDING').toUpperCase();
-        const timeRange = (['THIS_WEEK', 'NEXT_WEEK', 'THIS_MONTH', 'NEXT_MONTH'].includes(rawRange) ? rawRange : 'THIS_WEEK') as TimeRangeKey;
+        const timeRange = (['TODAY', 'THIS_WEEK', 'NEXT_WEEK', 'THIS_MONTH', 'NEXT_MONTH'].includes(rawRange) ? rawRange : 'THIS_WEEK') as TimeRangeKey;
         const statusFilter = (['PENDING', 'COMPLETED', 'OVERDUE'].includes(rawStatus) ? rawStatus : 'PENDING') as StatusFilterKey;
         const { start: filterStart, end: filterEnd } = getTimeRange(now, timeRange);
 

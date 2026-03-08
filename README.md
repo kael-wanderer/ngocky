@@ -151,22 +151,22 @@ All endpoints require Bearer token authentication.
 
 ## Modules
 
-- **Dashboard** – Summary cards, filters (`Time`, `Status`, `Category`), overdue feed for true due items, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Assets`, `Learning`, `Pinned Items`)
-- **Goals** – Recurring goals (weekly/monthly) with check-in tracking and progress bars
-- **Projects** – Kanban board + list view with priorities, deadlines, assignees, drag-and-drop status updates, board edit/refresh, shared family boards, and per-task sharing
-- **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete` action and grouped states (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`)
-- **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`), and owner visibility
+- **Dashboard** – Summary cards, filters (`Today`, `This week`, `Next week`, `This month`, `Next month`, `Status`, `Category`), overdue feed for true due items, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Assets`, `Learning`, `Pinned Items`)
+- **Goals** – Recurring goals (weekly/monthly) with check-in tracking, progress bars, and optional reminders before period deadline
+- **Projects** – Kanban board + list view with priorities, deadlines, assignees, drag-and-drop status updates, board edit/refresh, shared family boards, per-task sharing, and optional task reminders
+- **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete` action, grouped states (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`), and optional reminders before due date
+- **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`), owner visibility, and optional reminders before event start
 - **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, expanded scopes (`Personal`, `Family`, `Keo`, `Project`), per-item sharing, sortable columns, and running totals for income, payment, and remaining fund in `VND`
 - **Learning** – Topic-first learning management with shared topics and duplicate actions; topic histories are treated as records
 - **Ideas** – Topic-first idea capture with shared topics and duplicate actions; idea logs are treated as records
 - **Reports** – Charts (bar, pie) for tasks, goals, housework, expenses, learning, and ideas
 - **Scheduled Action** – Rule management with edit/duplicate support and scheduled reports
-- **Settings** – Profile, notifications, theme picker (3 themes) with immediate apply, password change
+- **Settings** – Profile, notifications, theme picker (3 themes) with immediate apply, password change, and TOTP MFA enrollment
 - **User Management** – Admin-only user creation, role assignment, activate/deactivate
 
 ## Dashboard Filters
 
-- **Time**: `THIS_WEEK`, `NEXT_WEEK`, `THIS_MONTH`, `NEXT_MONTH`
+- **Time**: `TODAY`, `THIS_WEEK`, `NEXT_WEEK`, `THIS_MONTH`, `NEXT_MONTH`
 - **Status**:
   - `PENDING`: not completed yet in selected range
   - `COMPLETED`: completed items in selected range (where lifecycle supports completion state)

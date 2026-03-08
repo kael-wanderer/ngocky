@@ -18,6 +18,7 @@ Tracks personal habits and achievement targets over specific time intervals.
   - `BY_FREQUENCY`: Counts each check-in once (e.g., "Gym workout 3 times/week").
   - `BY_QUANTITY`: Sums a 'quantity' value (e.g., "Read 60 mins/day").
 - **UI**: Visual progress bars showing percentage completion, supporting >100% achievements.
+- **Reminder Model**: Goals can enable reminders using `notificationEnabled` plus a reminder offset (`MINUTES`, `HOURS`, `DAYS`) relative to the current goal period end.
 
 ### 2. Project Management (Two-Level Kanban)
 
@@ -28,6 +29,7 @@ Allows organizing tasks into distinct boards with a modern Kanban view.
   - **Status**: `PLANNED`, `IN_PROGRESS`, `DONE`, `ARCHIVED`.
   - **Priority**: `LOW`, `MEDIUM`, `HIGH`, `URGENT`.
 - **Task Sharing**: Individual tasks can also be marked as shared so they appear to all users even when the board itself is not shared.
+- **Task Reminders**: Tasks can enable reminders with an offset before `deadline`.
 - **Navigation**: Uses a project selection flow first, then enters the board view with breadcrumb navigation.
 
 ### 3. Expense Tracking
@@ -86,6 +88,7 @@ Calendar items are events:
 - they have a scheduled date/time
 - they may repeat (`DAILY`, `WEEKLY`, `MONTHLY`)
 - they can end `NEVER` or `ON_DATE`
+- they may define an optional reminder offset before `startDate`
 - they are not treated as `Pending`, `Completed`, or `Overdue`
 
 ### 7. Record Modules
@@ -109,6 +112,7 @@ Records are date-based entries. They are shown by time range but not by overdue/
 - **Access Token**: Short-lived, stored in memory/localStorage.
 - **Refresh Token**: Long-lived (7 days), stored in an **HTTP-only, Secure cookie**.
 - **CORS**: Restricted to the frontend domain (`https://ngocky.kael.io.vn`).
+- **MFA**: Users can enable TOTP-based MFA with a pending enrollment secret, QR/manual setup key, code verification to activate, and code verification again to disable.
 
 ### Deployment (CI/CD)
 
@@ -117,6 +121,12 @@ Records are date-based entries. They are shown by time range but not by overdue/
 - **Environment Management**: `.env` is generated on-the-fly on the VPS during deployment.
 - **Observed Dev Pattern**: Localhost web may be configured to call the VPS API directly. In that setup, backend code changes only become visible locally after the VPS deployment updates the running API.
 - **Theme Application**: Theme selection is applied client-side immediately after settings save; no logout/login cycle is required.
+- **Refresh Behavior**: Frontend token refresh applies only to expired authenticated API calls. Login/logout/refresh requests are excluded so auth failures are shown directly instead of causing redirect loops.
+
+### Modal Interaction
+
+- Dialog backdrops close only when the pointer is pressed directly on the backdrop.
+- Mouse text selection inside a modal no longer closes the form accidentally.
 
 ### Tech Stack
 
@@ -131,8 +141,9 @@ Records are date-based entries. They are shown by time range but not by overdue/
 
 ### Time Filter
 
-Dashboard supports four time ranges:
+Dashboard supports five time ranges:
 
+- `TODAY`
 - `THIS_WEEK`
 - `NEXT_WEEK`
 - `THIS_MONTH`

@@ -8,7 +8,7 @@ import { AuthPayload } from '../middleware/auth';
 
 export class AuthService {
     static async login(email: string, password: string) {
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user: any = await prisma.user.findUnique({ where: { email } });
         if (!user || !user.active) {
             throw new UnauthorizedError('Invalid credentials');
         }
@@ -16,6 +16,46 @@ export class AuthService {
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) {
             throw new UnauthorizedError('Invalid credentials');
+        }
+
+        if (user.mfaEnabled && user.mfaSecret) {
+            return {
+                mfaRequired: true,
+                mfaToken: this.generateMfaChallengeToken(user),
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                    theme: user.theme,
+                    mfaEnabled: true,
+                },
+            };
+        }
+
+        const accessToken = this.generateAccessToken(user);
+        const refreshToken = await this.generateRefreshToken(user.id);
+
+        return {
+            mfaRequired: false,
+            accessToken,
+            refreshToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                theme: user.theme,
+                mfaEnabled: !!user.mfaEnabled,
+            },
+        };
+    }
+
+    static async completeMfaLogin(mfaToken: string) {
+        const payload = this.verifyMfaChallengeToken(mfaToken);
+        const user: any = await prisma.user.findUnique({ where: { id: payload.userId } });
+        if (!user || !user.active || !user.mfaEnabled) {
+            throw new UnauthorizedError('Invalid MFA session');
         }
 
         const accessToken = this.generateAccessToken(user);
@@ -30,12 +70,13 @@ export class AuthService {
                 name: user.name,
                 role: user.role,
                 theme: user.theme,
+                mfaEnabled: true,
             },
         };
     }
 
     static async refresh(refreshTokenStr: string) {
-        const stored = await prisma.refreshToken.findUnique({
+        const stored: any = await prisma.refreshToken.findUnique({
             where: { token: refreshTokenStr },
             include: { user: true },
         });
@@ -62,6 +103,7 @@ export class AuthService {
                 name: stored.user.name,
                 role: stored.user.role,
                 theme: stored.user.theme,
+                mfaEnabled: !!stored.user.mfaEnabled,
             },
         };
     }
@@ -91,6 +133,20 @@ export class AuthService {
             role: user.role as any,
         };
         return jwt.sign(payload, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRY as any });
+    }
+
+    private static generateMfaChallengeToken(user: { id: string; email: string; role: string }) {
+        return jwt.sign({ userId: user.id, email: user.email, role: user.role, stage: 'mfa' }, config.JWT_SECRET, { expiresIn: '10m' });
+    }
+
+    static verifyMfaChallengeToken(token: string) {
+        try {
+            const payload = jwt.verify(token, config.JWT_SECRET) as AuthPayload & { stage?: string };
+            if (payload.stage !== 'mfa') throw new UnauthorizedError('Invalid MFA session');
+            return payload;
+        } catch {
+            throw new UnauthorizedError('Invalid MFA session');
+        }
     }
 
     private static async generateRefreshToken(userId: string): Promise<string> {

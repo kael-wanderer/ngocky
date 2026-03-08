@@ -30,6 +30,35 @@ function getRangeFromPreset(preset?: string) {
     }
 }
 
+function subtractReminderOffset(target: Date, value?: number | null, unit?: string | null) {
+    const reminderAt = new Date(target);
+    const amount = value && value > 0 ? value : 0;
+    if (!amount) return reminderAt;
+    switch (unit) {
+        case 'MINUTES':
+            reminderAt.setMinutes(reminderAt.getMinutes() - amount);
+            break;
+        case 'HOURS':
+            reminderAt.setHours(reminderAt.getHours() - amount);
+            break;
+        case 'DAYS':
+        default:
+            reminderAt.setDate(reminderAt.getDate() - amount);
+            break;
+    }
+    return reminderAt;
+}
+
+function getGoalPeriodEnd(goal: { currentPeriodStart: Date; periodType: string }) {
+    const end = new Date(goal.currentPeriodStart);
+    if (goal.periodType === 'MONTHLY') {
+        end.setMonth(end.getMonth() + 1);
+    } else {
+        end.setDate(end.getDate() + 7);
+    }
+    return end;
+}
+
 // Tasks by status
 router.get('/tasks-by-status', async (_req: Request, res: Response, next: NextFunction) => {
     try {
@@ -251,25 +280,66 @@ router.get('/export/expenses', async (req: Request, res: Response, next: NextFun
 router.get('/notifications/due-items', async (_req: Request, res: Response, next: NextFunction) => {
     try {
         const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        const [dueProjectTasks, dueHousework, dueGoals] = await Promise.all([
+        const [taskCandidates, houseworkCandidates, goalCandidates, calendarCandidates] = await Promise.all([
             prisma.projectTask.findMany({
-                where: { deadline: { lte: tomorrow }, status: { notIn: ['DONE', 'ARCHIVED'] }, notificationEnabled: true },
-                include: { assignee: { select: { id: true, name: true, notificationChannel: true, notificationEmail: true, telegramChatId: true } } },
+                where: { deadline: { not: null }, status: { notIn: ['DONE', 'ARCHIVED'] }, notificationEnabled: true },
+                select: {
+                    id: true,
+                    title: true,
+                    deadline: true,
+                    status: true,
+                    notificationEnabled: true,
+                    reminderOffsetValue: true,
+                    reminderOffsetUnit: true,
+                    assignee: { select: { id: true, name: true, notificationChannel: true, notificationEmail: true, telegramChatId: true } },
+                },
             }),
             prisma.houseworkItem.findMany({
-                where: { nextDueDate: { lte: tomorrow }, active: true, notificationEnabled: true },
-                include: { assignee: { select: { id: true, name: true, notificationChannel: true, notificationEmail: true, telegramChatId: true } } },
+                where: { nextDueDate: { not: null }, active: true, notificationEnabled: true },
+                select: {
+                    id: true,
+                    title: true,
+                    nextDueDate: true,
+                    active: true,
+                    notificationEnabled: true,
+                    reminderOffsetValue: true,
+                    reminderOffsetUnit: true,
+                    assignee: { select: { id: true, name: true, notificationChannel: true, notificationEmail: true, telegramChatId: true } },
+                },
             }),
             prisma.goal.findMany({
                 where: { active: true, notificationEnabled: true },
-                include: { user: { select: { id: true, name: true, notificationChannel: true, notificationEmail: true, telegramChatId: true } } },
+                select: {
+                    id: true,
+                    title: true,
+                    periodType: true,
+                    currentPeriodStart: true,
+                    notificationEnabled: true,
+                    reminderOffsetValue: true,
+                    reminderOffsetUnit: true,
+                    user: { select: { id: true, name: true, notificationChannel: true, notificationEmail: true, telegramChatId: true } },
+                },
+            }),
+            prisma.calendarEvent.findMany({
+                where: { notificationEnabled: true },
+                select: {
+                    id: true,
+                    title: true,
+                    startDate: true,
+                    notificationEnabled: true,
+                    reminderOffsetValue: true,
+                    reminderOffsetUnit: true,
+                    createdBy: { select: { id: true, name: true, notificationChannel: true, notificationEmail: true, telegramChatId: true } },
+                },
             }),
         ]);
 
-        sendSuccess(res, { dueProjects: dueProjectTasks, dueHousework, dueGoals });
+        const dueProjectTasks = taskCandidates.filter((item) => item.deadline && subtractReminderOffset(item.deadline, item.reminderOffsetValue, item.reminderOffsetUnit) <= now);
+        const dueHousework = houseworkCandidates.filter((item) => item.nextDueDate && subtractReminderOffset(item.nextDueDate, item.reminderOffsetValue, item.reminderOffsetUnit) <= now);
+        const dueGoals = goalCandidates.filter((item) => subtractReminderOffset(getGoalPeriodEnd(item), item.reminderOffsetValue, item.reminderOffsetUnit) <= now);
+        const dueCalendarEvents = calendarCandidates.filter((item) => subtractReminderOffset(item.startDate, item.reminderOffsetValue, item.reminderOffsetUnit) <= now);
+
+        sendSuccess(res, { dueProjects: dueProjectTasks, dueHousework, dueGoals, dueCalendarEvents });
     } catch (err) { next(err); }
 });
 
