@@ -18,8 +18,6 @@ const emptyReportForm = () => ({
     frequency: 'WEEKLY',
     dayOfWeek: 1,
     time: '08:00',
-    notificationChannel: 'EMAIL',
-    recipients: [] as string[],
     active: true,
 });
 
@@ -32,7 +30,6 @@ export default function AlertsPage() {
     const [editingReport, setEditingReport] = useState<any>(null);
     const [ruleForm, setRuleForm] = useState(emptyRuleForm());
     const [reportForm, setReportForm] = useState(emptyReportForm());
-    const [recipientInput, setRecipientInput] = useState('');
 
     const { data: rules, isLoading: rulesLoading } = useQuery({
         queryKey: ['alert-rules'],
@@ -120,7 +117,6 @@ export default function AlertsPage() {
     function openCreateReport() {
         setEditingReport(null);
         setReportForm(emptyReportForm());
-        setRecipientInput('');
         setShowReportModal(true);
     }
 
@@ -131,11 +127,8 @@ export default function AlertsPage() {
             frequency: report.frequency || 'WEEKLY',
             dayOfWeek: report.dayOfWeek ?? 1,
             time: report.time || '08:00',
-            notificationChannel: report.notificationChannel || 'EMAIL',
-            recipients: report.recipients || [],
             active: report.active ?? true,
         });
-        setRecipientInput('');
         setShowReportModal(true);
     }
 
@@ -145,8 +138,6 @@ export default function AlertsPage() {
             frequency: report.frequency,
             dayOfWeek: report.dayOfWeek,
             time: report.time,
-            notificationChannel: report.notificationChannel,
-            recipients: report.recipients || [],
             active: report.active,
         });
     }
@@ -155,13 +146,6 @@ export default function AlertsPage() {
         setShowReportModal(false);
         setEditingReport(null);
         setReportForm(emptyReportForm());
-        setRecipientInput('');
-    }
-
-    function addRecipient() {
-        if (!recipientInput || reportForm.recipients.includes(recipientInput)) return;
-        setReportForm({ ...reportForm, recipients: [...reportForm.recipients, recipientInput] });
-        setRecipientInput('');
     }
 
     return (
@@ -180,7 +164,7 @@ export default function AlertsPage() {
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
                 <Info className="w-5 h-5 text-blue-500 flex-shrink-0" />
                 <div className="text-xs text-blue-800 leading-relaxed">
-                    <strong>Schedule Reports:</strong> Alert rules and scheduled reports can be edited or duplicated directly from this page.
+                    <strong>Schedule Reports:</strong> Reports are delivered via your notification channel configured in Settings. Alert rules and scheduled reports can be edited or duplicated directly from this page.
                 </div>
             </div>
 
@@ -252,25 +236,15 @@ export default function AlertsPage() {
                                             <FileText className="w-5 h-5 text-purple-600" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-sm" style={{ color: 'var(--color-text)' }}>{report.reportType === 'WEEKLY_SUMMARY' ? 'Weekly Summary' : report.reportType === 'NEXT_WEEK_TASKS' ? 'Next Week Tasks' : report.reportType}</h4>
+                                            <h4 className="font-bold text-sm" style={{ color: 'var(--color-text)' }}>{report.reportType === 'WEEKLY_SUMMARY' || report.reportType === 'SUMMARY' ? 'Weekly Summary' : report.reportType === 'NEXT_WEEK_TASKS' ? 'Next Week Tasks' : report.reportType}</h4>
                                             <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Every {report.frequency.toLowerCase()} at {report.time}</p>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-6">
-                                        <div className="hidden md:block text-right">
-                                            <span className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: 'var(--color-text-secondary)' }}>Recipients</span>
-                                            <div className="flex flex-wrap justify-end gap-1">
-                                                {report.recipients.map((recipient: string) => (
-                                                    <span key={recipient} className="text-[10px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-600">{recipient}</span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xs font-bold inline-flex items-center gap-1 text-primary" style={{ color: 'var(--color-primary)' }}>
-                                                <Mail className="w-3.5 h-3.5" /> {report.notificationChannel}
-                                            </span>
-                                        </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs font-bold inline-flex items-center gap-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                            <Mail className="w-3.5 h-3.5" /> via Settings channel
+                                        </span>
                                     </div>
 
                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -383,21 +357,10 @@ export default function AlertsPage() {
                                     <label className="label">Time</label>
                                     <input type="time" className="input" value={reportForm.time} onChange={(e) => setReportForm({ ...reportForm, time: e.target.value })} />
                                 </div>
-                                <div className="col-span-2">
-                                    <label className="label">Recipients</label>
-                                    <div className="flex gap-2">
-                                        <input className="input flex-1" value={recipientInput} onChange={(e) => setRecipientInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addRecipient())} placeholder="Email address" />
-                                        <button type="button" className="btn-ghost" onClick={addRecipient}>Add</button>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                        {reportForm.recipients.map((recipient) => (
-                                            <span key={recipient} className="text-[10px] px-2 py-1 bg-gray-100 rounded flex items-center gap-1">
-                                                {recipient} <X className="w-2.5 h-2.5 cursor-pointer" onClick={() => setReportForm({ ...reportForm, recipients: reportForm.recipients.filter((item) => item !== recipient) })} />
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
                             </div>
+                            <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                Delivered via your notification channel in Settings.
+                            </p>
                             <button type="submit" className="btn-primary w-full" disabled={createReportMut.isPending || updateReportMut.isPending}>
                                 {editingReport ? 'Save Schedule' : 'Schedule Report'}
                             </button>
