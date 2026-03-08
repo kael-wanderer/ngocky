@@ -41,8 +41,9 @@ router.get('/due-reports', async (_req: Request, res: Response, next: NextFuncti
 
         const due = reports.filter(report => {
             const [h, m] = (report.time || '08:00').split(':').map(Number);
-            const diff = Math.abs(currentTotalMinutes - (h * 60 + m));
-            if (diff > TIME_WINDOW) return false;
+            const diff = currentTotalMinutes - (h * 60 + m);
+            // One-sided window: fire only when current time is 0–14 min past scheduled time
+            if (diff < 0 || diff >= TIME_WINDOW) return false;
             if (report.frequency === 'DAILY') return true;
             if (report.frequency === 'WEEKLY') return currentDay === (report.dayOfWeek ?? 1);
             return false;
