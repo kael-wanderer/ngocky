@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Target, Plus, X, Check, TrendingUp, Trash2, AlertCircle, Pencil, Copy, Pin } from 'lucide-react';
+import { Target, Plus, X, Check, Trash2, AlertCircle, Pencil, Copy, Pin } from 'lucide-react';
+import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useSearchParams } from 'react-router-dom';
 
 const unitOptions = [
@@ -9,11 +10,6 @@ const unitOptions = [
     { value: 'minutes', label: 'Minute' },
 ] as const;
 
-const reminderUnitOptions = [
-    { value: 'MINUTES', label: 'Mins' },
-    { value: 'HOURS', label: 'Hour' },
-    { value: 'DAYS', label: 'Days' },
-] as const;
 
 const emptyForm = {
     title: '',
@@ -24,9 +20,7 @@ const emptyForm = {
     targetCount: 3,
     unit: 'times',
     trackingType: 'BY_FREQUENCY',
-    notificationEnabled: false,
-    reminderOffsetUnit: 'DAYS',
-    reminderOffsetValue: 1,
+    ...emptyNotification,
 };
 
 type GoalFormState = typeof emptyForm;
@@ -40,12 +34,12 @@ function GoalForm({
 }: {
     form: GoalFormState;
     setForm: React.Dispatch<React.SetStateAction<GoalFormState>>;
-    onSubmit: (f: GoalFormState) => void;
+    onSubmit: (f: any) => void;
     loading: boolean;
     isEdit: boolean;
 }) {
     return (
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, ...buildNotificationPayload(form) }); }} className="space-y-4">
             <div>
                 <label className="label">Goal Title <span className="text-red-500">*</span></label>
                 <input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required placeholder="e.g. Go to gym" />
@@ -87,24 +81,7 @@ function GoalForm({
             </div>
 
             <div className="grid grid-cols-1 gap-2">
-                <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={form.notificationEnabled} onChange={(e) => setForm({ ...form, notificationEnabled: e.target.checked })} />
-                    Reminder enabled
-                </label>
-                {form.notificationEnabled && (
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="label">Before deadline</label>
-                            <select className="input" value={form.reminderOffsetUnit} onChange={(e) => setForm({ ...form, reminderOffsetUnit: e.target.value })}>
-                                {reminderUnitOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="label">Unit</label>
-                            <input type="number" min={1} className="input" value={form.reminderOffsetValue} onChange={(e) => setForm({ ...form, reminderOffsetValue: parseInt(e.target.value) || 1 })} />
-                        </div>
-                    </div>
-                )}
+                <NotificationFields form={form} setForm={setForm} />
                 <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} />
                     Share with all users
@@ -230,9 +207,7 @@ export default function GoalsPage() {
             targetCount: goal.targetCount,
             unit: goal.unit || 'times',
             trackingType: goal.trackingType || 'BY_FREQUENCY',
-            notificationEnabled: !!goal.notificationEnabled,
-            reminderOffsetUnit: goal.reminderOffsetUnit || 'DAYS',
-            reminderOffsetValue: goal.reminderOffsetValue || 1,
+            ...loadNotificationState(goal),
         });
     };
 
@@ -247,9 +222,7 @@ export default function GoalsPage() {
             targetCount: goal.targetCount,
             unit: goal.unit || 'times',
             trackingType: goal.trackingType || 'BY_FREQUENCY',
-            notificationEnabled: !!goal.notificationEnabled,
-            reminderOffsetUnit: goal.reminderOffsetUnit || 'DAYS',
-            reminderOffsetValue: goal.reminderOffsetValue || 1,
+            ...loadNotificationState(goal),
         });
         setShowCreate(true);
     };
@@ -456,7 +429,11 @@ export default function GoalsPage() {
                                     </p>
                                     <div className="flex items-center gap-2">
                                         <button className="btn-primary text-xs py-1.5 px-3" onClick={() => openCheckIn(goal.id)} disabled={!goal.active}><Check className="w-3 h-3" /> Check-in</button>
-                                        {completed && <span className="text-xs text-emerald-600 font-medium flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Done</span>}
+                                        <span className="text-xs font-medium whitespace-nowrap" style={{
+                                            color: progressPct > 100 ? '#7c3aed' : progressPct === 100 ? '#059669' : progressPct >= 50 ? '#d97706' : '#dc2626'
+                                        }}>
+                                            {progressPct > 100 ? 'Overachievement' : progressPct === 100 ? 'Done' : progressPct >= 50 ? 'Almost there' : 'Try hard'}
+                                        </span>
                                     </div>
                                 </div>
                             </div>

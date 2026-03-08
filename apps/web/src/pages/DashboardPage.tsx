@@ -30,8 +30,9 @@ const TIME_OPTIONS = [
 ] as const;
 
 type TimeRange = typeof TIME_OPTIONS[number]['value'];
-type StatusFilter = 'PENDING' | 'COMPLETED' | 'OVERDUE';
+type StatusFilter = 'ALL' | 'PENDING' | 'COMPLETED' | 'OVERDUE';
 const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
+    { value: 'ALL', label: 'All' },
     { value: 'PENDING', label: 'Pending' },
     { value: 'COMPLETED', label: 'Completed' },
     { value: 'OVERDUE', label: 'Overdue' },

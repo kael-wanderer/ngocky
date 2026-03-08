@@ -7,7 +7,7 @@ const router = Router();
 router.use(authenticate);
 
 type TimeRangeKey = 'TODAY' | 'THIS_WEEK' | 'NEXT_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH';
-type StatusFilterKey = 'PENDING' | 'COMPLETED' | 'OVERDUE';
+type StatusFilterKey = 'ALL' | 'PENDING' | 'COMPLETED' | 'OVERDUE';
 
 function getWeekStart(now: Date): Date {
     const dayOfWeek = now.getDay();
@@ -53,7 +53,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const rawRange = String(req.query.timeRange || 'THIS_WEEK').toUpperCase();
         const rawStatus = String(req.query.status || 'PENDING').toUpperCase();
         const timeRange = (['TODAY', 'THIS_WEEK', 'NEXT_WEEK', 'THIS_MONTH', 'NEXT_MONTH'].includes(rawRange) ? rawRange : 'THIS_WEEK') as TimeRangeKey;
-        const statusFilter = (['PENDING', 'COMPLETED', 'OVERDUE'].includes(rawStatus) ? rawStatus : 'PENDING') as StatusFilterKey;
+        const statusFilter = (['ALL', 'PENDING', 'COMPLETED', 'OVERDUE'].includes(rawStatus) ? rawStatus : 'PENDING') as StatusFilterKey;
         const { start: filterStart, end: filterEnd } = getTimeRange(now, timeRange);
 
         // Week boundaries (Mon-Sun)
@@ -155,10 +155,15 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                                 deadline: { gte: filterStart, lt: filterEnd },
                                 status: 'DONE',
                             }
-                            : {
-                                deadline: { gte: filterStart, lt: filterEnd },
-                                status: { notIn: ['DONE', 'ARCHIVED'] },
-                            }),
+                            : statusFilter === 'ALL'
+                                ? {
+                                    deadline: { gte: filterStart, lt: filterEnd },
+                                    status: { not: 'ARCHIVED' },
+                                }
+                                : {
+                                    deadline: { gte: filterStart, lt: filterEnd },
+                                    status: { notIn: ['DONE', 'ARCHIVED'] },
+                                }),
                 },
                 orderBy: { deadline: 'asc' },
                 take: 50,
@@ -178,10 +183,17 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                         ? {
                             lastCompletedDate: { gte: filterStart, lt: filterEnd },
                         }
-                        : {
-                            nextDueDate: { gte: filterStart, lt: filterEnd },
-                            active: true,
-                        },
+                        : statusFilter === 'ALL'
+                            ? {
+                                OR: [
+                                    { nextDueDate: { gte: filterStart, lt: filterEnd }, active: true },
+                                    { lastCompletedDate: { gte: filterStart, lt: filterEnd } },
+                                ],
+                            }
+                            : {
+                                nextDueDate: { gte: filterStart, lt: filterEnd },
+                                active: true,
+                            },
                 orderBy: statusFilter === 'COMPLETED' ? { lastCompletedDate: 'desc' } : { nextDueDate: 'asc' },
                 take: 10,
                 include: { assignee: { select: { name: true } } },
@@ -314,6 +326,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         ]);
 
         const filteredGoals = goals.filter((goal: any) => {
+            if (statusFilter === 'ALL') return true;
             if (statusFilter === 'COMPLETED') return goal.currentCount >= goal.targetCount;
             if (statusFilter === 'PENDING') return goal.currentCount < goal.targetCount;
             return false;

@@ -4,6 +4,7 @@ import api from '../api/client';
 import { Calendar, Copy, Package, Pencil, Pin, Plus, Trash2, Wrench, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
+import NotificationFields, { buildNotificationPayload, loadNotificationState } from '../components/NotificationFields';
 
 const emptyAssetForm = () => ({
     name: '',
@@ -17,6 +18,8 @@ const emptyAssetForm = () => ({
     note: '',
 });
 
+const ASSET_TYPES = ['Vehicle', 'Appliances', 'Devices'] as const;
+
 const emptyRecordForm = () => ({
     serviceDate: format(new Date(), 'yyyy-MM-dd'),
     serviceType: '',
@@ -24,6 +27,11 @@ const emptyRecordForm = () => ({
     cost: '',
     vendor: '',
     nextRecommendedDate: '',
+    kilometers: '',
+    notificationEnabled: false,
+    reminderOffsetUnit: 'DAYS',
+    reminderOffsetValue: 1,
+    notificationDate: '',
     pinToDashboard: false,
 });
 
@@ -187,6 +195,8 @@ export default function AssetsPage() {
             cost: record.cost ? String(Math.round(record.cost)) : '',
             vendor: record.vendor || '',
             nextRecommendedDate: record.nextRecommendedDate ? format(new Date(record.nextRecommendedDate), 'yyyy-MM-dd') : '',
+            kilometers: record.kilometers != null ? String(record.kilometers) : '',
+            ...loadNotificationState(record),
             pinToDashboard: !!record.pinToDashboard,
         });
         setShowRecordModal(true);
@@ -209,6 +219,8 @@ export default function AssetsPage() {
                 cost: typeof record.cost === 'number' ? record.cost : undefined,
                 vendor: record.vendor || '',
                 nextRecommendedDate: record.nextRecommendedDate || null,
+                kilometers: record.kilometers ?? undefined,
+                ...buildNotificationPayload(record),
                 pinToDashboard: !!record.pinToDashboard,
             },
         });
@@ -224,13 +236,16 @@ export default function AssetsPage() {
             return;
         }
 
-        const body = {
+        const km = (recordForm as any).kilometers?.trim?.() ? Number((recordForm as any).kilometers) : undefined;
+        const body: any = {
             serviceDate: new Date(`${recordForm.serviceDate}T00:00:00`).toISOString(),
             serviceType: recordForm.serviceType,
             description: recordForm.description,
             cost: parsedCost,
             vendor: recordForm.vendor,
             nextRecommendedDate: recordForm.nextRecommendedDate ? new Date(`${recordForm.nextRecommendedDate}T00:00:00`).toISOString() : null,
+            kilometers: km,
+            ...buildNotificationPayload(recordForm as any),
             pinToDashboard: (recordForm as any).pinToDashboard || false,
         };
 
@@ -395,6 +410,9 @@ export default function AssetsPage() {
                                                             {record.vendor && (
                                                                 <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-primary)' }}>Vendor: {record.vendor}</p>
                                                             )}
+                                                            {record.kilometers != null && (
+                                                                <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-text-secondary)' }}>🛞 {record.kilometers.toLocaleString()} km</p>
+                                                            )}
                                                             <div className="flex items-center gap-2 mt-2">
                                                                 <button type="button" className={`inline-flex items-center gap-1 text-xs hover:opacity-80 ${record.pinToDashboard ? 'text-amber-600' : ''}`} onClick={() => updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: record.id, body: { pinToDashboard: !record.pinToDashboard } })}>
                                                                     <Pin className="w-3.5 h-3.5" /> {record.pinToDashboard ? 'Pinned' : 'Pin'}
@@ -467,7 +485,10 @@ export default function AssetsPage() {
                                 </div>
                                 <div>
                                     <label className="label">Type</label>
-                                    <input className="input" value={assetForm.type} onChange={(e) => setAssetForm({ ...assetForm, type: e.target.value })} placeholder="Vehicle, Appliance..." />
+                                    <select className="input" value={assetForm.type} onChange={(e) => setAssetForm({ ...assetForm, type: e.target.value })}>
+                                        <option value="">— Select type —</option>
+                                        {ASSET_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="label">Brand</label>
@@ -539,7 +560,14 @@ export default function AssetsPage() {
                                     <label className="label">Next Recommended</label>
                                     <input type="date" className="input" value={recordForm.nextRecommendedDate} onChange={(e) => setRecordForm({ ...recordForm, nextRecommendedDate: e.target.value })} />
                                 </div>
+                                {selectedAsset.type === 'Vehicle' && (
+                                    <div className="col-span-2">
+                                        <label className="label">Kilometers</label>
+                                        <input type="number" min={0} className="input" value={(recordForm as any).kilometers} onChange={(e) => setRecordForm({ ...(recordForm as any), kilometers: e.target.value })} placeholder="e.g. 45000" />
+                                    </div>
+                                )}
                             </div>
+                            <NotificationFields form={recordForm as any} setForm={setRecordForm as any} />
                             <label className="flex items-center gap-2 text-sm">
                                 <input type="checkbox" checked={(recordForm as any).pinToDashboard || false} onChange={(e) => setRecordForm({ ...(recordForm as any), pinToDashboard: e.target.checked })} />
                                 Pin to dashboard

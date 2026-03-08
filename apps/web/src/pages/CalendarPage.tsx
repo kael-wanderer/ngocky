@@ -4,13 +4,9 @@ import api from '../api/client';
 import { Calendar as CalIcon, Plus, X, ChevronLeft, ChevronRight, Pencil, Trash2, Pin } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
+import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 
 type CalendarView = 'today' | 'week' | 'month';
-const reminderUnitOptions = [
-    { value: 'MINUTES', label: 'Mins' },
-    { value: 'HOURS', label: 'Hour' },
-    { value: 'DAYS', label: 'Days' },
-] as const;
 
 const emptyForm = {
     title: '',
@@ -25,9 +21,7 @@ const emptyForm = {
     repeatFrequency: '',
     repeatEndType: '',
     repeatUntil: '',
-    notificationEnabled: false,
-    reminderOffsetUnit: 'DAYS',
-    reminderOffsetValue: 1,
+    ...emptyNotification,
 };
 
 export default function CalendarPage() {
@@ -122,9 +116,7 @@ export default function CalendarPage() {
             repeatFrequency: event.repeatFrequency || '',
             repeatEndType: event.repeatEndType || '',
             repeatUntil: event.repeatUntil ? format(new Date(event.repeatUntil), 'yyyy-MM-dd') : '',
-            notificationEnabled: !!event.notificationEnabled,
-            reminderOffsetUnit: event.reminderOffsetUnit || 'DAYS',
-            reminderOffsetValue: event.reminderOffsetValue || 1,
+            ...loadNotificationState(event),
         });
     };
 
@@ -212,13 +204,12 @@ export default function CalendarPage() {
                                 startDate: new Date(form.startDate).toISOString(),
                                 repeatFrequency: form.repeatFrequency || null,
                                 repeatEndType: form.repeatFrequency ? (form.repeatEndType || 'NEVER') : null,
+                                ...buildNotificationPayload(form),
                             };
                             if (form.endDate) body.endDate = new Date(form.endDate).toISOString();
                             else delete body.endDate;
                             if (form.repeatFrequency && form.repeatEndType === 'ON_DATE' && form.repeatUntil) body.repeatUntil = new Date(`${form.repeatUntil}T23:59:59.999`).toISOString();
                             else body.repeatUntil = null;
-                            body.reminderOffsetUnit = form.notificationEnabled ? form.reminderOffsetUnit : null;
-                            body.reminderOffsetValue = form.notificationEnabled ? form.reminderOffsetValue : null;
                             if (editingEvent) updateMut.mutate({ id: getSourceId(editingEvent), body });
                             else createMut.mutate(body);
                         }} className="space-y-4">
@@ -262,21 +253,7 @@ export default function CalendarPage() {
                                     <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} className="rounded" /> Pin to dashboard</label>
                                 </div>
                             </div>
-                            <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.notificationEnabled} onChange={(e) => setForm({ ...form, notificationEnabled: e.target.checked })} className="rounded" /> Reminder enabled</label>
-                            {form.notificationEnabled && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="label">Before deadline</label>
-                                        <select className="input" value={form.reminderOffsetUnit} onChange={(e) => setForm({ ...form, reminderOffsetUnit: e.target.value })}>
-                                            {reminderUnitOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="label">Unit</label>
-                                        <input type="number" min={1} className="input" value={form.reminderOffsetValue} onChange={(e) => setForm({ ...form, reminderOffsetValue: parseInt(e.target.value) || 1 })} />
-                                    </div>
-                                </div>
-                            )}
+                            <NotificationFields form={form} setForm={setForm} />
                             <button type="submit" className="btn-primary w-full" disabled={createMut.isPending || updateMut.isPending}>{editingEvent ? 'Save Changes' : 'Create Event'}</button>
                         </form>
                     </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, Trash2, Pencil, RefreshCw, Copy, Pin } from 'lucide-react';
+import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { format } from 'date-fns';
 import { useAuthStore } from '../stores/auth';
 import { useSearchParams } from 'react-router-dom';
@@ -10,12 +11,6 @@ const STATUS_COLS = ['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED'] as const;
 const statusLabels: Record<string, string> = { PLANNED: 'Planned', IN_PROGRESS: 'In Progress', DONE: 'Done', ARCHIVED: 'Archived' };
 const statusColors: Record<string, string> = { PLANNED: '#64748b', IN_PROGRESS: '#4f46e5', DONE: '#059669', ARCHIVED: '#94a3b8' };
 const priorityColors: Record<string, string> = { LOW: '#94a3b8', MEDIUM: '#3b82f6', HIGH: '#f59e0b', URGENT: '#ef4444' };
-const reminderUnitOptions = [
-    { value: 'MINUTES', label: 'Mins' },
-    { value: 'HOURS', label: 'Hour' },
-    { value: 'DAYS', label: 'Days' },
-] as const;
-
 const emptyTaskForm = {
     title: '',
     description: '',
@@ -25,9 +20,7 @@ const emptyTaskForm = {
     category: '',
     isShared: false,
     pinToDashboard: false,
-    notificationEnabled: false,
-    reminderOffsetUnit: 'DAYS',
-    reminderOffsetValue: 1,
+    ...emptyNotification,
 };
 
 export default function ProjectsPage() {
@@ -160,9 +153,7 @@ export default function ProjectsPage() {
             deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
             isShared: !!task.isShared,
             pinToDashboard: !!task.pinToDashboard,
-            notificationEnabled: !!task.notificationEnabled,
-            reminderOffsetUnit: task.reminderOffsetUnit || 'DAYS',
-            reminderOffsetValue: task.reminderOffsetValue || 1,
+            ...loadNotificationState(task),
         });
         setShowCreateTask(true);
     };
@@ -187,9 +178,7 @@ export default function ProjectsPage() {
             deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
             isShared: !!task.isShared,
             pinToDashboard: !!task.pinToDashboard,
-            notificationEnabled: !!task.notificationEnabled,
-            reminderOffsetUnit: task.reminderOffsetUnit || 'DAYS',
-            reminderOffsetValue: task.reminderOffsetValue || 1,
+            ...loadNotificationState(task),
         });
     }, [taskIdParam, activeBoard]);
 
@@ -281,6 +270,47 @@ export default function ProjectsPage() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {editingBoard && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingBoard(null); }}>
+                        <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold">Edit Project Board</h3>
+                                <button onClick={() => setEditingBoard(null)}><X className="w-5 h-5" /></button>
+                            </div>
+                            <form onSubmit={(e) => { e.preventDefault(); updateBoardMut.mutate({ id: editingBoard.id, data: boardForm }); }} className="space-y-4">
+                                <div>
+                                    <label className="label">Board Name <span className="text-red-500">*</span></label>
+                                    <input className="input" required value={boardForm.name} onChange={(e) => setBoardForm({ ...boardForm, name: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="label">Description</label>
+                                    <textarea className="input" rows={3} value={boardForm.description} onChange={(e) => setBoardForm({ ...boardForm, description: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="label">Project Type</label>
+                                    <select className="input" value={boardForm.type} onChange={(e) => setBoardForm({ ...boardForm, type: e.target.value })}>
+                                        <option value="PERSONAL">Personal</option>
+                                        <option value="WORK">Work</option>
+                                        <option value="FOR_FUN">For Fun</option>
+                                        <option value="STUDY">Study</option>
+                                    </select>
+                                </div>
+                                <label className="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" checked={boardForm.isShared} onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })} />
+                                    Share with all family users
+                                </label>
+                                <label className="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" checked={boardForm.pinToDashboard} onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })} />
+                                    Pin to dashboard
+                                </label>
+                                <button type="submit" className="btn-primary w-full" disabled={updateBoardMut.isPending}>
+                                    {updateBoardMut.isPending ? 'Saving...' : 'Save Board'}
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 )}
 
@@ -425,7 +455,7 @@ export default function ProjectsPage() {
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
-                            const body: any = { ...taskForm, projectId: selectedBoardId };
+                            const body: any = { ...taskForm, projectId: selectedBoardId, ...buildNotificationPayload(taskForm) };
                             if (body.deadline) body.deadline = new Date(body.deadline).toISOString();
                             else delete body.deadline;
 
@@ -471,28 +501,7 @@ export default function ProjectsPage() {
                                 />
                                 Pin to dashboard
                             </label>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input
-                                    type="checkbox"
-                                    checked={taskForm.notificationEnabled}
-                                    onChange={(e) => setTaskForm({ ...taskForm, notificationEnabled: e.target.checked })}
-                                />
-                                Reminder enabled
-                            </label>
-                            {taskForm.notificationEnabled && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="label">Before deadline</label>
-                                        <select className="input" value={taskForm.reminderOffsetUnit} onChange={(e) => setTaskForm({ ...taskForm, reminderOffsetUnit: e.target.value })}>
-                                            {reminderUnitOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="label">Unit</label>
-                                        <input type="number" min={1} className="input" value={taskForm.reminderOffsetValue} onChange={(e) => setTaskForm({ ...taskForm, reminderOffsetValue: parseInt(e.target.value) || 1 })} />
-                                    </div>
-                                </div>
-                            )}
+                            <NotificationFields form={taskForm} setForm={setTaskForm} />
                             <button type="submit" className="btn-primary w-full" disabled={createTaskMut.isPending || updateTaskMut.isPending}>
                                 {createTaskMut.isPending || updateTaskMut.isPending ? 'Saving...' : (editingTask ? 'Save Changes' : 'Create Task')}
                             </button>
@@ -537,9 +546,7 @@ export default function ProjectsPage() {
                                             deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : '',
                                             isShared: !!t.isShared,
                                             pinToDashboard: !!t.pinToDashboard,
-                                            notificationEnabled: !!t.notificationEnabled,
-                                            reminderOffsetUnit: t.reminderOffsetUnit || 'DAYS',
-                                            reminderOffsetValue: t.reminderOffsetValue || 1,
+                                            ...loadNotificationState(t),
                                         });
                                     }}
                                     >
@@ -606,9 +613,7 @@ export default function ProjectsPage() {
                                             deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : '',
                                             isShared: !!t.isShared,
                                             pinToDashboard: !!t.pinToDashboard,
-                                            notificationEnabled: !!t.notificationEnabled,
-                                            reminderOffsetUnit: t.reminderOffsetUnit || 'DAYS',
-                                            reminderOffsetValue: t.reminderOffsetValue || 1,
+                                            ...loadNotificationState(t),
                                         });
                                     }}>
                                         <td className="font-medium">{t.title}</td>

@@ -22,6 +22,11 @@ export const createMaintenanceRecordSchema = z.object({
     cost: z.number().nonnegative().optional(),
     vendor: z.string().optional(),
     nextRecommendedDate: z.string().datetime().nullable().optional(),
+    kilometers: z.number().int().nonnegative().optional(),
+    notificationEnabled: z.boolean().optional(),
+    reminderOffsetValue: z.number().int().positive().optional(),
+    reminderOffsetUnit: z.enum(['HOURS', 'DAYS', 'ON_DATE']).optional(),
+    notificationDate: z.string().datetime().nullable().optional(),
     pinToDashboard: z.boolean().optional(),
 });
 

@@ -4,6 +4,7 @@ import api from '../api/client';
 import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
+import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 
 const freqLabels: Record<string, string> = {
     ONE_TIME: 'One time',
@@ -26,12 +27,6 @@ const weekdayLabels: Record<string, string> = {
 };
 
 const frequencyOptions = ['ONE_TIME', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY'];
-const reminderUnitOptions = [
-    { value: 'MINUTES', label: 'Mins' },
-    { value: 'HOURS', label: 'Hour' },
-    { value: 'DAYS', label: 'Days' },
-] as const;
-
 type HouseworkFormState = {
     title: string;
     description: string;
@@ -41,6 +36,7 @@ type HouseworkFormState = {
     notificationEnabled: boolean;
     reminderOffsetUnit: string;
     reminderOffsetValue: number;
+    notificationDate: string;
     dayOfWeek: string;
     dayOfMonth: string;
     monthOfPeriod: string;
@@ -53,9 +49,7 @@ const emptyForm: HouseworkFormState = {
     frequencyType: 'WEEKLY',
     nextDueDate: '',
     pinToDashboard: false,
-    notificationEnabled: false,
-    reminderOffsetUnit: 'DAYS',
-    reminderOffsetValue: 1,
+    ...emptyNotification,
     dayOfWeek: '1',
     dayOfMonth: '1',
     monthOfPeriod: '1',
@@ -209,24 +203,7 @@ function HouseworkForm({
                 <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} />
                 Pin to dashboard
             </label>
-            <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.notificationEnabled} onChange={(e) => setForm({ ...form, notificationEnabled: e.target.checked })} />
-                Reminder enabled
-            </label>
-            {form.notificationEnabled && (
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="label">Before deadline</label>
-                        <select className="input" value={form.reminderOffsetUnit} onChange={(e) => setForm({ ...form, reminderOffsetUnit: e.target.value })}>
-                            {reminderUnitOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="label">Unit</label>
-                        <input type="number" min={1} className="input" value={form.reminderOffsetValue} onChange={(e) => setForm({ ...form, reminderOffsetValue: parseInt(e.target.value) || 1 })} />
-                    </div>
-                </div>
-            )}
+            <NotificationFields form={form} setForm={setForm} />
 
             <button type="submit" className="btn-primary w-full" disabled={loading}>{submitLabel}</button>
         </form>
@@ -239,7 +216,6 @@ export default function HouseworkPage() {
     const [showCreate, setShowCreate] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
     const [form, setForm] = useState({ ...emptyForm });
-    const [showCompleted, setShowCompleted] = useState(true);
     const [frequencyFilter, setFrequencyFilter] = useState<string>('ALL');
     const editIdParam = searchParams.get('editId');
 
@@ -285,9 +261,7 @@ export default function HouseworkPage() {
 
         if (form.nextDueDate) body.nextDueDate = new Date(form.nextDueDate).toISOString();
         body.pinToDashboard = form.pinToDashboard;
-        body.notificationEnabled = form.notificationEnabled;
-        body.reminderOffsetUnit = form.notificationEnabled ? form.reminderOffsetUnit : null;
-        body.reminderOffsetValue = form.notificationEnabled ? form.reminderOffsetValue : null;
+        Object.assign(body, buildNotificationPayload(form));
 
         if (form.frequencyType === 'WEEKLY') body.dayOfWeek = Number(form.dayOfWeek);
         if (form.frequencyType === 'MONTHLY') body.dayOfMonth = Number(form.dayOfMonth);
@@ -311,9 +285,7 @@ export default function HouseworkPage() {
             frequencyType: item.frequencyType || 'WEEKLY',
             nextDueDate: item.nextDueDate ? new Date(item.nextDueDate).toISOString().split('T')[0] : '',
             pinToDashboard: !!item.pinToDashboard,
-            notificationEnabled: !!item.notificationEnabled,
-            reminderOffsetUnit: item.reminderOffsetUnit || 'DAYS',
-            reminderOffsetValue: item.reminderOffsetValue || 1,
+            ...loadNotificationState(item),
             dayOfWeek: String(item.dayOfWeek || '1'),
             dayOfMonth: String(item.dayOfMonth || '1'),
             monthOfPeriod: String(item.monthOfPeriod || '1'),
@@ -442,10 +414,6 @@ export default function HouseworkPage() {
                         <option value="ALL">All frequencies</option>
                         {frequencyOptions.map((k) => <option key={k} value={k}>{freqLabels[k]}</option>)}
                     </select>
-                    <label className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
-                        <input type="checkbox" checked={showCompleted} onChange={(e) => setShowCompleted(e.target.checked)} />
-                        Show completed
-                    </label>
                     <button className="btn-primary" onClick={() => { setForm({ ...emptyForm }); setShowCreate(true); }}>
                         <Plus className="w-4 h-4" /> New Item
                     </button>
@@ -528,16 +496,14 @@ export default function HouseworkPage() {
                         </div>
                     )}
 
-                    {showCompleted && (
-                        <div>
-                            <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Completed ({completedItems.length})</h3>
-                            <div className="space-y-3">
-                                {completedItems.length === 0
-                                    ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No completed housework yet</p>
-                                    : completedItems.map((item: any) => renderItem(item))}
-                            </div>
+                    <div>
+                        <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Completed ({completedItems.length})</h3>
+                        <div className="space-y-3">
+                            {completedItems.length === 0
+                                ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No completed housework yet</p>
+                                : completedItems.map((item: any) => renderItem(item))}
                         </div>
-                    )}
+                    </div>
                 </div>
             )}
         </div>

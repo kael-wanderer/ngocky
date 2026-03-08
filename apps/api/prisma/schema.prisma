@@ -119,6 +119,7 @@ enum ReminderUnit {
   MINUTES
   HOURS
   DAYS
+  ON_DATE
 }
 
 // ─── User ───────────────────────────────────────────
@@ -195,6 +196,7 @@ model Goal {
   notificationEnabled Boolean          @default(false)
   reminderOffsetValue Int?
   reminderOffsetUnit  ReminderUnit?
+  notificationDate    DateTime?
   pinToDashboard      Boolean          @default(false)
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
@@ -255,6 +257,7 @@ model ProjectTask {
   notificationEnabled Boolean       @default(false)
   reminderOffsetValue Int?
   reminderOffsetUnit  ReminderUnit?
+  notificationDate    DateTime?
   pinToDashboard      Boolean       @default(false)
   kanbanOrder         Int           @default(0)
   createdAt           DateTime      @default(now())
@@ -365,6 +368,7 @@ model HouseworkItem {
   notificationEnabled Boolean       @default(false)
   reminderOffsetValue Int?
   reminderOffsetUnit  ReminderUnit?
+  notificationDate    DateTime?
   pinToDashboard      Boolean       @default(false)
   active              Boolean       @default(true)
   createdAt           DateTime      @default(now())
@@ -401,7 +405,7 @@ model Asset {
 }
 
 model MaintenanceRecord {
-  id                      String    @id @default(cuid())
+  id                      String       @id @default(cuid())
   assetId                 String
   serviceDate             DateTime
   description             String
@@ -409,10 +413,15 @@ model MaintenanceRecord {
   cost                    Float?
   vendor                  String?
   nextRecommendedDate     DateTime?
+  kilometers              Int?
+  notificationEnabled     Boolean      @default(false)
+  reminderOffsetValue     Int?
+  reminderOffsetUnit      ReminderUnit?
+  notificationDate        DateTime?
   userId                  String
-  pinToDashboard          Boolean   @default(false)
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  pinToDashboard          Boolean      @default(false)
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
 
   asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -437,6 +446,7 @@ model CalendarEvent {
   notificationEnabled Boolean    @default(false)
   reminderOffsetValue Int?
   reminderOffsetUnit ReminderUnit?
+  notificationDate   DateTime?
   pinToDashboard Boolean         @default(false)
   repeatFrequency RepeatFrequency?
   repeatEndType RepeatEndType?

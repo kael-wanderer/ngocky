@@ -1,5 +1,24 @@
 import { z } from 'zod';
 
+const notificationRefinement = (data: any, ctx: z.RefinementCtx) => {
+    if (data.notificationEnabled) {
+        if (!data.reminderOffsetUnit) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when notification is enabled' });
+        } else if (data.reminderOffsetUnit === 'ON_DATE') {
+            if (!data.notificationDate) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['notificationDate'], message: 'notificationDate is required when type is ON_DATE' });
+        } else {
+            if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when notification is enabled' });
+        }
+    }
+};
+
+const notificationFields = {
+    notificationEnabled: z.boolean().optional(),
+    reminderOffsetValue: z.number().int().positive().optional(),
+    reminderOffsetUnit: z.enum(['HOURS', 'DAYS', 'ON_DATE']).optional(),
+    notificationDate: z.string().datetime().nullable().optional(),
+};
+
 export const createGoalSchema = z.object({
     title: z.string().min(1).max(200),
     description: z.string().optional(),
@@ -9,16 +28,9 @@ export const createGoalSchema = z.object({
     unit: z.string().optional().default('times'),
     trackingType: z.enum(['BY_QUANTITY', 'BY_FREQUENCY']).optional().default('BY_FREQUENCY'),
     startDate: z.string().datetime().optional(),
-    notificationEnabled: z.boolean().optional(),
-    reminderOffsetValue: z.number().int().positive().optional(),
-    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS']).optional(),
+    ...notificationFields,
     pinToDashboard: z.boolean().optional(),
-}).superRefine((data, ctx) => {
-    if (data.notificationEnabled) {
-        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
-        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
-    }
-});
+}).superRefine(notificationRefinement);
 
 export const updateGoalSchema = z.object({
     title: z.string().min(1).max(200).optional(),
@@ -29,17 +41,10 @@ export const updateGoalSchema = z.object({
     unit: z.string().optional(),
     trackingType: z.enum(['BY_QUANTITY', 'BY_FREQUENCY']).optional(),
     startDate: z.string().datetime().optional(),
-    notificationEnabled: z.boolean().optional(),
-    reminderOffsetValue: z.number().int().positive().optional(),
-    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS']).optional(),
+    ...notificationFields,
     pinToDashboard: z.boolean().optional(),
     active: z.boolean().optional(),
-}).superRefine((data, ctx) => {
-    if (data.notificationEnabled) {
-        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
-        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
-    }
-});
+}).superRefine(notificationRefinement);
 
 export const createCheckInSchema = z.object({
     goalId: z.string().min(1),
@@ -74,17 +79,10 @@ export const createTaskSchema = z.object({
     status: z.enum(['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED']).optional(),
     assigneeId: z.string().optional(),
     isShared: z.boolean().optional(),
-    notificationEnabled: z.boolean().optional(),
-    reminderOffsetValue: z.number().int().positive().optional(),
-    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS']).optional(),
+    ...notificationFields,
     pinToDashboard: z.boolean().optional(),
     kanbanOrder: z.number().int().optional(),
-}).superRefine((data, ctx) => {
-    if (data.notificationEnabled) {
-        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
-        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
-    }
-});
+}).superRefine(notificationRefinement);
 
 export const updateTaskSchema = z.object({
     title: z.string().min(1).max(200).optional(),
@@ -96,17 +94,10 @@ export const updateTaskSchema = z.object({
     status: z.enum(['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED']).optional(),
     assigneeId: z.string().optional(),
     isShared: z.boolean().optional(),
-    notificationEnabled: z.boolean().optional(),
-    reminderOffsetValue: z.number().int().positive().optional(),
-    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS']).optional(),
+    ...notificationFields,
     pinToDashboard: z.boolean().optional(),
     kanbanOrder: z.number().int().optional(),
-}).superRefine((data, ctx) => {
-    if (data.notificationEnabled) {
-        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
-        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
-    }
-});
+}).superRefine(notificationRefinement);
 
 const houseworkSchemaBase = z.object({
     title: z.string().min(1).max(200),
@@ -120,9 +111,7 @@ const houseworkSchemaBase = z.object({
     customIntervalDays: z.number().int().positive().optional(),
     nextDueDate: z.string().datetime().optional(),
     estimatedCost: z.number().optional(),
-    notificationEnabled: z.boolean().optional(),
-    reminderOffsetValue: z.number().int().positive().optional(),
-    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS']).optional(),
+    ...notificationFields,
     pinToDashboard: z.boolean().optional(),
 });
 
@@ -153,10 +142,7 @@ export const createHouseworkSchema = houseworkSchemaBase.superRefine((data, ctx)
         default:
             break;
     }
-    if (data.notificationEnabled) {
-        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
-        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
-    }
+    notificationRefinement(data, ctx);
 });
 
 export const updateHouseworkSchema = houseworkSchemaBase.partial().extend({
@@ -193,10 +179,7 @@ export const updateHouseworkSchema = houseworkSchemaBase.partial().extend({
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['dayOfMonth'], message: 'Provide dayOfMonth when changing to YEARLY' });
         }
     }
-    if (data.notificationEnabled) {
-        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
-        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
-    }
+    notificationRefinement(data, ctx);
 });
 
 const eventSchemaBase = z.object({
@@ -209,9 +192,7 @@ const eventSchemaBase = z.object({
     color: z.string().optional(),
     category: z.string().optional(),
     isShared: z.boolean().optional(),
-    notificationEnabled: z.boolean().optional(),
-    reminderOffsetValue: z.number().int().positive().optional(),
-    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS']).optional(),
+    ...notificationFields,
     pinToDashboard: z.boolean().optional(),
     repeatFrequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).nullable().optional(),
     repeatEndType: z.enum(['NEVER', 'ON_DATE']).nullable().optional(),
@@ -228,10 +209,7 @@ export const createEventSchema = eventSchemaBase.superRefine((data, ctx) => {
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repeatUntil'], message: 'repeatUntil is required when repeat ends on date' });
         }
     }
-    if (data.notificationEnabled) {
-        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
-        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
-    }
+    notificationRefinement(data, ctx);
 });
 
 export const updateEventSchema = eventSchemaBase.partial().superRefine((data, ctx) => {
@@ -243,10 +221,7 @@ export const updateEventSchema = eventSchemaBase.partial().superRefine((data, ct
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repeatUntil'], message: 'repeatUntil is required when repeat ends on date' });
         }
     }
-    if (data.notificationEnabled) {
-        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when reminder is enabled' });
-        if (!data.reminderOffsetUnit) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when reminder is enabled' });
-    }
+    notificationRefinement(data, ctx);
 });
 
 export const createExpenseSchema = z.object({
