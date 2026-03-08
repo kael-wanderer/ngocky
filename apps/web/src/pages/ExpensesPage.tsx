@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, DollarSign, Filter, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Wallet, Filter, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
@@ -268,7 +268,7 @@ export default function ExpensesPage() {
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2">
-                    <DollarSign className="w-6 h-6" style={{ color: '#d97706' }} />
+                    <Wallet className="w-6 h-6" style={{ color: '#d97706' }} />
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Expenses</h2>
                 </div>
                 <button className="btn-primary" onClick={openCreate}>

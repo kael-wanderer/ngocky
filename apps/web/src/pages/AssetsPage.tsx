@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Calendar, Copy, Package, Pencil, Pin, Plus, Trash2, Wrench, X } from 'lucide-react';
+import { Calendar, Copy, Microwave, Pencil, Pin, Plus, Trash2, Wrench, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
@@ -269,7 +269,7 @@ export default function AssetsPage() {
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Package className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                    <Microwave className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Assets & Maintenance</h2>
                 </div>
                 <button className="btn-primary" onClick={openCreateAsset}>
@@ -314,7 +314,7 @@ export default function AssetsPage() {
                             ))}
                             {assets?.length === 0 && (
                                 <div className="text-center py-8 card border-dashed border-2">
-                                    <Package className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                                    <Microwave className="w-8 h-8 mx-auto mb-2 opacity-20" />
                                     <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>No assets yet</p>
                                 </div>
                             )}
@@ -457,7 +457,7 @@ export default function AssetsPage() {
                         </div>
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center card p-12 text-center border-dashed border-2">
-                            <Package className="w-12 h-12 mb-4 opacity-10" />
+                            <Microwave className="w-12 h-12 mb-4 opacity-10" />
                             <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text-secondary)' }}>Select an Asset</h3>
                             <p className="text-sm mt-1 max-w-[240px]" style={{ color: 'var(--color-text-secondary)' }}>
                                 Choose an item from the left to view details and maintenance history.

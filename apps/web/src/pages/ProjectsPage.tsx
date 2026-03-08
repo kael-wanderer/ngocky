@@ -63,7 +63,7 @@ export default function ProjectsPage() {
     // Mutations
     const createBoardMut = useMutation({
         mutationFn: (body: any) => api.post('/projects', body),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setShowCreateBoard(false); setBoardForm({ name: '', description: '', type: 'PERSONAL', isShared: false, pinToDashboard: false }); },
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setShowCreateBoard(false); setBoardForm({ name: '', description: '', type: 'PERSONAL', boardStatus: 'PLAN', isShared: false, pinToDashboard: false }); },
     });
 
     const deleteBoardMut = useMutation({
@@ -235,7 +235,7 @@ export default function ProjectsPage() {
                         {[...Array(3)].map((_, i) => <div key={i} className="card h-32 animate-pulse bg-gray-100" />)}
                     </div>
                 ) : (
-                    <div className={boardListView === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-4' : 'card divide-y overflow-hidden'} style={boardListView === 'list' ? { divideColor: 'var(--color-border)' } : {}}>
+                    <div className={boardListView === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-4' : 'card divide-y overflow-hidden'}>
                         {visibleBoards?.map((b: any) => (
                             boardListView === 'grid' ? (
                                 /* ── Grid card ── */

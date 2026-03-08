@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Target, Plus, X, Check, Trash2, AlertCircle, Pencil, Copy, Pin, LayoutGrid, List, Bell } from 'lucide-react';
+import { Trophy, Plus, X, Check, Trash2, AlertCircle, Pencil, Copy, Pin, LayoutGrid, List, Bell } from 'lucide-react';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useSearchParams } from 'react-router-dom';
 
@@ -314,7 +314,7 @@ export default function GoalsPage() {
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2">
-                    <Target className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                    <Trophy className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Goals</h2>
                 </div>
                 <div className="flex items-center gap-2">
@@ -414,7 +414,7 @@ export default function GoalsPage() {
                 <div className="space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="card p-5 h-32 animate-pulse bg-gray-100" />)}</div>
             ) : filteredGoals.length === 0 ? (
                 <div className="card p-12 flex flex-col items-center border-dashed border-2">
-                    <Target className="w-12 h-12 mb-4 opacity-10" />
+                    <Trophy className="w-12 h-12 mb-4 opacity-10" />
                     <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text-secondary)' }}>No goals yet</h3>
                     <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>Set your first goal and start building habits.</p>
                 </div>

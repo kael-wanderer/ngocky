@@ -2,19 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
 import {
-    LayoutDashboard, Target, FolderKanban, Home, Calendar,
-    DollarSign, BarChart3, Settings, Users, LogOut, Menu, X,
-    ChevronRight, Bell, Plus, Package, GraduationCap, Lightbulb, BellRing
+    LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
+    Wallet, BarChart3, Settings, Users, LogOut, Menu, X,
+    ChevronRight, Bell, Plus, Microwave, GraduationCap, Lightbulb, BellRing
 } from 'lucide-react';
 
 const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/goals', icon: Target, label: 'Goals' },
+    { to: '/goals', icon: Trophy, label: 'Goals' },
     { to: '/projects', icon: FolderKanban, label: 'Projects' },
     { to: '/housework', icon: Home, label: 'Housework' },
     { to: '/calendar', icon: Calendar, label: 'Calendar' },
-    { to: '/expenses', icon: DollarSign, label: 'Expenses' },
-    { to: '/assets', icon: Package, label: 'Assets' },
+    { to: '/expenses', icon: Wallet, label: 'Expenses' },
+    { to: '/assets', icon: Microwave, label: 'Assets' },
     { to: '/learning', icon: GraduationCap, label: 'Learning' },
     { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
     { to: '/alerts', icon: BellRing, label: 'Scheduled Action' },
