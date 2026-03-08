@@ -19,6 +19,8 @@ All notable changes to this project will be documented in this file.
 - **Dashboard Filters**: Added `Time`, `Status`, and multi-select `Category` filters.
 - **Dashboard Coverage**: Added/updated sections for `Project`, `Task`, `Pinned Items`, `Expense`, `Assets`, `Learning`, and dedicated `Overdue` feed.
 - **Branding Assets**: Added ladybug logo in Login, sidebar brand, and browser tab favicon.
+- **Expense Type Model**: Added `PAY` / `RECEIVE` expense type support with expanded scopes (`PERSONAL`, `FAMILY`, `KEO`, `PROJECT`).
+- **Expense Management Actions**: Added per-item `Edit` and `Delete` actions on the Expenses page.
 
 ### Changed
 
@@ -28,6 +30,8 @@ All notable changes to this project will be documented in this file.
 - **Goal/Project Progress Display**: Switched progress labels from raw counts to percentage in Goals and Dashboard widgets.
 - **Dashboard Data Model**: `GET /api/dashboard` now accepts query params (`timeRange`, `status`) and returns filtered due/overdue datasets.
 - **Expense Currency Display**: Switched UI amount formatting from USD to VND.
+- **Expense UX**: Reordered expense table columns, added type filter, added `Travel`, `Hobby`, and `Home Maintenance` categories, added shorthand amount parsing (for example `82M`), and split totals into income, payment, and remaining fund with type-aware colors.
+- **Dev Environment Note**: Documented that localhost web may read the VPS API/database, so backend fixes become visible locally only after VPS deployment in that setup.
 - **Housework Frequency UI**: Removed `Custom` option from Housework frequency dropdown.
 
 ### Fixed

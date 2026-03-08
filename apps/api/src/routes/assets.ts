@@ -22,6 +22,7 @@ router.post('/', validate(createAssetSchema), async (req: Request, res: Response
         const asset = await prisma.asset.create({
             data: {
                 ...req.body,
+                purchaseDate: req.body.purchaseDate ? new Date(req.body.purchaseDate) : undefined,
                 userId: req.user!.userId,
             },
         });
@@ -59,7 +60,10 @@ router.patch('/:id', validate(updateAssetSchema), async (req: Request, res: Resp
 
         const updated = await prisma.asset.update({
             where: { id },
-            data: req.body,
+            data: {
+                ...req.body,
+                purchaseDate: req.body.purchaseDate === null ? null : req.body.purchaseDate ? new Date(req.body.purchaseDate) : undefined,
+            },
         });
         sendSuccess(res, updated);
     } catch (err) { next(err); }
@@ -91,6 +95,8 @@ router.post('/:id/maintenance', validate(createMaintenanceRecordSchema.omit({ as
         const record = await prisma.maintenanceRecord.create({
             data: {
                 ...req.body,
+                serviceDate: new Date(req.body.serviceDate),
+                nextRecommendedDate: req.body.nextRecommendedDate ? new Date(req.body.nextRecommendedDate) : undefined,
                 userId: req.user!.userId,
                 assetId,
             },
@@ -107,6 +113,28 @@ router.get('/:id/maintenance', async (req: Request, res: Response, next: NextFun
             orderBy: { serviceDate: 'desc' },
         });
         sendSuccess(res, records);
+    } catch (err) { next(err); }
+});
+
+router.patch('/:assetId/maintenance/:recordId', validate(updateMaintenanceRecordSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const assetId = paramStr(req, 'assetId');
+        const recordId = paramStr(req, 'recordId');
+
+        const record = await prisma.maintenanceRecord.findFirst({
+            where: { id: recordId, assetId, userId: req.user!.userId },
+        });
+        if (!record) throw new NotFoundError('Record not found');
+
+        const updated = await prisma.maintenanceRecord.update({
+            where: { id: recordId },
+            data: {
+                ...req.body,
+                serviceDate: req.body.serviceDate ? new Date(req.body.serviceDate) : undefined,
+                nextRecommendedDate: req.body.nextRecommendedDate === null ? null : req.body.nextRecommendedDate ? new Date(req.body.nextRecommendedDate) : undefined,
+            },
+        });
+        sendSuccess(res, updated);
     } catch (err) { next(err); }
 });
 

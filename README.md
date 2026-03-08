@@ -156,7 +156,7 @@ All endpoints require Bearer token authentication.
 - **Projects** – Kanban board + list view with priorities, deadlines, assignees, drag-and-drop status updates, board edit/refresh, and shared family boards
 - **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete` action and grouped states (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`)
 - **Calendar** – Month view with event dots, day detail panel, color-coded events
-- **Expenses** – Filtered table with category/scope/date filters and totals displayed in `VND`
+- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), expanded scopes (`Personal`, `Family`, `Keo`, `Project`), and running totals for income, payment, and remaining fund in `VND`
 - **Reports** – Charts (bar, pie) for tasks, goals, housework, and expenses
 - **Settings** – Profile, notifications, theme picker (3 themes), password change
 - **User Management** – Admin-only user creation, role assignment, activate/deactivate
@@ -181,6 +181,12 @@ Dashboard overdue feed currently includes modules with due/deadline fields:
 - `CalendarEvent.startDate` (missed start time)
 
 Expense overdue is not computed separately because current schema has payment date only (`Expense.date`), not a dedicated unpaid due date field.
+
+## Local Dev With VPS API
+
+- In the current development setup, localhost web may be configured to read the VPS API (and therefore the VPS database) instead of a local API/database.
+- In that mode, backend changes such as overdue logic do not appear in localhost web until the VPS API has been deployed/restarted.
+- Restarting only the local Vite server does not change backend behavior when the frontend is still pointed at the VPS API.
 
 ## Project Sharing Rules
 

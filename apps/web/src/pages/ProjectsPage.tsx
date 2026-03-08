@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, Trash2, Pencil, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuthStore } from '../stores/auth';
+import { useSearchParams } from 'react-router-dom';
 
 const STATUS_COLS = ['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED'] as const;
 const statusLabels: Record<string, string> = { PLANNED: 'Planned', IN_PROGRESS: 'In Progress', DONE: 'Done', ARCHIVED: 'Archived' };
@@ -13,6 +14,7 @@ const priorityColors: Record<string, string> = { LOW: '#94a3b8', MEDIUM: '#3b82f
 export default function ProjectsPage() {
     const qc = useQueryClient();
     const { user } = useAuthStore();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
     const [view, setView] = useState<'kanban' | 'list'>('kanban');
     const [showCreateBoard, setShowCreateBoard] = useState(false);
@@ -25,6 +27,8 @@ export default function ProjectsPage() {
     const [taskForm, setTaskForm] = useState({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '' });
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
+    const boardIdParam = searchParams.get('boardId');
+    const taskIdParam = searchParams.get('taskId');
 
     // Queries
     const { data: boards, isLoading: boardsLoading } = useQuery({
@@ -124,6 +128,27 @@ export default function ProjectsPage() {
         moveTaskMut.mutate({ id: draggingTaskId, status });
         setDraggingTaskId(null);
     };
+
+    useEffect(() => {
+        if (boardIdParam && boardIdParam !== selectedBoardId) {
+            setSelectedBoardId(boardIdParam);
+        }
+    }, [boardIdParam, selectedBoardId]);
+
+    useEffect(() => {
+        if (!taskIdParam || !activeBoard?.tasks?.length) return;
+        const task = activeBoard.tasks.find((t: any) => t.id === taskIdParam);
+        if (!task) return;
+        setEditingTask(task);
+        setTaskForm({
+            title: task.title || '',
+            description: task.description || '',
+            category: task.category || '',
+            priority: task.priority || 'MEDIUM',
+            status: task.status || 'PLANNED',
+            deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
+        });
+    }, [taskIdParam, activeBoard]);
 
     if (!selectedBoardId) {
         return (
@@ -235,7 +260,7 @@ export default function ProjectsPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => setSelectedBoardId(null)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <button onClick={() => { setSelectedBoardId(null); setSearchParams({}); }} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>

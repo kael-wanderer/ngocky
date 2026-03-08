@@ -59,6 +59,13 @@ enum IdeaStatus {
 enum ExpenseScope {
   PERSONAL
   FAMILY
+  KEO
+  PROJECT
+}
+
+enum ExpenseType {
+  PAY
+  RECEIVE
 }
 
 enum NotificationChannel {
@@ -378,6 +385,7 @@ model Expense {
   date        DateTime
   description String
   amount      Float
+  type        ExpenseType  @default(PAY)
   category    String?
   scope       ExpenseScope @default(PERSONAL)
   note        String?

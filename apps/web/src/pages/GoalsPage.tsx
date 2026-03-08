@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { Target, Plus, X, Check, TrendingUp, Trash2, AlertCircle, Pencil } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 const emptyForm = {
     title: '',
@@ -88,6 +89,7 @@ function GoalForm({
 
 export default function GoalsPage() {
     const qc = useQueryClient();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [showCreate, setShowCreate] = useState(false);
     const [editGoal, setEditGoal] = useState<any>(null);
     const [checkInGoalId, setCheckInGoalId] = useState<string | null>(null);
@@ -98,6 +100,8 @@ export default function GoalsPage() {
     const [quantity, setQuantity] = useState(1);               // actual progress (BY_QUANTITY)
 
     const [form, setForm] = useState({ ...emptyForm });
+    const editIdParam = searchParams.get('editId');
+    const checkInIdParam = searchParams.get('checkInId');
 
     const { data, isLoading } = useQuery({
         queryKey: ['goals'],
@@ -218,6 +222,24 @@ export default function GoalsPage() {
 
         checkInMut.mutate(payload);
     };
+
+    useEffect(() => {
+        if (!data?.length) return;
+        if (editIdParam) {
+            const goal = data.find((g: any) => g.id === editIdParam);
+            if (goal) openEdit(goal);
+        }
+        if (checkInIdParam) {
+            const goal = data.find((g: any) => g.id === checkInIdParam);
+            if (goal) openCheckIn(goal.id);
+        }
+    }, [data, editIdParam, checkInIdParam]);
+
+    useEffect(() => {
+        if (!editGoal && !checkInGoalId && !showCreate && (editIdParam || checkInIdParam)) {
+            setSearchParams({});
+        }
+    }, [editGoal, checkInGoalId, showCreate, editIdParam, checkInIdParam, setSearchParams]);
 
     return (
         <div className="space-y-6 pb-20 lg:pb-0">

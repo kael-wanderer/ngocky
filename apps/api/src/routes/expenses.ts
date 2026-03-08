@@ -15,6 +15,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const page = Math.max(1, parseInt(req.query.page as string) || 1);
         const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
         const userId = req.query.userId as string;
+        const type = req.query.type as string;
         const category = req.query.category as string;
         const scope = req.query.scope as string;
         const dateFrom = req.query.dateFrom as string;
@@ -22,6 +23,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
         const where: any = {};
         if (userId) where.userId = userId;
+        if (type) where.type = type;
         if (category) where.category = category;
         if (scope) where.scope = scope;
         if (dateFrom || dateTo) {

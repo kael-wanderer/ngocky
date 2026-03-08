@@ -6,7 +6,7 @@ export const createAssetSchema = z.object({
     brand: z.string().optional(),
     model: z.string().optional(),
     serialNumber: z.string().optional(),
-    purchaseDate: z.string().datetime().optional(),
+    purchaseDate: z.string().datetime().nullable().optional(),
     note: z.string().optional(),
 });
 
@@ -19,7 +19,7 @@ export const createMaintenanceRecordSchema = z.object({
     serviceType: z.string().optional(),
     cost: z.number().nonnegative().optional(),
     vendor: z.string().optional(),
-    nextRecommendedDate: z.string().datetime().optional(),
+    nextRecommendedDate: z.string().datetime().nullable().optional(),
 });
 
 export const updateMaintenanceRecordSchema = createMaintenanceRecordSchema.partial().omit({ assetId: true });

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useSearchParams } from 'react-router-dom';
 
 const freqLabels: Record<string, string> = {
     ONE_TIME: 'One time',
@@ -198,9 +199,11 @@ function HouseworkForm({
 
 export default function HouseworkPage() {
     const qc = useQueryClient();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [showCreate, setShowCreate] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
     const [form, setForm] = useState({ ...emptyForm });
+    const editIdParam = searchParams.get('editId');
 
     const { data, isLoading } = useQuery({
         queryKey: ['housework'],
@@ -275,6 +278,18 @@ export default function HouseworkPage() {
     const handleDelete = (id: string) => {
         if (window.confirm('Delete this housework item?')) deleteMut.mutate(id);
     };
+
+    useEffect(() => {
+        if (!editIdParam || !(data || []).length) return;
+        const item = (data || []).find((x: any) => x.id === editIdParam);
+        if (item) openEdit(item);
+    }, [editIdParam, data]);
+
+    useEffect(() => {
+        if (!editingItem && !showCreate && editIdParam) {
+            setSearchParams({});
+        }
+    }, [editingItem, showCreate, editIdParam, setSearchParams]);
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());

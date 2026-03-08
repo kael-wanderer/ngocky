@@ -33,9 +33,14 @@ Allows organizing tasks into distinct boards with a modern Kanban view.
 
 Monitors family and personal spending.
 
-- **Scope**: `PERSONAL` (private) vs `FAMILY` (visible to everyone).
-- **Categories**: Food, Transport, Utilities, etc.
-- **Reporting**: Aggregated totals per category and scope.
+- **Type**: `PAY` (outgoing) and `RECEIVE` (incoming).
+- **Scope**: `PERSONAL`, `FAMILY`, `KEO`, `PROJECT`.
+- **Categories**: Food, Transport, Utilities, Travel, Hobby, Home Maintenance, etc.
+- **UI Behavior**:
+  - `PAY` amounts are shown in red.
+  - `RECEIVE` amounts are shown in green.
+  - Expense input accepts shorthand values such as `82M` and stores them as numeric VND amounts.
+  - Expense summary is split into `Total income`, `Total payment`, and `Remaining fund`.
 
 ---
 
@@ -53,6 +58,7 @@ Monitors family and personal spending.
 - **GitHub Actions**: Automated pipeline builds Docker images and pushes to GHCR.
 - **VPS Deployment**: Uses `docker-compose.prod.yml`, automated by SSH and GitHub Secrets.
 - **Environment Management**: `.env` is generated on-the-fly on the VPS during deployment.
+- **Observed Dev Pattern**: Localhost web may be configured to call the VPS API directly. In that setup, backend code changes only become visible locally after the VPS deployment updates the running API.
 
 ### Tech Stack
 

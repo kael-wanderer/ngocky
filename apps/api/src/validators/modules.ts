@@ -153,8 +153,9 @@ export const createExpenseSchema = z.object({
     date: z.string().datetime(),
     description: z.string().min(1).max(300),
     amount: z.number().positive(),
+    type: z.enum(['PAY', 'RECEIVE']).optional(),
     category: z.string().optional(),
-    scope: z.enum(['PERSONAL', 'FAMILY']).optional(),
+    scope: z.enum(['PERSONAL', 'FAMILY', 'KEO', 'PROJECT']).optional(),
     note: z.string().optional(),
     recurring: z.boolean().optional(),
 });

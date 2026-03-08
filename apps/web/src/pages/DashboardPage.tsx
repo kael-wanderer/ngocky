@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
+import { useNavigate } from 'react-router-dom';
 import {
     FolderKanban, Home, Calendar, DollarSign,
     AlertTriangle, Target, CheckCircle2, Pin, Package, ChevronDown
@@ -50,6 +51,7 @@ const getHouseworkStatus = (nextDueDate?: string | null) => {
 
 export default function DashboardPage() {
     const { user } = useAuthStore();
+    const navigate = useNavigate();
     const [timeRange, setTimeRange] = useState<TimeRange>('THIS_WEEK');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('PENDING');
     const [categories, setCategories] = useState<Category[]>([...CATEGORY_OPTIONS]);
@@ -64,10 +66,10 @@ export default function DashboardPage() {
     todayStart.setHours(0, 0, 0, 0);
 
     const cards = [
-        { label: 'Tasks This Week', value: s.tasksThisWeek, icon: FolderKanban, color: '#4f46e5', bg: '#eef2ff' },
-        { label: 'Housework Due', value: s.houseworkThisWeek, icon: Home, color: '#059669', bg: '#ecfdf5' },
-        { label: 'Upcoming Events', value: s.upcomingEventsCount, icon: Calendar, color: '#7c3aed', bg: '#f5f3ff' },
-        { label: 'Overdue Items', value: s.overdueItemsTotal || 0, icon: AlertTriangle, color: '#dc2626', bg: '#fef2f2' },
+        { label: 'Tasks This Week', value: s.tasksThisWeek, icon: FolderKanban, color: '#4f46e5', bg: '#eef2ff', to: '/projects' },
+        { label: 'Housework Due', value: s.houseworkThisWeek, icon: Home, color: '#059669', bg: '#ecfdf5', to: '/housework' },
+        { label: 'Upcoming Events', value: s.upcomingEventsCount, icon: Calendar, color: '#7c3aed', bg: '#f5f3ff', to: '/calendar' },
+        { label: 'Overdue Items', value: s.overdueItemsTotal || 0, icon: AlertTriangle, color: '#dc2626', bg: '#fef2f2', to: '/' },
     ];
 
     const sectionVisible = (category: Category) => categories.includes(category);
@@ -162,7 +164,11 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {cards.map((c) => (
-                    <div key={c.label} className="card p-5 animate-slide-up">
+                    <button
+                        key={c.label}
+                        className="card p-5 animate-slide-up text-left hover:shadow-md transition-shadow"
+                        onClick={() => c.to === '/dashboard' ? setStatusFilter('OVERDUE') : navigate(c.to)}
+                    >
                         <div className="flex items-start justify-between">
                             <div>
                                 <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{c.label}</p>
@@ -172,7 +178,7 @@ export default function DashboardPage() {
                                 <c.icon className="w-5 h-5" style={{ color: c.color }} />
                             </div>
                         </div>
-                    </div>
+                    </button>
                 ))}
             </div>
 
@@ -186,7 +192,17 @@ export default function DashboardPage() {
                         <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No overdue items for selected categories.</p>
                     )}
                     {filteredOverdueItems.map((o: any) => (
-                        <div key={`${o.type}-${o.id}`} className="flex items-center justify-between py-1 gap-3">
+                        <button
+                            key={`${o.type}-${o.id}`}
+                            className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-red-50 rounded px-1"
+                            onClick={() => {
+                                if (o.type === 'PROJECT') navigate('/projects');
+                                else if (o.type === 'HOUSEWORK') navigate(`/housework?editId=${o.id}`);
+                                else if (o.type === 'CALENDAR') navigate(`/calendar?eventId=${o.id}`);
+                                else if (o.type === 'ASSET') navigate('/assets');
+                                else if (o.type === 'LEARNING') navigate('/learning');
+                            }}
+                        >
                             <div className="min-w-0">
                                 <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{o.title}</p>
                                 <p className="text-xs text-red-700">
@@ -198,7 +214,7 @@ export default function DashboardPage() {
                                     {format(new Date(o.date), 'MMM d')}
                                 </span>
                             )}
-                        </div>
+                        </button>
                     ))}
                 </div>
             </div>
@@ -217,7 +233,7 @@ export default function DashboardPage() {
                             {(data?.goals || []).map((g: any) => {
                                 const progressPct = g.targetCount > 0 ? (g.currentCount / g.targetCount) * 100 : 0;
                                 return (
-                                    <div key={g.id} className="flex items-center gap-3">
+                                    <button key={g.id} className="w-full flex items-center gap-3 text-left hover:bg-gray-50 rounded p-1" onClick={() => navigate(`/goals?editId=${g.id}`)}>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{g.title}</p>
                                             <div className="flex items-center gap-2 mt-1.5">
@@ -240,7 +256,7 @@ export default function DashboardPage() {
                                         {g.currentCount >= g.targetCount && (
                                             <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                                         )}
-                                    </div>
+                                    </button>
                                 );
                             })}
                         </div>
@@ -258,7 +274,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No events in selected time</p>
                             )}
                             {(data?.upcomingEvents || []).map((e: any) => (
-                                <div key={e.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                                <button key={e.id} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors text-left" onClick={() => navigate(`/calendar?eventId=${e.id}`)}>
                                     <div className="w-1 h-10 rounded-full" style={{ backgroundColor: e.color || 'var(--color-primary)' }} />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{e.title}</p>
@@ -266,7 +282,7 @@ export default function DashboardPage() {
                                             {format(new Date(e.startDate), 'EEE, MMM d · h:mm a')}
                                         </p>
                                     </div>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -283,7 +299,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No project deadlines in selected time</p>
                             )}
                             {(data?.dueProjects || []).map((p: any) => (
-                                <div key={p.id} className="flex items-center justify-between py-1 gap-3">
+                                <button key={p.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(`/projects?boardId=${p.id}`)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{p.name}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -295,7 +311,7 @@ export default function DashboardPage() {
                                             {format(new Date(p.earliestDeadline), 'MMM d')}
                                         </span>
                                     )}
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -312,7 +328,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No tasks with deadline in selected time</p>
                             )}
                             {(data?.dueTasks || []).map((t: any) => (
-                                <div key={t.id} className="flex items-center justify-between py-1 gap-3">
+                                <button key={t.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(`/projects?boardId=${t.projectId}&taskId=${t.id}`)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{t.title}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -324,7 +340,7 @@ export default function DashboardPage() {
                                             {format(new Date(t.deadline), 'MMM d')}
                                         </span>
                                     )}
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -341,7 +357,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No housework due in selected time</p>
                             )}
                             {(data?.dueHousework || []).map((h: any) => (
-                                <div key={h.id} className="flex items-center justify-between py-1 gap-3">
+                                <button key={h.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(`/housework?editId=${h.id}`)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{h.title}</p>
                                         <div className="flex items-center gap-2 mt-0.5">
@@ -364,7 +380,7 @@ export default function DashboardPage() {
                                             {format(new Date(h.nextDueDate), 'MMM d')}
                                         </span>
                                     )}
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -381,7 +397,15 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No pinned items in selected time</p>
                             )}
                             {(data?.pinnedItems || []).map((p: any) => (
-                                <div key={`${p.type}-${p.id}`} className="flex items-center justify-between py-1 gap-3">
+                                <button
+                                    key={`${p.type}-${p.id}`}
+                                    className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1"
+                                    onClick={() => {
+                                        if (p.type === 'GOAL') navigate(`/goals?editId=${p.id}`);
+                                        else if (p.type === 'TASK') navigate('/projects');
+                                        else if (p.type === 'HOUSEWORK') navigate(`/housework?editId=${p.id}`);
+                                    }}
+                                >
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{p.title}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -393,7 +417,7 @@ export default function DashboardPage() {
                                             {format(new Date(p.date), 'MMM d')}
                                         </span>
                                     )}
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -410,7 +434,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No expenses in selected time</p>
                             )}
                             {(data?.expenses || []).map((e: any) => (
-                                <div key={e.id} className="flex items-center justify-between py-1 gap-3">
+                                <button key={e.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate('/expenses')}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{e.description}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -420,7 +444,7 @@ export default function DashboardPage() {
                                     <span className="text-sm font-semibold whitespace-nowrap" style={{ color: 'var(--color-danger)' }}>
                                         {formatVND(e.amount)}
                                     </span>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -437,7 +461,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No asset due dates in selected time</p>
                             )}
                             {(data?.dueAssets || []).map((a: any) => (
-                                <div key={a.id} className="flex items-center justify-between py-1 gap-3">
+                                <button key={a.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(`/assets?assetId=${a.assetId}`)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{a.asset?.name || 'Asset'}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -449,7 +473,7 @@ export default function DashboardPage() {
                                             {format(new Date(a.nextRecommendedDate), 'MMM d')}
                                         </span>
                                     )}
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -466,7 +490,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No learning deadlines in selected time</p>
                             )}
                             {(data?.dueLearning || []).map((l: any) => (
-                                <div key={l.id} className="flex items-center justify-between py-1 gap-3">
+                                <button key={l.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate('/learning')}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{l.title}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -478,7 +502,7 @@ export default function DashboardPage() {
                                             {format(new Date(l.deadline), 'MMM d')}
                                         </span>
                                     )}
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>

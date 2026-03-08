@@ -1,32 +1,46 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Package, Plus, X, Wrench, Calendar, Trash2, ExternalLink } from 'lucide-react';
+import { Calendar, Copy, Package, Pencil, Plus, Trash2, Wrench, X } from 'lucide-react';
+import { format } from 'date-fns';
+import { useSearchParams } from 'react-router-dom';
+
+const emptyAssetForm = () => ({
+    name: '',
+    type: '',
+    brand: '',
+    model: '',
+    serialNumber: '',
+    purchaseDate: '',
+    note: '',
+});
+
+const emptyRecordForm = () => ({
+    serviceDate: format(new Date(), 'yyyy-MM-dd'),
+    serviceType: '',
+    description: '',
+    cost: '',
+    vendor: '',
+    nextRecommendedDate: '',
+});
+
+const formatVND = (amount: number) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(amount)} VND`;
 
 export default function AssetsPage() {
     const qc = useQueryClient();
-    const [showCreateAsset, setShowCreateAsset] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
     const [selectedAsset, setSelectedAsset] = useState<any>(null);
-    const [showAddRecord, setShowAddRecord] = useState(false);
+    const [showAssetModal, setShowAssetModal] = useState(false);
+    const [editingAsset, setEditingAsset] = useState<any>(null);
+    const [showRecordModal, setShowRecordModal] = useState(false);
+    const [editingRecord, setEditingRecord] = useState<any>(null);
+    const [assetForm, setAssetForm] = useState(emptyAssetForm());
+    const [recordForm, setRecordForm] = useState(emptyRecordForm());
+    const assetIdParam = searchParams.get('assetId');
 
     const { data: assets, isLoading: assetsLoading } = useQuery({
         queryKey: ['assets'],
         queryFn: async () => (await api.get('/assets')).data.data,
-    });
-
-    const createAssetMut = useMutation({
-        mutationFn: (body: any) => api.post('/assets', body),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['assets'] }); setShowCreateAsset(false); },
-    });
-
-    const deleteAssetMut = useMutation({
-        mutationFn: (id: string) => api.delete(`/assets/${id}`),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['assets'] }),
-    });
-
-    const addRecordMut = useMutation({
-        mutationFn: ({ assetId, body }: { assetId: string, body: any }) => api.post(`/assets/${assetId}/maintenance`, body),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['maintenance', selectedAsset?.id] }); setShowAddRecord(false); },
     });
 
     const { data: records, isLoading: recordsLoading } = useQuery({
@@ -35,8 +49,196 @@ export default function AssetsPage() {
         enabled: !!selectedAsset,
     });
 
-    const [assetForm, setAssetForm] = useState({ name: '', type: '', brand: '', model: '', serialNumber: '', purchaseDate: '', note: '' });
-    const [recordForm, setRecordForm] = useState({ serviceDate: new Date().toISOString().split('T')[0], serviceType: '', description: '', cost: 0, vendor: '', nextRecommendedDate: '' });
+    const createAssetMut = useMutation({
+        mutationFn: (body: any) => api.post('/assets', body),
+        onSuccess: ({ data }) => {
+            qc.invalidateQueries({ queryKey: ['assets'] });
+            setSelectedAsset(data.data);
+            closeAssetModal();
+        },
+    });
+
+    const updateAssetMut = useMutation({
+        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/assets/${id}`, body),
+        onSuccess: ({ data }) => {
+            qc.invalidateQueries({ queryKey: ['assets'] });
+            setSelectedAsset(data.data);
+            closeAssetModal();
+        },
+    });
+
+    const deleteAssetMut = useMutation({
+        mutationFn: (id: string) => api.delete(`/assets/${id}`),
+        onSuccess: (_, id) => {
+            qc.invalidateQueries({ queryKey: ['assets'] });
+            if (selectedAsset?.id === id) {
+                setSelectedAsset(null);
+                setSearchParams({});
+            }
+        },
+    });
+
+    const createRecordMut = useMutation({
+        mutationFn: ({ assetId, body }: { assetId: string; body: any }) => api.post(`/assets/${assetId}/maintenance`, body),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['maintenance', selectedAsset?.id] });
+            closeRecordModal();
+        },
+    });
+
+    const updateRecordMut = useMutation({
+        mutationFn: ({ assetId, recordId, body }: { assetId: string; recordId: string; body: any }) => api.patch(`/assets/${assetId}/maintenance/${recordId}`, body),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['maintenance', selectedAsset?.id] });
+            closeRecordModal();
+        },
+    });
+
+    const deleteRecordMut = useMutation({
+        mutationFn: ({ assetId, recordId }: { assetId: string; recordId: string }) => api.delete(`/assets/${assetId}/maintenance/${recordId}`),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['maintenance', selectedAsset?.id] }),
+    });
+
+    useEffect(() => {
+        if (!assetIdParam || !(assets || []).length) return;
+        const asset = (assets || []).find((item: any) => item.id === assetIdParam);
+        if (asset) setSelectedAsset(asset);
+    }, [assetIdParam, assets]);
+
+    useEffect(() => {
+        if (!selectedAsset && assetIdParam) setSearchParams({});
+    }, [selectedAsset, assetIdParam, setSearchParams]);
+
+    function openCreateAsset() {
+        setEditingAsset(null);
+        setAssetForm(emptyAssetForm());
+        setShowAssetModal(true);
+    }
+
+    function openEditAsset(asset: any) {
+        setEditingAsset(asset);
+        setAssetForm({
+            name: asset.name || '',
+            type: asset.type || '',
+            brand: asset.brand || '',
+            model: asset.model || '',
+            serialNumber: asset.serialNumber || '',
+            purchaseDate: asset.purchaseDate ? format(new Date(asset.purchaseDate), 'yyyy-MM-dd') : '',
+            note: asset.note || '',
+        });
+        setShowAssetModal(true);
+    }
+
+    function closeAssetModal() {
+        setShowAssetModal(false);
+        setEditingAsset(null);
+        setAssetForm(emptyAssetForm());
+    }
+
+    function duplicateAsset(asset: any) {
+        createAssetMut.mutate({
+            name: `${asset.name} (Copy)`,
+            type: asset.type || '',
+            brand: asset.brand || '',
+            model: asset.model || '',
+            serialNumber: asset.serialNumber || '',
+            purchaseDate: asset.purchaseDate || null,
+            note: asset.note || '',
+        });
+    }
+
+    function handleAssetSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        const payload = {
+            ...assetForm,
+            purchaseDate: assetForm.purchaseDate ? new Date(`${assetForm.purchaseDate}T00:00:00`).toISOString() : null,
+        };
+
+        if (editingAsset) {
+            updateAssetMut.mutate({ id: editingAsset.id, body: payload });
+            return;
+        }
+
+        createAssetMut.mutate(payload);
+    }
+
+    function openCreateRecord() {
+        setEditingRecord(null);
+        setRecordForm(emptyRecordForm());
+        setShowRecordModal(true);
+    }
+
+    function openEditRecord(record: any) {
+        setEditingRecord(record);
+        setRecordForm({
+            serviceDate: format(new Date(record.serviceDate), 'yyyy-MM-dd'),
+            serviceType: record.serviceType || '',
+            description: record.description || '',
+            cost: record.cost ? String(Math.round(record.cost)) : '',
+            vendor: record.vendor || '',
+            nextRecommendedDate: record.nextRecommendedDate ? format(new Date(record.nextRecommendedDate), 'yyyy-MM-dd') : '',
+        });
+        setShowRecordModal(true);
+    }
+
+    function closeRecordModal() {
+        setShowRecordModal(false);
+        setEditingRecord(null);
+        setRecordForm(emptyRecordForm());
+    }
+
+    function duplicateRecord(record: any) {
+        if (!selectedAsset) return;
+        createRecordMut.mutate({
+            assetId: selectedAsset.id,
+            body: {
+                serviceDate: new Date(record.serviceDate).toISOString(),
+                serviceType: record.serviceType || '',
+                description: record.description || '',
+                cost: typeof record.cost === 'number' ? record.cost : undefined,
+                vendor: record.vendor || '',
+                nextRecommendedDate: record.nextRecommendedDate || null,
+            },
+        });
+    }
+
+    function handleRecordSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        if (!selectedAsset) return;
+
+        const parsedCost = recordForm.cost.trim() ? Number(recordForm.cost.replace(/,/g, '')) : undefined;
+        if (parsedCost !== undefined && Number.isNaN(parsedCost)) {
+            window.alert('Cost must be a valid number.');
+            return;
+        }
+
+        const body = {
+            serviceDate: new Date(`${recordForm.serviceDate}T00:00:00`).toISOString(),
+            serviceType: recordForm.serviceType,
+            description: recordForm.description,
+            cost: parsedCost,
+            vendor: recordForm.vendor,
+            nextRecommendedDate: recordForm.nextRecommendedDate ? new Date(`${recordForm.nextRecommendedDate}T00:00:00`).toISOString() : null,
+        };
+
+        if (editingRecord) {
+            updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: editingRecord.id, body });
+            return;
+        }
+
+        createRecordMut.mutate({ assetId: selectedAsset.id, body });
+    }
+
+    function handleDeleteAsset(assetId: string) {
+        if (window.confirm('Delete this asset and all maintenance logs?')) deleteAssetMut.mutate(assetId);
+    }
+
+    function handleDeleteRecord(recordId: string) {
+        if (!selectedAsset) return;
+        if (window.confirm('Delete this maintenance log?')) {
+            deleteRecordMut.mutate({ assetId: selectedAsset.id, recordId });
+        }
+    }
 
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
@@ -45,13 +247,12 @@ export default function AssetsPage() {
                     <Package className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Assets & Maintenance</h2>
                 </div>
-                <button className="btn-primary" onClick={() => setShowCreateAsset(true)}>
+                <button className="btn-primary" onClick={openCreateAsset}>
                     <Plus className="w-4 h-4" /> New Asset
                 </button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Assets List */}
                 <div className="lg:col-span-1 space-y-4">
                     <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>My Assets</h3>
                     {assetsLoading ? (
@@ -65,19 +266,24 @@ export default function AssetsPage() {
                                     onClick={() => setSelectedAsset(asset)}
                                     style={selectedAsset?.id === asset.id ? { borderColor: 'var(--color-primary)' } : {}}
                                 >
-                                    <div className="flex items-start justify-between">
-                                        <div>
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
                                             <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{asset.name}</h4>
                                             <p className="text-[10px] uppercase font-bold mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                                {asset.brand} {asset.model}
+                                                {[asset.brand, asset.model].filter(Boolean).join(' ') || asset.type || 'No brand/model'}
                                             </p>
                                         </div>
-                                        <button
-                                            className="p-1.5 text-gray-400 hover:text-red-500 rounded-md transition-colors"
-                                            onClick={(e) => { e.stopPropagation(); if (confirm('Delete this asset?')) deleteAssetMut.mutate(asset.id); }}
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditAsset(asset); }}>
+                                                <Pencil className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateAsset(asset); }}>
+                                                <Copy className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); handleDeleteAsset(asset.id); }}>
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -91,15 +297,18 @@ export default function AssetsPage() {
                     )}
                 </div>
 
-                {/* Asset Details & Records */}
                 <div className="lg:col-span-2 space-y-6">
                     {selectedAsset ? (
                         <div className="animate-fade-in space-y-6">
                             <div className="card p-6">
-                                <div className="flex items-start justify-between mb-6">
+                                <div className="flex items-start justify-between mb-6 gap-4">
                                     <div>
                                         <h3 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{selectedAsset.name}</h3>
                                         <div className="flex flex-wrap gap-4 mt-2">
+                                            <div className="text-xs">
+                                                <span className="font-semibold block mb-0.5" style={{ color: 'var(--color-text-secondary)' }}>Type</span>
+                                                <span style={{ color: 'var(--color-text)' }}>{selectedAsset.type || '-'}</span>
+                                            </div>
                                             <div className="text-xs">
                                                 <span className="font-semibold block mb-0.5" style={{ color: 'var(--color-text-secondary)' }}>Brand/Model</span>
                                                 <span style={{ color: 'var(--color-text)' }}>{selectedAsset.brand || '-'} / {selectedAsset.model || '-'}</span>
@@ -114,9 +323,17 @@ export default function AssetsPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <button className="btn-primary py-1.5 px-3 text-xs" onClick={() => setShowAddRecord(true)}>
-                                        <Wrench className="w-3.5 h-3.5" /> Add Log
-                                    </button>
+                                    <div className="flex flex-wrap gap-2 justify-end">
+                                        <button className="btn-secondary py-1.5 px-3 text-xs" onClick={() => openEditAsset(selectedAsset)}>
+                                            <Pencil className="w-3.5 h-3.5" /> Edit Asset
+                                        </button>
+                                        <button className="btn-secondary py-1.5 px-3 text-xs" onClick={() => duplicateAsset(selectedAsset)}>
+                                            <Copy className="w-3.5 h-3.5" /> Duplicate Asset
+                                        </button>
+                                        <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateRecord}>
+                                            <Wrench className="w-3.5 h-3.5" /> Add Log
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {selectedAsset.note && (
@@ -137,10 +354,10 @@ export default function AssetsPage() {
                                         <div className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
                                             {(records || []).map((record: any) => (
                                                 <div key={record.id} className="py-4 first:pt-0">
-                                                    <div className="flex items-start justify-between">
+                                                    <div className="flex items-start justify-between gap-4">
                                                         <div>
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{record.serviceType}</span>
+                                                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                                <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{record.serviceType || 'Maintenance'}</span>
                                                                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 font-medium" style={{ color: 'var(--color-text-secondary)' }}>
                                                                     {new Date(record.serviceDate).toLocaleDateString()}
                                                                 </span>
@@ -149,11 +366,22 @@ export default function AssetsPage() {
                                                             {record.vendor && (
                                                                 <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-primary)' }}>Vendor: {record.vendor}</p>
                                                             )}
+                                                            <div className="flex items-center gap-2 mt-2">
+                                                                <button type="button" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={() => openEditRecord(record)}>
+                                                                    <Pencil className="w-3.5 h-3.5" /> Edit
+                                                                </button>
+                                                                <button type="button" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={() => duplicateRecord(record)}>
+                                                                    <Copy className="w-3.5 h-3.5" /> Duplicate
+                                                                </button>
+                                                                <button type="button" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--color-danger)' }} onClick={() => handleDeleteRecord(record.id)}>
+                                                                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                         <div className="text-right">
-                                                            {record.cost > 0 && (
+                                                            {typeof record.cost === 'number' && record.cost > 0 && (
                                                                 <span className="text-sm font-bold block" style={{ color: 'var(--color-text)' }}>
-                                                                    ${record.cost.toLocaleString()}
+                                                                    {formatVND(record.cost)}
                                                                 </span>
                                                             )}
                                                             {record.nextRecommendedDate && (
@@ -187,28 +415,22 @@ export default function AssetsPage() {
                 </div>
             </div>
 
-            {/* Create Asset Modal */}
-            {showCreateAsset && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowCreateAsset(false)}>
+            {showAssetModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeAssetModal}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Add New Asset</h3>
-                            <button onClick={() => setShowCreateAsset(false)}><X className="w-5 h-5" /></button>
+                            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingAsset ? 'Edit Asset' : 'Add New Asset'}</h3>
+                            <button onClick={closeAssetModal}><X className="w-5 h-5" /></button>
                         </div>
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                createAssetMut.mutate({
-                                    ...assetForm,
-                                    purchaseDate: assetForm.purchaseDate ? new Date(assetForm.purchaseDate).toISOString() : null
-                                });
-                            }}
-                            className="space-y-4"
-                        >
+                        <form onSubmit={handleAssetSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
                                     <label className="label">Name <span className="text-red-500">*</span></label>
                                     <input className="input" value={assetForm.name} onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })} placeholder="e.g. Family Van, Fridge" required />
+                                </div>
+                                <div>
+                                    <label className="label">Type</label>
+                                    <input className="input" value={assetForm.type} onChange={(e) => setAssetForm({ ...assetForm, type: e.target.value })} placeholder="Vehicle, Appliance..." />
                                 </div>
                                 <div>
                                     <label className="label">Brand</label>
@@ -222,7 +444,7 @@ export default function AssetsPage() {
                                     <label className="label">Serial Number</label>
                                     <input className="input" value={assetForm.serialNumber} onChange={(e) => setAssetForm({ ...assetForm, serialNumber: e.target.value })} />
                                 </div>
-                                <div>
+                                <div className="col-span-2">
                                     <label className="label">Purchase Date</label>
                                     <input type="date" className="input" value={assetForm.purchaseDate} onChange={(e) => setAssetForm({ ...assetForm, purchaseDate: e.target.value })} />
                                 </div>
@@ -231,52 +453,37 @@ export default function AssetsPage() {
                                     <textarea className="input" rows={2} value={assetForm.note} onChange={(e) => setAssetForm({ ...assetForm, note: e.target.value })} placeholder="Any additional details..." />
                                 </div>
                             </div>
-                            <button type="submit" className="btn-primary w-full" disabled={createAssetMut.isPending}>
-                                {createAssetMut.isPending ? 'Saving...' : 'Save Asset'}
+                            <button type="submit" className="btn-primary w-full" disabled={createAssetMut.isPending || updateAssetMut.isPending}>
+                                {editingAsset ? 'Save Asset' : 'Create Asset'}
                             </button>
                         </form>
                     </div>
                 </div>
             )}
 
-            {/* Add Maintenance Record Modal */}
-            {showAddRecord && selectedAsset && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowAddRecord(false)}>
+            {showRecordModal && selectedAsset && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeRecordModal}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Add Maintenance Log</h3>
-                            <button onClick={() => setShowAddRecord(false)}><X className="w-5 h-5" /></button>
+                            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingRecord ? 'Edit Maintenance Log' : 'Add Maintenance Log'}</h3>
+                            <button onClick={closeRecordModal}><X className="w-5 h-5" /></button>
                         </div>
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                addRecordMut.mutate({
-                                    assetId: selectedAsset.id,
-                                    body: {
-                                        ...recordForm,
-                                        serviceDate: new Date(recordForm.serviceDate).toISOString(),
-                                        nextRecommendedDate: recordForm.nextRecommendedDate ? new Date(recordForm.nextRecommendedDate).toISOString() : null,
-                                        cost: parseFloat(recordForm.cost.toString())
-                                    }
-                                });
-                            }}
-                            className="space-y-4"
-                        >
+                        <form onSubmit={handleRecordSubmit} className="space-y-4">
                             <div>
-                                <label className="label">Service Type</label>
+                                <label className="label">Service Type <span className="text-red-500">*</span></label>
                                 <input className="input" value={recordForm.serviceType} onChange={(e) => setRecordForm({ ...recordForm, serviceType: e.target.value })} placeholder="Oil Change, Repair, etc." required />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="label">Date</label>
+                                    <label className="label">Date <span className="text-red-500">*</span></label>
                                     <input type="date" className="input" value={recordForm.serviceDate} onChange={(e) => setRecordForm({ ...recordForm, serviceDate: e.target.value })} required />
                                 </div>
                                 <div>
                                     <label className="label">Cost</label>
-                                    <input type="number" step="0.01" className="input" value={recordForm.cost} onChange={(e) => setRecordForm({ ...recordForm, cost: parseFloat(e.target.value) })} />
+                                    <input className="input" value={recordForm.cost} onChange={(e) => setRecordForm({ ...recordForm, cost: e.target.value })} placeholder="Optional" />
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="label">Description</label>
+                                    <label className="label">Description <span className="text-red-500">*</span></label>
                                     <textarea className="input" rows={2} value={recordForm.description} onChange={(e) => setRecordForm({ ...recordForm, description: e.target.value })} required />
                                 </div>
                                 <div>
@@ -288,8 +495,8 @@ export default function AssetsPage() {
                                     <input type="date" className="input" value={recordForm.nextRecommendedDate} onChange={(e) => setRecordForm({ ...recordForm, nextRecommendedDate: e.target.value })} />
                                 </div>
                             </div>
-                            <button type="submit" className="btn-primary w-full" disabled={addRecordMut.isPending}>
-                                {addRecordMut.isPending ? 'Saving...' : 'Save Log'}
+                            <button type="submit" className="btn-primary w-full" disabled={createRecordMut.isPending || updateRecordMut.isPending}>
+                                {editingRecord ? 'Save Log' : 'Create Log'}
                             </button>
                         </form>
                     </div>

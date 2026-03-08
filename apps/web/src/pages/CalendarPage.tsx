@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { Calendar as CalIcon, Plus, X, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
+import { useSearchParams } from 'react-router-dom';
 
 export default function CalendarPage() {
     const qc = useQueryClient();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [showCreate, setShowCreate] = useState(false);
     const [editingEvent, setEditingEvent] = useState<any>(null);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [form, setForm] = useState({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true });
+    const eventIdParam = searchParams.get('eventId');
+    const dateParam = searchParams.get('date');
 
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
@@ -82,6 +86,31 @@ export default function CalendarPage() {
     const handleDelete = (id: string) => {
         if (window.confirm('Delete this event?')) deleteMut.mutate(id);
     };
+
+    useEffect(() => {
+        if (dateParam) {
+            const parsed = new Date(dateParam);
+            if (!Number.isNaN(parsed.getTime())) {
+                setSelectedDate(parsed);
+                setCurrentMonth(parsed);
+            }
+        }
+    }, [dateParam]);
+
+    useEffect(() => {
+        if (!eventIdParam || !events.length) return;
+        const event = events.find((e: any) => e.id === eventIdParam);
+        if (!event) return;
+        setSelectedDate(new Date(event.startDate));
+        setCurrentMonth(new Date(event.startDate));
+        openEdit(event);
+    }, [eventIdParam, events]);
+
+    useEffect(() => {
+        if (!showCreate && !editingEvent && (eventIdParam || dateParam)) {
+            setSearchParams({});
+        }
+    }, [showCreate, editingEvent, eventIdParam, dateParam, setSearchParams]);
 
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
