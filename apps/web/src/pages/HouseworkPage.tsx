@@ -218,7 +218,7 @@ export default function HouseworkPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [form, setForm] = useState({ ...emptyForm });
     const [frequencyFilter, setFrequencyFilter] = useState<string>('ALL');
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const editIdParam = searchParams.get('editId');
 
     const { data, isLoading } = useQuery({
@@ -354,41 +354,41 @@ export default function HouseworkPage() {
 
         if (viewMode === 'grid') {
             return (
-                <div key={item.id} className={`card p-4 group animate-slide-up ${overdue ? 'border-red-200' : ''}`}>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                                <p className="font-medium truncate text-sm" style={{ color: 'var(--color-text)' }}>{item.title}</p>
-                                {overdue && <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
-                            </div>
-                            {item.description && <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-text-secondary)' }}>{item.description}</p>}
+                <div key={item.id} className={`card p-5 transition-all group hover:shadow-lg animate-slide-up ${overdue ? 'border-red-200' : ''}`}>
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <h3 className="font-bold text-lg truncate" style={{ color: 'var(--color-text)' }}>{item.title}</h3>
+                            {overdue && <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />}
                         </div>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                            <button onClick={() => updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } })} className={`p-1.5 rounded-lg transition-colors ${item.pinToDashboard ? 'text-amber-500 hover:bg-amber-50' : 'hover:bg-gray-100'}`} title="Pin"><Pin className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => duplicateItem(item)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => openEdit(item)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all flex-shrink-0">
+                            <button onClick={() => updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } })} className={`p-1 ${item.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin"><Pin className="w-4 h-4" /></button>
+                            <button onClick={() => duplicateItem(item)} className="p-1 hover:text-indigo-500" title="Duplicate"><Copy className="w-4 h-4" /></button>
+                            <button onClick={() => openEdit(item)} className="p-1 hover:text-indigo-500" title="Edit"><Pencil className="w-4 h-4" /></button>
+                            <button onClick={() => handleDelete(item.id)} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-4 h-4" /></button>
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
-                        <span className="badge-primary text-[10px]">{freqLabels[item.frequencyType]}</span>
-                        {item.nextDueDate && (
-                            <span className="text-xs" style={{ color: overdue ? '#dc2626' : 'var(--color-text-secondary)' }}>
-                                Due: {format(new Date(item.nextDueDate), 'MMM d, yyyy')}
-                            </span>
-                        )}
-                        {item.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
-                        {item.lastCompletedDate && (
-                            <span className="text-xs" style={{ color: '#059669' }}>Done: {format(new Date(item.lastCompletedDate), 'MMM d')}</span>
-                        )}
+                    <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                        {item.description || 'No description provided.'}
+                    </p>
+                    <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{freqLabels[item.frequencyType]}</span>
+                            {recurrenceLabel && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{recurrenceLabel}</span>}
+                            {item.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
+                            {item.nextDueDate && (
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: overdue ? '#fee2e2' : '#f0fdf4', color: overdue ? '#dc2626' : '#059669' }}>
+                                    Due {format(new Date(item.nextDueDate), 'MMM d')}
+                                </span>
+                            )}
+                        </div>
+                        <button
+                            onClick={() => completeMut.mutate(item.id)}
+                            disabled={completeMut.isPending}
+                            className={`btn-primary text-xs flex-shrink-0 ${overdue ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                        >
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Done
+                        </button>
                     </div>
-                    <button
-                        onClick={() => completeMut.mutate(item.id)}
-                        disabled={completeMut.isPending}
-                        className={`btn-primary w-full text-xs ${overdue ? 'bg-red-600 hover:bg-red-700' : ''}`}
-                    >
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Mark Complete
-                    </button>
                 </div>
             );
         }
@@ -479,21 +479,9 @@ export default function HouseworkPage() {
                         <option value="ALL">All</option>
                         {frequencyOptions.map((k) => <option key={k} value={k}>{freqLabels[k]}</option>)}
                     </select>
-                    <div className="flex items-center rounded-lg border p-1 gap-1">
-                        <button
-                            className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'bg-primary text-white' : 'hover:bg-gray-100'}`}
-                            onClick={() => setViewMode('list')}
-                            title="List view"
-                        >
-                            <List className="w-4 h-4" />
-                        </button>
-                        <button
-                            className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-primary text-white' : 'hover:bg-gray-100'}`}
-                            onClick={() => setViewMode('grid')}
-                            title="Grid view"
-                        >
-                            <LayoutGrid className="w-4 h-4" />
-                        </button>
+                    <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
+                        <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
+                        <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
                     </div>
                     <button className="btn-primary whitespace-nowrap" onClick={() => { setForm({ ...emptyForm }); setShowCreate(true); }}>
                         <Plus className="w-4 h-4" /> New Item

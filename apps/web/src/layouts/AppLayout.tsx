@@ -17,7 +17,7 @@ const navItems = [
     { to: '/assets', icon: Microwave, label: 'Assets' },
     { to: '/learning', icon: GraduationCap, label: 'Learning' },
     { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
-    { to: '/alerts', icon: BellRing, label: 'Scheduled Action' },
+    { to: '/alerts', icon: BellRing, label: 'Schedule Reports' },
     { to: '/reports', icon: BarChart3, label: 'Reports' },
     { to: '/settings', icon: Settings, label: 'Settings' },
 ];
