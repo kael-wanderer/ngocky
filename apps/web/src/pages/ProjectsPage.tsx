@@ -10,6 +10,8 @@ import { useSearchParams } from 'react-router-dom';
 const STATUS_COLS = ['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED'] as const;
 const statusLabels: Record<string, string> = { PLANNED: 'Planned', IN_PROGRESS: 'In Progress', DONE: 'Done', ARCHIVED: 'Archived' };
 const statusColors: Record<string, string> = { PLANNED: '#64748b', IN_PROGRESS: '#4f46e5', DONE: '#059669', ARCHIVED: '#94a3b8' };
+const boardStatusLabels: Record<string, string> = { PLAN: 'Plan', WORKING: 'Working', COMPLETED: 'Completed' };
+const boardStatusColors: Record<string, string> = { PLAN: '#64748b', WORKING: '#4f46e5', COMPLETED: '#059669' };
 const priorityColors: Record<string, string> = { LOW: '#94a3b8', MEDIUM: '#3b82f6', HIGH: '#f59e0b', URGENT: '#ef4444' };
 const emptyTaskForm = {
     title: '',
@@ -36,7 +38,8 @@ export default function ProjectsPage() {
     const [editingTask, setEditingTask] = useState<any>(null);
     const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
 
-    const [boardForm, setBoardForm] = useState({ name: '', description: '', type: 'PERSONAL', isShared: false, pinToDashboard: false });
+    const [boardStatusFilter, setBoardStatusFilter] = useState<'ALL' | 'PLAN' | 'WORKING' | 'COMPLETED'>('ALL');
+    const [boardForm, setBoardForm] = useState({ name: '', description: '', type: 'PERSONAL', boardStatus: 'PLAN', isShared: false, pinToDashboard: false });
     const [taskForm, setTaskForm] = useState({ ...emptyTaskForm });
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -121,7 +124,7 @@ export default function ProjectsPage() {
 
     const openEditBoard = () => {
         if (!activeBoard) return;
-        setBoardForm({ name: activeBoard.name || '', description: activeBoard.description || '', type: activeBoard.type || 'PERSONAL', isShared: !!activeBoard.isShared, pinToDashboard: !!activeBoard.pinToDashboard });
+        setBoardForm({ name: activeBoard.name || '', description: activeBoard.description || '', type: activeBoard.type || 'PERSONAL', boardStatus: activeBoard.boardStatus || 'PLAN', isShared: !!activeBoard.isShared, pinToDashboard: !!activeBoard.pinToDashboard });
         setEditingBoard(activeBoard);
     };
 
@@ -191,11 +194,17 @@ export default function ProjectsPage() {
                         <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Project Boards</h2>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
-                            <button onClick={() => setBoardListView('grid')} className={`p-2 ${boardListView === 'grid' ? 'bg-gray-100' : ''}`}><LayoutGrid className="w-4 h-4" /></button>
-                            <button onClick={() => setBoardListView('list')} className={`p-2 ${boardListView === 'list' ? 'bg-gray-100' : ''}`}><List className="w-4 h-4" /></button>
+                        <select className="input" value={boardStatusFilter} onChange={(e) => setBoardStatusFilter(e.target.value as any)}>
+                            <option value="ALL">All</option>
+                            <option value="PLAN">Plan</option>
+                            <option value="WORKING">Working</option>
+                            <option value="COMPLETED">Completed</option>
+                        </select>
+                        <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
+                            <button onClick={() => setBoardListView('grid')} className={`p-1.5 rounded-md transition-colors ${boardListView === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
+                            <button onClick={() => setBoardListView('list')} className={`p-1.5 rounded-md transition-colors ${boardListView === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
                         </div>
-                        <button className="btn-primary" onClick={() => { setBoardForm({ name: '', description: '', type: 'PERSONAL', isShared: false, pinToDashboard: false }); setShowCreateBoard(true); }}><Plus className="w-4 h-4" /> New Board</button>
+                        <button className="btn-primary whitespace-nowrap" onClick={() => { setBoardForm({ name: '', description: '', type: 'PERSONAL', boardStatus: 'PLAN', isShared: false, pinToDashboard: false }); setShowCreateBoard(true); }}><Plus className="w-4 h-4" /> New Board</button>
                     </div>
                 </div>
 
@@ -204,71 +213,61 @@ export default function ProjectsPage() {
                         {[...Array(3)].map((_, i) => <div key={i} className="card h-32 animate-pulse bg-gray-100" />)}
                     </div>
                 ) : (
-                    <div className={boardListView === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}>
-                        {boards?.map((b: any) => (
-                            <div key={b.id} className={`card p-5 hover:shadow-lg transition-all group cursor-pointer ${boardListView === 'list' ? 'flex items-center justify-between gap-4' : ''}`} onClick={() => setSelectedBoardId(b.id)}>
-                                <div className="flex justify-between items-start mb-2">
-                                    <h3 className="font-bold text-lg" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
-                                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                updateBoardMut.mutate({ id: b.id, data: { pinToDashboard: !b.pinToDashboard } });
-                                            }}
-                                            className={`p-1 ${b.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`}
-                                            title="Pin board"
-                                        >
-                                            <Pin className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setBoardForm({ name: b.name || '', description: b.description || '', type: b.type || 'PERSONAL', isShared: !!b.isShared, pinToDashboard: !!b.pinToDashboard });
-                                                setEditingBoard(b);
-                                            }}
-                                            className="p-1 hover:text-indigo-500"
-                                            title="Edit board"
-                                        >
-                                            <Pencil className="w-4 h-4" />
-                                        </button>
-                                        {b.ownerId === user?.id && (
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id, b.name); }}
-                                                className="p-1 hover:text-red-500"
-                                                title="Delete board"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        )}
+                    <div className={boardListView === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-4' : 'card divide-y overflow-hidden'} style={boardListView === 'list' ? { divideColor: 'var(--color-border)' } : {}}>
+                        {(boardStatusFilter === 'ALL' ? boards : boards?.filter((b: any) => b.boardStatus === boardStatusFilter))?.map((b: any) => (
+                            boardListView === 'grid' ? (
+                                /* ── Grid card ── */
+                                <div key={b.id} className="card p-5 hover:shadow-lg transition-all group cursor-pointer" onClick={() => setSelectedBoardId(b.id)}>
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h3 className="font-bold text-lg" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
+                                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
+                                            <button onClick={(e) => { e.stopPropagation(); updateBoardMut.mutate({ id: b.id, data: { pinToDashboard: !b.pinToDashboard } }); }} className={`p-1 ${b.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin board"><Pin className="w-4 h-4" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); setBoardForm({ name: b.name || '', description: b.description || '', type: b.type || 'PERSONAL', boardStatus: b.boardStatus || 'PLAN', isShared: !!b.isShared, pinToDashboard: !!b.pinToDashboard }); setEditingBoard(b); }} className="p-1 hover:text-indigo-500" title="Edit board"><Pencil className="w-4 h-4" /></button>
+                                            {b.ownerId === user?.id && <button onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id, b.name); }} className="p-1 hover:text-red-500" title="Delete board"><Trash2 className="w-4 h-4" /></button>}
+                                        </div>
+                                    </div>
+                                    <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>{b.description || 'No description provided.'}</p>
+                                    <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{b._count?.tasks || 0} tasks</span>
+                                            {b.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
+                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{String(b.type || 'PERSONAL').replace('_', ' ')}</span>
+                                            {b.boardStatus && <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${boardStatusColors[b.boardStatus]}20`, color: boardStatusColors[b.boardStatus] }}>{boardStatusLabels[b.boardStatus]}</span>}
+                                            {b.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
+                                        </div>
+                                        <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>Updated {format(new Date(b.updatedAt), 'MMM d')}</span>
                                     </div>
                                 </div>
-                                <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-                                    {b.description || 'No description provided.'}
-                                </p>
-                                <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
-                                            {b._count?.tasks || 0} tasks
-                                        </span>
-                                        {b.isShared && (
-                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
-                                                Shared
-                                            </span>
-                                        )}
-                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                                            {String(b.type || 'PERSONAL').replace('_', ' ')}
-                                        </span>
-                                        {b.pinToDashboard && (
-                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
-                                                Pinned
-                                            </span>
-                                        )}
+                            ) : (
+                                /* ── List row ── */
+                                <div key={b.id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => setSelectedBoardId(b.id)}>
+                                    {/* Col 1: name */}
+                                    <div className="w-44 flex-shrink-0">
+                                        <h3 className="font-bold text-sm truncate" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
                                     </div>
-                                    <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>
-                                        Updated {format(new Date(b.updatedAt), 'MMM d')}
-                                    </span>
+                                    {/* Col 2: description */}
+                                    <div className="w-64 flex-shrink-0">
+                                        <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>{b.description || '—'}</p>
+                                    </div>
+                                    {/* Col 3: task count + shared + type + pinned + updated */}
+                                    <div className="flex-1 flex items-center gap-2 flex-wrap">
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{b._count?.tasks || 0} tasks</span>
+                                        {b.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{String(b.type || 'PERSONAL').replace('_', ' ')}</span>
+                                        {b.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
+                                        <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Updated {format(new Date(b.updatedAt), 'MMM d')}</span>
+                                    </div>
+                                    {/* Col 4: status badge + hover actions */}
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        {b.boardStatus && <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full" style={{ backgroundColor: `${boardStatusColors[b.boardStatus]}20`, color: boardStatusColors[b.boardStatus] }}>{boardStatusLabels[b.boardStatus]}</span>}
+                                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
+                                            <button onClick={(e) => { e.stopPropagation(); updateBoardMut.mutate({ id: b.id, data: { pinToDashboard: !b.pinToDashboard } }); }} className={`p-1 ${b.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin"><Pin className="w-3.5 h-3.5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); setBoardForm({ name: b.name || '', description: b.description || '', type: b.type || 'PERSONAL', boardStatus: b.boardStatus || 'PLAN', isShared: !!b.isShared, pinToDashboard: !!b.pinToDashboard }); setEditingBoard(b); }} className="p-1 hover:text-indigo-500" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                            {b.ownerId === user?.id && <button onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id, b.name); }} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            )
                         ))}
                     </div>
                 )}
@@ -289,14 +288,24 @@ export default function ProjectsPage() {
                                     <label className="label">Description</label>
                                     <textarea className="input" rows={3} value={boardForm.description} onChange={(e) => setBoardForm({ ...boardForm, description: e.target.value })} />
                                 </div>
-                                <div>
-                                    <label className="label">Project Type</label>
-                                    <select className="input" value={boardForm.type} onChange={(e) => setBoardForm({ ...boardForm, type: e.target.value })}>
-                                        <option value="PERSONAL">Personal</option>
-                                        <option value="WORK">Work</option>
-                                        <option value="FOR_FUN">For Fun</option>
-                                        <option value="STUDY">Study</option>
-                                    </select>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label">Project Type</label>
+                                        <select className="input" value={boardForm.type} onChange={(e) => setBoardForm({ ...boardForm, type: e.target.value })}>
+                                            <option value="PERSONAL">Personal</option>
+                                            <option value="WORK">Work</option>
+                                            <option value="FOR_FUN">For Fun</option>
+                                            <option value="STUDY">Study</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="label">Status</label>
+                                        <select className="input" value={boardForm.boardStatus} onChange={(e) => setBoardForm({ ...boardForm, boardStatus: e.target.value })}>
+                                            <option value="PLAN">Plan</option>
+                                            <option value="WORKING">Working</option>
+                                            <option value="COMPLETED">Completed</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <label className="flex items-center gap-2 text-sm">
                                     <input type="checkbox" checked={boardForm.isShared} onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })} />
@@ -330,29 +339,31 @@ export default function ProjectsPage() {
                                     <label className="label">Description</label>
                                     <textarea className="input" rows={3} value={boardForm.description} onChange={(e) => setBoardForm({ ...boardForm, description: e.target.value })} placeholder="What is this project about?" />
                                 </div>
-                                <div>
-                                    <label className="label">Project Type</label>
-                                    <select className="input" value={boardForm.type} onChange={(e) => setBoardForm({ ...boardForm, type: e.target.value })}>
-                                        <option value="PERSONAL">Personal</option>
-                                        <option value="WORK">Work</option>
-                                        <option value="FOR_FUN">For Fun</option>
-                                        <option value="STUDY">Study</option>
-                                    </select>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label">Project Type</label>
+                                        <select className="input" value={boardForm.type} onChange={(e) => setBoardForm({ ...boardForm, type: e.target.value })}>
+                                            <option value="PERSONAL">Personal</option>
+                                            <option value="WORK">Work</option>
+                                            <option value="FOR_FUN">For Fun</option>
+                                            <option value="STUDY">Study</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="label">Status</label>
+                                        <select className="input" value={boardForm.boardStatus} onChange={(e) => setBoardForm({ ...boardForm, boardStatus: e.target.value })}>
+                                            <option value="PLAN">Plan</option>
+                                            <option value="WORKING">Working</option>
+                                            <option value="COMPLETED">Completed</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <label className="flex items-center gap-2 text-sm">
-                                    <input
-                                        type="checkbox"
-                                        checked={boardForm.isShared}
-                                        onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })}
-                                    />
+                                    <input type="checkbox" checked={boardForm.isShared} onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })} />
                                     Share with all family users
                                 </label>
                                 <label className="flex items-center gap-2 text-sm">
-                                    <input
-                                        type="checkbox"
-                                        checked={boardForm.pinToDashboard}
-                                        onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })}
-                                    />
+                                    <input type="checkbox" checked={boardForm.pinToDashboard} onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })} />
                                     Pin to dashboard
                                 </label>
                                 <button type="submit" className="btn-primary w-full" disabled={createBoardMut.isPending}>
@@ -420,14 +431,24 @@ export default function ProjectsPage() {
                                 <label className="label">Description</label>
                                 <textarea className="input" rows={3} value={boardForm.description} onChange={(e) => setBoardForm({ ...boardForm, description: e.target.value })} />
                             </div>
-                            <div>
-                                <label className="label">Project Type</label>
-                                <select className="input" value={boardForm.type} onChange={(e) => setBoardForm({ ...boardForm, type: e.target.value })}>
-                                    <option value="PERSONAL">Personal</option>
-                                    <option value="WORK">Work</option>
-                                    <option value="FOR_FUN">For Fun</option>
-                                    <option value="STUDY">Study</option>
-                                </select>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label">Project Type</label>
+                                    <select className="input" value={boardForm.type} onChange={(e) => setBoardForm({ ...boardForm, type: e.target.value })}>
+                                        <option value="PERSONAL">Personal</option>
+                                        <option value="WORK">Work</option>
+                                        <option value="FOR_FUN">For Fun</option>
+                                        <option value="STUDY">Study</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="label">Status</label>
+                                    <select className="input" value={boardForm.boardStatus} onChange={(e) => setBoardForm({ ...boardForm, boardStatus: e.target.value })}>
+                                        <option value="PLAN">Plan</option>
+                                        <option value="WORKING">Working</option>
+                                        <option value="COMPLETED">Completed</option>
+                                    </select>
+                                </div>
                             </div>
                             <label className="flex items-center gap-2 text-sm">
                                 <input type="checkbox" checked={boardForm.isShared} onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })} />

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Target, Plus, X, Check, Trash2, AlertCircle, Pencil, Copy, Pin } from 'lucide-react';
+import { Target, Plus, X, Check, Trash2, AlertCircle, Pencil, Copy, Pin, LayoutGrid, List, Bell } from 'lucide-react';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useSearchParams } from 'react-router-dom';
 
@@ -24,6 +24,16 @@ const emptyForm = {
 };
 
 type GoalFormState = typeof emptyForm;
+
+function formatNotification(goal: any): string | null {
+    if (!goal.notificationEnabled) return null;
+    if (goal.reminderOffsetUnit === 'ON_DATE' && goal.notificationDate) {
+        return format(new Date(goal.notificationDate), 'MMM dd, yyyy HH:mm');
+    }
+    if (goal.reminderOffsetUnit === 'HOURS') return `${goal.reminderOffsetValue} hour${goal.reminderOffsetValue !== 1 ? 's' : ''} before`;
+    if (goal.reminderOffsetUnit === 'DAYS') return `${goal.reminderOffsetValue} day${goal.reminderOffsetValue !== 1 ? 's' : ''} before`;
+    return null;
+}
 
 function GoalForm({
     form,
@@ -111,6 +121,7 @@ export default function GoalsPage() {
     const [duration, setDuration] = useState<number | ''>('');
     const [quantity, setQuantity] = useState(1);
     const [periodFilter, setPeriodFilter] = useState<'ALL' | 'WEEKLY' | 'MONTHLY'>('ALL');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [form, setForm] = useState({ ...emptyForm });
     const editIdParam = searchParams.get('editId');
     const checkInIdParam = searchParams.get('checkInId');
@@ -287,12 +298,16 @@ export default function GoalsPage() {
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Goals</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                    <select className="input min-w-[160px]" value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value as any)}>
-                        <option value="ALL">All reset periods</option>
+                    <select className="input" value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value as any)}>
+                        <option value="ALL">All</option>
                         <option value="WEEKLY">Weekly</option>
                         <option value="MONTHLY">Monthly</option>
                     </select>
-                    <button className="btn-primary" onClick={() => { setForm({ ...emptyForm }); setShowCreate(true); }}>
+                    <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
+                        <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
+                        <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
+                    </div>
+                    <button className="btn-primary whitespace-nowrap" onClick={() => { setForm({ ...emptyForm }); setShowCreate(true); }}>
                         <Plus className="w-4 h-4" /> New Goal
                     </button>
                 </div>
@@ -383,7 +398,7 @@ export default function GoalsPage() {
                     <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text-secondary)' }}>No goals yet</h3>
                     <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>Set your first goal and start building habits.</p>
                 </div>
-            ) : (
+            ) : viewMode === 'grid' ? (
                 <div className="grid gap-4 md:grid-cols-2">
                     {filteredGoals.map((goal: any) => {
                         const progressPct = goal.targetCount > 0 ? (goal.currentCount / goal.targetCount) * 100 : 0;
@@ -435,6 +450,52 @@ export default function GoalsPage() {
                                             {progressPct > 100 ? 'Overachievement' : progressPct === 100 ? 'Done' : progressPct >= 50 ? 'Almost there' : 'Try hard'}
                                         </span>
                                     </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="card divide-y" style={{ divideColor: 'var(--color-border)' }}>
+                    {filteredGoals.map((goal: any) => {
+                        const progressPct = goal.targetCount > 0 ? (goal.currentCount / goal.targetCount) * 100 : 0;
+                        const barPct = Math.min(100, progressPct);
+                        const completed = goal.currentCount >= goal.targetCount;
+                        const overachieved = progressPct > 100;
+                        const notifText = formatNotification(goal);
+                        return (
+                            <div key={goal.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors group">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{goal.title}</span>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 font-medium capitalize" style={{ color: 'var(--color-text-secondary)' }}>{goal.periodType.charAt(0) + goal.periodType.slice(1).toLowerCase()}</span>
+                                        {goal.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                        {goal.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
+                                    </div>
+                                    {goal.description && (
+                                        <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-text-secondary)' }}>{goal.description}</p>
+                                    )}
+                                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-32 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                                                <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${barPct}%`, background: overachieved ? 'linear-gradient(90deg, #059669, #34d399)' : completed ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #4f46e5, #7c3aed)' }} />
+                                            </div>
+                                            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{goal.currentCount}/{goal.targetCount} {goal.unit}</span>
+                                            <span className="text-xs font-semibold" style={{ color: overachieved ? '#7c3aed' : completed ? '#059669' : 'var(--color-primary)' }}>{Math.round(progressPct)}%</span>
+                                        </div>
+                                        {notifText && (
+                                            <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+                                                <Bell className="w-3 h-3" />{notifText}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => openCheckIn(goal.id)} disabled={!goal.active} className="p-1.5 rounded-md hover:bg-emerald-50 hover:text-emerald-600 transition-colors" title="Check-in"><Check className="w-3.5 h-3.5" /></button>
+                                    <button onClick={() => togglePin(goal)} className={`p-1.5 rounded-md transition-colors ${goal.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
+                                    <button onClick={() => openEdit(goal)} className="p-1.5 rounded-md hover:text-indigo-500 transition-colors" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                    <button onClick={() => openDuplicate(goal)} className="p-1.5 rounded-md hover:text-sky-500 transition-colors" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                                    <button onClick={() => handleDelete(goal.id)} className="p-1.5 rounded-md hover:text-red-500 transition-colors" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
                                 </div>
                             </div>
                         );

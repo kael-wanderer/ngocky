@@ -63,6 +63,7 @@ export const createProjectSchema = z.object({
     name: z.string().min(1).max(200),
     description: z.string().optional(),
     type: z.enum(['PERSONAL', 'WORK', 'FOR_FUN', 'STUDY']).optional(),
+    boardStatus: z.enum(['PLAN', 'WORKING', 'COMPLETED']).optional(),
     isShared: z.boolean().optional(),
     pinToDashboard: z.boolean().optional(),
 });

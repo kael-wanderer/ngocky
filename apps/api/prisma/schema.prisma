@@ -46,6 +46,12 @@ enum ProjectType {
   STUDY
 }
 
+enum ProjectBoardStatus {
+  PLAN
+  WORKING
+  COMPLETED
+}
+
 enum FrequencyType {
   ONE_TIME
   DAILY
@@ -231,6 +237,7 @@ model Project {
   name        String
   description String?
   type        ProjectType @default(PERSONAL)
+  boardStatus ProjectBoardStatus @default(PLAN)
   ownerId     String
   isShared    Boolean  @default(false)
   pinToDashboard Boolean @default(false)
