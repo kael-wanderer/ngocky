@@ -116,4 +116,20 @@ router.patch('/:id/reset-password', authorize('OWNER', 'ADMIN'), validate(resetP
     } catch (err) { next(err); }
 });
 
+// Delete user (owner/admin with role restrictions)
+router.delete('/:id', authorize('OWNER', 'ADMIN'), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+        if (!target) throw new NotFoundError('User');
+        if (target.id === req.user!.userId) throw new ForbiddenError('Cannot delete your own account');
+        if (req.user!.role === 'ADMIN') {
+            if (target.role !== 'USER') throw new ForbiddenError('Admin can only delete users with USER role');
+        }
+
+        await prisma.refreshToken.deleteMany({ where: { userId: req.params.id } });
+        await prisma.user.delete({ where: { id: req.params.id } });
+        sendMessage(res, 'User deleted');
+    } catch (err) { next(err); }
+});
+
 export default router;

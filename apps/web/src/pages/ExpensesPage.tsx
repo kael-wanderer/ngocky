@@ -7,7 +7,7 @@ import { useAuthStore } from '../stores/auth';
 
 const payCategories = ['Food', 'Utilities', 'Healthcare', 'Shopping', 'Transport', 'Home Maintenance', 'Education', 'AI', 'Entertainment', 'Other'];
 const receiveCategories = ['Salary', 'Top-up', 'Sell'];
-const allCategories = [...payCategories, ...receiveCategories];
+const allCategories = [...new Set([...payCategories, ...receiveCategories])];
 const typeOptions = [
     { value: 'PAY', label: 'Pay' },
     { value: 'RECEIVE', label: 'Receive' },
@@ -17,6 +17,13 @@ const scopeOptions = [
     { value: 'FAMILY', label: 'Family' },
     { value: 'KEO', label: 'Keo' },
     { value: 'PROJECT', label: 'Project' },
+];
+const timeOptions = [
+    { value: 'LAST_QUARTER', label: 'Last Quarter' },
+    { value: 'LAST_MONTH', label: 'Last Month' },
+    { value: 'THIS_MONTH', label: 'This Month' },
+    { value: 'THIS_QUARTER', label: 'This Quarter' },
+    { value: 'CUSTOM', label: 'Custom' },
 ];
 const columns = [
     { key: 'date', label: 'Date' },
@@ -28,15 +35,17 @@ const columns = [
     { key: 'amount', label: 'Amount' },
 ] as const;
 
+type SortKey = typeof columns[number]['key'];
+type SortOrder = 'asc' | 'desc';
+type TimePreset = 'LAST_QUARTER' | 'LAST_MONTH' | 'THIS_MONTH' | 'THIS_QUARTER' | 'CUSTOM';
+
 const formatAmount = (amount: number) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(amount)} VND`;
 
 const parseAmountInput = (value: string) => {
     const normalized = value.trim().replace(/,/g, '').toUpperCase();
     if (!normalized) return NaN;
-
     const match = normalized.match(/^(\d+(?:\.\d+)?)([KMB])?$/);
     if (!match) return NaN;
-
     const base = Number(match[1]);
     const multiplierMap: Record<string, number> = { K: 1_000, M: 1_000_000, B: 1_000_000_000 };
     const multiplier = match[2] ? multiplierMap[match[2]] : 1;
@@ -48,36 +57,69 @@ const emptyForm = () => ({
     amount: '',
     type: 'PAY',
     isShared: false,
-    category: 'Food',
+    category: payCategories[0],
     scope: 'PERSONAL',
     date: format(new Date(), 'yyyy-MM-dd'),
     note: '',
 });
 
-type SortKey = typeof columns[number]['key'];
-type SortOrder = 'asc' | 'desc';
+function getDateRangeFromPreset(preset: TimePreset) {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    if (preset === 'THIS_MONTH') {
+        return {
+            dateFrom: format(new Date(currentYear, currentMonth, 1), 'yyyy-MM-dd'),
+            dateTo: format(new Date(currentYear, currentMonth + 1, 0), 'yyyy-MM-dd'),
+        };
+    }
+    if (preset === 'LAST_MONTH') {
+        return {
+            dateFrom: format(new Date(currentYear, currentMonth - 1, 1), 'yyyy-MM-dd'),
+            dateTo: format(new Date(currentYear, currentMonth, 0), 'yyyy-MM-dd'),
+        };
+    }
+    const quarterStartMonth = Math.floor(currentMonth / 3) * 3;
+    if (preset === 'THIS_QUARTER') {
+        return {
+            dateFrom: format(new Date(currentYear, quarterStartMonth, 1), 'yyyy-MM-dd'),
+            dateTo: format(new Date(currentYear, quarterStartMonth + 3, 0), 'yyyy-MM-dd'),
+        };
+    }
+    const lastQuarterEndMonth = quarterStartMonth - 1;
+    const lastQuarterYear = lastQuarterEndMonth < 0 ? currentYear - 1 : currentYear;
+    const normalizedEndMonth = (lastQuarterEndMonth + 12) % 12;
+    const lastQuarterStartMonth = normalizedEndMonth - 2;
+    return {
+        dateFrom: format(new Date(lastQuarterYear, lastQuarterStartMonth, 1), 'yyyy-MM-dd'),
+        dateTo: format(new Date(lastQuarterYear, normalizedEndMonth + 1, 0), 'yyyy-MM-dd'),
+    };
+}
 
 export default function ExpensesPage() {
     const qc = useQueryClient();
     const { user } = useAuthStore();
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState<any>(null);
-    const [filters, setFilters] = useState({ type: '', scope: '', category: '', dateFrom: '', dateTo: '' });
+    const [filters, setFilters] = useState({ type: '', scope: '', category: '', timePreset: 'THIS_MONTH' as TimePreset, dateFrom: '', dateTo: '' });
     const [form, setForm] = useState(emptyForm());
     const [sortBy, setSortBy] = useState<SortKey>('date');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-    const categoryOptions = form.type === 'RECEIVE' ? receiveCategories : payCategories;
+
+    const effectiveRange = filters.timePreset === 'CUSTOM'
+        ? { dateFrom: filters.dateFrom, dateTo: filters.dateTo }
+        : getDateRangeFromPreset(filters.timePreset);
 
     const queryParams = new URLSearchParams();
     queryParams.set('limit', '100');
     if (filters.type) queryParams.set('type', filters.type);
     if (filters.scope) queryParams.set('scope', filters.scope);
     if (filters.category) queryParams.set('category', filters.category);
-    if (filters.dateFrom) queryParams.set('dateFrom', new Date(`${filters.dateFrom}T00:00:00`).toISOString());
-    if (filters.dateTo) queryParams.set('dateTo', new Date(`${filters.dateTo}T23:59:59.999`).toISOString());
+    if (effectiveRange.dateFrom) queryParams.set('dateFrom', new Date(`${effectiveRange.dateFrom}T00:00:00`).toISOString());
+    if (effectiveRange.dateTo) queryParams.set('dateTo', new Date(`${effectiveRange.dateTo}T23:59:59.999`).toISOString());
 
     const { data, isLoading } = useQuery({
-        queryKey: ['expenses', filters],
+        queryKey: ['expenses', filters, effectiveRange],
         queryFn: async () => (await api.get(`/expenses?${queryParams}`)).data,
     });
 
@@ -103,6 +145,8 @@ export default function ExpensesPage() {
     });
 
     const expenses = data?.data || [];
+    const categoryOptions = form.type === 'RECEIVE' ? receiveCategories : payCategories;
+
     const sortedExpenses = useMemo(() => {
         const getValue = (expense: any, key: SortKey) => {
             switch (key) {
@@ -130,11 +174,7 @@ export default function ExpensesPage() {
     const summary = useMemo(() => {
         const income = expenses.filter((item: any) => item.type === 'RECEIVE').reduce((sum: number, item: any) => sum + item.amount, 0);
         const payment = expenses.filter((item: any) => item.type === 'PAY').reduce((sum: number, item: any) => sum + item.amount, 0);
-        return {
-            income,
-            payment,
-            remaining: income - payment,
-        };
+        return { income, payment, remaining: income - payment };
     }, [expenses]);
 
     const parsedAmount = parseAmountInput(form.amount);
@@ -162,7 +202,7 @@ export default function ExpensesPage() {
             amount: String(Math.round(expense.amount)),
             type: expense.type || 'PAY',
             isShared: !!expense.isShared,
-            category: expense.category || ((expense.type || 'PAY') === 'RECEIVE' ? 'Salary' : 'Food'),
+            category: expense.category || ((expense.type || 'PAY') === 'RECEIVE' ? receiveCategories[0] : payCategories[0]),
             scope: expense.scope || 'PERSONAL',
             date: format(new Date(expense.date), 'yyyy-MM-dd'),
             note: expense.note || '',
@@ -181,6 +221,15 @@ export default function ExpensesPage() {
             ...current,
             type: nextType,
             category: nextType === 'RECEIVE' ? receiveCategories[0] : payCategories[0],
+        }));
+    }
+
+    function handleTimePresetChange(nextPreset: TimePreset) {
+        setFilters((current) => ({
+            ...current,
+            timePreset: nextPreset,
+            dateFrom: nextPreset === 'CUSTOM' ? current.dateFrom : '',
+            dateTo: nextPreset === 'CUSTOM' ? current.dateTo : '',
         }));
     }
 
@@ -232,8 +281,8 @@ export default function ExpensesPage() {
                     <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
                     <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                    <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value, category: filters.category && !((e.target.value || form.type) === 'RECEIVE' ? receiveCategories : payCategories).includes(filters.category) ? '' : filters.category })}>
                         <option value="">All Types</option>
                         {typeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                     </select>
@@ -243,11 +292,18 @@ export default function ExpensesPage() {
                     </select>
                     <select className="input text-sm" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
                         <option value="">All Categories</option>
-                        {allCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+                        {(filters.type === 'RECEIVE' ? receiveCategories : filters.type === 'PAY' ? payCategories : allCategories).map((category) => <option key={category} value={category}>{category}</option>)}
                     </select>
-                    <input type="date" className="input text-sm" value={filters.dateFrom} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} />
-                    <input type="date" className="input text-sm" value={filters.dateTo} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
+                    <select className="input text-sm" value={filters.timePreset} onChange={(e) => handleTimePresetChange(e.target.value as TimePreset)}>
+                        {timeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
                 </div>
+                {filters.timePreset === 'CUSTOM' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                        <input type="date" className="input text-sm" value={filters.dateFrom} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} />
+                        <input type="date" className="input text-sm" value={filters.dateTo} min={filters.dateFrom || undefined} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -306,13 +362,7 @@ export default function ExpensesPage() {
                                 </div>
                                 <div>
                                     <label className="label">Amount <span className="text-red-500">*</span></label>
-                                    <input
-                                        className="input"
-                                        required
-                                        placeholder="Example: 82000000 or 82M"
-                                        value={form.amount}
-                                        onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                                    />
+                                    <input className="input" required placeholder="Example: 82000000 or 82M" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
                                     {form.amount && (
                                         <div className="mt-1 text-xs" style={{ color: Number.isNaN(parsedAmount) ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
                                             {Number.isNaN(parsedAmount) ? 'Invalid amount format' : amountPreview}
@@ -325,11 +375,7 @@ export default function ExpensesPage() {
                                 <input className="input" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
                             </div>
                             <label className="flex items-center gap-2 text-sm">
-                                <input
-                                    type="checkbox"
-                                    checked={form.isShared}
-                                    onChange={(e) => setForm({ ...form, isShared: e.target.checked })}
-                                />
+                                <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} />
                                 Share with all users
                             </label>
                             <button type="submit" className="btn-primary w-full" disabled={createMut.isPending || updateMut.isPending}>
@@ -366,24 +412,14 @@ export default function ExpensesPage() {
                                         <tr key={expense.id}>
                                             <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(expense.date), 'MMM d, yyyy')}</td>
                                             <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{expense.user?.name || '-'}</td>
-                                            <td>
-                                                <span className={`badge ${isReceive ? 'badge-success' : 'badge-danger'}`}>
-                                                    {isReceive ? 'Receive' : 'Pay'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className="badge badge-warning">{scopeOptions.find((option) => option.value === expense.scope)?.label || expense.scope}</span>
-                                            </td>
+                                            <td><span className={`badge ${isReceive ? 'badge-success' : 'badge-danger'}`}>{isReceive ? 'Receive' : 'Pay'}</span></td>
+                                            <td><span className="badge badge-warning">{scopeOptions.find((option) => option.value === expense.scope)?.label || expense.scope}</span></td>
                                             <td><span className="badge-primary">{expense.category || '-'}</span></td>
                                             <td>
                                                 <div className="font-medium" style={{ color: 'var(--color-text)' }}>{expense.description}</div>
                                                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                                    {expense.isShared && (
-                                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>
-                                                    )}
-                                                    {expense.note && (
-                                                        <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{expense.note}</span>
-                                                    )}
+                                                    {expense.isShared && <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                                    {expense.note && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{expense.note}</span>}
                                                 </div>
                                                 {canEdit && (
                                                     <div className="flex items-center gap-2 mt-2">

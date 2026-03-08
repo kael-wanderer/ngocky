@@ -6,6 +6,30 @@ import { sendSuccess } from '../utils/response';
 const router = Router();
 router.use(authenticate);
 
+function getRangeFromPreset(preset?: string) {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(todayStart.getDate() - (todayStart.getDay() === 0 ? 6 : todayStart.getDay() - 1));
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    switch ((preset || '').toUpperCase()) {
+        case 'TODAY':
+            return { start: todayStart, end: tomorrowStart };
+        case 'WEEK':
+            return { start: weekStart, end: weekEnd };
+        case 'MONTH':
+            return { start: monthStart, end: monthEnd };
+        default:
+            return null;
+    }
+}
+
 // Tasks by status
 router.get('/tasks-by-status', async (_req: Request, res: Response, next: NextFunction) => {
     try {
@@ -114,9 +138,14 @@ router.get('/idea-topics', async (_req: Request, res: Response, next: NextFuncti
 // Expense summary by period/category
 router.get('/expense-summary', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const dateFrom = req.query.dateFrom as string;
-        const dateTo = req.query.dateTo as string;
+        const preset = req.query.timeRange as string;
+        const presetRange = getRangeFromPreset(preset);
+        const dateFrom = (req.query.dateFrom as string) || presetRange?.start?.toISOString();
+        const dateTo = (req.query.dateTo as string) || presetRange?.end?.toISOString();
         const groupByField = (req.query.groupBy as string) || 'category';
+        const type = req.query.type as string;
+        const scope = req.query.scope as string;
+        const category = req.query.category as string;
 
         const where: any = {};
         if (dateFrom || dateTo) {
@@ -124,6 +153,9 @@ router.get('/expense-summary', async (req: Request, res: Response, next: NextFun
             if (dateFrom) where.date.gte = new Date(dateFrom);
             if (dateTo) where.date.lte = new Date(dateTo);
         }
+        if (type) where.type = type;
+        if (scope) where.scope = scope;
+        if (category) where.category = category;
 
         if (groupByField === 'category') {
             const result = await prisma.expense.groupBy({

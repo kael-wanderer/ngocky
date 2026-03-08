@@ -1,14 +1,47 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/client';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const COLORS = ['#4f46e5', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2', '#db2777', '#84cc16'];
-const formatVND = (amount: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(amount);
+const formatVND = (amount: number) => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(amount) + ' VND';
+const expenseCategories = ['Food', 'Utilities', 'Healthcare', 'Shopping', 'Transport', 'Home Maintenance', 'Education', 'AI', 'Entertainment', 'Other', 'Salary', 'Top-up', 'Sell'];
+const scopeOptions = [
+    { value: 'PERSONAL', label: 'Personal' },
+    { value: 'FAMILY', label: 'Family' },
+    { value: 'KEO', label: 'Keo' },
+    { value: 'PROJECT', label: 'Project' },
+];
+const typeOptions = [
+    { value: 'PAY', label: 'Pay' },
+    { value: 'RECEIVE', label: 'Receive' },
+];
+
+type ReportTimeRange = 'TODAY' | 'WEEK' | 'MONTH' | 'CUSTOM';
 
 export default function ReportsPage() {
     const [activeTab, setActiveTab] = useState('tasks');
+    const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('MONTH');
+    const [expenseFilters, setExpenseFilters] = useState({ type: '', scope: '', category: '', dateFrom: '', dateTo: '' });
+
+    const expenseQuery = useMemo(() => {
+        const params = new URLSearchParams();
+        params.set('groupBy', 'category');
+        if (reportTimeRange !== 'CUSTOM') params.set('timeRange', reportTimeRange);
+        if (expenseFilters.type) params.set('type', expenseFilters.type);
+        if (expenseFilters.scope) params.set('scope', expenseFilters.scope);
+        if (expenseFilters.category) params.set('category', expenseFilters.category);
+        if (reportTimeRange === 'CUSTOM' && expenseFilters.dateFrom) params.set('dateFrom', new Date(`${expenseFilters.dateFrom}T00:00:00`).toISOString());
+        if (reportTimeRange === 'CUSTOM' && expenseFilters.dateTo) params.set('dateTo', new Date(`${expenseFilters.dateTo}T23:59:59.999`).toISOString());
+        return params.toString();
+    }, [reportTimeRange, expenseFilters]);
+
+    const expenseTrendQuery = useMemo(() => {
+        const params = new URLSearchParams(expenseQuery);
+        params.set('groupBy', 'monthly');
+        return params.toString();
+    }, [expenseQuery]);
 
     const { data: tasksByStatus } = useQuery({
         queryKey: ['reports', 'tasks-by-status'],
@@ -26,13 +59,13 @@ export default function ReportsPage() {
     });
 
     const { data: expenseSummary } = useQuery({
-        queryKey: ['reports', 'expense-summary'],
-        queryFn: async () => (await api.get('/reports/expense-summary?groupBy=category')).data.data,
+        queryKey: ['reports', 'expense-summary', expenseQuery],
+        queryFn: async () => (await api.get(`/reports/expense-summary?${expenseQuery}`)).data.data,
     });
 
     const { data: expenseTrend } = useQuery({
-        queryKey: ['reports', 'expense-trend'],
-        queryFn: async () => (await api.get('/reports/expense-summary?groupBy=monthly')).data.data,
+        queryKey: ['reports', 'expense-trend', expenseTrendQuery],
+        queryFn: async () => (await api.get(`/reports/expense-summary?${expenseTrendQuery}`)).data.data,
     });
 
     const { data: learningStatus } = useQuery({
@@ -71,17 +104,42 @@ export default function ReportsPage() {
                 <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Reports</h2>
             </div>
 
+            <div className="card p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                    <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Expense Filters</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <select className="input text-sm" value={reportTimeRange} onChange={(e) => setReportTimeRange(e.target.value as ReportTimeRange)}>
+                        <option value="TODAY">Today</option>
+                        <option value="WEEK">Week</option>
+                        <option value="MONTH">Month</option>
+                        <option value="CUSTOM">Custom</option>
+                    </select>
+                    <select className="input text-sm" value={expenseFilters.type} onChange={(e) => setExpenseFilters({ ...expenseFilters, type: e.target.value })}>
+                        <option value="">All Types</option>
+                        {typeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                    <select className="input text-sm" value={expenseFilters.scope} onChange={(e) => setExpenseFilters({ ...expenseFilters, scope: e.target.value })}>
+                        <option value="">All Scopes</option>
+                        {scopeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                    <select className="input text-sm" value={expenseFilters.category} onChange={(e) => setExpenseFilters({ ...expenseFilters, category: e.target.value })}>
+                        <option value="">All Categories</option>
+                        {expenseCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+                    </select>
+                </div>
+                {reportTimeRange === 'CUSTOM' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input type="date" className="input text-sm" value={expenseFilters.dateFrom} onChange={(e) => setExpenseFilters({ ...expenseFilters, dateFrom: e.target.value })} />
+                        <input type="date" className="input text-sm" value={expenseFilters.dateTo} min={expenseFilters.dateFrom || undefined} onChange={(e) => setExpenseFilters({ ...expenseFilters, dateTo: e.target.value })} />
+                    </div>
+                )}
+            </div>
+
             <div className="flex gap-1 p-1 rounded-lg flex-wrap" style={{ backgroundColor: 'var(--color-bg)' }}>
                 {tabs.map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`py-2 px-4 rounded-md text-sm font-medium transition-all ${activeTab === tab.id ? 'shadow-sm' : ''}`}
-                        style={{
-                            backgroundColor: activeTab === tab.id ? 'var(--color-surface)' : 'transparent',
-                            color: activeTab === tab.id ? 'var(--color-text)' : 'var(--color-text-secondary)',
-                        }}
-                    >
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`py-2 px-4 rounded-md text-sm font-medium transition-all ${activeTab === tab.id ? 'shadow-sm' : ''}`} style={{ backgroundColor: activeTab === tab.id ? 'var(--color-surface)' : 'transparent', color: activeTab === tab.id ? 'var(--color-text)' : 'var(--color-text-secondary)' }}>
                         {tab.label}
                     </button>
                 ))}

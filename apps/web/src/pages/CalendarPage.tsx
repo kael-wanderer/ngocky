@@ -15,7 +15,7 @@ export default function CalendarPage() {
     const [showCreate, setShowCreate] = useState(false);
     const [editingEvent, setEditingEvent] = useState<any>(null);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const [form, setForm] = useState({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true, pinToDashboard: false });
+    const [form, setForm] = useState({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true, pinToDashboard: false, repeatFrequency: '', repeatEndType: '', repeatUntil: '' });
     const eventIdParam = searchParams.get('eventId');
     const dateParam = searchParams.get('date');
 
@@ -45,7 +45,7 @@ export default function CalendarPage() {
 
     const createMut = useMutation({
         mutationFn: (body: any) => api.post('/calendar', body),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['calendar'] }); setShowCreate(false); setForm({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true, pinToDashboard: false }); },
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['calendar'] }); setShowCreate(false); setForm({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true, pinToDashboard: false, repeatFrequency: '', repeatEndType: '', repeatUntil: '' }); },
     });
 
     const updateMut = useMutation({
@@ -53,7 +53,7 @@ export default function CalendarPage() {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['calendar'] });
             setEditingEvent(null);
-            setForm({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true, pinToDashboard: false });
+            setForm({ title: '', description: '', startDate: '', endDate: '', allDay: false, location: '', color: '#4f46e5', isShared: true, pinToDashboard: false, repeatFrequency: '', repeatEndType: '', repeatUntil: '' });
         },
     });
 
@@ -86,6 +86,9 @@ export default function CalendarPage() {
             color: '#4f46e5',
             isShared: true,
             pinToDashboard: false,
+            repeatFrequency: '',
+            repeatEndType: '',
+            repeatUntil: '',
         });
         setShowCreate(true);
     };
@@ -103,6 +106,9 @@ export default function CalendarPage() {
             color: event.color || '#4f46e5',
             isShared: !!event.isShared,
             pinToDashboard: !!event.pinToDashboard,
+            repeatFrequency: event.repeatFrequency || '',
+            repeatEndType: event.repeatEndType || '',
+            repeatUntil: event.repeatUntil ? format(new Date(event.repeatUntil), 'yyyy-MM-dd') : '',
         });
     };
 
@@ -110,8 +116,10 @@ export default function CalendarPage() {
         if (window.confirm('Delete this event?')) deleteMut.mutate(id);
     };
 
+    const getSourceId = (event: any) => event.sourceEventId || event.id;
+
     const togglePin = (event: any) => {
-        updateMut.mutate({ id: event.id, body: { pinToDashboard: !event.pinToDashboard } });
+        updateMut.mutate({ id: getSourceId(event), body: { pinToDashboard: !event.pinToDashboard } });
     };
 
     useEffect(() => {
@@ -126,7 +134,7 @@ export default function CalendarPage() {
 
     useEffect(() => {
         if (!eventIdParam || !events.length) return;
-        const event = events.find((e: any) => e.id === eventIdParam);
+        const event = events.find((e: any) => e.id === eventIdParam || e.sourceEventId === eventIdParam);
         if (!event) return;
         setSelectedDate(new Date(event.startDate));
         setCurrentDate(new Date(event.startDate));
@@ -183,10 +191,17 @@ export default function CalendarPage() {
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
-                            const body: any = { ...form, startDate: new Date(form.startDate).toISOString() };
+                            const body: any = {
+                                ...form,
+                                startDate: new Date(form.startDate).toISOString(),
+                                repeatFrequency: form.repeatFrequency || null,
+                                repeatEndType: form.repeatFrequency ? (form.repeatEndType || 'NEVER') : null,
+                            };
                             if (form.endDate) body.endDate = new Date(form.endDate).toISOString();
                             else delete body.endDate;
-                            if (editingEvent) updateMut.mutate({ id: editingEvent.id, body });
+                            if (form.repeatFrequency && form.repeatEndType === 'ON_DATE' && form.repeatUntil) body.repeatUntil = new Date(`${form.repeatUntil}T23:59:59.999`).toISOString();
+                            else body.repeatUntil = null;
+                            if (editingEvent) updateMut.mutate({ id: getSourceId(editingEvent), body });
                             else createMut.mutate(body);
                         }} className="space-y-4">
                             <div><label className="label">Title <span className="text-red-500">*</span></label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
@@ -195,6 +210,32 @@ export default function CalendarPage() {
                                 <div><label className="label">End</label><input type="datetime-local" className="input" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></div>
                             </div>
                             <div><label className="label">Location</label><input className="input" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label">Repeat</label>
+                                    <select className="input" value={form.repeatFrequency} onChange={(e) => setForm({ ...form, repeatFrequency: e.target.value, repeatEndType: e.target.value ? (form.repeatEndType || 'NEVER') : '', repeatUntil: e.target.value ? form.repeatUntil : '' })}>
+                                        <option value="">Does not repeat</option>
+                                        <option value="DAILY">Daily</option>
+                                        <option value="WEEKLY">Weekly</option>
+                                        <option value="MONTHLY">Monthly</option>
+                                    </select>
+                                </div>
+                                {form.repeatFrequency && (
+                                    <div>
+                                        <label className="label">End Repeat</label>
+                                        <select className="input" value={form.repeatEndType || 'NEVER'} onChange={(e) => setForm({ ...form, repeatEndType: e.target.value, repeatUntil: e.target.value === 'ON_DATE' ? form.repeatUntil : '' })}>
+                                            <option value="NEVER">Never</option>
+                                            <option value="ON_DATE">On date</option>
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+                            {form.repeatFrequency && form.repeatEndType === 'ON_DATE' && (
+                                <div>
+                                    <label className="label">Repeat Until</label>
+                                    <input type="date" min={format(new Date(form.startDate || new Date()), 'yyyy-MM-dd')} className="input" value={form.repeatUntil} onChange={(e) => setForm({ ...form, repeatUntil: e.target.value })} />
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 gap-4">
                                 <div><label className="label">Color</label><input type="color" className="input h-10 p-1" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} /></div>
                                 <div className="space-y-2">
@@ -258,10 +299,11 @@ export default function CalendarPage() {
                                         <div className="flex items-center gap-1">
                                             <button className={`p-1 ${e.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin event" onClick={() => togglePin(e)}><Pin className="w-3.5 h-3.5" /></button>
                                             <button className="p-1 hover:text-indigo-500" title="Edit event" onClick={() => openEdit(e)}><Pencil className="w-3.5 h-3.5" /></button>
-                                            <button className="p-1 hover:text-red-500" title="Delete event" onClick={() => handleDelete(e.id)}><Trash2 className="w-3.5 h-3.5" /></button>
+                                            <button className="p-1 hover:text-red-500" title="Delete event" onClick={() => handleDelete(getSourceId(e))}><Trash2 className="w-3.5 h-3.5" /></button>
                                         </div>
                                     </div>
                                     <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>{e.allDay ? 'All day' : format(new Date(e.startDate), 'h:mm a')}{e.endDate && !e.allDay && ` - ${format(new Date(e.endDate), 'h:mm a')}`}</p>
+                                    {e.repeatFrequency && <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Repeats: {e.repeatFrequency.toLowerCase()}</p>}
                                     {e.location && <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Location: {e.location}</p>}
                                 </div>
                             ))}
@@ -294,9 +336,10 @@ export default function CalendarPage() {
                                             <div className="flex items-center gap-1">
                                                 <button className={`p-1 ${e.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={() => togglePin(e)}><Pin className="w-3.5 h-3.5" /></button>
                                                 <button className="p-1 hover:text-indigo-500" onClick={() => openEdit(e)}><Pencil className="w-3.5 h-3.5" /></button>
-                                                <button className="p-1 hover:text-red-500" onClick={() => handleDelete(e.id)}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                <button className="p-1 hover:text-red-500" onClick={() => handleDelete(getSourceId(e))}><Trash2 className="w-3.5 h-3.5" /></button>
                                             </div>
                                         </div>
+                                        {e.repeatFrequency && <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Repeats: {e.repeatFrequency.toLowerCase()}</p>}
                                     </div>
                                 ))}
                             </div>

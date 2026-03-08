@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Calendar, Lightbulb, Pencil, Plus, Tag, Trash2, X } from 'lucide-react';
+import { Calendar, Copy, Lightbulb, Pencil, Plus, Tag, Trash2, X } from 'lucide-react';
 
-const emptyTopicForm = () => ({ title: '', description: '' });
+const emptyTopicForm = () => ({ title: '', description: '', isShared: false });
 const emptyLogForm = () => ({ title: '', content: '', category: '', status: 'OPEN', tags: [] as string[] });
 
 export default function IdeasPage() {
@@ -92,7 +92,13 @@ export default function IdeasPage() {
 
     function openEditTopic(topic: any) {
         setEditingTopic(topic);
-        setTopicForm({ title: topic.title || '', description: topic.description || '' });
+        setTopicForm({ title: topic.title || '', description: topic.description || '', isShared: !!topic.isShared });
+        setShowTopicModal(true);
+    }
+
+    function duplicateTopic(topic: any) {
+        setEditingTopic(null);
+        setTopicForm({ title: `${topic.title} Copy`, description: topic.description || '', isShared: !!topic.isShared });
         setShowTopicModal(true);
     }
 
@@ -123,6 +129,19 @@ export default function IdeasPage() {
         setShowLogModal(true);
     }
 
+    function duplicateLog(log: any) {
+        setEditingLog(null);
+        setLogForm({
+            title: `${log.title} Copy`,
+            content: log.content || '',
+            category: log.category || '',
+            status: log.status || 'OPEN',
+            tags: log.tags || [],
+        });
+        setTagInput('');
+        setShowLogModal(true);
+    }
+
     function closeLogModal() {
         setShowLogModal(false);
         setEditingLog(null);
@@ -138,7 +157,7 @@ export default function IdeasPage() {
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Idea Bank</h2>
                 </div>
                 <button className="btn-primary" onClick={openCreateTopic}>
-                    <Plus className="w-4 h-4" /> New Idea
+                    <Plus className="w-4 h-4" /> New Idea Topic
                 </button>
             </div>
 
@@ -150,26 +169,19 @@ export default function IdeasPage() {
                     ) : (
                         <div className="space-y-3">
                             {topicList.map((topic: any) => (
-                                <div
-                                    key={topic.id}
-                                    className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''}`}
-                                    onClick={() => setSelectedTopicId(topic.id)}
-                                    style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}
-                                >
+                                <div key={topic.id} className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''}`} onClick={() => setSelectedTopicId(topic.id)} style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}>
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{topic.title}</h4>
-                                            <p className="text-[10px] uppercase font-bold mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                                {topic.logs?.length || 0} logs
-                                            </p>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{topic.title}</h4>
+                                                {topic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                            </div>
+                                            <p className="text-[10px] uppercase font-bold mt-1" style={{ color: 'var(--color-text-secondary)' }}>{topic.logs?.length || 0} logs</p>
                                         </div>
                                         <div className="flex items-center gap-1">
-                                            <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}>
-                                                <Pencil className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this idea topic and all logs?')) deleteTopicMut.mutate(topic.id); }}>
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
+                                            <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>
+                                            <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}><Pencil className="w-3.5 h-3.5" /></button>
+                                            <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this idea topic and all logs?')) deleteTopicMut.mutate(topic.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                         </div>
                                     </div>
                                 </div>
@@ -189,7 +201,10 @@ export default function IdeasPage() {
                         <div className="card p-6 space-y-6">
                             <div className="flex items-start justify-between gap-4">
                                 <div>
-                                    <h3 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTopic.title}</h3>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h3 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTopic.title}</h3>
+                                        {activeTopic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                    </div>
                                     <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{activeTopic.description || 'No topic description yet.'}</p>
                                 </div>
                                 <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateLog}>
@@ -201,38 +216,25 @@ export default function IdeasPage() {
                                 {logs.map((log: any) => (
                                     <div key={log.id} className="card p-5 group break-inside-avoid animate-fade-in hover:shadow-lg transition-all duration-300">
                                         <div className="flex items-start justify-between mb-3">
-                                            {log.category && (
-                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-600">
-                                                    {log.category}
-                                                </span>
-                                            )}
+                                            {log.category && <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-600">{log.category}</span>}
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="p-1 hover:text-indigo-500" onClick={() => openEditLog(log)}>
-                                                    <Pencil className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button className="p-1 hover:text-red-500" onClick={() => { if (confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}>
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
+                                                <button className="p-1 hover:text-indigo-500" onClick={() => duplicateLog(log)}><Copy className="w-3.5 h-3.5" /></button>
+                                                <button className="p-1 hover:text-indigo-500" onClick={() => openEditLog(log)}><Pencil className="w-3.5 h-3.5" /></button>
+                                                <button className="p-1 hover:text-red-500" onClick={() => { if (window.confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                             </div>
                                         </div>
 
                                         <h3 className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{log.title}</h3>
-                                        <p className="text-xs whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                                            {log.content}
-                                        </p>
+                                        <p className="text-xs whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{log.content}</p>
 
                                         <div className="mt-4 flex flex-wrap gap-1.5">
                                             {(log.tags || []).map((tag: string) => (
-                                                <span key={tag} className="text-[9px] font-medium px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 flex items-center gap-1">
-                                                    <Tag className="w-2 h-2" /> {tag}
-                                                </span>
+                                                <span key={tag} className="text-[9px] font-medium px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 flex items-center gap-1"><Tag className="w-2 h-2" /> {tag}</span>
                                             ))}
                                         </div>
 
                                         <div className="mt-4 pt-3 border-t flex items-center justify-between" style={{ borderColor: 'var(--color-border)' }}>
-                                            <div className="text-[9px] font-semibold flex items-center gap-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                                <Calendar className="w-2.5 h-2.5" /> {new Date(log.createdAt).toLocaleDateString()}
-                                            </div>
+                                            <div className="text-[9px] font-semibold flex items-center gap-1" style={{ color: 'var(--color-text-secondary)' }}><Calendar className="w-2.5 h-2.5" /> {new Date(log.createdAt).toLocaleDateString()}</div>
                                             <span className="text-[9px] font-bold text-emerald-600 uppercase">{log.status}</span>
                                         </div>
                                     </div>
@@ -249,20 +251,18 @@ export default function IdeasPage() {
                         <div className="h-full flex flex-col items-center justify-center card p-12 text-center border-dashed border-2">
                             <Lightbulb className="w-12 h-12 mb-4 opacity-10" />
                             <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text-secondary)' }}>Create an Idea Topic</h3>
-                            <p className="text-sm mt-1 max-w-[240px]" style={{ color: 'var(--color-text-secondary)' }}>
-                                Create a topic first, then add logs under it.
-                            </p>
+                            <p className="text-sm mt-1 max-w-[240px]" style={{ color: 'var(--color-text-secondary)' }}>Create a topic first, then add logs under it.</p>
                         </div>
                     )}
                 </div>
             </div>
 
             {showTopicModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowTopicModal(false)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeTopicModal}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingTopic ? 'Edit Idea Topic' : 'New Idea Topic'}</h3>
-                            <button onClick={() => setShowTopicModal(false)}><X className="w-5 h-5" /></button>
+                            <button onClick={closeTopicModal}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
@@ -277,20 +277,22 @@ export default function IdeasPage() {
                                 <label className="label">Description</label>
                                 <textarea className="input" rows={3} value={topicForm.description} onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })} />
                             </div>
-                            <button type="submit" className="btn-primary w-full" disabled={createTopicMut.isPending || updateTopicMut.isPending}>
-                                {editingTopic ? 'Save Topic' : 'Create Topic'}
-                            </button>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={topicForm.isShared} onChange={(e) => setTopicForm({ ...topicForm, isShared: e.target.checked })} />
+                                Share with all users
+                            </label>
+                            <button type="submit" className="btn-primary w-full" disabled={createTopicMut.isPending || updateTopicMut.isPending}>{editingTopic ? 'Save Topic' : 'Create Topic'}</button>
                         </form>
                     </div>
                 </div>
             )}
 
             {showLogModal && activeTopic && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowLogModal(false)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeLogModal}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingLog ? 'Edit Idea Log' : 'Add Idea Log'}</h3>
-                            <button onClick={() => setShowLogModal(false)}><X className="w-5 h-5" /></button>
+                            <button onClick={closeLogModal}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
@@ -328,15 +330,11 @@ export default function IdeasPage() {
                                 </div>
                                 <div className="flex flex-wrap gap-2 mt-3">
                                     {logForm.tags.map((tag) => (
-                                        <span key={tag} className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-red-50 hover:text-red-500 cursor-pointer transition-colors flex items-center gap-1" onClick={() => removeTag(tag)}>
-                                            {tag} <X className="w-3 h-3" />
-                                        </span>
+                                        <span key={tag} className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-red-50 hover:text-red-500 cursor-pointer transition-colors flex items-center gap-1" onClick={() => removeTag(tag)}>{tag} <X className="w-3 h-3" /></span>
                                     ))}
                                 </div>
                             </div>
-                            <button type="submit" className="btn-primary w-full" disabled={createLogMut.isPending || updateLogMut.isPending}>
-                                {editingLog ? 'Save Log' : 'Add Log'}
-                            </button>
+                            <button type="submit" className="btn-primary w-full" disabled={createLogMut.isPending || updateLogMut.isPending}>{editingLog ? 'Save Log' : 'Add Log'}</button>
                         </form>
                     </div>
                 </div>

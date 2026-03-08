@@ -81,13 +81,32 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             ],
         };
 
+        const visibleEventWhere = {
+            OR: [
+                { createdById: userId },
+                { isShared: true },
+            ],
+        };
+        const visibleLearningWhere = {
+            OR: [
+                { userId },
+                { topic: { isShared: true } },
+            ],
+        };
+        const visibleAssetRecordWhere = {
+            OR: [
+                { userId },
+                { asset: { isShared: true } },
+            ],
+        };
+
         const [
             tasksThisWeek, tasksThisMonth,
             houseworkThisWeek, houseworkThisMonth,
             upcomingEvents, dueTasks,
-            dueHousework, dueLearning, expensesInRange, dueAssets,
-            overdueHousework, overdueProjects, overdueLearning, overdueAssets, overdueEvents,
-            overdueTaskItems, overdueHouseworkItems, overdueLearningItems, overdueAssetItems, overdueEventItems,
+            dueHousework, learningRecords, expensesInRange, assetRecords,
+            overdueHousework, overdueProjects,
+            overdueTaskItems, overdueHouseworkItems,
             pinnedGoals, pinnedProjects, pinnedHousework, pinnedBoards, pinnedEvents, pinnedAssets,
             goals,
         ] = await Promise.all([
@@ -109,11 +128,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             }),
             // Upcoming events (next 7 days)
             prisma.calendarEvent.findMany({
-                where: statusFilter === 'OVERDUE'
-                    ? { startDate: { lt: todayStart } }
-                    : statusFilter === 'PENDING'
-                        ? { startDate: { gte: filterStart, lt: filterEnd } }
-                        : { id: '__none__' },
+                where: {
+                    ...visibleEventWhere,
+                    startDate: { gte: filterStart, lt: filterEnd },
+                },
                 orderBy: { startDate: 'asc' },
                 take: 10,
                 include: { createdBy: { select: { name: true } } },
@@ -163,28 +181,15 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 take: 10,
                 include: { assignee: { select: { name: true } } },
             }),
-            // Learning items due in selected range
+            // Learning records in selected range. Records do not participate in status/overdue.
             prisma.learningItem.findMany({
-                where: statusFilter === 'OVERDUE'
-                    ? {
-                        userId,
-                        deadline: { lt: todayStart },
-                        status: { notIn: ['DONE', 'ARCHIVED'] },
-                    }
-                    : statusFilter === 'COMPLETED'
-                        ? {
-                            userId,
-                            deadline: { gte: filterStart, lt: filterEnd },
-                            status: 'DONE',
-                        }
-                        : {
-                            userId,
-                            deadline: { gte: filterStart, lt: filterEnd },
-                            status: { notIn: ['DONE', 'ARCHIVED'] },
-                        },
-                orderBy: { deadline: 'asc' },
+                where: {
+                    ...visibleLearningWhere,
+                    createdAt: { gte: filterStart, lt: filterEnd },
+                },
+                orderBy: { createdAt: 'asc' },
                 take: 20,
-                include: { user: { select: { name: true } } },
+                include: { user: { select: { name: true } }, topic: { select: { title: true } } },
             }),
             // Expenses in selected range
             prisma.expense.findMany({
@@ -195,14 +200,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 take: 20,
                 include: { user: { select: { name: true } } },
             }),
-            // Asset maintenance due in selected range
+            // Asset maintenance records in selected range. Records do not participate in status/overdue.
             prisma.maintenanceRecord.findMany({
-                where: statusFilter === 'OVERDUE'
-                    ? { nextRecommendedDate: { lt: todayStart } }
-                    : statusFilter === 'PENDING'
-                        ? { nextRecommendedDate: { gte: filterStart, lt: filterEnd } }
-                        : { id: '__none__' },
-                orderBy: { nextRecommendedDate: 'asc' },
+                where: {
+                    ...visibleAssetRecordWhere,
+                    serviceDate: { gte: filterStart, lt: filterEnd },
+                },
+                orderBy: { serviceDate: 'asc' },
                 take: 20,
                 include: {
                     asset: { select: { name: true } },
@@ -216,18 +220,6 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             // Overdue tasks
             prisma.projectTask.count({
                 where: { ...visibleTaskWhere, deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
-            }),
-            // Overdue learning
-            prisma.learningItem.count({
-                where: { userId, deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
-            }),
-            // Overdue asset maintenance
-            prisma.maintenanceRecord.count({
-                where: { nextRecommendedDate: { lt: todayStart } },
-            }),
-            // Overdue calendar events (missed start)
-            prisma.calendarEvent.count({
-                where: { startDate: { lt: todayStart } },
             }),
             // Overdue task items
             prisma.projectTask.findMany({
@@ -245,30 +237,6 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 orderBy: { nextDueDate: 'asc' },
                 take: 20,
                 include: { assignee: { select: { name: true } } },
-            }),
-            // Overdue learning items
-            prisma.learningItem.findMany({
-                where: { userId, deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
-                orderBy: { deadline: 'asc' },
-                take: 20,
-                include: { user: { select: { name: true } } },
-            }),
-            // Overdue asset maintenance items
-            prisma.maintenanceRecord.findMany({
-                where: { nextRecommendedDate: { lt: todayStart } },
-                orderBy: { nextRecommendedDate: 'asc' },
-                take: 20,
-                include: {
-                    asset: { select: { name: true } },
-                    user: { select: { name: true } },
-                },
-            }),
-            // Overdue calendar events
-            prisma.calendarEvent.findMany({
-                where: { startDate: { lt: todayStart } },
-                orderBy: { startDate: 'asc' },
-                take: 20,
-                include: { createdBy: { select: { name: true } } },
             }),
             // Pinned goals
             prisma.goal.findMany({
@@ -417,7 +385,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 type: 'ASSET',
                 title: a.asset?.name || 'Asset',
                 assetId: a.assetId,
-                date: a.nextRecommendedDate || a.serviceDate,
+                date: a.serviceDate,
                 meta: [a.description, a.user?.name].filter(Boolean).join(' · ') || null,
             })),
         ].sort((a, b) => {
@@ -441,27 +409,6 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 date: h.nextDueDate,
                 meta: h.assignee?.name || null,
             })),
-            ...overdueLearningItems.map((l: any) => ({
-                id: l.id,
-                type: 'LEARNING',
-                title: l.title,
-                date: l.deadline,
-                meta: l.user?.name || null,
-            })),
-            ...overdueAssetItems.map((a: any) => ({
-                id: a.id,
-                type: 'ASSET',
-                title: a.asset?.name || 'Asset',
-                date: a.nextRecommendedDate,
-                meta: [a.description, a.user?.name].filter(Boolean).join(' · ') || null,
-            })),
-            ...overdueEventItems.map((e: any) => ({
-                id: e.id,
-                type: 'CALENDAR',
-                title: e.title,
-                date: e.startDate,
-                meta: e.createdBy?.name || null,
-            })),
         ].sort((a, b) => {
             const ta = a.date ? new Date(a.date).getTime() : Number.MAX_SAFE_INTEGER;
             const tb = b.date ? new Date(b.date).getTime() : Number.MAX_SAFE_INTEGER;
@@ -481,18 +428,18 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 upcomingEventsCount: upcomingEvents.length,
                 overdueHousework,
                 overdueTasks: overdueProjects,
-                overdueLearning,
-                overdueAssets,
-                overdueEvents,
-                overdueItemsTotal: overdueHousework + overdueProjects + overdueLearning + overdueAssets + overdueEvents,
+                overdueLearning: 0,
+                overdueAssets: 0,
+                overdueEvents: 0,
+                overdueItemsTotal: overdueHousework + overdueProjects,
             },
             upcomingEvents,
             dueTasks,
             dueProjects,
             dueHousework,
-            dueLearning,
+            dueLearning: learningRecords,
             expenses: expensesInRange,
-            dueAssets,
+            dueAssets: assetRecords,
             overdueItems,
             pinnedGoals,
             pinnedTasks: pinnedProjects,

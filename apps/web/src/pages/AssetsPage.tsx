@@ -12,6 +12,8 @@ const emptyAssetForm = () => ({
     model: '',
     serialNumber: '',
     purchaseDate: '',
+    warrantyMonths: '',
+    isShared: false,
     note: '',
 });
 
@@ -127,6 +129,8 @@ export default function AssetsPage() {
             model: asset.model || '',
             serialNumber: asset.serialNumber || '',
             purchaseDate: asset.purchaseDate ? format(new Date(asset.purchaseDate), 'yyyy-MM-dd') : '',
+            warrantyMonths: asset.warrantyMonths ? String(asset.warrantyMonths) : '',
+            isShared: !!asset.isShared,
             note: asset.note || '',
         });
         setShowAssetModal(true);
@@ -146,6 +150,8 @@ export default function AssetsPage() {
             model: asset.model || '',
             serialNumber: asset.serialNumber || '',
             purchaseDate: asset.purchaseDate || null,
+            warrantyMonths: asset.warrantyMonths || undefined,
+            isShared: !!asset.isShared,
             note: asset.note || '',
         });
     }
@@ -155,6 +161,7 @@ export default function AssetsPage() {
         const payload = {
             ...assetForm,
             purchaseDate: assetForm.purchaseDate ? new Date(`${assetForm.purchaseDate}T00:00:00`).toISOString() : null,
+            warrantyMonths: assetForm.warrantyMonths ? Number(assetForm.warrantyMonths) : undefined,
         };
 
         if (editingAsset) {
@@ -327,6 +334,10 @@ export default function AssetsPage() {
                                                 <span className="font-semibold block mb-0.5" style={{ color: 'var(--color-text-secondary)' }}>Purchase Date</span>
                                                 <span style={{ color: 'var(--color-text)' }}>{selectedAsset.purchaseDate ? new Date(selectedAsset.purchaseDate).toLocaleDateString() : '-'}</span>
                                             </div>
+                                            <div className="text-xs">
+                                                <span className="font-semibold block mb-0.5" style={{ color: 'var(--color-text-secondary)' }}>Warranty</span>
+                                                <span style={{ color: 'var(--color-text)' }}>{selectedAsset.warrantyMonths ? `${selectedAsset.warrantyMonths} months` : '-'}</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap gap-2 justify-end">
@@ -467,6 +478,10 @@ export default function AssetsPage() {
                                     <input className="input" value={assetForm.model} onChange={(e) => setAssetForm({ ...assetForm, model: e.target.value })} />
                                 </div>
                                 <div>
+                                    <label className="label">Warranty (months)</label>
+                                    <input type="number" min={0} className="input" value={assetForm.warrantyMonths} onChange={(e) => setAssetForm({ ...assetForm, warrantyMonths: e.target.value })} placeholder="12, 36..." />
+                                </div>
+                                <div>
                                     <label className="label">Serial Number</label>
                                     <input className="input" value={assetForm.serialNumber} onChange={(e) => setAssetForm({ ...assetForm, serialNumber: e.target.value })} />
                                 </div>
@@ -479,6 +494,10 @@ export default function AssetsPage() {
                                     <textarea className="input" rows={2} value={assetForm.note} onChange={(e) => setAssetForm({ ...assetForm, note: e.target.value })} placeholder="Any additional details..." />
                                 </div>
                             </div>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={assetForm.isShared} onChange={(e) => setAssetForm({ ...assetForm, isShared: e.target.checked })} />
+                                Share with all users
+                            </label>
                             <button type="submit" className="btn-primary w-full" disabled={createAssetMut.isPending || updateAssetMut.isPending}>
                                 {editingAsset ? 'Save Asset' : 'Create Asset'}
                             </button>

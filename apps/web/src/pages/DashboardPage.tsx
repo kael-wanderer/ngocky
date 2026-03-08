@@ -100,9 +100,6 @@ export default function DashboardPage() {
     const overdueByCategory = (type: string): Category => {
         if (type === 'PROJECT') return 'project';
         if (type === 'HOUSEWORK') return 'housework';
-        if (type === 'CALENDAR') return 'calendar';
-        if (type === 'ASSET') return 'assets';
-        if (type === 'LEARNING') return 'learning';
         return 'project';
     };
 
@@ -486,7 +483,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="space-y-3">
                             {(data?.dueAssets || []).length === 0 && (
-                                <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No asset due dates in selected time</p>
+                                <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No asset records in selected time</p>
                             )}
                             {(data?.dueAssets || []).map((a: any) => (
                                 <button key={a.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(`/assets?assetId=${a.assetId}`)}>
@@ -496,9 +493,9 @@ export default function DashboardPage() {
                                             {a.description || 'Maintenance'}{a.user?.name ? ` · ${a.user.name}` : ''}
                                         </p>
                                     </div>
-                                    {a.nextRecommendedDate && (
+                                    {a.serviceDate && (
                                         <span className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }}>
-                                            {format(new Date(a.nextRecommendedDate), 'MMM d')}
+                                            {format(new Date(a.serviceDate), 'MMM d')}
                                         </span>
                                     )}
                                 </button>
@@ -515,19 +512,19 @@ export default function DashboardPage() {
                         </div>
                         <div className="space-y-3">
                             {(data?.dueLearning || []).length === 0 && (
-                                <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No learning deadlines in selected time</p>
+                                <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No learning records in selected time</p>
                             )}
                             {(data?.dueLearning || []).map((l: any) => (
                                 <button key={l.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate('/learning')}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{l.title}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                                            {l.subject || 'Learning item'}{l.user?.name ? ` · ${l.user.name}` : ''}
+                                            {l.topic?.title || 'Learning topic'}{l.user?.name ? ` · ${l.user.name}` : ''}
                                         </p>
                                     </div>
-                                    {l.deadline && (
-                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(l.deadline) < todayStart ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
-                                            {format(new Date(l.deadline), 'MMM d')}
+                                    {l.createdAt && (
+                                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }}>
+                                            {format(new Date(l.createdAt), 'MMM d')}
                                         </span>
                                     )}
                                 </button>

@@ -24,7 +24,7 @@ export default function ProjectsPage() {
     const [editingTask, setEditingTask] = useState<any>(null);
     const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
 
-    const [boardForm, setBoardForm] = useState({ name: '', description: '', isShared: false, pinToDashboard: false });
+    const [boardForm, setBoardForm] = useState({ name: '', description: '', type: 'PERSONAL', isShared: false, pinToDashboard: false });
     const [taskForm, setTaskForm] = useState({ title: '', description: '', priority: 'MEDIUM', status: 'PLANNED', deadline: '', category: '', isShared: false, pinToDashboard: false });
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -46,7 +46,7 @@ export default function ProjectsPage() {
     // Mutations
     const createBoardMut = useMutation({
         mutationFn: (body: any) => api.post('/projects', body),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setShowCreateBoard(false); setBoardForm({ name: '', description: '', isShared: false, pinToDashboard: false }); },
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setShowCreateBoard(false); setBoardForm({ name: '', description: '', type: 'PERSONAL', isShared: false, pinToDashboard: false }); },
     });
 
     const deleteBoardMut = useMutation({
@@ -109,7 +109,7 @@ export default function ProjectsPage() {
 
     const openEditBoard = () => {
         if (!activeBoard) return;
-        setBoardForm({ name: activeBoard.name || '', description: activeBoard.description || '', isShared: !!activeBoard.isShared, pinToDashboard: !!activeBoard.pinToDashboard });
+        setBoardForm({ name: activeBoard.name || '', description: activeBoard.description || '', type: activeBoard.type || 'PERSONAL', isShared: !!activeBoard.isShared, pinToDashboard: !!activeBoard.pinToDashboard });
         setEditingBoard(activeBoard);
     };
 
@@ -181,7 +181,7 @@ export default function ProjectsPage() {
                             <button onClick={() => setBoardListView('grid')} className={`p-2 ${boardListView === 'grid' ? 'bg-gray-100' : ''}`}><LayoutGrid className="w-4 h-4" /></button>
                             <button onClick={() => setBoardListView('list')} className={`p-2 ${boardListView === 'list' ? 'bg-gray-100' : ''}`}><List className="w-4 h-4" /></button>
                         </div>
-                        <button className="btn-primary" onClick={() => { setBoardForm({ name: '', description: '', isShared: false, pinToDashboard: false }); setShowCreateBoard(true); }}><Plus className="w-4 h-4" /> New Board</button>
+                        <button className="btn-primary" onClick={() => { setBoardForm({ name: '', description: '', type: 'PERSONAL', isShared: false, pinToDashboard: false }); setShowCreateBoard(true); }}><Plus className="w-4 h-4" /> New Board</button>
                     </div>
                 </div>
 
@@ -209,7 +209,7 @@ export default function ProjectsPage() {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setBoardForm({ name: b.name || '', description: b.description || '', isShared: !!b.isShared, pinToDashboard: !!b.pinToDashboard });
+                                                setBoardForm({ name: b.name || '', description: b.description || '', type: b.type || 'PERSONAL', isShared: !!b.isShared, pinToDashboard: !!b.pinToDashboard });
                                                 setEditingBoard(b);
                                             }}
                                             className="p-1 hover:text-indigo-500"
@@ -241,6 +241,9 @@ export default function ProjectsPage() {
                                                 Shared
                                             </span>
                                         )}
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                                            {String(b.type || 'PERSONAL').replace('_', ' ')}
+                                        </span>
                                         {b.pinToDashboard && (
                                             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
                                                 Pinned
@@ -271,6 +274,15 @@ export default function ProjectsPage() {
                                 <div>
                                     <label className="label">Description</label>
                                     <textarea className="input" rows={3} value={boardForm.description} onChange={(e) => setBoardForm({ ...boardForm, description: e.target.value })} placeholder="What is this project about?" />
+                                </div>
+                                <div>
+                                    <label className="label">Project Type</label>
+                                    <select className="input" value={boardForm.type} onChange={(e) => setBoardForm({ ...boardForm, type: e.target.value })}>
+                                        <option value="PERSONAL">Personal</option>
+                                        <option value="WORK">Work</option>
+                                        <option value="FOR_FUN">For Fun</option>
+                                        <option value="STUDY">Study</option>
+                                    </select>
                                 </div>
                                 <label className="flex items-center gap-2 text-sm">
                                     <input
@@ -352,6 +364,15 @@ export default function ProjectsPage() {
                             <div>
                                 <label className="label">Description</label>
                                 <textarea className="input" rows={3} value={boardForm.description} onChange={(e) => setBoardForm({ ...boardForm, description: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="label">Project Type</label>
+                                <select className="input" value={boardForm.type} onChange={(e) => setBoardForm({ ...boardForm, type: e.target.value })}>
+                                    <option value="PERSONAL">Personal</option>
+                                    <option value="WORK">Work</option>
+                                    <option value="FOR_FUN">For Fun</option>
+                                    <option value="STUDY">Study</option>
+                                </select>
                             </div>
                             <label className="flex items-center gap-2 text-sm">
                                 <input type="checkbox" checked={boardForm.isShared} onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })} />

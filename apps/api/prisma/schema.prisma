@@ -39,6 +39,13 @@ enum Priority {
   URGENT
 }
 
+enum ProjectType {
+  PERSONAL
+  WORK
+  FOR_FUN
+  STUDY
+}
+
 enum FrequencyType {
   ONE_TIME
   DAILY
@@ -95,6 +102,17 @@ enum Theme {
   BLUE_PURPLE
   GREY_BLACK
   RED_ACCENT
+}
+
+enum RepeatFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum RepeatEndType {
+  NEVER
+  ON_DATE
 }
 
 // ─── User ───────────────────────────────────────────
@@ -198,6 +216,7 @@ model Project {
   id          String   @id @default(cuid())
   name        String
   description String?
+  type        ProjectType @default(PERSONAL)
   ownerId     String
   isShared    Boolean  @default(false)
   pinToDashboard Boolean @default(false)
@@ -244,6 +263,7 @@ model LearningTopic {
   id          String         @id @default(cuid())
   title       String
   description String?
+  isShared    Boolean        @default(false)
   userId      String
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -282,6 +302,7 @@ model IdeaTopic {
   id          String   @id @default(cuid())
   title       String
   description String?
+  isShared    Boolean  @default(false)
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -351,6 +372,8 @@ model Asset {
   model        String?
   serialNumber String?
   purchaseDate DateTime?
+  warrantyMonths Int?
+  isShared     Boolean             @default(false)
   note         String?
   userId       String
   createdAt    DateTime            @default(now())
@@ -397,6 +420,9 @@ model CalendarEvent {
   category    String?
   isShared    Boolean            @default(true)
   pinToDashboard Boolean         @default(false)
+  repeatFrequency RepeatFrequency?
+  repeatEndType RepeatEndType?
+  repeatUntil DateTime?
   createdById String
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt

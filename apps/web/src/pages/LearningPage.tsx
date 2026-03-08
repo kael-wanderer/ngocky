@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { BookOpen, CheckCircle2, Clock, GraduationCap, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { BookOpen, CheckCircle2, Clock, Copy, GraduationCap, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 
-const emptyTopicForm = () => ({ title: '', description: '' });
+const emptyTopicForm = () => ({ title: '', description: '', isShared: false });
 const emptyHistoryForm = () => ({
     title: '',
     description: '',
@@ -106,7 +106,13 @@ export default function LearningPage() {
 
     function openEditTopic(topic: any) {
         setEditingTopic(topic);
-        setTopicForm({ title: topic.title || '', description: topic.description || '' });
+        setTopicForm({ title: topic.title || '', description: topic.description || '', isShared: !!topic.isShared });
+        setShowTopicModal(true);
+    }
+
+    function duplicateTopic(topic: any) {
+        setEditingTopic(null);
+        setTopicForm({ title: `${topic.title} Copy`, description: topic.description || '', isShared: !!topic.isShared });
         setShowTopicModal(true);
     }
 
@@ -127,6 +133,20 @@ export default function LearningPage() {
         setEditingHistory(history);
         setHistoryForm({
             title: history.title || '',
+            description: history.description || '',
+            target: history.target || '',
+            progress: history.progress || 0,
+            deadline: history.deadline ? format(new Date(history.deadline), 'yyyy-MM-dd') : '',
+            status: history.status || 'PLANNED',
+            notificationEnabled: history.notificationEnabled ?? true,
+        });
+        setShowHistoryModal(true);
+    }
+
+    function duplicateHistory(history: any) {
+        setEditingHistory(null);
+        setHistoryForm({
+            title: `${history.title} Copy`,
             description: history.description || '',
             target: history.target || '',
             progress: history.progress || 0,
@@ -190,26 +210,19 @@ export default function LearningPage() {
                     ) : (
                         <div className="space-y-3">
                             {topicList.map((topic: any) => (
-                                <div
-                                    key={topic.id}
-                                    className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''}`}
-                                    onClick={() => setSelectedTopicId(topic.id)}
-                                    style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}
-                                >
+                                <div key={topic.id} className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''}`} onClick={() => setSelectedTopicId(topic.id)} style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}>
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{topic.title}</h4>
-                                            <p className="text-[10px] uppercase font-bold mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                                {topic.histories?.length || 0} histories
-                                            </p>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{topic.title}</h4>
+                                                {topic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                            </div>
+                                            <p className="text-[10px] uppercase font-bold mt-1" style={{ color: 'var(--color-text-secondary)' }}>{topic.histories?.length || 0} histories</p>
                                         </div>
                                         <div className="flex items-center gap-1">
-                                            <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}>
-                                                <Pencil className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this topic and all histories?')) deleteTopicMut.mutate(topic.id); }}>
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
+                                            <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>
+                                            <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}><Pencil className="w-3.5 h-3.5" /></button>
+                                            <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this topic and all histories?')) deleteTopicMut.mutate(topic.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                         </div>
                                     </div>
                                 </div>
@@ -229,7 +242,10 @@ export default function LearningPage() {
                         <div className="card p-6 space-y-6">
                             <div className="flex items-start justify-between gap-4">
                                 <div>
-                                    <h3 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTopic.title}</h3>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h3 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTopic.title}</h3>
+                                        {activeTopic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                    </div>
                                     <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{activeTopic.description || 'No topic description yet.'}</p>
                                 </div>
                                 <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateHistory}>
@@ -238,39 +254,24 @@ export default function LearningPage() {
                             </div>
 
                             <div className="space-y-4">
-                                <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
-                                    <BookOpen className="w-4 h-4" /> Topic Histories
-                                </h4>
-
+                                <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--color-text)' }}><BookOpen className="w-4 h-4" /> Topic Histories</h4>
                                 {histories.length === 0 ? (
-                                    <div className="text-center py-10 opacity-40">
-                                        <p className="text-xs">No histories recorded for this topic.</p>
-                                    </div>
+                                    <div className="text-center py-10 opacity-40"><p className="text-xs">No histories recorded for this topic.</p></div>
                                 ) : (
                                     <div className="grid gap-4 md:grid-cols-2">
                                         {histories.map((history: any) => (
                                             <div key={history.id} className="card p-5 group flex flex-col h-full">
                                                 <div className="flex items-start justify-between mb-2">
-                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getStatusColor(history.status)}`}>
-                                                        {history.status.replace('_', ' ')}
-                                                    </span>
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getStatusColor(history.status)}`}>{history.status.replace('_', ' ')}</span>
                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditHistory(history)}>
-                                                            <Pencil className="w-3.5 h-3.5" />
-                                                        </button>
-                                                        <button
-                                                            className="p-1.5 hover:bg-red-50 hover:text-red-500 rounded text-gray-400"
-                                                            onClick={() => { if (confirm('Delete this history?')) deleteHistoryMut.mutate(history.id); }}
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </button>
+                                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditHistory(history)}><Pencil className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1.5 hover:bg-red-50 hover:text-red-500 rounded text-gray-400" onClick={() => { if (window.confirm('Delete this history?')) deleteHistoryMut.mutate(history.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                                     </div>
                                                 </div>
 
                                                 <h3 className="font-semibold text-sm line-clamp-1" style={{ color: 'var(--color-text)' }}>{history.title}</h3>
-                                                <p className="text-xs mt-2 line-clamp-2 flex-grow" style={{ color: 'var(--color-text-secondary)' }}>
-                                                    {history.description || 'No description provided.'}
-                                                </p>
+                                                <p className="text-xs mt-2 line-clamp-2 flex-grow" style={{ color: 'var(--color-text-secondary)' }}>{history.description || 'No description provided.'}</p>
 
                                                 <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
                                                     <div className="flex items-center justify-between text-[11px] mb-1.5 font-medium">
@@ -287,11 +288,7 @@ export default function LearningPage() {
                                                             {history.deadline ? new Date(history.deadline).toLocaleDateString() : 'No deadline'}
                                                         </div>
                                                         {history.status !== 'DONE' && (
-                                                            <button
-                                                                className="p-1.5 hover:bg-emerald-50 text-emerald-600 rounded-md transition-colors"
-                                                                onClick={() => updateHistoryMut.mutate({ id: history.id, body: { status: 'DONE', progress: 100 } })}
-                                                                title="Mark as Done"
-                                                            >
+                                                            <button className="p-1.5 hover:bg-emerald-50 text-emerald-600 rounded-md transition-colors" onClick={() => updateHistoryMut.mutate({ id: history.id, body: { status: 'DONE', progress: 100 } })} title="Mark as Done">
                                                                 <CheckCircle2 className="w-4 h-4" />
                                                             </button>
                                                         )}
@@ -307,9 +304,7 @@ export default function LearningPage() {
                         <div className="h-full flex flex-col items-center justify-center card p-12 text-center border-dashed border-2">
                             <BookOpen className="w-12 h-12 mb-4 opacity-10" />
                             <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text-secondary)' }}>Select a Topic</h3>
-                            <p className="text-sm mt-1 max-w-[240px]" style={{ color: 'var(--color-text-secondary)' }}>
-                                Create a learning topic first, then add history entries under it.
-                            </p>
+                            <p className="text-sm mt-1 max-w-[240px]" style={{ color: 'var(--color-text-secondary)' }}>Create a learning topic first, then add history entries under it.</p>
                         </div>
                     )}
                 </div>
@@ -331,9 +326,11 @@ export default function LearningPage() {
                                 <label className="label">Description</label>
                                 <textarea className="input" rows={3} value={topicForm.description} onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })} />
                             </div>
-                            <button type="submit" className="btn-primary w-full" disabled={createTopicMut.isPending || updateTopicMut.isPending}>
-                                {editingTopic ? 'Save Topic' : 'Create Topic'}
-                            </button>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={topicForm.isShared} onChange={(e) => setTopicForm({ ...topicForm, isShared: e.target.checked })} />
+                                Share with all users
+                            </label>
+                            <button type="submit" className="btn-primary w-full" disabled={createTopicMut.isPending || updateTopicMut.isPending}>{editingTopic ? 'Save Topic' : 'Create Topic'}</button>
                         </form>
                     </div>
                 </div>
@@ -379,9 +376,7 @@ export default function LearningPage() {
                                 <input type="checkbox" checked={historyForm.notificationEnabled} onChange={(e) => setHistoryForm({ ...historyForm, notificationEnabled: e.target.checked })} />
                                 Notifications enabled
                             </label>
-                            <button type="submit" className="btn-primary w-full" disabled={createHistoryMut.isPending || updateHistoryMut.isPending}>
-                                {editingHistory ? 'Save History' : 'Add History'}
-                            </button>
+                            <button type="submit" className="btn-primary w-full" disabled={createHistoryMut.isPending || updateHistoryMut.isPending}>{editingHistory ? 'Save History' : 'Add History'}</button>
                         </form>
                     </div>
                 </div>

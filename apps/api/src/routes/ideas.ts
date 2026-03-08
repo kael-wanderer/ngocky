@@ -16,8 +16,14 @@ router.use(authenticate);
 
 router.get('/topics', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const where: any = {
+            OR: [
+                { userId: req.user!.userId },
+                { isShared: true },
+            ],
+        };
         const topics = await prisma.ideaTopic.findMany({
-            where: { userId: req.user!.userId },
+            where,
             include: {
                 logs: {
                     orderBy: { createdAt: 'desc' },

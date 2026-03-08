@@ -35,15 +35,21 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const page = queryInt(req, 'page', 1);
         const limit = queryInt(req, 'limit', 20);
         const skip = (page - 1) * limit;
+        const where: any = {
+            OR: [
+                { userId: req.user!.userId },
+                { isShared: true },
+            ],
+        };
 
         const [assets, total] = await Promise.all([
             prisma.asset.findMany({
-                where: { userId: req.user!.userId },
+                where,
                 skip,
                 take: limit,
                 orderBy: { createdAt: 'desc' },
             }),
-            prisma.asset.count({ where: { userId: req.user!.userId } }),
+            prisma.asset.count({ where }),
         ]);
 
         sendPaginated(res, assets, total, page, limit);

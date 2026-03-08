@@ -17,7 +17,7 @@ const navItems = [
     { to: '/assets', icon: Package, label: 'Assets' },
     { to: '/learning', icon: GraduationCap, label: 'Learning' },
     { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
-    { to: '/alerts', icon: BellRing, label: 'Alerts' },
+    { to: '/alerts', icon: BellRing, label: 'Scheduled Action' },
     { to: '/reports', icon: BarChart3, label: 'Reports' },
     { to: '/settings', icon: Settings, label: 'Settings' },
 ];
@@ -44,7 +44,7 @@ export default function AppLayout() {
         const current = [...navItems, ...adminItems].find(
             (i) => i.to === location.pathname || (i.to !== '/' && location.pathname.startsWith(i.to))
         );
-        return current?.label || 'NgocKy';
+        return current?.label || 'NgốcKý';
     })();
 
     return (
@@ -131,7 +131,7 @@ export default function AppLayout() {
                 {/* Footer */}
                 {!collapsed && (
                     <div className="p-4 border-t text-[11px]" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
-                        NgocKy v1.0.0
+                        NgốcKý v1.0.0
                     </div>
                 )}
             </aside>

@@ -51,6 +51,32 @@ All notable changes to this project will be documented in this file.
 - **Projects Modal Focus Bug**: Fixed edit modal unexpectedly closing during text selection by using safer backdrop close handling.
 - **Dashboard Task Visibility**: Fixed issue where due tasks were hidden unless pinned; `Task` now shows due tasks by selected filters and `Project` shows project names with due task counts.
 
+## [2026-03-08] - Record/Event Semantics and Scheduling Updates
+
+### Added
+
+- **Project Type**: Added project type values `PERSONAL`, `WORK`, `FOR_FUN`, and `STUDY`.
+- **Calendar Repeat**: Added calendar recurrence support with `DAILY`, `WEEKLY`, and `MONTHLY` plus repeat end modes `NEVER` and `ON_DATE`.
+- **Asset Warranty**: Added `warrantyMonths` at asset level.
+- **Asset Sharing**: Added asset-level `isShared`.
+- **Learning Sharing & Duplication**: Added shared learning topics plus duplicate actions for topics and histories.
+- **Idea Sharing & Duplication**: Added shared idea topics plus duplicate actions for topics and logs.
+- **Expense Time Presets**: Added expense filters for `Last quarter`, `Last month`, `This month`, `This quarter`, and `Custom`.
+- **User Admin Actions**: Added user delete and reset-password actions in the admin UI with role-based restrictions.
+
+### Changed
+
+- **Branding**: Browser/tab title now uses `NgốcKý - Family record management`.
+- **Navigation Label**: Renamed `Alerts` to `Scheduled Action` in the application UI.
+- **Dashboard Semantics**: Reclassified calendar items as `events` and expense/asset-learning-idea logs as `records`.
+- **Overdue Scope**: Dashboard overdue logic now applies only to true deadline-based items (`ProjectTask.deadline`, `HouseworkItem.nextDueDate`).
+- **Dashboard Date Panels**: Calendar events, asset logs, and learning histories are now shown by selected time range only and are no longer classified as `Pending`, `Completed`, or `Overdue`.
+
+### Documentation
+
+- **README**: Updated product name, sharing behavior, item semantics, and today’s feature changes.
+- **Design Notes**: Added explicit event vs. record vs. deadline-item model and updated shared-item visibility rules.
+
 ---
 
 ## [2026-03-03] - Initial VPS Deployment

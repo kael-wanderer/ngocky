@@ -1,6 +1,6 @@
-# NgốcKý – Family Productivity App
+# NgốcKý – Family Record Management
 
-A private family productivity web app for managing tasks, goals, housework, expenses, calendars, and reports.
+A private family record management web app for managing tasks, goals, housework, expenses, calendars, assets, learning records, and reports.
 
 ## Tech Stack
 
@@ -151,16 +151,16 @@ All endpoints require Bearer token authentication.
 
 ## Modules
 
-- **Dashboard** – Summary cards, filters (`Time`, `Status`, `Category`), overdue feed, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Assets`, `Learning`, `Pinned Items`)
+- **Dashboard** – Summary cards, filters (`Time`, `Status`, `Category`), overdue feed for true due items, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Assets`, `Learning`, `Pinned Items`)
 - **Goals** – Recurring goals (weekly/monthly) with check-in tracking and progress bars
 - **Projects** – Kanban board + list view with priorities, deadlines, assignees, drag-and-drop status updates, board edit/refresh, shared family boards, and per-task sharing
 - **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete` action and grouped states (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`)
-- **Calendar** – Month view with event dots, day detail panel, color-coded events
+- **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`), and owner visibility
 - **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, expanded scopes (`Personal`, `Family`, `Keo`, `Project`), per-item sharing, sortable columns, and running totals for income, payment, and remaining fund in `VND`
-- **Learning** – Topic-first learning management: create a topic, select it, then add history entries under that topic
-- **Ideas** – Topic-first idea capture: create an idea topic first, then add logs/history under that topic
+- **Learning** – Topic-first learning management with shared topics and duplicate actions; topic histories are treated as records
+- **Ideas** – Topic-first idea capture with shared topics and duplicate actions; idea logs are treated as records
 - **Reports** – Charts (bar, pie) for tasks, goals, housework, expenses, learning, and ideas
-- **Alerts** – Rule management with edit/duplicate support and module coverage for goals, projects, housework, learning, calendar, and assets
+- **Scheduled Action** – Rule management with edit/duplicate support and scheduled reports
 - **Settings** – Profile, notifications, theme picker (3 themes) with immediate apply, password change
 - **User Management** – Admin-only user creation, role assignment, activate/deactivate
 
@@ -170,20 +170,54 @@ All endpoints require Bearer token authentication.
 - **Status**:
   - `PENDING`: not completed yet in selected range
   - `COMPLETED`: completed items in selected range (where lifecycle supports completion state)
-  - `OVERDUE`: items with due/deadline date before now
+  - `OVERDUE`: items with due/deadline date before today
 - **Category** (multi-select): `goal`, `project`, `housework`, `calendar`, `expense`, `assets`, `learning`
 
-## Overdue Scope
+## Item Semantics
 
-Dashboard overdue feed currently includes modules with due/deadline fields:
+NgốcKý now treats items in three groups:
+
+- **Deadline items**: can participate in `Pending`, `Completed`, and `Overdue`
+  - `ProjectTask.deadline`
+  - `HouseworkItem.nextDueDate`
+- **Events**: scheduled on a date/time, but not treated as pending/completed/overdue
+  - `CalendarEvent.startDate`
+- **Records**: logged on a date, but not treated as pending/completed/overdue
+  - `Expense.date`
+  - `MaintenanceRecord.serviceDate`
+  - `LearningItem.createdAt`
+  - `Idea.createdAt`
+
+Dashboard overdue feed only includes true deadline items:
 
 - `ProjectTask.deadline`
 - `HouseworkItem.nextDueDate`
-- `LearningItem.deadline`
-- `MaintenanceRecord.nextRecommendedDate`
-- `CalendarEvent.startDate` (missed start time)
 
-Expense overdue is not computed separately because current schema has payment date only (`Expense.date`), not a dedicated unpaid due date field.
+Calendar events and record-style items are still shown by selected time range, but the status filter does not classify them as `Pending`, `Completed`, or `Overdue`.
+
+## Sharing Logic
+
+Shared visibility uses the same basic rule across modules:
+
+- If `isShared = true`, the item is visible to all users.
+- If `isShared = false`, the item is visible only to the owner/creator unless module-specific board sharing also grants access.
+
+Current shared modules include:
+
+- Goals
+- Project boards
+- Project tasks
+- Calendar events
+- Expenses
+- Assets
+- Learning topics
+- Idea topics
+
+Operational note:
+
+- The checkbox reflects the true saved state.
+- Checked means shared is enabled.
+- Unchecked means the item is private.
 
 ## Local Dev With VPS API
 
@@ -195,6 +229,21 @@ Expense overdue is not computed separately because current schema has payment da
 
 - `RECEIVE`: `Salary`, `Top-up`, `Sell`
 - `PAY`: `Food`, `Utilities`, `Healthcare`, `Shopping`, `Transport`, `Home Maintenance`, `Education`, `AI`, `Entertainment`, `Other`
+
+## 2026-03-08 Changes
+
+Today’s updates include:
+
+- browser/tab branding updated to `NgốcKý - Family record management`
+- project type added: `Personal`, `Work`, `For Fun`, `Study`
+- calendar repeat added: `Daily`, `Weekly`, `Monthly`, with end repeat `Never` or `On date`
+- asset warranty months and asset sharing added
+- expense time presets added: `Last quarter`, `Last month`, `This month`, `This quarter`, `Custom`
+- learning topics and idea topics now support sharing plus duplicate actions for topic/log entries
+- reports now support time range plus expense filters
+- user management now supports delete and reset password with role restrictions
+- scheduled action section renamed from `Alerts`
+- dashboard logic updated so events and records are not treated as overdue/deadline items
 
 ## Project Sharing Rules
 

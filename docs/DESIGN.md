@@ -1,8 +1,8 @@
-# NgocKy Project Design
+# NgốcKý Project Design
 
 ## Overview
 
-NgocKy is a family productivity hub designed to manage personal and household tasks, track goals, and monitor expenses. It is built as a monorepo with a React/Vite frontend and an Express/Prisma/PostgreSQL backend, hosted on a VPS via Docker/Caddy.
+NgốcKý is a family record management hub designed to manage personal and household tasks, track goals, record events, and monitor expenses. It is built as a monorepo with a React/Vite frontend and an Express/Prisma/PostgreSQL backend, hosted on a VPS via Docker/Caddy.
 
 ---
 
@@ -60,6 +60,8 @@ This mirrors the asset/log interaction model:
 - user selects a topic
 - user adds histories under that topic
 
+Learning topics can be shared to all users. Histories are records, not deadline-managed tasks.
+
 ### 5. Idea Topics & Logs
 
 Ideas follow the same two-layer structure as Learning and Assets:
@@ -74,6 +76,28 @@ Interaction model:
 - user adds logs under that topic
 
 This replaces the old flat "add idea item" flow and avoids invalid log creation without a parent topic.
+
+Idea topics can be shared to all users. Idea logs are records, not deadline-managed tasks.
+
+### 6. Calendar Events
+
+Calendar items are events:
+
+- they have a scheduled date/time
+- they may repeat (`DAILY`, `WEEKLY`, `MONTHLY`)
+- they can end `NEVER` or `ON_DATE`
+- they are not treated as `Pending`, `Completed`, or `Overdue`
+
+### 7. Record Modules
+
+The following modules are treated as records:
+
+- Expenses
+- Asset maintenance logs
+- Learning histories
+- Idea logs
+
+Records are date-based entries. They are shown by time range but not by overdue/deadline logic.
 
 ---
 
@@ -122,7 +146,7 @@ Dashboard supports:
 
 - `PENDING`: not completed yet in selected range.
 - `COMPLETED`: completed items in selected range, where module lifecycle supports completion.
-- `OVERDUE`: due/deadline before `now`.
+- `OVERDUE`: due/deadline before today.
 
 ### Category Filter
 
@@ -147,9 +171,9 @@ Reports currently expose chart data for:
 - learning
 - ideas
 
-### Alerts Coverage
+### Scheduled Action Coverage
 
-Alert rules support modules including:
+Scheduled action rules support modules including:
 
 - `GOALS`
 - `PROJECTS`
@@ -164,11 +188,26 @@ Unified overdue feed includes modules with due/deadline fields:
 
 - `ProjectTask.deadline`
 - `HouseworkItem.nextDueDate`
-- `LearningItem.deadline`
-- `MaintenanceRecord.nextRecommendedDate`
-- `CalendarEvent.startDate` (missed start)
 
-Expense currently has no separate unpaid due-date field (only payment date), so expense overdue debt is not inferred.
+Calendar events and record modules are excluded from overdue logic.
+
+### Shared Item Rule
+
+Shared modules use a consistent visibility rule:
+
+- `isShared = true` -> visible to all users
+- `isShared = false` -> visible only to the owner/creator unless a parent shared container grants access
+
+This rule currently applies to:
+
+- Goals
+- Project boards
+- Project tasks
+- Calendar events
+- Expenses
+- Assets
+- Learning topics
+- Idea topics
 
 ---
 

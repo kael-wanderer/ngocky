@@ -7,6 +7,8 @@ export const createAssetSchema = z.object({
     model: z.string().optional(),
     serialNumber: z.string().optional(),
     purchaseDate: z.string().datetime().nullable().optional(),
+    warrantyMonths: z.number().int().nonnegative().optional(),
+    isShared: z.boolean().optional(),
     note: z.string().optional(),
 });
 
@@ -28,6 +30,7 @@ export const updateMaintenanceRecordSchema = createMaintenanceRecordSchema.parti
 export const createLearningTopicSchema = z.object({
     title: z.string().min(1).max(200),
     description: z.string().optional(),
+    isShared: z.boolean().optional(),
 });
 
 export const updateLearningTopicSchema = createLearningTopicSchema.partial();
@@ -48,6 +51,7 @@ export const updateLearningHistorySchema = createLearningHistorySchema.partial()
 export const createIdeaTopicSchema = z.object({
     title: z.string().min(1).max(200),
     description: z.string().optional(),
+    isShared: z.boolean().optional(),
 });
 
 export const updateIdeaTopicSchema = createIdeaTopicSchema.partial();

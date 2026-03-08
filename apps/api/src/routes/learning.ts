@@ -17,8 +17,14 @@ router.use(authenticate);
 router.get('/topics', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        const where: any = {
+            OR: [
+                { userId },
+                { isShared: true },
+            ],
+        };
         const topics = await prisma.learningTopic.findMany({
-            where: { userId },
+            where,
             include: {
                 histories: {
                     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],

@@ -33,6 +33,7 @@ export const createCheckInSchema = z.object({
 export const createProjectSchema = z.object({
     name: z.string().min(1).max(200),
     description: z.string().optional(),
+    type: z.enum(['PERSONAL', 'WORK', 'FOR_FUN', 'STUDY']).optional(),
     isShared: z.boolean().optional(),
     pinToDashboard: z.boolean().optional(),
 });
@@ -137,7 +138,7 @@ export const updateHouseworkSchema = houseworkSchemaBase.partial().extend({
     }
 });
 
-export const createEventSchema = z.object({
+const eventSchemaBase = z.object({
     title: z.string().min(1).max(200),
     description: z.string().optional(),
     startDate: z.string().datetime(),
@@ -148,10 +149,33 @@ export const createEventSchema = z.object({
     category: z.string().optional(),
     isShared: z.boolean().optional(),
     pinToDashboard: z.boolean().optional(),
+    repeatFrequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).nullable().optional(),
+    repeatEndType: z.enum(['NEVER', 'ON_DATE']).nullable().optional(),
+    repeatUntil: z.string().datetime().nullable().optional(),
     participantIds: z.array(z.string()).optional(),
 });
 
-export const updateEventSchema = createEventSchema.partial();
+export const createEventSchema = eventSchemaBase.superRefine((data, ctx) => {
+    if (data.repeatFrequency) {
+        if (!data.repeatEndType) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repeatEndType'], message: 'repeatEndType is required when repeatFrequency is set' });
+        }
+        if (data.repeatEndType === 'ON_DATE' && !data.repeatUntil) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repeatUntil'], message: 'repeatUntil is required when repeat ends on date' });
+        }
+    }
+});
+
+export const updateEventSchema = eventSchemaBase.partial().superRefine((data, ctx) => {
+    if (data.repeatFrequency) {
+        if (!data.repeatEndType) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repeatEndType'], message: 'repeatEndType is required when repeatFrequency is set' });
+        }
+        if (data.repeatEndType === 'ON_DATE' && !data.repeatUntil) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repeatUntil'], message: 'repeatUntil is required when repeat ends on date' });
+        }
+    }
+});
 
 export const createExpenseSchema = z.object({
     date: z.string().datetime(),

@@ -5,9 +5,40 @@ import { validate } from '../middleware/validate';
 import { createEventSchema, updateEventSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
+import { addDays, addMonths, addWeeks, endOfDay } from 'date-fns';
 
 const router = Router();
 router.use(authenticate);
+
+function expandRecurringEvent(event: any, rangeStart?: Date, rangeEnd?: Date) {
+    if (!event.repeatFrequency || !rangeStart || !rangeEnd) return [event];
+
+    const instances: any[] = [];
+    let cursor = new Date(event.startDate);
+    const until = event.repeatEndType === 'ON_DATE' && event.repeatUntil ? endOfDay(new Date(event.repeatUntil)) : null;
+    const durationMs = event.endDate ? new Date(event.endDate).getTime() - new Date(event.startDate).getTime() : 0;
+
+    while (cursor <= rangeEnd) {
+        if (until && cursor > until) break;
+        if (cursor >= rangeStart) {
+            instances.push({
+                ...event,
+                id: `${event.id}::${cursor.toISOString()}`,
+                sourceEventId: event.id,
+                startDate: cursor.toISOString(),
+                endDate: event.endDate ? new Date(cursor.getTime() + durationMs).toISOString() : null,
+            });
+        }
+
+        if (event.repeatFrequency === 'DAILY') cursor = addDays(cursor, 1);
+        else if (event.repeatFrequency === 'WEEKLY') cursor = addWeeks(cursor, 1);
+        else cursor = addMonths(cursor, 1);
+
+        if (!until && instances.length > 366) break;
+    }
+
+    return instances;
+}
 
 // List events (with date range filter)
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -16,12 +47,42 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50));
         const startFrom = req.query.startFrom as string;
         const startTo = req.query.startTo as string;
+        const rangeStart = startFrom ? new Date(startFrom) : undefined;
+        const rangeEnd = startTo ? new Date(startTo) : undefined;
 
-        const where: any = {};
-        if (startFrom || startTo) {
-            where.startDate = {};
-            if (startFrom) where.startDate.gte = new Date(startFrom);
-            if (startTo) where.startDate.lte = new Date(startTo);
+        const where: any = {
+            OR: [
+                { createdById: req.user!.userId },
+                { isShared: true },
+            ],
+        };
+
+        if (rangeStart || rangeEnd) {
+            const effectiveStart = rangeStart || new Date(0);
+            const effectiveEnd = rangeEnd || new Date('9999-12-31T23:59:59.999Z');
+            where.AND = [
+                {
+                    OR: [
+                        {
+                            repeatFrequency: null,
+                            startDate: {
+                                gte: effectiveStart,
+                                lte: effectiveEnd,
+                            },
+                        },
+                        {
+                            repeatFrequency: { not: null },
+                            startDate: { lte: effectiveEnd },
+                            OR: [
+                                { repeatEndType: 'NEVER' },
+                                { repeatEndType: null },
+                                { repeatUntil: null },
+                                { repeatUntil: { gte: effectiveStart } },
+                            ],
+                        },
+                    ],
+                },
+            ];
         }
 
         const [events, total] = await Promise.all([
@@ -36,7 +97,15 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             prisma.calendarEvent.count({ where }),
         ]);
 
-        sendPaginated(res, events, total, page, limit);
+        const expanded = (rangeStart || rangeEnd)
+            ? events.flatMap((event: any) => expandRecurringEvent(
+                event,
+                rangeStart,
+                rangeEnd,
+            ))
+            : events;
+
+        sendPaginated(res, expanded, rangeStart || rangeEnd ? expanded.length : total, page, limit);
     } catch (err) { next(err); }
 });
 
