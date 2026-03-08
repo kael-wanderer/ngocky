@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
-import { Settings as SettingsIcon, User, Bell, Palette, Lock, Shield } from 'lucide-react';
+import { Settings as SettingsIcon, User, Bell, Palette, Shield } from 'lucide-react';
 
 export default function SettingsPage() {
     const { user, setUser } = useAuthStore();
@@ -76,12 +76,28 @@ export default function SettingsPage() {
 
     const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
 
+    const TIMEZONES = [
+        { value: 'Asia/Ho_Chi_Minh', label: 'Ho Chi Minh (GMT+7)' },
+        { value: 'Asia/Bangkok', label: 'Bangkok (GMT+7)' },
+        { value: 'Asia/Singapore', label: 'Singapore (GMT+8)' },
+        { value: 'Asia/Shanghai', label: 'Shanghai (GMT+8)' },
+        { value: 'Asia/Tokyo', label: 'Tokyo (GMT+9)' },
+        { value: 'Asia/Seoul', label: 'Seoul (GMT+9)' },
+        { value: 'Asia/Kolkata', label: 'Kolkata (GMT+5:30)' },
+        { value: 'Asia/Dubai', label: 'Dubai (GMT+4)' },
+        { value: 'Europe/London', label: 'London (GMT+0)' },
+        { value: 'Europe/Paris', label: 'Paris (GMT+1)' },
+        { value: 'America/New_York', label: 'New York (GMT-5)' },
+        { value: 'America/Chicago', label: 'Chicago (GMT-6)' },
+        { value: 'America/Los_Angeles', label: 'Los Angeles (GMT-8)' },
+        { value: 'UTC', label: 'UTC (GMT+0)' },
+    ];
+
     const tabs = [
         { id: 'profile', label: 'Profile', icon: User },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'theme', label: 'Theme', icon: Palette },
         { id: 'security', label: 'Security', icon: Shield },
-        { id: 'password', label: 'Password', icon: Lock },
     ];
 
     const themes = [
@@ -139,6 +155,18 @@ export default function SettingsPage() {
                                 <div>
                                     <label className="label">Role</label>
                                     <input className="input" value={profile.role} disabled />
+                                </div>
+                                <div>
+                                    <label className="label">Timezone</label>
+                                    <select
+                                        className="input"
+                                        value={profile.timezone || 'Asia/Ho_Chi_Minh'}
+                                        onChange={(e) => updateProfile.mutate({ timezone: e.target.value })}
+                                    >
+                                        {TIMEZONES.map((tz) => (
+                                            <option key={tz.value} value={tz.value}>{tz.label}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -262,6 +290,33 @@ export default function SettingsPage() {
                                     </form>
                                 </div>
                             )}
+
+                            <div className="border-t pt-5" style={{ borderColor: 'var(--color-border)' }}>
+                                <h4 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Change Password</h4>
+                                <form onSubmit={(e) => {
+                                    e.preventDefault();
+                                    if (pwForm.newPassword !== pwForm.confirm) { setMsg('Passwords do not match'); return; }
+                                    changePw.mutate({ currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword });
+                                    setPwForm({ currentPassword: '', newPassword: '', confirm: '' });
+                                }} className="space-y-4 max-w-sm">
+                                    <div>
+                                        <label className="label">Current Password <span className="text-red-500">*</span></label>
+                                        <input type="password" className="input" required value={pwForm.currentPassword}
+                                            onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label className="label">New Password <span className="text-red-500">*</span></label>
+                                        <input type="password" className="input" required minLength={8} value={pwForm.newPassword}
+                                            onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label className="label">Confirm New Password <span className="text-red-500">*</span></label>
+                                        <input type="password" className="input" required value={pwForm.confirm}
+                                            onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })} />
+                                    </div>
+                                    <button type="submit" className="btn-primary" disabled={changePw.isPending}>Change Password</button>
+                                </form>
+                            </div>
                         </div>
                     )}
 
@@ -293,35 +348,6 @@ export default function SettingsPage() {
                         </div>
                     )}
 
-                    {/* Password */}
-                    {tab === 'password' && (
-                        <div className="space-y-5">
-                            <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Change Password</h3>
-                            <form onSubmit={(e) => {
-                                e.preventDefault();
-                                if (pwForm.newPassword !== pwForm.confirm) { setMsg('Passwords do not match'); return; }
-                                changePw.mutate({ currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword });
-                                setPwForm({ currentPassword: '', newPassword: '', confirm: '' });
-                            }} className="space-y-4 max-w-sm">
-                                <div>
-                                    <label className="label">Current Password <span className="text-red-500">*</span></label>
-                                    <input type="password" className="input" required value={pwForm.currentPassword}
-                                        onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
-                                </div>
-                                <div>
-                                    <label className="label">New Password <span className="text-red-500">*</span></label>
-                                    <input type="password" className="input" required minLength={8} value={pwForm.newPassword}
-                                        onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
-                                </div>
-                                <div>
-                                    <label className="label">Confirm New Password <span className="text-red-500">*</span></label>
-                                    <input type="password" className="input" required value={pwForm.confirm}
-                                        onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })} />
-                                </div>
-                                <button type="submit" className="btn-primary" disabled={changePw.isPending}>Change Password</button>
-                            </form>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

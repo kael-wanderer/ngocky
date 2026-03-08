@@ -20,6 +20,7 @@ const profileSelect: any = {
     notificationChannel: true,
     notificationEmail: true,
     telegramChatId: true,
+    timezone: true,
 } as const;
 
 // Get profile/settings
@@ -36,7 +37,7 @@ router.get('/profile', async (req: Request, res: Response, next: NextFunction) =
 // Update profile
 router.patch('/profile', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const allowedFields = ['name', 'theme', 'notificationEnabled', 'notificationChannel', 'notificationEmail', 'telegramChatId'];
+        const allowedFields = ['name', 'theme', 'notificationEnabled', 'notificationChannel', 'notificationEmail', 'telegramChatId', 'timezone'];
         const data: any = {};
         allowedFields.forEach((f) => { if (req.body[f] !== undefined) data[f] = req.body[f]; });
 

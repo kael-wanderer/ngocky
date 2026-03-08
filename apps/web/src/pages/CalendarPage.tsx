@@ -8,11 +8,21 @@ import NotificationFields, { buildNotificationPayload, emptyNotification, loadNo
 
 type CalendarView = 'today' | 'week' | 'month';
 
+const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
+    const h = Math.floor(i / 4);
+    const m = (i % 4) * 15;
+    const period = h < 12 ? 'am' : 'pm';
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return { value: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`, label: `${h12}:${String(m).padStart(2, '0')}${period}` };
+});
+
 const emptyForm = {
     title: '',
     description: '',
     startDate: '',
+    startTime: '09:00',
     endDate: '',
+    endTime: '10:00',
     allDay: false,
     location: '',
     color: '#4f46e5',
@@ -93,9 +103,21 @@ export default function CalendarPage() {
 
     const openCreate = () => {
         setEditingEvent(null);
+        const base = selectedDate || new Date();
+        const now = new Date();
+        let h = now.getHours();
+        let m = Math.ceil(now.getMinutes() / 15) * 15;
+        if (m >= 60) { h += 1; m = 0; }
+        if (h >= 24) h = 23;
+        const startTime = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        const endH = h + 1 > 23 ? 23 : h + 1;
+        const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         setForm({
             ...emptyForm,
-            startDate: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+            startDate: format(base, 'yyyy-MM-dd'),
+            startTime,
+            endDate: format(base, 'yyyy-MM-dd'),
+            endTime,
         });
         setShowCreate(true);
     };
@@ -106,8 +128,10 @@ export default function CalendarPage() {
         setForm({
             title: event.title || '',
             description: event.description || '',
-            startDate: format(new Date(event.startDate), "yyyy-MM-dd'T'HH:mm"),
-            endDate: event.endDate ? format(new Date(event.endDate), "yyyy-MM-dd'T'HH:mm") : '',
+            startDate: format(new Date(event.startDate), 'yyyy-MM-dd'),
+            startTime: format(new Date(event.startDate), 'HH:mm'),
+            endDate: event.endDate ? format(new Date(event.endDate), 'yyyy-MM-dd') : '',
+            endTime: event.endDate ? format(new Date(event.endDate), 'HH:mm') : '',
             allDay: !!event.allDay,
             location: event.location || '',
             color: event.color || '#4f46e5',
@@ -201,12 +225,12 @@ export default function CalendarPage() {
                             e.preventDefault();
                             const body: any = {
                                 ...form,
-                                startDate: new Date(form.startDate).toISOString(),
+                                startDate: new Date(`${form.startDate}T${form.startTime}`).toISOString(),
                                 repeatFrequency: form.repeatFrequency || null,
                                 repeatEndType: form.repeatFrequency ? (form.repeatEndType || 'NEVER') : null,
                                 ...buildNotificationPayload(form),
                             };
-                            if (form.endDate) body.endDate = new Date(form.endDate).toISOString();
+                            if (form.endDate) body.endDate = new Date(`${form.endDate}T${form.endTime || form.startTime}`).toISOString();
                             else delete body.endDate;
                             if (form.repeatFrequency && form.repeatEndType === 'ON_DATE' && form.repeatUntil) body.repeatUntil = new Date(`${form.repeatUntil}T23:59:59.999`).toISOString();
                             else body.repeatUntil = null;
@@ -214,9 +238,33 @@ export default function CalendarPage() {
                             else createMut.mutate(body);
                         }} className="space-y-4">
                             <div><label className="label">Title <span className="text-red-500">*</span></label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div><label className="label">Start</label><input type="datetime-local" className="input" required value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></div>
-                                <div><label className="label">End</label><input type="datetime-local" className="input" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="label">Start Date <span className="text-red-500">*</span></label>
+                                    <label className="relative block cursor-pointer">
+                                        <span className="input block text-sm">{form.startDate ? format(new Date(`${form.startDate}T00:00`), 'MMM dd, yyyy') : 'Select date'}</span>
+                                        <input type="date" required className="absolute inset-0 opacity-0 w-full cursor-pointer" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
+                                    </label>
+                                </div>
+                                <div>
+                                    <label className="label">Start Time</label>
+                                    <select className="input" value={form.startTime} onChange={(e) => setForm({ ...form, startTime: e.target.value })}>
+                                        {TIME_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="label">End Date</label>
+                                    <label className="relative block cursor-pointer">
+                                        <span className="input block text-sm">{form.endDate ? format(new Date(`${form.endDate}T00:00`), 'MMM dd, yyyy') : 'None'}</span>
+                                        <input type="date" className="absolute inset-0 opacity-0 w-full cursor-pointer" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
+                                    </label>
+                                </div>
+                                <div>
+                                    <label className="label">End Time</label>
+                                    <select className="input" value={form.endTime} disabled={!form.endDate} onChange={(e) => setForm({ ...form, endTime: e.target.value })}>
+                                        {TIME_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                    </select>
+                                </div>
                             </div>
                             <div><label className="label">Location</label><input className="input" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
                             <div className="grid grid-cols-2 gap-4">
@@ -242,7 +290,7 @@ export default function CalendarPage() {
                             {form.repeatFrequency && form.repeatEndType === 'ON_DATE' && (
                                 <div>
                                     <label className="label">Repeat Until</label>
-                                    <input type="date" min={format(new Date(form.startDate || new Date()), 'yyyy-MM-dd')} className="input" value={form.repeatUntil} onChange={(e) => setForm({ ...form, repeatUntil: e.target.value })} />
+                                    <input type="date" min={form.startDate || format(new Date(), 'yyyy-MM-dd')} className="input" value={form.repeatUntil} onChange={(e) => setForm({ ...form, repeatUntil: e.target.value })} />
                                 </div>
                             )}
                             <div className="grid grid-cols-2 gap-4">

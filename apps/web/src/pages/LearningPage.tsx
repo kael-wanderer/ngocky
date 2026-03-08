@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { BookOpen, CheckCircle2, Clock, Copy, GraduationCap, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
+import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 
 const emptyTopicForm = () => ({ title: '', description: '', isShared: false });
 const emptyHistoryForm = () => ({
@@ -12,7 +13,7 @@ const emptyHistoryForm = () => ({
     progress: 0,
     deadline: '',
     status: 'PLANNED',
-    notificationEnabled: true,
+    ...emptyNotification,
 });
 
 const statusOptions = [
@@ -138,7 +139,7 @@ export default function LearningPage() {
             progress: history.progress || 0,
             deadline: history.deadline ? format(new Date(history.deadline), 'yyyy-MM-dd') : '',
             status: history.status || 'PLANNED',
-            notificationEnabled: history.notificationEnabled ?? true,
+            ...loadNotificationState(history),
         });
         setShowHistoryModal(true);
     }
@@ -152,7 +153,7 @@ export default function LearningPage() {
             progress: history.progress || 0,
             deadline: history.deadline ? format(new Date(history.deadline), 'yyyy-MM-dd') : '',
             status: history.status || 'PLANNED',
-            notificationEnabled: history.notificationEnabled ?? true,
+            ...loadNotificationState(history),
         });
         setShowHistoryModal(true);
     }
@@ -181,6 +182,7 @@ export default function LearningPage() {
             topicId: activeTopic.id,
             progress: Number(historyForm.progress),
             deadline: historyForm.deadline ? new Date(`${historyForm.deadline}T00:00:00`).toISOString() : null,
+            ...buildNotificationPayload(historyForm as any),
         };
 
         if (editingHistory) {
@@ -372,10 +374,7 @@ export default function LearningPage() {
                                 <label className="label">Description</label>
                                 <textarea className="input" rows={3} value={historyForm.description} onChange={(e) => setHistoryForm({ ...historyForm, description: e.target.value })} />
                             </div>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={historyForm.notificationEnabled} onChange={(e) => setHistoryForm({ ...historyForm, notificationEnabled: e.target.checked })} />
-                                Notifications enabled
-                            </label>
+                            <NotificationFields form={historyForm as any} setForm={setHistoryForm as any} />
                             <button type="submit" className="btn-primary w-full" disabled={createHistoryMut.isPending || updateHistoryMut.isPending}>{editingHistory ? 'Save History' : 'Add History'}</button>
                         </form>
                     </div>

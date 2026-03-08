@@ -1,10 +1,20 @@
 import React from 'react';
+import { format } from 'date-fns';
+
+const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
+    const h = Math.floor(i / 4);
+    const m = (i % 4) * 15;
+    const period = h < 12 ? 'am' : 'pm';
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return { value: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`, label: `${h12}:${String(m).padStart(2, '0')}${period}` };
+});
 
 export type NotificationState = {
     notificationEnabled: boolean;
-    reminderOffsetUnit: string;
+    reminderOffsetUnit: string; // 'HOURS' | 'DAYS' | 'ON_DATE'
     reminderOffsetValue: number;
-    notificationDate: string;
+    notificationDate: string; // 'yyyy-MM-dd'
+    notificationTime: string; // 'HH:mm'
 };
 
 export const emptyNotification: NotificationState = {
@@ -12,24 +22,27 @@ export const emptyNotification: NotificationState = {
     reminderOffsetUnit: 'DAYS',
     reminderOffsetValue: 1,
     notificationDate: '',
+    notificationTime: '09:00',
 };
 
 /** Call this in your submit handler to build the notification payload */
 export function buildNotificationPayload(state: NotificationState): Record<string, any> {
     if (!state.notificationEnabled) return { notificationEnabled: false, notificationDate: null };
-    const base: Record<string, any> = {
+    if (state.reminderOffsetUnit === 'ON_DATE') {
+        const dateStr = state.notificationDate;
+        const timeStr = state.notificationTime || '09:00';
+        return {
+            notificationEnabled: true,
+            reminderOffsetUnit: 'ON_DATE',
+            notificationDate: dateStr ? new Date(`${dateStr}T${timeStr}`).toISOString() : null,
+        };
+    }
+    return {
         notificationEnabled: true,
         reminderOffsetUnit: state.reminderOffsetUnit,
+        reminderOffsetValue: state.reminderOffsetValue,
+        notificationDate: null,
     };
-    if (state.reminderOffsetUnit === 'ON_DATE') {
-        base.notificationDate = state.notificationDate
-            ? new Date(`${state.notificationDate}T00:00:00`).toISOString()
-            : null;
-    } else {
-        base.reminderOffsetValue = state.reminderOffsetValue;
-        base.notificationDate = null;
-    }
-    return base;
 }
 
 /** Populate notification state from an existing record */
@@ -39,8 +52,11 @@ export function loadNotificationState(record: any): NotificationState {
         reminderOffsetUnit: record.reminderOffsetUnit || 'DAYS',
         reminderOffsetValue: record.reminderOffsetValue || 1,
         notificationDate: record.notificationDate
-            ? new Date(record.notificationDate).toISOString().split('T')[0]
+            ? format(new Date(record.notificationDate), 'yyyy-MM-dd')
             : '',
+        notificationTime: record.notificationDate
+            ? format(new Date(record.notificationDate), 'HH:mm')
+            : '09:00',
     };
 }
 
@@ -62,7 +78,7 @@ export default function NotificationFields<T extends NotificationState>({
                 Notification
             </label>
             {form.notificationEnabled && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3">
                     <div>
                         <label className="label">Type</label>
                         <select
@@ -75,32 +91,47 @@ export default function NotificationFields<T extends NotificationState>({
                             <option value="ON_DATE">On Date</option>
                         </select>
                     </div>
-                    <div>
-                        {form.reminderOffsetUnit === 'ON_DATE' ? (
-                            <>
-                                <label className="label">Notification Date</label>
-                                <input
-                                    type="date"
-                                    className="input"
-                                    value={form.notificationDate}
-                                    onChange={(e) => setForm({ ...form, notificationDate: e.target.value })}
-                                />
-                            </>
-                        ) : (
-                            <>
-                                <label className="label">
-                                    {form.reminderOffsetUnit === 'DAYS' ? 'Days Before' : 'Hours Before'}
+                    {form.reminderOffsetUnit === 'ON_DATE' ? (
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="label">Date</label>
+                                <label className="relative block cursor-pointer">
+                                    <span className="input block text-sm">
+                                        {form.notificationDate ? format(new Date(`${form.notificationDate}T00:00`), 'MMM dd, yyyy') : 'Select date'}
+                                    </span>
+                                    <input
+                                        type="date"
+                                        className="absolute inset-0 opacity-0 w-full cursor-pointer"
+                                        value={form.notificationDate}
+                                        onChange={(e) => setForm({ ...form, notificationDate: e.target.value })}
+                                    />
                                 </label>
-                                <input
-                                    type="number"
-                                    min={1}
+                            </div>
+                            <div>
+                                <label className="label">Time</label>
+                                <select
                                     className="input"
-                                    value={form.reminderOffsetValue}
-                                    onChange={(e) => setForm({ ...form, reminderOffsetValue: parseInt(e.target.value) || 1 })}
-                                />
-                            </>
-                        )}
-                    </div>
+                                    value={form.notificationTime}
+                                    onChange={(e) => setForm({ ...form, notificationTime: e.target.value })}
+                                >
+                                    {TIME_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="label">
+                                {form.reminderOffsetUnit === 'DAYS' ? 'Days Before' : 'Hours Before'}
+                            </label>
+                            <input
+                                type="number"
+                                min={1}
+                                className="input"
+                                value={form.reminderOffsetValue}
+                                onChange={(e) => setForm({ ...form, reminderOffsetValue: parseInt(e.target.value) || 1 })}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
         </>

@@ -139,6 +139,7 @@ model User {
   notificationChannel NotificationChannel @default(EMAIL)
   notificationEmail   String?
   telegramChatId      String?
+  timezone            String              @default("Asia/Ho_Chi_Minh")
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 

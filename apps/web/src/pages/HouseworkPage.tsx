@@ -37,6 +37,7 @@ type HouseworkFormState = {
     reminderOffsetUnit: string;
     reminderOffsetValue: number;
     notificationDate: string;
+    notificationTime: string;
     dayOfWeek: string;
     dayOfMonth: string;
     monthOfPeriod: string;
@@ -323,10 +324,11 @@ export default function HouseworkPage() {
     };
 
     const allItems = (data || []).filter((item: any) => frequencyFilter === 'ALL' || item.frequencyType === frequencyFilter);
-    const overdueItems = allItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'overdue');
-    const todayItems = allItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'today');
-    const upcomingItems = allItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'upcoming');
-    const unscheduledItems = allItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'unscheduled');
+    const activeItems = allItems.filter((item: any) => item.active !== false);
+    const overdueItems = activeItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'overdue');
+    const todayItems = activeItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'today');
+    const upcomingItems = activeItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'upcoming');
+    const unscheduledItems = activeItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'unscheduled');
     const completedItems = allItems.filter((item: any) => !!item.lastCompletedDate);
 
     const renderItem = (item: any, tone: 'normal' | 'overdue' = 'normal') => {

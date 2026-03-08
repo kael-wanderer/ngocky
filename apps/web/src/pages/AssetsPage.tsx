@@ -4,7 +4,7 @@ import api from '../api/client';
 import { Calendar, Copy, Package, Pencil, Pin, Plus, Trash2, Wrench, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
-import NotificationFields, { buildNotificationPayload, loadNotificationState } from '../components/NotificationFields';
+import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 
 const emptyAssetForm = () => ({
     name: '',
@@ -28,10 +28,7 @@ const emptyRecordForm = () => ({
     vendor: '',
     nextRecommendedDate: '',
     kilometers: '',
-    notificationEnabled: false,
-    reminderOffsetUnit: 'DAYS',
-    reminderOffsetValue: 1,
-    notificationDate: '',
+    ...emptyNotification,
     pinToDashboard: false,
 });
 
