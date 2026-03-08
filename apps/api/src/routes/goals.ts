@@ -43,7 +43,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             prisma.goal.findMany({
                 where, skip: (page - 1) * limit, take: limit,
                 include: { _count: { select: { checkIns: true } } },
-                orderBy: { createdAt: 'desc' },
+                orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
             }),
             prisma.goal.count({ where }),
         ]);
@@ -78,6 +78,16 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         }));
 
         sendPaginated(res, updated, total, page, limit);
+    } catch (err) { next(err); }
+});
+
+// Batch reorder goals
+router.post('/reorder', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { ids } = req.body as { ids: string[] };
+        if (!Array.isArray(ids)) return sendMessage(res, 'Invalid');
+        await Promise.all(ids.map((id, index) => prisma.goal.update({ where: { id }, data: { sortOrder: index } })));
+        sendMessage(res, 'Reordered');
     } catch (err) { next(err); }
 });
 

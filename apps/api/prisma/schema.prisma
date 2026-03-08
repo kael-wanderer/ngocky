@@ -146,6 +146,7 @@ model User {
   notificationEmail   String?
   telegramChatId      String?
   timezone            String              @default("Asia/Ho_Chi_Minh")
+  avatarUrl           String?
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
@@ -205,6 +206,7 @@ model Goal {
   reminderOffsetUnit  ReminderUnit?
   notificationDate    DateTime?
   pinToDashboard      Boolean          @default(false)
+  sortOrder           Int              @default(0)
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
 
@@ -241,6 +243,7 @@ model Project {
   ownerId     String
   isShared    Boolean  @default(false)
   pinToDashboard Boolean @default(false)
+  sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin } from 'lucide-react';
+import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin, LayoutGrid, List, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
@@ -218,6 +218,7 @@ export default function HouseworkPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [form, setForm] = useState({ ...emptyForm });
     const [frequencyFilter, setFrequencyFilter] = useState<string>('ALL');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const editIdParam = searchParams.get('editId');
 
     const { data, isLoading } = useQuery({
@@ -278,6 +279,22 @@ export default function HouseworkPage() {
         return body;
     };
 
+    const duplicateItem = (item: any) => {
+        setForm(getNormalizedFormByFrequency({
+            title: `${item.title} (copy)`,
+            description: item.description || '',
+            frequencyType: item.frequencyType || 'WEEKLY',
+            nextDueDate: item.nextDueDate ? new Date(item.nextDueDate).toISOString().split('T')[0] : '',
+            pinToDashboard: !!item.pinToDashboard,
+            ...loadNotificationState(item),
+            dayOfWeek: String(item.dayOfWeek || '1'),
+            dayOfMonth: String(item.dayOfMonth || '1'),
+            monthOfPeriod: String(item.monthOfPeriod || '1'),
+            monthOfYear: String(item.monthOfYear || '1'),
+        }, item.frequencyType || 'WEEKLY'));
+        setShowCreate(true);
+    };
+
     const openEdit = (item: any) => {
         setEditingItem(item);
         setForm(getNormalizedFormByFrequency({
@@ -334,8 +351,51 @@ export default function HouseworkPage() {
     const renderItem = (item: any, tone: 'normal' | 'overdue' = 'normal') => {
         const overdue = tone === 'overdue';
         const recurrenceLabel = buildRecurrenceLabel(item);
+
+        if (viewMode === 'grid') {
+            return (
+                <div key={item.id} className={`card p-4 group animate-slide-up ${overdue ? 'border-red-200' : ''}`}>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <p className="font-medium truncate text-sm" style={{ color: 'var(--color-text)' }}>{item.title}</p>
+                                {overdue && <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
+                            </div>
+                            {item.description && <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-text-secondary)' }}>{item.description}</p>}
+                        </div>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                            <button onClick={() => updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } })} className={`p-1.5 rounded-lg transition-colors ${item.pinToDashboard ? 'text-amber-500 hover:bg-amber-50' : 'hover:bg-gray-100'}`} title="Pin"><Pin className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => duplicateItem(item)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => openEdit(item)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                        <span className="badge-primary text-[10px]">{freqLabels[item.frequencyType]}</span>
+                        {item.nextDueDate && (
+                            <span className="text-xs" style={{ color: overdue ? '#dc2626' : 'var(--color-text-secondary)' }}>
+                                Due: {format(new Date(item.nextDueDate), 'MMM d, yyyy')}
+                            </span>
+                        )}
+                        {item.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
+                        {item.lastCompletedDate && (
+                            <span className="text-xs" style={{ color: '#059669' }}>Done: {format(new Date(item.lastCompletedDate), 'MMM d')}</span>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => completeMut.mutate(item.id)}
+                        disabled={completeMut.isPending}
+                        className={`btn-primary w-full text-xs ${overdue ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                    >
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Mark Complete
+                    </button>
+                </div>
+            );
+        }
+
+        // List view
         return (
-            <div key={item.id} className={`card p-4 flex items-center gap-4 animate-slide-up ${overdue ? 'border-red-200' : ''}`}>
+            <div key={item.id} className={`card p-4 flex items-center gap-4 group animate-slide-up ${overdue ? 'border-red-200' : ''}`}>
                 <button
                     onClick={() => completeMut.mutate(item.id)}
                     disabled={completeMut.isPending}
@@ -375,13 +435,16 @@ export default function HouseworkPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                         onClick={() => updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } })}
                         className={`p-2 rounded-lg transition-colors ${item.pinToDashboard ? 'text-amber-500 hover:bg-amber-50' : 'hover:bg-gray-100'}`}
                         title="Pin item"
                     >
                         <Pin className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => duplicateItem(item)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Duplicate">
+                        <Copy className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => openEdit(item)}
@@ -411,12 +474,28 @@ export default function HouseworkPage() {
                     <Home className="w-6 h-6" style={{ color: '#059669' }} />
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Housework</h2>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                    <select className="input min-w-[180px]" value={frequencyFilter} onChange={(e) => setFrequencyFilter(e.target.value)}>
-                        <option value="ALL">All frequencies</option>
+                <div className="flex items-center gap-2">
+                    <select className="input" value={frequencyFilter} onChange={(e) => setFrequencyFilter(e.target.value)}>
+                        <option value="ALL">All</option>
                         {frequencyOptions.map((k) => <option key={k} value={k}>{freqLabels[k]}</option>)}
                     </select>
-                    <button className="btn-primary" onClick={() => { setForm({ ...emptyForm }); setShowCreate(true); }}>
+                    <div className="flex items-center rounded-lg border p-1 gap-1">
+                        <button
+                            className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'bg-primary text-white' : 'hover:bg-gray-100'}`}
+                            onClick={() => setViewMode('list')}
+                            title="List view"
+                        >
+                            <List className="w-4 h-4" />
+                        </button>
+                        <button
+                            className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-primary text-white' : 'hover:bg-gray-100'}`}
+                            onClick={() => setViewMode('grid')}
+                            title="Grid view"
+                        >
+                            <LayoutGrid className="w-4 h-4" />
+                        </button>
+                    </div>
+                    <button className="btn-primary whitespace-nowrap" onClick={() => { setForm({ ...emptyForm }); setShowCreate(true); }}>
                         <Plus className="w-4 h-4" /> New Item
                     </button>
                 </div>
@@ -462,50 +541,47 @@ export default function HouseworkPage() {
                 <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="card p-5 h-20 animate-pulse bg-gray-100" />)}</div>
             ) : (
                 <div className="space-y-5">
-                    <div>
-                        <h3 className="text-sm font-semibold mb-2 text-red-600">Overdue ({overdueItems.length})</h3>
-                        <div className="space-y-3">
-                            {overdueItems.length === 0
-                                ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No overdue housework</p>
-                                : overdueItems.map((item: any) => renderItem(item, 'overdue'))}
-                        </div>
-                    </div>
+                    {(() => {
+                        const itemCls = viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3' : 'space-y-3';
+                        return (
+                            <>
+                                <div>
+                                    <h3 className="text-sm font-semibold mb-2 text-red-600">Overdue ({overdueItems.length})</h3>
+                                    {overdueItems.length === 0
+                                        ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No overdue housework</p>
+                                        : <div className={itemCls}>{overdueItems.map((item: any) => renderItem(item, 'overdue'))}</div>}
+                                </div>
 
-                    <div>
-                        <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Due Today ({todayItems.length})</h3>
-                        <div className="space-y-3">
-                            {todayItems.length === 0
-                                ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No housework due today</p>
-                                : todayItems.map((item: any) => renderItem(item))}
-                        </div>
-                    </div>
+                                <div>
+                                    <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Due Today ({todayItems.length})</h3>
+                                    {todayItems.length === 0
+                                        ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No housework due today</p>
+                                        : <div className={itemCls}>{todayItems.map((item: any) => renderItem(item))}</div>}
+                                </div>
 
-                    <div>
-                        <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Upcoming ({upcomingItems.length})</h3>
-                        <div className="space-y-3">
-                            {upcomingItems.length === 0
-                                ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No upcoming housework</p>
-                                : upcomingItems.map((item: any) => renderItem(item))}
-                        </div>
-                    </div>
+                                <div>
+                                    <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Upcoming ({upcomingItems.length})</h3>
+                                    {upcomingItems.length === 0
+                                        ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No upcoming housework</p>
+                                        : <div className={itemCls}>{upcomingItems.map((item: any) => renderItem(item))}</div>}
+                                </div>
 
-                    {unscheduledItems.length > 0 && (
-                        <div>
-                            <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Unscheduled ({unscheduledItems.length})</h3>
-                            <div className="space-y-3">
-                                {unscheduledItems.map((item: any) => renderItem(item))}
-                            </div>
-                        </div>
-                    )}
+                                {unscheduledItems.length > 0 && (
+                                    <div>
+                                        <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Unscheduled ({unscheduledItems.length})</h3>
+                                        <div className={itemCls}>{unscheduledItems.map((item: any) => renderItem(item))}</div>
+                                    </div>
+                                )}
 
-                    <div>
-                        <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Completed ({completedItems.length})</h3>
-                        <div className="space-y-3">
-                            {completedItems.length === 0
-                                ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No completed housework yet</p>
-                                : completedItems.map((item: any) => renderItem(item))}
-                        </div>
-                    </div>
+                                <div>
+                                    <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Completed ({completedItems.length})</h3>
+                                    {completedItems.length === 0
+                                        ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No completed housework yet</p>
+                                        : <div className={itemCls}>{completedItems.map((item: any) => renderItem(item))}</div>}
+                                </div>
+                            </>
+                        );
+                    })()}
                 </div>
             )}
         </div>

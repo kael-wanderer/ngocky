@@ -40,6 +40,8 @@ export default function ProjectsPage() {
 
     const [boardStatusFilter, setBoardStatusFilter] = useState<'ALL' | 'PLAN' | 'WORKING' | 'COMPLETED'>('ALL');
     const [boardForm, setBoardForm] = useState({ name: '', description: '', type: 'PERSONAL', boardStatus: 'PLAN', isShared: false, pinToDashboard: false });
+    const [draggingBoardId, setDraggingBoardId] = useState<string | null>(null);
+    const [dragOverBoardId, setDragOverBoardId] = useState<string | null>(null);
     const [taskForm, setTaskForm] = useState({ ...emptyTaskForm });
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -128,6 +130,26 @@ export default function ProjectsPage() {
         setEditingBoard(activeBoard);
     };
 
+    const reorderBoardsMut = useMutation({
+        mutationFn: (ids: string[]) => api.post('/projects/reorder', { ids }),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['project_boards'] }),
+    });
+
+    const visibleBoards = boardStatusFilter === 'ALL' ? boards : boards?.filter((b: any) => b.boardStatus === boardStatusFilter);
+
+    const handleBoardDrop = (targetId: string) => {
+        if (!draggingBoardId || draggingBoardId === targetId) { setDraggingBoardId(null); setDragOverBoardId(null); return; }
+        const ids = (visibleBoards || []).map((b: any) => b.id);
+        const from = ids.indexOf(draggingBoardId);
+        const to = ids.indexOf(targetId);
+        const reordered = [...ids];
+        reordered.splice(from, 1);
+        reordered.splice(to, 0, draggingBoardId);
+        reorderBoardsMut.mutate(reordered);
+        setDraggingBoardId(null);
+        setDragOverBoardId(null);
+    };
+
     const refreshBoard = () => {
         if (!selectedBoardId) return;
         qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
@@ -214,10 +236,21 @@ export default function ProjectsPage() {
                     </div>
                 ) : (
                     <div className={boardListView === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-4' : 'card divide-y overflow-hidden'} style={boardListView === 'list' ? { divideColor: 'var(--color-border)' } : {}}>
-                        {(boardStatusFilter === 'ALL' ? boards : boards?.filter((b: any) => b.boardStatus === boardStatusFilter))?.map((b: any) => (
+                        {visibleBoards?.map((b: any) => (
                             boardListView === 'grid' ? (
                                 /* ── Grid card ── */
-                                <div key={b.id} className="card p-5 hover:shadow-lg transition-all group cursor-pointer" onClick={() => setSelectedBoardId(b.id)}>
+                                <div
+                                    key={b.id}
+                                    className={`card p-5 transition-all group cursor-grab active:cursor-grabbing ${dragOverBoardId === b.id ? 'ring-2 shadow-lg' : 'hover:shadow-lg'}`}
+                                    style={dragOverBoardId === b.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
+                                    draggable
+                                    onDragStart={() => setDraggingBoardId(b.id)}
+                                    onDragOver={(e) => { e.preventDefault(); setDragOverBoardId(b.id); }}
+                                    onDragLeave={() => setDragOverBoardId(null)}
+                                    onDrop={() => handleBoardDrop(b.id)}
+                                    onDragEnd={() => { setDraggingBoardId(null); setDragOverBoardId(null); }}
+                                    onClick={() => setSelectedBoardId(b.id)}
+                                >
                                     <div className="flex justify-between items-start mb-2">
                                         <h3 className="font-bold text-lg" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
                                         <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">

@@ -122,6 +122,8 @@ export default function GoalsPage() {
     const [quantity, setQuantity] = useState(1);
     const [periodFilter, setPeriodFilter] = useState<'ALL' | 'WEEKLY' | 'MONTHLY'>('ALL');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [draggingGoalId, setDraggingGoalId] = useState<string | null>(null);
+    const [dragOverGoalId, setDragOverGoalId] = useState<string | null>(null);
     const [form, setForm] = useState({ ...emptyForm });
     const editIdParam = searchParams.get('editId');
     const checkInIdParam = searchParams.get('checkInId');
@@ -152,6 +154,24 @@ export default function GoalsPage() {
         mutationFn: (id: string) => api.delete(`/goals/${id}`),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['goals'] }),
     });
+
+    const reorderMut = useMutation({
+        mutationFn: (ids: string[]) => api.post('/goals/reorder', { ids }),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['goals'] }),
+    });
+
+    const handleGoalDrop = (targetId: string) => {
+        if (!draggingGoalId || draggingGoalId === targetId) { setDraggingGoalId(null); setDragOverGoalId(null); return; }
+        const ids = filteredGoals.map((g: any) => g.id);
+        const from = ids.indexOf(draggingGoalId);
+        const to = ids.indexOf(targetId);
+        const reordered = [...ids];
+        reordered.splice(from, 1);
+        reordered.splice(to, 0, draggingGoalId);
+        reorderMut.mutate(reordered);
+        setDraggingGoalId(null);
+        setDragOverGoalId(null);
+    };
 
     const resetMut = useMutation({
         mutationFn: (id: string) => api.post(`/goals/${id}/reset`),
@@ -406,7 +426,17 @@ export default function GoalsPage() {
                         const completed = goal.currentCount >= goal.targetCount;
                         const overachieved = progressPct > 100;
                         return (
-                            <div key={goal.id} className="card p-5 animate-slide-up hover:shadow-lg transition-shadow">
+                            <div
+                                key={goal.id}
+                                className={`card p-5 animate-slide-up transition-shadow cursor-grab active:cursor-grabbing ${dragOverGoalId === goal.id ? 'ring-2 shadow-lg' : 'hover:shadow-lg'}`}
+                                style={dragOverGoalId === goal.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
+                                draggable
+                                onDragStart={() => setDraggingGoalId(goal.id)}
+                                onDragOver={(e) => { e.preventDefault(); setDragOverGoalId(goal.id); }}
+                                onDragLeave={() => setDragOverGoalId(null)}
+                                onDrop={() => handleGoalDrop(goal.id)}
+                                onDragEnd={() => { setDraggingGoalId(null); setDragOverGoalId(null); }}
+                            >
                                 <div className="flex items-start justify-between mb-2 gap-3">
                                     <div className="flex-1 min-w-0 pr-2">
                                         <div className="flex items-center gap-2 flex-wrap">
@@ -465,32 +495,37 @@ export default function GoalsPage() {
                         const notifText = formatNotification(goal);
                         return (
                             <div key={goal.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors group">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{goal.title}</span>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 font-medium capitalize" style={{ color: 'var(--color-text-secondary)' }}>{goal.periodType.charAt(0) + goal.periodType.slice(1).toLowerCase()}</span>
-                                        {goal.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
-                                        {goal.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
-                                    </div>
-                                    {goal.description && (
-                                        <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-text-secondary)' }}>{goal.description}</p>
-                                    )}
-                                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-32 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                                                <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${barPct}%`, background: overachieved ? 'linear-gradient(90deg, #059669, #34d399)' : completed ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #4f46e5, #7c3aed)' }} />
-                                            </div>
-                                            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{goal.currentCount}/{goal.targetCount} {goal.unit}</span>
-                                            <span className="text-xs font-semibold" style={{ color: overachieved ? '#7c3aed' : completed ? '#059669' : 'var(--color-primary)' }}>{Math.round(progressPct)}%</span>
-                                        </div>
-                                        {notifText && (
-                                            <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
-                                                <Bell className="w-3 h-3" />{notifText}
-                                            </span>
-                                        )}
+                                {/* Col 1: name + period/badges */}
+                                <div className="w-44 flex-shrink-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="font-medium text-sm truncate" style={{ color: 'var(--color-text)' }}>{goal.title}</span>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 font-medium capitalize flex-shrink-0" style={{ color: 'var(--color-text-secondary)' }}>{goal.periodType.charAt(0) + goal.periodType.slice(1).toLowerCase()}</span>
+                                        {goal.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold flex-shrink-0">Shared</span>}
+                                        {goal.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold flex-shrink-0">Pinned</span>}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {/* Col 2: description */}
+                                <div className="w-56 flex-shrink-0">
+                                    <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>{goal.description || '—'}</p>
+                                </div>
+                                {/* Col 3: progress */}
+                                <div className="w-48 flex-shrink-0 flex items-center gap-2">
+                                    <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                                        <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${barPct}%`, background: overachieved ? 'linear-gradient(90deg, #059669, #34d399)' : completed ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #4f46e5, #7c3aed)' }} />
+                                    </div>
+                                    <span className="text-xs whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }}>{goal.currentCount}/{goal.targetCount} {goal.unit}</span>
+                                    <span className="text-xs font-semibold whitespace-nowrap" style={{ color: overachieved ? '#7c3aed' : completed ? '#059669' : 'var(--color-primary)' }}>{Math.round(progressPct)}%</span>
+                                </div>
+                                {/* Col 4: notification */}
+                                <div className="flex-1">
+                                    {notifText && (
+                                        <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+                                            <Bell className="w-3 h-3 flex-shrink-0" />{notifText}
+                                        </span>
+                                    )}
+                                </div>
+                                {/* Actions */}
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                                     <button onClick={() => openCheckIn(goal.id)} disabled={!goal.active} className="p-1.5 rounded-md hover:bg-emerald-50 hover:text-emerald-600 transition-colors" title="Check-in"><Check className="w-3.5 h-3.5" /></button>
                                     <button onClick={() => togglePin(goal)} className={`p-1.5 rounded-md transition-colors ${goal.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
                                     <button onClick={() => openEdit(goal)} className="p-1.5 rounded-md hover:text-indigo-500 transition-colors" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>

@@ -168,10 +168,14 @@ export default function AppLayout() {
                             onClick={handleLogout}
                             title="Logout"
                         >
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
-                                style={{ background: 'linear-gradient(135deg, var(--color-primary), #7c3aed)' }}>
-                                {user?.name?.charAt(0).toUpperCase()}
-                            </div>
+                            {user?.avatarUrl ? (
+                                <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
+                                    style={{ background: 'linear-gradient(135deg, var(--color-primary), #7c3aed)' }}>
+                                    {user?.name?.charAt(0).toUpperCase()}
+                                </div>
+                            )}
                             <span className="hidden sm:block text-sm font-medium" style={{ color: 'var(--color-text)' }}>
                                 {user?.name}
                             </span>

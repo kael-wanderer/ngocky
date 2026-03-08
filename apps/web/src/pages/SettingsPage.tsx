@@ -1,8 +1,26 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
-import { Settings as SettingsIcon, User, Bell, Palette, Shield } from 'lucide-react';
+import { Settings as SettingsIcon, User, Bell, Palette, Shield, Camera } from 'lucide-react';
+
+function resizeImageToBase64(file: File, maxSize = 128): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            const canvas = document.createElement('canvas');
+            const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = reject;
+        img.src = url;
+    });
+}
 
 export default function SettingsPage() {
     const { user, setUser } = useAuthStore();
@@ -75,6 +93,19 @@ export default function SettingsPage() {
     });
 
     const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
+    const avatarInputRef = useRef<HTMLInputElement>(null);
+
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            const dataUrl = await resizeImageToBase64(file, 256);
+            updateProfile.mutate({ avatarUrl: dataUrl });
+        } catch {
+            setMsg('Failed to process image');
+        }
+        e.target.value = '';
+    };
 
     const TIMEZONES = [
         { value: 'Asia/Ho_Chi_Minh', label: 'Ho Chi Minh (GMT+7)' },
@@ -141,6 +172,35 @@ export default function SettingsPage() {
                     {tab === 'profile' && profile && (
                         <div className="space-y-5">
                             <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Profile</h3>
+
+                            {/* Avatar */}
+                            <div className="flex items-center gap-4">
+                                <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                                    {profile.avatarUrl ? (
+                                        <img src={profile.avatarUrl} alt={profile.name} className="w-20 h-20 rounded-full object-cover border-2" style={{ borderColor: 'var(--color-border)' }} />
+                                    ) : (
+                                        <div className="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold" style={{ background: 'linear-gradient(135deg, var(--color-primary), #7c3aed)' }}>
+                                            {profile.name?.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Camera className="w-6 h-6 text-white" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <button className="btn-primary text-sm py-1.5 px-3" onClick={() => avatarInputRef.current?.click()}>
+                                        <Camera className="w-4 h-4" /> Upload Photo
+                                    </button>
+                                    {profile.avatarUrl && (
+                                        <button className="ml-2 text-sm text-red-500 hover:text-red-600" onClick={() => updateProfile.mutate({ avatarUrl: null })}>
+                                            Remove
+                                        </button>
+                                    )}
+                                    <p className="text-xs mt-1.5" style={{ color: 'var(--color-text-secondary)' }}>JPG, PNG or GIF. Max display 256×256px.</p>
+                                </div>
+                                <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                            </div>
+
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div>
                                     <label className="label">Name</label>

@@ -28,9 +28,19 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 ],
             },
             include: { _count: { select: { tasks: true } } },
-            orderBy: { createdAt: 'desc' },
+            orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
         });
         sendSuccess(res, boards);
+    } catch (err) { next(err); }
+});
+
+// Batch reorder boards
+router.post('/reorder', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { ids } = req.body as { ids: string[] };
+        if (!Array.isArray(ids)) return sendMessage(res, 'Invalid');
+        await Promise.all(ids.map((id, index) => prisma.project.update({ where: { id }, data: { sortOrder: index } })));
+        sendMessage(res, 'Reordered');
     } catch (err) { next(err); }
 });
 

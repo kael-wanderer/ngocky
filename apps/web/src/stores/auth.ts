@@ -7,6 +7,7 @@ interface User {
     role: 'OWNER' | 'ADMIN' | 'USER';
     theme: string;
     mfaEnabled?: boolean;
+    avatarUrl?: string | null;
 }
 
 interface AuthState {
