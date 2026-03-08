@@ -14,7 +14,7 @@ const emptyRuleForm = () => ({
 });
 
 const emptyReportForm = () => ({
-    reportType: 'SUMMARY',
+    reportType: 'WEEKLY_SUMMARY',
     frequency: 'WEEKLY',
     dayOfWeek: 1,
     time: '08:00',
@@ -127,7 +127,7 @@ export default function AlertsPage() {
     function openEditReport(report: any) {
         setEditingReport(report);
         setReportForm({
-            reportType: report.reportType || 'SUMMARY',
+            reportType: report.reportType || 'WEEKLY_SUMMARY',
             frequency: report.frequency || 'WEEKLY',
             dayOfWeek: report.dayOfWeek ?? 1,
             time: report.time || '08:00',
@@ -252,7 +252,7 @@ export default function AlertsPage() {
                                             <FileText className="w-5 h-5 text-purple-600" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-sm" style={{ color: 'var(--color-text)' }}>{report.reportType} Report</h4>
+                                            <h4 className="font-bold text-sm" style={{ color: 'var(--color-text)' }}>{report.reportType === 'WEEKLY_SUMMARY' ? 'Weekly Summary' : report.reportType === 'NEXT_WEEK_TASKS' ? 'Next Week Tasks' : report.reportType}</h4>
                                             <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Every {report.frequency.toLowerCase()} at {report.time}</p>
                                         </div>
                                     </div>
@@ -367,11 +367,8 @@ export default function AlertsPage() {
                                 <div className="col-span-2">
                                     <label className="label">Report Type</label>
                                     <select className="input" value={reportForm.reportType} onChange={(e) => setReportForm({ ...reportForm, reportType: e.target.value })}>
-                                        <option value="SUMMARY">Weekly Summary</option>
-                                        <option value="EXPENSE_LIST">Expense Detailed List</option>
-                                        <option value="GOAL_PROGRESS">Goal Progress Report</option>
-                                        <option value="LEARNING_SUMMARY">Learning Summary</option>
-                                        <option value="IDEA_SUMMARY">Idea Summary</option>
+                                        <option value="WEEKLY_SUMMARY">Weekly Summary</option>
+                                        <option value="NEXT_WEEK_TASKS">Next Week Tasks</option>
                                     </select>
                                 </div>
                                 <div>
