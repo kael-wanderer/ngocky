@@ -4,6 +4,7 @@ import api from '../api/client';
 import { Trophy, Plus, X, Check, Trash2, AlertCircle, Pencil, Copy, Pin, LayoutGrid, List, Bell } from 'lucide-react';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useSearchParams } from 'react-router-dom';
+import { format } from 'date-fns';
 
 const unitOptions = [
     { value: 'times', label: 'Time' },
@@ -486,7 +487,7 @@ export default function GoalsPage() {
                     })}
                 </div>
             ) : (
-                <div className="card divide-y" style={{ divideColor: 'var(--color-border)' }}>
+                <div className="card divide-y">
                     {filteredGoals.map((goal: any) => {
                         const progressPct = goal.targetCount > 0 ? (goal.currentCount / goal.targetCount) * 100 : 0;
                         const barPct = Math.min(100, progressPct);
