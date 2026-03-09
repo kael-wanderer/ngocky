@@ -14,9 +14,12 @@ const statusColors: Record<string, string> = { PLANNED: '#64748b', IN_PROGRESS: 
 const boardStatusLabels: Record<string, string> = { PLAN: 'Plan', WORKING: 'Working', COMPLETED: 'Completed' };
 const boardStatusColors: Record<string, string> = { PLAN: '#64748b', WORKING: '#4f46e5', COMPLETED: '#059669' };
 const priorityColors: Record<string, string> = { LOW: '#94a3b8', MEDIUM: '#3b82f6', HIGH: '#f59e0b', URGENT: '#ef4444' };
+const taskTypeLabels: Record<string, string> = { TASK: 'Task', BUG: 'Bug', FEATURE: 'Feature', STORY: 'Story', EPIC: 'Epic' };
+const taskTypeColors: Record<string, string> = { TASK: '#64748b', BUG: '#dc2626', FEATURE: '#2563eb', STORY: '#7c3aed', EPIC: '#d97706' };
 const emptyTaskForm = {
     title: '',
     description: '',
+    type: 'TASK',
     priority: 'MEDIUM',
     status: 'PLANNED',
     deadline: '',
@@ -173,6 +176,7 @@ export default function ProjectsPage() {
         setTaskForm({
             title: `${task.title} (Copy)`,
             description: task.description || '',
+            type: task.type || 'TASK',
             category: task.category || '',
             priority: task.priority || 'MEDIUM',
             status: task.status || 'PLANNED',
@@ -198,6 +202,7 @@ export default function ProjectsPage() {
         setTaskForm({
             title: task.title || '',
             description: task.description || '',
+            type: task.type || 'TASK',
             category: task.category || '',
             priority: task.priority || 'MEDIUM',
             status: task.status || 'PLANNED',
@@ -456,7 +461,7 @@ export default function ProjectsPage() {
                     <button className="p-2 rounded-lg border hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--color-border)' }} onClick={refreshBoard} title="Refresh board">
                         <RefreshCw className={`w-4 h-4 ${activeBoardLoading || moveTaskMut.isPending ? 'animate-spin' : ''}`} />
                     </button>
-                    <button className="btn-primary" onClick={() => { setEditingTask(null); setTaskForm({ ...emptyTaskForm }); setShowCreateTask(true); }}><Plus className="w-4 h-4" /> New Task</button>
+                    <button className="btn-primary" onClick={() => { setEditingTask(null); setTaskForm({ ...emptyTaskForm }); setShowCreateTask(true); }}><Plus className="w-4 h-4" /> New Item</button>
                 </div>
             </div>
 
@@ -483,7 +488,7 @@ export default function ProjectsPage() {
                                 <label className="label">Description</label>
                                 <textarea className="input" rows={3} value={boardForm.description} onChange={(e) => setBoardForm({ ...boardForm, description: e.target.value })} />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div>
                                     <label className="label">Project Type</label>
                                     <select className="input" value={boardForm.type} onChange={(e) => setBoardForm({ ...boardForm, type: e.target.value })}>
@@ -523,7 +528,7 @@ export default function ProjectsPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreateTask(false); setEditingTask(null); setTaskForm({ ...emptyTaskForm }); } }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">{editingTask ? 'Edit Task' : 'Create Task'}</h3>
+                            <h3 className="text-lg font-semibold">{editingTask ? 'Edit Item' : 'Create Item'}</h3>
                             <button onClick={() => { setShowCreateTask(false); setEditingTask(null); setTaskForm({ ...emptyTaskForm }); }}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
@@ -541,6 +546,14 @@ export default function ProjectsPage() {
                             <div><label className="label">Title <span className="text-red-500">*</span></label><input className="input" required value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} /></div>
                             <div><label className="label">Description</label><textarea className="input" rows={2} value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} /></div>
                             <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label">Type</label>
+                                    <select className="input" value={taskForm.type} onChange={(e) => setTaskForm({ ...taskForm, type: e.target.value })}>
+                                        {Object.entries(taskTypeLabels).map(([value, label]) => (
+                                            <option key={value} value={value}>{label}</option>
+                                        ))}
+                                    </select>
+                                </div>
                                 <div><label className="label">Category</label><input className="input" value={taskForm.category} onChange={(e) => setTaskForm({ ...taskForm, category: e.target.value })} placeholder="e.g. Design" /></div>
                                 <div>
                                     <label className="label">Priority <span className="text-red-500">*</span></label>
@@ -576,7 +589,7 @@ export default function ProjectsPage() {
                             </label>
                             <NotificationFields form={taskForm} setForm={setTaskForm} />
                             <button type="submit" className="btn-primary w-full" disabled={createTaskMut.isPending || updateTaskMut.isPending}>
-                                {createTaskMut.isPending || updateTaskMut.isPending ? 'Saving...' : (editingTask ? 'Save Changes' : 'Create Task')}
+                                {createTaskMut.isPending || updateTaskMut.isPending ? 'Saving...' : (editingTask ? 'Save Changes' : 'Create Item')}
                             </button>
                         </form>
                     </div>
@@ -613,6 +626,7 @@ export default function ProjectsPage() {
                                             setTaskForm({
                                                 title: t.title || '',
                                                 description: t.description || '',
+                                                type: t.type || 'TASK',
                                                 category: t.category || '',
                                                 priority: t.priority || 'MEDIUM',
                                                 status: t.status || 'PLANNED',
@@ -635,6 +649,9 @@ export default function ProjectsPage() {
                                         </button>
                                         <p className="text-sm font-medium pr-5" style={{ color: 'var(--color-text)' }}>{t.title}</p>
                                         <div className="flex items-center gap-2 flex-wrap mt-2">
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: `${taskTypeColors[t.type || 'TASK']}20`, color: taskTypeColors[t.type || 'TASK'] }}>
+                                                {taskTypeLabels[t.type || 'TASK']}
+                                            </span>
                                             <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: `${priorityColors[t.priority]}20`, color: priorityColors[t.priority] }}>
                                                 {t.priority}
                                             </span>
@@ -671,7 +688,7 @@ export default function ProjectsPage() {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Title</th><th>Status</th><th>Priority</th><th>Category</th><th>Deadline</th><th>Actions</th>
+                                    <th>Title</th><th>Type</th><th>Status</th><th>Priority</th><th>Category</th><th>Deadline</th><th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -681,6 +698,7 @@ export default function ProjectsPage() {
                                         setTaskForm({
                                             title: t.title || '',
                                             description: t.description || '',
+                                            type: t.type || 'TASK',
                                             category: t.category || '',
                                             priority: t.priority || 'MEDIUM',
                                             status: t.status || 'PLANNED',
@@ -691,6 +709,7 @@ export default function ProjectsPage() {
                                         });
                                     }}>
                                         <td className="font-medium">{t.title}</td>
+                                        <td><span className="badge" style={{ backgroundColor: `${taskTypeColors[t.type || 'TASK']}20`, color: taskTypeColors[t.type || 'TASK'] }}>{taskTypeLabels[t.type || 'TASK']}</span></td>
                                         <td><span className="badge" style={{ backgroundColor: `${statusColors[t.status]}20`, color: statusColors[t.status] }}>{statusLabels[t.status]}</span></td>
                                         <td><span className="badge" style={{ backgroundColor: `${priorityColors[t.priority]}20`, color: priorityColors[t.priority] }}>{t.priority}</span></td>
                                         <td>

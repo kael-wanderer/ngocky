@@ -59,7 +59,7 @@ router.get('/due-reports', async (_req: Request, res: Response, next: NextFuncti
 /**
  * GET /api/service/report-data/:reportId
  * Returns assembled data for a specific ScheduledReport.
- * Supports WEEKLY_SUMMARY and NEXT_WEEK_TASKS.
+ * Supports WEEKLY_SUMMARY, NEXT_WEEK_TASKS, and TOMORROW_TASKS.
  */
 router.get('/report-data/:reportId', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -93,10 +93,23 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
             };
         }
 
+        function getDayRange(offsetDays: number) {
+            const vnNow = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+            const startVN = new Date(vnNow);
+            startVN.setUTCDate(vnNow.getUTCDate() + offsetDays);
+            startVN.setUTCHours(0, 0, 0, 0);
+            const endVN = new Date(startVN);
+            endVN.setUTCHours(23, 59, 59, 999);
+            return {
+                start: new Date(startVN.getTime() - 7 * 60 * 60 * 1000),
+                end: new Date(endVN.getTime() - 7 * 60 * 60 * 1000),
+            };
+        }
+
         if (report.reportType === 'WEEKLY_SUMMARY' || report.reportType === 'SUMMARY') {
             const { start, end } = getWeekRange(0);
 
-            const [goals, tasks, housework, calendar, expenses] = await Promise.all([
+            const [goals, projectTasks, standaloneTasks, housework, calendar, expenses, assets, learning, ideas] = await Promise.all([
                 prisma.goal.findMany({
                     where: { userId, active: true },
                     orderBy: { sortOrder: 'asc' },
@@ -104,6 +117,11 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                 prisma.projectTask.findMany({
                     where: { project: { ownerId: userId }, updatedAt: { gte: start, lte: end } },
                     include: { project: { select: { name: true } } },
+                    orderBy: { updatedAt: 'desc' },
+                    take: 30,
+                }),
+                prisma.task.findMany({
+                    where: { userId, updatedAt: { gte: start, lte: end } },
                     orderBy: { updatedAt: 'desc' },
                     take: 30,
                 }),
@@ -117,6 +135,23 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                 prisma.expense.findMany({
                     where: { userId, date: { gte: start, lte: end } },
                     orderBy: { date: 'desc' },
+                }),
+                prisma.maintenanceRecord.findMany({
+                    where: { userId, serviceDate: { gte: start, lte: end } },
+                    include: { asset: { select: { name: true } } },
+                    orderBy: { serviceDate: 'desc' },
+                    take: 20,
+                }),
+                prisma.learningItem.findMany({
+                    where: { userId, updatedAt: { gte: start, lte: end } },
+                    include: { topic: { select: { title: true } } },
+                    orderBy: { updatedAt: 'desc' },
+                    take: 20,
+                }),
+                prisma.idea.findMany({
+                    where: { userId, updatedAt: { gte: start, lte: end } },
+                    orderBy: { updatedAt: 'desc' },
+                    take: 20,
                 }),
             ]);
 
@@ -136,13 +171,38 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                     periodType: g.periodType,
                     completed: g.currentCount >= g.targetCount,
                 })),
+                project: {
+                    done: projectTasks.filter(t => t.status === 'DONE').map(t => ({ title: t.title, project: t.project.name, deadline: t.deadline })),
+                    inProgress: projectTasks.filter(t => t.status === 'IN_PROGRESS').map(t => ({ title: t.title, project: t.project.name, deadline: t.deadline })),
+                    total: projectTasks.length,
+                },
                 tasks: {
-                    done: tasks.filter(t => t.status === 'DONE').map(t => ({ title: t.title, project: t.project.name })),
-                    inProgress: tasks.filter(t => t.status === 'IN_PROGRESS').map(t => ({ title: t.title, project: t.project.name, deadline: t.deadline })),
-                    total: tasks.length,
+                    done: standaloneTasks.filter(t => t.status === 'DONE').map(t => ({ title: t.title, dueDate: t.dueDate })),
+                    inProgress: standaloneTasks.filter(t => t.status === 'IN_PROGRESS').map(t => ({ title: t.title, dueDate: t.dueDate })),
+                    total: standaloneTasks.length,
                 },
                 housework: housework.map(h => ({ title: h.title, completedDate: h.lastCompletedDate })),
                 calendar: calendar.map(e => ({ title: e.title, startDate: e.startDate, location: e.location, allDay: e.allDay })),
+                assets: assets.map(a => ({
+                    asset: a.asset.name,
+                    serviceType: a.serviceType,
+                    description: a.description,
+                    serviceDate: a.serviceDate,
+                    cost: a.cost,
+                })),
+                learning: learning.map(l => ({
+                    title: l.title,
+                    topic: l.topic?.title || null,
+                    status: l.status,
+                    progress: l.progress,
+                    deadline: l.deadline,
+                })),
+                ideas: ideas.map(i => ({
+                    title: i.title,
+                    category: i.category,
+                    status: i.status,
+                    updatedAt: i.updatedAt,
+                })),
                 expenses: {
                     totalPaid: Math.round(totalPaid),
                     totalReceived: Math.round(totalReceived),
@@ -159,14 +219,18 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
             });
         }
 
-        if (report.reportType === 'NEXT_WEEK_TASKS') {
-            const { start, end } = getWeekRange(1);
+        if (report.reportType === 'NEXT_WEEK_TASKS' || report.reportType === 'TOMORROW_TASKS') {
+            const { start, end } = report.reportType === 'TOMORROW_TASKS' ? getDayRange(1) : getWeekRange(1);
 
-            const [tasks, housework, calendar, goals] = await Promise.all([
+            const [project, tasks, housework, calendar] = await Promise.all([
                 prisma.projectTask.findMany({
                     where: { project: { ownerId: userId }, deadline: { gte: start, lte: end }, status: { not: 'DONE' } },
                     include: { project: { select: { name: true } } },
                     orderBy: [{ deadline: 'asc' }],
+                }),
+                prisma.task.findMany({
+                    where: { userId, dueDate: { gte: start, lte: end }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+                    orderBy: [{ dueDate: 'asc' }],
                 }),
                 prisma.houseworkItem.findMany({
                     where: { createdById: userId, nextDueDate: { gte: start, lte: end }, active: true },
@@ -176,34 +240,29 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                     where: { createdById: userId, startDate: { gte: start, lte: end } },
                     orderBy: { startDate: 'asc' },
                 }),
-                prisma.goal.findMany({
-                    where: { userId, active: true },
-                    orderBy: { sortOrder: 'asc' },
-                }),
             ]);
 
             return sendSuccess(res, {
-                reportType: 'NEXT_WEEK_TASKS',
+                reportType: report.reportType,
                 sections: report.sections ?? [],
                 user: userInfo,
                 period: { start, end },
-                tasks: tasks.map(t => ({
+                project: project.map(t => ({
                     title: t.title,
                     priority: t.priority,
+                    type: t.type,
                     project: t.project.name,
                     deadline: t.deadline,
                     status: t.status,
                 })),
+                tasks: tasks.map(t => ({
+                    title: t.title,
+                    priority: t.priority,
+                    dueDate: t.dueDate,
+                    status: t.status,
+                })),
                 housework: housework.map(h => ({ title: h.title, dueDate: h.nextDueDate, frequencyType: h.frequencyType })),
                 calendar: calendar.map(e => ({ title: e.title, startDate: e.startDate, location: e.location, allDay: e.allDay })),
-                goals: goals.map(g => ({
-                    title: g.title,
-                    currentCount: g.currentCount,
-                    targetCount: g.targetCount,
-                    unit: g.unit,
-                    periodType: g.periodType,
-                    completed: g.currentCount >= g.targetCount,
-                })),
             });
         }
 

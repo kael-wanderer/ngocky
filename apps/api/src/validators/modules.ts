@@ -130,6 +130,7 @@ export const updateProjectSchema = createProjectSchema.partial();
 export const createTaskSchema = z.object({
     title: z.string().min(1).max(200),
     description: z.string().optional(),
+    type: z.enum(['TASK', 'BUG', 'FEATURE', 'STORY', 'EPIC']).optional(),
     projectId: z.string().min(1),
     category: z.string().optional(),
     deadline: z.string().datetime().optional(),
@@ -145,6 +146,7 @@ export const createTaskSchema = z.object({
 export const updateTaskSchema = z.object({
     title: z.string().min(1).max(200).optional(),
     description: z.string().optional(),
+    type: z.enum(['TASK', 'BUG', 'FEATURE', 'STORY', 'EPIC']).optional(),
     projectId: z.string().min(1).optional(),
     category: z.string().optional(),
     deadline: z.string().datetime().optional(),

@@ -43,27 +43,55 @@ const emptyRuleForm = () => ({
 const SECTIONS_BY_TYPE: Record<string, { key: string; label: string }[]> = {
     WEEKLY_SUMMARY: [
         { key: 'GOALS', label: 'Goals' },
-        { key: 'TASKS_DONE', label: 'Tasks Done' },
-        { key: 'TASKS_IN_PROGRESS', label: 'Tasks In Progress' },
+        { key: 'PROJECT', label: 'Project' },
+        { key: 'TASKS', label: 'Task' },
         { key: 'HOUSEWORK', label: 'Housework' },
         { key: 'CALENDAR', label: 'Calendar Events' },
         { key: 'EXPENSES', label: 'Expenses' },
+        { key: 'ASSETS', label: 'Asset' },
+        { key: 'LEARNING', label: 'Learning' },
+        { key: 'IDEAS', label: 'Ideas' },
     ],
     NEXT_WEEK_TASKS: [
-        { key: 'TASKS', label: 'Tasks' },
+        { key: 'PROJECT', label: 'Project' },
+        { key: 'TASKS', label: 'Task' },
         { key: 'HOUSEWORK', label: 'Housework' },
         { key: 'CALENDAR', label: 'Calendar Events' },
-        { key: 'GOALS', label: 'Goals' },
+    ],
+    TOMORROW_TASKS: [
+        { key: 'PROJECT', label: 'Project' },
+        { key: 'TASKS', label: 'Task' },
+        { key: 'HOUSEWORK', label: 'Housework' },
+        { key: 'CALENDAR', label: 'Calendar Events' },
     ],
 };
 
-const emptyReportForm = () => ({
-    reportType: 'WEEKLY_SUMMARY',
-    frequency: 'WEEKLY',
+const REPORT_TYPE_LABELS: Record<string, string> = {
+    WEEKLY_SUMMARY: 'Weekly Summary',
+    SUMMARY: 'Weekly Summary',
+    NEXT_WEEK_TASKS: 'Next Week Tasks',
+    TOMORROW_TASKS: 'Tomorrow Tasks',
+};
+
+function getDefaultSections(reportType: string) {
+    if (reportType === 'WEEKLY_SUMMARY') {
+        return ['GOALS', 'PROJECT', 'TASKS', 'HOUSEWORK', 'CALENDAR', 'EXPENSES'];
+    }
+    return (SECTIONS_BY_TYPE[reportType] || []).map(({ key }) => key);
+}
+
+function getDefaultFrequency(reportType: string) {
+    if (reportType === 'TOMORROW_TASKS') return 'NONE';
+    return 'WEEKLY';
+}
+
+const emptyReportForm = (reportType = 'WEEKLY_SUMMARY') => ({
+    reportType,
+    frequency: getDefaultFrequency(reportType),
     dayOfWeek: 1,
     dayOfMonth: 1,
     time: '08:00',
-    sections: [] as string[],
+    sections: getDefaultSections(reportType),
     active: true,
 });
 
@@ -177,11 +205,11 @@ export default function AlertsPage() {
         setEditingReport(report);
         setReportForm({
             reportType: report.reportType || 'WEEKLY_SUMMARY',
-            frequency: report.frequency || 'WEEKLY',
+            frequency: report.frequency || getDefaultFrequency(report.reportType || 'WEEKLY_SUMMARY'),
             dayOfWeek: report.dayOfWeek ?? 1,
             dayOfMonth: report.dayOfMonth ?? 1,
             time: report.time || '08:00',
-            sections: report.sections ?? [],
+            sections: report.sections?.length ? report.sections : getDefaultSections(report.reportType || 'WEEKLY_SUMMARY'),
             active: report.active ?? true,
         });
         setShowReportModal(true);
@@ -194,7 +222,7 @@ export default function AlertsPage() {
             dayOfWeek: report.dayOfWeek,
             dayOfMonth: report.dayOfMonth,
             time: report.time,
-            sections: report.sections ?? [],
+            sections: report.sections?.length ? report.sections : getDefaultSections(report.reportType),
             active: report.active,
         });
     }
@@ -299,9 +327,11 @@ export default function AlertsPage() {
                                             <FileText className="w-5 h-5 text-purple-600" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-sm" style={{ color: 'var(--color-text)' }}>{report.reportType === 'WEEKLY_SUMMARY' || report.reportType === 'SUMMARY' ? 'Weekly Summary' : report.reportType === 'NEXT_WEEK_TASKS' ? 'Next Week Tasks' : report.reportType}</h4>
+                                            <h4 className="font-bold text-sm" style={{ color: 'var(--color-text)' }}>{REPORT_TYPE_LABELS[report.reportType] || report.reportType}</h4>
                                             <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                                {report.frequency === 'WEEKLY'
+                                                {report.frequency === 'NONE'
+                                                    ? 'Manual only'
+                                                    : report.frequency === 'WEEKLY'
                                                     ? `Every ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][report.dayOfWeek ?? 1]} at ${report.time}`
                                                     : report.frequency === 'MONTHLY'
                                                     ? `Monthly on day ${report.dayOfMonth ?? 1} at ${report.time}`
@@ -475,17 +505,39 @@ export default function AlertsPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
                                     <label className="label">Report Type</label>
-                                    <select className="input" value={reportForm.reportType} onChange={(e) => setReportForm({ ...reportForm, reportType: e.target.value })}>
+                                    <select
+                                        className="input"
+                                        value={reportForm.reportType}
+                                        onChange={(e) => {
+                                            const reportType = e.target.value;
+                                            setReportForm({
+                                                ...reportForm,
+                                                reportType,
+                                                frequency: getDefaultFrequency(reportType),
+                                                sections: getDefaultSections(reportType),
+                                            });
+                                        }}
+                                    >
                                         <option value="WEEKLY_SUMMARY">Weekly Summary</option>
                                         <option value="NEXT_WEEK_TASKS">Next Week Tasks</option>
+                                        <option value="TOMORROW_TASKS">Tomorrow Tasks</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label className="label">Frequency</label>
                                     <select className="input" value={reportForm.frequency} onChange={(e) => setReportForm({ ...reportForm, frequency: e.target.value })}>
-                                        <option value="DAILY">Daily</option>
-                                        <option value="WEEKLY">Weekly</option>
-                                        <option value="MONTHLY">Monthly</option>
+                                        {reportForm.reportType === 'TOMORROW_TASKS' ? (
+                                            <>
+                                                <option value="NONE">None</option>
+                                                <option value="DAILY">Daily</option>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <option value="DAILY">Daily</option>
+                                                <option value="WEEKLY">Weekly</option>
+                                                <option value="MONTHLY">Monthly</option>
+                                            </>
+                                        )}
                                     </select>
                                 </div>
                                 <div>
@@ -517,26 +569,23 @@ export default function AlertsPage() {
                                     </div>
                                 )}
                                 <div className="col-span-2">
-                                    <label className="label">Include Sections <span className="text-xs font-normal" style={{ color: 'var(--color-text-secondary)' }}>(empty = all)</span></label>
+                                    <label className="label">Include Sections <span className="text-xs font-normal" style={{ color: 'var(--color-text-secondary)' }}>(checked items are included)</span></label>
                                     <div className="grid grid-cols-2 gap-2 mt-1">
                                         {(SECTIONS_BY_TYPE[reportForm.reportType] || []).map(({ key, label }) => {
-                                            const checked = reportForm.sections.length === 0 || reportForm.sections.includes(key);
-                                            const isAllSelected = reportForm.sections.length === 0;
+                                            const checked = reportForm.sections.includes(key);
                                             return (
                                                 <label key={key} className="flex items-center gap-2 text-xs cursor-pointer">
                                                     <input
                                                         type="checkbox"
                                                         checked={checked}
                                                         onChange={(e) => {
-                                                            const allKeys = (SECTIONS_BY_TYPE[reportForm.reportType] || []).map(s => s.key);
-                                                            let current = isAllSelected ? [...allKeys] : [...reportForm.sections];
+                                                            let current = [...reportForm.sections];
                                                             if (e.target.checked) {
                                                                 current = [...new Set([...current, key])];
                                                             } else {
                                                                 current = current.filter(k => k !== key);
                                                             }
-                                                            // If all checked, store as empty (= all)
-                                                            setReportForm({ ...reportForm, sections: current.length === allKeys.length ? [] : current });
+                                                            setReportForm({ ...reportForm, sections: current });
                                                         }}
                                                         className="rounded"
                                                     />

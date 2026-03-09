@@ -94,6 +94,7 @@ enum AlertFrequency {
 }
 
 enum ReportFrequency {
+  NONE
   DAILY
   WEEKLY
   MONTHLY
@@ -132,6 +133,14 @@ enum ReminderUnit {
   HOURS
   DAYS
   ON_DATE
+}
+
+enum ProjectTaskType {
+  TASK
+  BUG
+  FEATURE
+  STORY
+  EPIC
 }
 
 // ─── User ───────────────────────────────────────────
@@ -302,6 +311,7 @@ model ProjectTask {
   id                  String        @id @default(cuid())
   title               String
   description         String?
+  type                ProjectTaskType @default(TASK)
   projectId           String
   category            String?
   deadline            DateTime?
