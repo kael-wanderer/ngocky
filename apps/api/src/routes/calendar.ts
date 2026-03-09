@@ -5,6 +5,7 @@ import { validate } from '../middleware/validate';
 import { createEventSchema, updateEventSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
+import { buildVisibleCalendarEventWhere } from '../utils/calendarVisibility';
 
 const router = Router();
 router.use(authenticate);
@@ -71,12 +72,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const rangeStart = startFrom ? new Date(startFrom) : undefined;
         const rangeEnd = startTo ? new Date(startTo) : undefined;
 
-        const where: any = {
-            OR: [
-                { createdById: req.user!.userId },
-                { isShared: true },
-            ],
-        };
+        const where: any = buildVisibleCalendarEventWhere(req.user!.userId);
 
         if (rangeStart || rangeEnd) {
             const effectiveStart = rangeStart || new Date(0);

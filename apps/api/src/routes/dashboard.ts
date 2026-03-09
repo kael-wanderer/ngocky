@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { sendSuccess } from '../utils/response';
+import { buildVisibleCalendarEventWhere } from '../utils/calendarVisibility';
 
 const router = Router();
 router.use(authenticate);
@@ -86,12 +87,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             ],
         };
 
-        const visibleEventWhere = {
-            OR: [
-                { createdById: userId },
-                { isShared: true },
-            ],
-        };
+        const visibleEventWhere = buildVisibleCalendarEventWhere(userId);
         const visibleLearningWhere = {
             OR: [
                 { userId },
@@ -298,10 +294,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             prisma.calendarEvent.findMany({
                 where: {
                     pinToDashboard: true,
-                    OR: [
-                        { createdById: userId },
-                        { isShared: true },
-                    ],
+                    ...visibleEventWhere,
                 },
                 take: 10,
                 include: { createdBy: { select: { name: true } } },
