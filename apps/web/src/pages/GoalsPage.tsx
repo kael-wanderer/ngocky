@@ -890,8 +890,8 @@ export default function GoalsPage() {
             )}
 
             {checkInGoalId && selectedGoal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setCheckInGoalId(null); }}>
-                    <div className="card p-6 w-full max-w-sm animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/40 p-4 pb-24 sm:items-center sm:pb-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setCheckInGoalId(null); }}>
+                    <div className="card w-full max-w-sm animate-slide-up overflow-y-auto p-6 max-h-[calc(100dvh-2rem)]" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-1">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Check-in</h3>
                             <button onClick={() => setCheckInGoalId(null)}><X className="w-5 h-5" /></button>

@@ -125,7 +125,7 @@ NgocKy/
 | Calendar | `GET/POST /api/calendar` | Event CRUD |
 | Expenses | `GET/POST /api/expenses` | Expense CRUD |
 | Reports | `GET /api/reports/*` | Report data + CSV |
-| Reports | `GET /api/reports/notifications/due-items` | n8n integration |
+| Service | `GET /api/service/due-notifications` | n8n reminder polling |
 | Settings | `GET/PATCH /api/settings/profile` | Profile settings |
 
 ## Architecture Decisions
@@ -143,19 +143,36 @@ NgocKy/
 
 The API exposes endpoints for n8n to:
 
-- Fetch due items needing notification: `GET /api/reports/notifications/due-items`
+- Fetch due items needing notification: `GET /api/service/due-notifications`
 - Get report data in JSON: `GET /api/reports/*`
 - Export CSV: `GET /api/reports/export/tasks`, `GET /api/reports/export/expenses`
 
 All endpoints require Bearer token authentication.
 
+Reminder delivery rules:
+
+- n8n is a poller, not the source of truth
+- the backend decides whether an item is eligible to send
+- reminders are only for **before** the deadline/start time
+- overdue follow-up is handled separately in `Reports & Notifications`
+- the reliable reminder mode today is `On Date`
+
+Target reminder architecture:
+
+- every reminder-enabled item should use a computed `notificationDate`
+- `Days Before` should include a send-time value
+- `On Date` must be validated to be before the deadline/start
+- reminder spam should be prevented with persisted cooldown fields such as:
+  - `lastNotificationSentAt`
+  - `notificationCooldownHours` with default `24`
+
 ## Modules
 
 - **Dashboard** – Summary cards, filters (`Today`, `This week`, `Next week`, `This month`, `Next month`, `Status`, `Category`), overdue feed for true due items, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Assets`, `Learning`, `Pinned Items`)
-- **Goals** – Recurring goals (weekly/monthly) with check-in tracking, progress bars, and optional reminders before period deadline
-- **Projects** – Kanban board + list view with priorities, deadlines, assignees, drag-and-drop status updates, board edit/refresh, shared family boards, per-task sharing, and optional task reminders
-- **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete` action, grouped states (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`), and optional reminders before due date
-- **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`), owner visibility, and optional reminders before event start
+- **Goals** – Recurring goals (weekly/monthly) with check-in tracking, progress bars, and optional pre-deadline reminders
+- **Projects** – Kanban board + list view with priorities, deadlines, assignees, drag-and-drop status updates, board edit/refresh, shared family boards, per-task sharing, and optional pre-deadline task reminders
+- **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete` action, grouped states (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`), and optional pre-due reminders
+- **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`), owner visibility, and optional pre-start reminders
 - **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, expanded scopes (`Personal`, `Family`, `Keo`, `Project`), per-item sharing, sortable columns, and running totals for income, payment, and remaining fund in `VND`
 - **Learning** – Topic-first learning management with shared topics and duplicate actions; topic histories are treated as records
 - **Ideas** – Topic-first idea capture with shared topics and duplicate actions; idea logs are treated as records

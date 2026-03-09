@@ -6,8 +6,10 @@ const notificationRefinement = (data: any, ctx: z.RefinementCtx) => {
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when notification is enabled' });
         } else if (data.reminderOffsetUnit === 'ON_DATE') {
             if (!data.notificationDate) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['notificationDate'], message: 'notificationDate is required when type is ON_DATE' });
+            if (!data.notificationTime) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['notificationTime'], message: 'notificationTime is required when type is ON_DATE' });
         } else {
             if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when notification is enabled' });
+            if (!data.notificationTime) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['notificationTime'], message: 'notificationTime is required when notification is enabled' });
         }
     }
 };
@@ -17,6 +19,7 @@ const notificationFields = {
     reminderOffsetValue: z.number().int().positive().optional(),
     reminderOffsetUnit: z.enum(['HOURS', 'DAYS', 'ON_DATE']).optional(),
     notificationDate: z.string().datetime().nullable().optional(),
+    notificationTime: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional(),
 };
 
 export const createGoalSchema = z.object({

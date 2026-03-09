@@ -212,6 +212,9 @@ model Goal {
   reminderOffsetValue Int?
   reminderOffsetUnit  ReminderUnit?
   notificationDate    DateTime?
+  notificationTime    String?
+  lastNotificationSentAt DateTime?
+  notificationCooldownHours Int       @default(24)
   pinToDashboard      Boolean          @default(false)
   sortOrder           Int              @default(0)
   createdAt           DateTime         @default(now())
@@ -255,6 +258,9 @@ model Task {
   reminderOffsetValue Int?
   reminderOffsetUnit  ReminderUnit?
   notificationDate    DateTime?
+  notificationTime    String?
+  lastNotificationSentAt DateTime?
+  notificationCooldownHours Int       @default(24)
   pinToDashboard      Boolean          @default(false)
   repeatFrequency     RepeatFrequency?
   repeatEndType       RepeatEndType?
@@ -308,6 +314,9 @@ model ProjectTask {
   reminderOffsetValue Int?
   reminderOffsetUnit  ReminderUnit?
   notificationDate    DateTime?
+  notificationTime    String?
+  lastNotificationSentAt DateTime?
+  notificationCooldownHours Int    @default(24)
   pinToDashboard      Boolean       @default(false)
   kanbanOrder         Int           @default(0)
   createdAt           DateTime      @default(now())
@@ -423,6 +432,9 @@ model HouseworkItem {
   reminderOffsetValue Int?
   reminderOffsetUnit  ReminderUnit?
   notificationDate    DateTime?
+  notificationTime    String?
+  lastNotificationSentAt DateTime?
+  notificationCooldownHours Int    @default(24)
   pinToDashboard      Boolean       @default(false)
   active              Boolean       @default(true)
   createdAt           DateTime      @default(now())
@@ -473,6 +485,9 @@ model MaintenanceRecord {
   reminderOffsetValue     Int?
   reminderOffsetUnit      ReminderUnit?
   notificationDate        DateTime?
+  notificationTime        String?
+  lastNotificationSentAt  DateTime?
+  notificationCooldownHours Int       @default(24)
   linkedEventId           String?      @unique
   userId                  String
   pinToDashboard          Boolean      @default(false)
@@ -504,6 +519,9 @@ model CalendarEvent {
   reminderOffsetValue Int?
   reminderOffsetUnit ReminderUnit?
   notificationDate   DateTime?
+  notificationTime   String?
+  lastNotificationSentAt DateTime?
+  notificationCooldownHours Int @default(24)
   pinToDashboard Boolean         @default(false)
   repeatFrequency RepeatFrequency?
   repeatEndType RepeatEndType?

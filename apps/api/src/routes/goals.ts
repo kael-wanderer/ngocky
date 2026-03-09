@@ -5,20 +5,10 @@ import { validate } from '../middleware/validate';
 import { createGoalSchema, updateGoalSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
+import { getGoalPeriodEnd, getGoalPeriodStart, resolveReminderFields } from '../utils/reminders';
 
 const router = Router();
 router.use(authenticate);
-
-// Helper: calculate period start
-function getPeriodStart(periodType: 'WEEKLY' | 'MONTHLY'): Date {
-    const now = new Date();
-    if (periodType === 'WEEKLY') {
-        const day = now.getDay();
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday
-        return new Date(now.getFullYear(), now.getMonth(), diff, 0, 0, 0, 0);
-    }
-    return new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-}
 
 // List goals
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -50,7 +40,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
         // Auto-reset period counts if needed
         const updated = await Promise.all(goals.map(async (g) => {
-            const periodStart = getPeriodStart(g.periodType);
+            const periodStart = getGoalPeriodStart(g.periodType);
             const currentPeriodStart = new Date(g.currentPeriodStart);
 
             if (currentPeriodStart.getTime() < periodStart.getTime()) {
@@ -68,11 +58,20 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                     checkInsVal = result._sum.quantity || 0;
                 }
 
+                const reminderFields = resolveReminderFields(
+                    { ...g, notificationEnabled: g.notificationEnabled },
+                    {
+                        anchorDate: getGoalPeriodEnd(periodStart, g.periodType),
+                        anchorLabel: 'goal deadline',
+                        current: g,
+                    },
+                );
+
                 await prisma.goal.update({
                     where: { id: g.id },
-                    data: { currentCount: checkInsVal, currentPeriodStart: periodStart },
+                    data: { currentCount: checkInsVal, currentPeriodStart: periodStart, ...reminderFields },
                 });
-                return { ...g, currentCount: checkInsVal, currentPeriodStart: periodStart };
+                return { ...g, currentCount: checkInsVal, currentPeriodStart: periodStart, ...reminderFields };
             }
             return g;
         }));
@@ -94,10 +93,15 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
 // Create goal
 router.post('/', validate(createGoalSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const periodStart = getPeriodStart(req.body.periodType);
+        const periodStart = getGoalPeriodStart(req.body.periodType);
+        const reminderFields = resolveReminderFields(req.body, {
+            anchorDate: getGoalPeriodEnd(periodStart, req.body.periodType),
+            anchorLabel: 'goal deadline',
+        });
         const goal = await prisma.goal.create({
             data: {
                 ...req.body,
+                ...reminderFields,
                 trackingType: req.body.trackingType || 'BY_FREQUENCY', // always default to BY_FREQUENCY
                 startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
                 currentPeriodStart: periodStart,
@@ -130,9 +134,22 @@ router.patch('/:id', validate(updateGoalSchema), async (req: Request, res: Respo
         const existing = await prisma.goal.findUnique({ where: { id: req.params.id } });
         if (!existing) throw new NotFoundError('Goal');
         if (existing.userId !== req.user!.userId) throw new NotFoundError('Goal');
+        const periodType = req.body.periodType ?? existing.periodType;
+        const currentPeriodStart = existing.currentPeriodStart;
+        const reminderFields = resolveReminderFields(
+            { ...existing, ...req.body },
+            {
+                anchorDate: getGoalPeriodEnd(currentPeriodStart, periodType),
+                anchorLabel: 'goal deadline',
+                current: existing,
+            },
+        );
         const goal = await prisma.goal.update({
             where: { id: req.params.id },
-            data: req.body,
+            data: {
+                ...req.body,
+                ...reminderFields,
+            },
         });
         sendSuccess(res, goal);
     } catch (err) { next(err); }
@@ -145,7 +162,7 @@ router.post('/:id/reset', async (req: Request, res: Response, next: NextFunction
         const goal = await prisma.goal.findUnique({ where: { id: req.params.id } });
         if (!goal) throw new NotFoundError('Goal');
 
-        const periodStart = getPeriodStart(goal.periodType);
+        const periodStart = getGoalPeriodStart(goal.periodType);
         let currentCount = 0;
         if (goal.trackingType === 'BY_FREQUENCY') {
             currentCount = await prisma.goalCheckIn.count({
@@ -159,9 +176,18 @@ router.post('/:id/reset', async (req: Request, res: Response, next: NextFunction
             currentCount = result._sum.quantity || 0;
         }
 
+        const reminderFields = resolveReminderFields(
+            { ...goal, currentPeriodStart: periodStart },
+            {
+                anchorDate: getGoalPeriodEnd(periodStart, goal.periodType),
+                anchorLabel: 'goal deadline',
+                current: goal,
+            },
+        );
+
         const updated = await prisma.goal.update({
             where: { id: goal.id },
-            data: { currentCount, currentPeriodStart: periodStart },
+            data: { currentCount, currentPeriodStart: periodStart, ...reminderFields },
         });
         sendSuccess(res, updated);
     } catch (err) { next(err); }

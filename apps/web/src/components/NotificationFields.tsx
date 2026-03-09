@@ -27,7 +27,14 @@ export const emptyNotification: NotificationState = {
 
 /** Call this in your submit handler to build the notification payload */
 export function buildNotificationPayload(state: NotificationState): Record<string, any> {
-    if (!state.notificationEnabled) return { notificationEnabled: false, notificationDate: null };
+    if (!state.notificationEnabled) {
+        return {
+            notificationEnabled: false,
+            notificationDate: null,
+            notificationTime: null,
+        };
+    }
+
     if (state.reminderOffsetUnit === 'ON_DATE') {
         const dateStr = state.notificationDate;
         const timeStr = state.notificationTime || '09:00';
@@ -35,13 +42,16 @@ export function buildNotificationPayload(state: NotificationState): Record<strin
             notificationEnabled: true,
             reminderOffsetUnit: 'ON_DATE',
             notificationDate: dateStr ? new Date(`${dateStr}T${timeStr}`).toISOString() : null,
+            notificationTime: timeStr,
         };
     }
+
     return {
         notificationEnabled: true,
         reminderOffsetUnit: state.reminderOffsetUnit,
         reminderOffsetValue: state.reminderOffsetValue,
         notificationDate: null,
+        notificationTime: state.notificationTime || '09:00',
     };
 }
 
@@ -54,9 +64,10 @@ export function loadNotificationState(record: any): NotificationState {
         notificationDate: record.notificationDate
             ? format(new Date(record.notificationDate), 'yyyy-MM-dd')
             : '',
-        notificationTime: record.notificationDate
+        notificationTime: record.notificationTime
+            || (record.notificationDate
             ? format(new Date(record.notificationDate), 'HH:mm')
-            : '09:00',
+            : '09:00'),
     };
 }
 
@@ -119,17 +130,29 @@ export default function NotificationFields<T extends NotificationState>({
                             </div>
                         </div>
                     ) : (
-                        <div>
-                            <label className="label">
-                                {form.reminderOffsetUnit === 'DAYS' ? 'Days Before' : 'Hours Before'}
-                            </label>
-                            <input
-                                type="number"
-                                min={1}
-                                className="input"
-                                value={form.reminderOffsetValue}
-                                onChange={(e) => setForm({ ...form, reminderOffsetValue: parseInt(e.target.value) || 1 })}
-                            />
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="label">
+                                    {form.reminderOffsetUnit === 'DAYS' ? 'Days Before' : 'Hours Before'}
+                                </label>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    className="input"
+                                    value={form.reminderOffsetValue}
+                                    onChange={(e) => setForm({ ...form, reminderOffsetValue: parseInt(e.target.value) || 1 })}
+                                />
+                            </div>
+                            <div>
+                                <label className="label">Time</label>
+                                <select
+                                    className="input"
+                                    value={form.notificationTime}
+                                    onChange={(e) => setForm({ ...form, notificationTime: e.target.value })}
+                                >
+                                    {TIME_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                </select>
+                            </div>
                         </div>
                     )}
                 </div>

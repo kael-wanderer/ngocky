@@ -18,7 +18,7 @@ Tracks personal habits and achievement targets over specific time intervals.
   - `BY_FREQUENCY`: Counts each check-in once (e.g., "Gym workout 3 times/week").
   - `BY_QUANTITY`: Sums a 'quantity' value (e.g., "Read 60 mins/day").
 - **UI**: Visual progress bars showing percentage completion, supporting >100% achievements.
-- **Reminder Model**: Goals can enable reminders using `notificationEnabled` plus a reminder offset (`MINUTES`, `HOURS`, `DAYS`) relative to the current goal period end.
+- **Reminder Model**: Goals can enable reminders using `notificationEnabled` plus a pre-deadline notification policy. Reminders must not be scheduled after the relevant deadline boundary. Overdue handling belongs to `Reports & Notifications`, not item reminders.
 
 ### 2. Goal & Tasks Workspace
 
@@ -121,7 +121,7 @@ Calendar items are events:
 - they have a scheduled date/time
 - they may repeat (`DAILY`, `WEEKLY`, `MONTHLY`)
 - they can end `NEVER` or `ON_DATE`
-- they may define an optional reminder offset before `startDate`
+- they may define an optional reminder before `startDate`
 - they are not treated as `Pending`, `Completed`, or `Overdue`
 
 Calendar also serves as a destination module for linked reminders generated from other domains, such as future asset maintenance follow-ups.
@@ -156,6 +156,49 @@ Design constraints:
 - updates should sync the linked record instead of creating a new one
 - source modules remain editable without losing the derived relationship
 - automations should be optional and explicit, not implicit for every record
+
+### 10. Notification & Reminder Model
+
+NgocKy supports item-level reminders on selected modules such as Goals, Project Tasks, Housework, Calendar, Maintenance, and standalone Tasks.
+
+Reminder principles:
+
+- reminders are always **pre-deadline** or **pre-start**, never post-deadline
+- once an item becomes overdue, follow-up belongs to `Reports & Notifications`
+- reminder evaluation should use a single computed datetime field (`notificationDate`) as the source of truth for delivery
+
+Supported reminder modes:
+
+- `ON_DATE`
+  - user picks an explicit date and time
+  - validation must ensure the notification datetime is before the item deadline/start
+- `DAYS BEFORE`
+  - user picks an offset plus a send time
+  - system computes `notificationDate = deadline/start - N days`, anchored to the chosen send time
+- `HOURS BEFORE`
+  - system computes `notificationDate = deadline/start - N hours`
+
+For date-only items, a reminder time is still required so the system can derive an exact timestamp.
+
+Delivery and spam prevention:
+
+- n8n may poll every 15 minutes
+- the API/database remains the source of truth for reminder eligibility
+- each reminder-enabled item should store:
+  - `notificationDate`
+  - `lastNotificationSentAt`
+  - `notificationCooldownHours` with default `24`
+- cooldown prevents repeated sends every polling cycle
+- a reminder is eligible only when:
+  - item is still active / not done / not archived
+  - current time is at or after `notificationDate`
+  - current time is still before the item deadline/start
+  - `lastNotificationSentAt` is null or older than the cooldown window
+
+This design intentionally separates two concerns:
+
+- **item reminders**: notify before the deadline/start
+- **overdue alerts**: notify after the deadline, managed by `Reports & Notifications`
 
 ---
 

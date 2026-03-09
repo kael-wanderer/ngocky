@@ -6,6 +6,7 @@ import { createEventSchema, updateEventSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { NotFoundError, ValidationError } from '../utils/errors';
 import { buildVisibleCalendarEventWhere } from '../utils/calendarVisibility';
+import { resolveReminderFields } from '../utils/reminders';
 
 const router = Router();
 router.use(authenticate);
@@ -143,9 +144,14 @@ router.post('/', validate(createEventSchema), async (req: Request, res: Response
     try {
         const { participantIds, ...data } = req.body;
         assertEndAfterStart(data.startDate, data.endDate);
+        const reminderFields = resolveReminderFields(data, {
+            anchorDate: data.startDate,
+            anchorLabel: 'event start time',
+        });
         const event = await prisma.calendarEvent.create({
             data: {
                 ...data,
+                ...reminderFields,
                 startDate: new Date(data.startDate),
                 endDate: data.endDate ? new Date(data.endDate) : undefined,
                 createdById: req.user!.userId,
@@ -185,13 +191,33 @@ router.patch('/:id', validate(updateEventSchema), async (req: Request, res: Resp
         const { participantIds, ...data } = req.body;
         const existing = await prisma.calendarEvent.findUnique({
             where: { id: req.params.id },
-            select: { id: true, startDate: true, endDate: true },
+            select: {
+                id: true,
+                startDate: true,
+                endDate: true,
+                notificationEnabled: true,
+                reminderOffsetUnit: true,
+                reminderOffsetValue: true,
+                notificationDate: true,
+                notificationTime: true,
+                notificationCooldownHours: true,
+                lastNotificationSentAt: true,
+            },
         });
         if (!existing) throw new NotFoundError('Event');
 
         assertEndAfterStart(
             data.startDate ?? existing.startDate,
             data.endDate === undefined ? existing.endDate : data.endDate,
+        );
+
+        const reminderFields = resolveReminderFields(
+            { ...existing, ...data },
+            {
+                anchorDate: data.startDate ?? existing.startDate,
+                anchorLabel: 'event start time',
+                current: existing,
+            },
         );
 
         if (participantIds !== undefined) {
@@ -207,6 +233,7 @@ router.patch('/:id', validate(updateEventSchema), async (req: Request, res: Resp
             where: { id: req.params.id },
             data: {
                 ...data,
+                ...reminderFields,
                 startDate: data.startDate ? new Date(data.startDate) : undefined,
                 endDate: data.endDate ? new Date(data.endDate) : undefined,
             },

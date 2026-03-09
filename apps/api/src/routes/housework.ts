@@ -6,6 +6,7 @@ import { createHouseworkSchema, updateHouseworkSchema } from '../validators/modu
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
 import { FrequencyType, HouseworkItem } from '@prisma/client';
+import { resolveReminderFields } from '../utils/reminders';
 
 const router = Router();
 router.use(authenticate);
@@ -135,6 +136,10 @@ router.post('/', validate(createHouseworkSchema), async (req: Request, res: Resp
         const item = await prisma.houseworkItem.create({
             data: {
                 ...req.body,
+                ...resolveReminderFields(req.body, {
+                    anchorDate: req.body.nextDueDate,
+                    anchorLabel: 'housework due date',
+                }),
                 nextDueDate: req.body.nextDueDate ? new Date(req.body.nextDueDate) : undefined,
                 createdById: req.user!.userId,
             },
@@ -162,10 +167,21 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 // Update housework
 router.patch('/:id', validate(updateHouseworkSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const existing = await prisma.houseworkItem.findUnique({ where: { id: req.params.id } });
+        if (!existing) throw new NotFoundError('Housework item');
+        const reminderFields = resolveReminderFields(
+            { ...existing, ...req.body },
+            {
+                anchorDate: req.body.nextDueDate === undefined ? existing.nextDueDate : req.body.nextDueDate,
+                anchorLabel: 'housework due date',
+                current: existing,
+            },
+        );
         const item = await prisma.houseworkItem.update({
             where: { id: req.params.id },
             data: {
                 ...req.body,
+                ...reminderFields,
                 nextDueDate: req.body.nextDueDate ? new Date(req.body.nextDueDate) : req.body.nextDueDate,
                 lastCompletedDate: req.body.lastCompletedDate ? new Date(req.body.lastCompletedDate) : req.body.lastCompletedDate,
             },
@@ -186,8 +202,24 @@ router.post('/:id/complete', async (req: Request, res: Response, next: NextFunct
 
         if (item.frequencyType !== 'ONE_TIME') {
             data.nextDueDate = calculateNextDueDateFromRule(item, now);
+            Object.assign(data, resolveReminderFields(
+                { ...item, nextDueDate: data.nextDueDate },
+                {
+                    anchorDate: data.nextDueDate,
+                    anchorLabel: 'housework due date',
+                    current: item,
+                },
+            ));
         } else {
             data.active = false;
+            Object.assign(data, resolveReminderFields(
+                { ...item, notificationEnabled: false },
+                {
+                    anchorDate: item.nextDueDate,
+                    anchorLabel: 'housework due date',
+                    current: item,
+                },
+            ));
         }
 
         const updated = await prisma.houseworkItem.update({

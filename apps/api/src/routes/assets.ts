@@ -6,10 +6,11 @@ import { validate } from '../middleware/validate';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
 import { paramStr, queryInt } from '../utils/query';
+import { resolveReminderFields } from '../utils/reminders';
 import {
     createAssetSchema,
     updateAssetSchema,
-    createMaintenanceRecordSchema,
+    createMaintenanceRecordBodySchema,
     updateMaintenanceRecordSchema,
 } from '../validators/phase2';
 
@@ -43,6 +44,9 @@ function buildMaintenanceEventData(asset: any, payload: any, userId: string) {
         reminderOffsetValue: payload.reminderOffsetValue ?? null,
         reminderOffsetUnit: payload.reminderOffsetUnit ?? null,
         notificationDate: payload.notificationDate ? new Date(payload.notificationDate) : null,
+        notificationTime: payload.notificationTime ?? null,
+        lastNotificationSentAt: payload.lastNotificationSentAt ?? null,
+        notificationCooldownHours: payload.notificationCooldownHours ?? 24,
         pinToDashboard: !!payload.pinToDashboard,
         createdById: userId,
     };
@@ -171,7 +175,7 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
 
 // ─── Maintenance Records ────────────────────────────────────────────────────
 
-router.post('/:id/maintenance', validate(createMaintenanceRecordSchema.omit({ assetId: true })), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:id/maintenance', validate(createMaintenanceRecordBodySchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const assetId = paramStr(req, 'id');
         const asset = await prisma.asset.findFirst({
@@ -180,9 +184,14 @@ router.post('/:id/maintenance', validate(createMaintenanceRecordSchema.omit({ as
         if (!asset) throw new NotFoundError('Asset not found');
 
         const record = await prisma.$transaction(async (tx) => {
+            const reminderFields = resolveReminderFields(req.body, {
+                anchorDate: req.body.nextRecommendedDate,
+                anchorLabel: 'next recommended date',
+            });
             const created = await tx.maintenanceRecord.create({
                 data: {
                     ...req.body,
+                    ...reminderFields,
                     serviceDate: new Date(req.body.serviceDate),
                     nextRecommendedDate: req.body.nextRecommendedDate ? new Date(req.body.nextRecommendedDate) : undefined,
                     userId: req.user!.userId,
@@ -248,6 +257,15 @@ router.patch('/:assetId/maintenance/:recordId', validate(updateMaintenanceRecord
                         ? new Date(req.body.notificationDate)
                         : record.notificationDate,
             };
+            const reminderFields = resolveReminderFields(
+                nextState,
+                {
+                    anchorDate: nextState.nextRecommendedDate,
+                    anchorLabel: 'next recommended date',
+                    current: record,
+                },
+            );
+            Object.assign(nextState, reminderFields);
 
             const linkedEventId = await syncMaintenanceCalendarEvent(
                 tx,
@@ -261,9 +279,9 @@ router.patch('/:assetId/maintenance/:recordId', validate(updateMaintenanceRecord
                 where: { id: recordId },
                 data: {
                     ...req.body,
+                    ...reminderFields,
                     serviceDate: req.body.serviceDate ? new Date(req.body.serviceDate) : undefined,
                     nextRecommendedDate: req.body.nextRecommendedDate === null ? null : req.body.nextRecommendedDate ? new Date(req.body.nextRecommendedDate) : undefined,
-                    notificationDate: req.body.notificationDate === null ? null : req.body.notificationDate ? new Date(req.body.notificationDate) : undefined,
                     linkedEventId,
                 },
             });

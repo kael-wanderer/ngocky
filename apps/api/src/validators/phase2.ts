@@ -1,5 +1,19 @@
 import { z } from 'zod';
 
+const notificationRefinement = (data: any, ctx: z.RefinementCtx) => {
+    if (!data.notificationEnabled) return;
+
+    if (!data.reminderOffsetUnit) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetUnit'], message: 'reminderOffsetUnit is required when notification is enabled' });
+    } else if (data.reminderOffsetUnit === 'ON_DATE') {
+        if (!data.notificationDate) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['notificationDate'], message: 'notificationDate is required when type is ON_DATE' });
+        if (!data.notificationTime) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['notificationTime'], message: 'notificationTime is required when type is ON_DATE' });
+    } else {
+        if (!data.reminderOffsetValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reminderOffsetValue'], message: 'reminderOffsetValue is required when notification is enabled' });
+        if (!data.notificationTime) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['notificationTime'], message: 'notificationTime is required when notification is enabled' });
+    }
+};
+
 export const createAssetSchema = z.object({
     name: z.string().min(1).max(200),
     type: z.string().optional(),
@@ -14,7 +28,7 @@ export const createAssetSchema = z.object({
 
 export const updateAssetSchema = createAssetSchema.partial();
 
-export const createMaintenanceRecordSchema = z.object({
+const maintenanceRecordSchemaBase = z.object({
     assetId: z.string().min(1),
     serviceDate: z.string().datetime(),
     description: z.string().min(1),
@@ -27,10 +41,14 @@ export const createMaintenanceRecordSchema = z.object({
     reminderOffsetValue: z.number().int().positive().optional(),
     reminderOffsetUnit: z.enum(['HOURS', 'DAYS', 'ON_DATE']).optional(),
     notificationDate: z.string().datetime().nullable().optional(),
+    notificationTime: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional(),
     pinToDashboard: z.boolean().optional(),
 });
 
-export const updateMaintenanceRecordSchema = createMaintenanceRecordSchema.partial().omit({ assetId: true });
+export const createMaintenanceRecordSchema = maintenanceRecordSchemaBase.superRefine(notificationRefinement);
+export const createMaintenanceRecordBodySchema = maintenanceRecordSchemaBase.omit({ assetId: true }).superRefine(notificationRefinement);
+
+export const updateMaintenanceRecordSchema = maintenanceRecordSchemaBase.partial().omit({ assetId: true }).superRefine(notificationRefinement);
 
 export const createLearningTopicSchema = z.object({
     title: z.string().min(1).max(200),

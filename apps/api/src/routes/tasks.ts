@@ -5,6 +5,7 @@ import { validate } from '../middleware/validate';
 import { createStandaloneTaskSchema, updateStandaloneTaskSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
+import { resolveReminderFields } from '../utils/reminders';
 
 const router = Router();
 router.use(authenticate);
@@ -59,11 +60,14 @@ router.post('/', validate(createStandaloneTaskSchema), async (req: Request, res:
         const task = await prisma.task.create({
             data: {
                 ...req.body,
+                ...resolveReminderFields(req.body, {
+                    anchorDate: req.body.dueDate,
+                    anchorLabel: 'task deadline',
+                }),
                 amount: req.body.amount ?? null,
                 expenseCategory: req.body.expenseCategory ?? null,
                 dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
                 repeatUntil: req.body.repeatUntil ? new Date(req.body.repeatUntil) : null,
-                notificationDate: req.body.notificationDate ? new Date(req.body.notificationDate) : null,
                 userId: req.user!.userId,
             },
             include: { user: { select: { id: true, name: true } } },
@@ -77,16 +81,24 @@ router.patch('/:id', validate(updateStandaloneTaskSchema), async (req: Request, 
         const existing = await prisma.task.findUnique({ where: { id: req.params.id } });
         if (!existing) throw new NotFoundError('Task');
         if (existing.userId !== req.user!.userId) throw new NotFoundError('Task');
+        const reminderFields = resolveReminderFields(
+            { ...existing, ...req.body },
+            {
+                anchorDate: req.body.dueDate === undefined ? existing.dueDate : req.body.dueDate,
+                anchorLabel: 'task deadline',
+                current: existing,
+            },
+        );
 
         const task = await prisma.task.update({
             where: { id: req.params.id },
             data: {
                 ...req.body,
+                ...reminderFields,
                 amount: req.body.amount === null ? null : req.body.amount ?? undefined,
                 expenseCategory: req.body.expenseCategory === null ? null : req.body.expenseCategory ?? undefined,
                 dueDate: req.body.dueDate === null ? null : req.body.dueDate ? new Date(req.body.dueDate) : undefined,
                 repeatUntil: req.body.repeatUntil === null ? null : req.body.repeatUntil ? new Date(req.body.repeatUntil) : undefined,
-                notificationDate: req.body.notificationDate === null ? null : req.body.notificationDate ? new Date(req.body.notificationDate) : undefined,
                 completedAt: req.body.status && req.body.status !== 'DONE' ? null : undefined,
             },
             include: { user: { select: { id: true, name: true } } },
@@ -130,19 +142,47 @@ router.post('/:id/complete', async (req: Request, res: Response, next: NextFunct
                 const repeatLimit = existing.repeatEndType === 'ON_DATE' && existing.repeatUntil
                     ? endOfDay(existing.repeatUntil)
                     : null;
+                const nextReminderFields = repeatLimit && nextDueDate > repeatLimit
+                    ? resolveReminderFields(
+                        { ...existing, notificationEnabled: false },
+                        {
+                            anchorDate: nextDueDate,
+                            anchorLabel: 'task deadline',
+                            current: existing,
+                        },
+                    )
+                    : resolveReminderFields(
+                        { ...existing, dueDate: nextDueDate },
+                        {
+                            anchorDate: nextDueDate,
+                            anchorLabel: 'task deadline',
+                            current: existing,
+                        },
+                    );
 
                 return tx.task.update({
                     where: { id: existing.id },
                     data: repeatLimit && nextDueDate > repeatLimit
-                        ? { status: 'DONE', completedAt }
-                        : { dueDate: nextDueDate, status: 'PLANNED', completedAt },
+                        ? { status: 'DONE', completedAt, ...nextReminderFields }
+                        : { dueDate: nextDueDate, status: 'PLANNED', completedAt: null, ...nextReminderFields },
                     include: { user: { select: { id: true, name: true } } },
                 });
             }
 
             return tx.task.update({
                 where: { id: existing.id },
-                data: { status: 'DONE', completedAt },
+                data: {
+                    status: 'DONE',
+                    completedAt,
+                    ...resolveReminderFields(
+                        { ...existing, notificationEnabled: false },
+                        {
+                            anchorDate: existing.dueDate,
+                            anchorLabel: 'task deadline',
+                            current: existing,
+                        },
+                    ),
+                },
                 include: { user: { select: { id: true, name: true } } },
             });
         });

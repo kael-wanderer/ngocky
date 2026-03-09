@@ -5,6 +5,7 @@ import { validate } from '../middleware/validate';
 import { createProjectSchema, updateProjectSchema, createTaskSchema, updateTaskSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
+import { resolveReminderFields } from '../utils/reminders';
 
 const router = Router();
 router.use(authenticate);
@@ -149,6 +150,10 @@ router.post('/tasks', validate(createTaskSchema), async (req: Request, res: Resp
         const task = await prisma.projectTask.create({
             data: {
                 ...req.body,
+                ...resolveReminderFields(req.body, {
+                    anchorDate: req.body.deadline,
+                    anchorLabel: 'task deadline',
+                }),
                 deadline: req.body.deadline ? new Date(req.body.deadline) : undefined,
                 createdById: userId,
             },
@@ -168,11 +173,20 @@ router.patch('/tasks/:id', validate(updateTaskSchema), async (req: Request, res:
         });
         if (!existing) throw new NotFoundError('Task');
         if (!canAccessTask(existing as any, userId)) throw new ForbiddenError('You do not have access to this task');
+        const reminderFields = resolveReminderFields(
+            { ...existing, ...req.body },
+            {
+                anchorDate: req.body.deadline === undefined ? existing.deadline : req.body.deadline,
+                anchorLabel: 'task deadline',
+                current: existing,
+            },
+        );
 
         const task = await prisma.projectTask.update({
             where: { id: req.params.id },
             data: {
                 ...req.body,
+                ...reminderFields,
                 deadline: req.body.deadline ? new Date(req.body.deadline) : req.body.deadline,
             },
             include: { assignee: { select: { id: true, name: true } } },
