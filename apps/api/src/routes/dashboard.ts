@@ -113,7 +113,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             overdueHousework, overdueProjects,
             overdueTaskItems, overdueHouseworkItems,
             pinnedGoals, pinnedProjects, pinnedHousework, pinnedBoards, pinnedEvents, pinnedAssets,
-            goals,
+            goals, recentIdeas,
         ] = await Promise.all([
             // Tasks (projects) due this week
             prisma.projectTask.count({
@@ -323,14 +323,16 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 take: 50,
                 include: { _count: { select: { checkIns: true } } },
             }),
+            // Recent ideas
+            prisma.idea.findMany({
+                where: { userId },
+                orderBy: { createdAt: 'desc' },
+                take: 8,
+                include: { topic: { select: { title: true } } },
+            }),
         ]);
 
-        const filteredGoals = goals.filter((goal: any) => {
-            if (statusFilter === 'ALL') return true;
-            if (statusFilter === 'COMPLETED') return goal.currentCount >= goal.targetCount;
-            if (statusFilter === 'PENDING') return goal.currentCount < goal.targetCount;
-            return false;
-        }).slice(0, 10);
+        const filteredGoals = goals.slice(0, 10);
 
         const dueProjects = Array.from(
             dueTasks.reduce((acc: Map<string, any>, task: any) => {
@@ -464,6 +466,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             pinnedHousework,
             pinnedItems,
             goals: filteredGoals,
+            recentIdeas,
         };
 
         if (debug) {
