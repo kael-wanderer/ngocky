@@ -122,6 +122,11 @@ enum RepeatEndType {
   ON_DATE
 }
 
+enum TaskType {
+  TASK
+  PAYMENT
+}
+
 enum ReminderUnit {
   MINUTES
   HOURS
@@ -238,6 +243,9 @@ model Task {
   id                  String           @id @default(cuid())
   title               String
   description         String?
+  taskType            TaskType         @default(TASK)
+  amount              Float?
+  expenseCategory     String?
   userId              String
   isShared            Boolean          @default(false)
   dueDate             DateTime?
@@ -322,6 +330,7 @@ model LearningTopic {
   title       String
   description String?
   isShared    Boolean        @default(false)
+  sortOrder   Int            @default(0)
   userId      String
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -362,6 +371,7 @@ model IdeaTopic {
   title       String
   description String?
   isShared    Boolean  @default(false)
+  sortOrder   Int      @default(0)
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -437,6 +447,7 @@ model Asset {
   purchaseDate DateTime?
   warrantyMonths Int?
   isShared     Boolean             @default(false)
+  sortOrder    Int                 @default(0)
   note         String?
   userId       String
   createdAt    DateTime            @default(now())
@@ -462,13 +473,15 @@ model MaintenanceRecord {
   reminderOffsetValue     Int?
   reminderOffsetUnit      ReminderUnit?
   notificationDate        DateTime?
+  linkedEventId           String?      @unique
   userId                  String
   pinToDashboard          Boolean      @default(false)
   createdAt               DateTime     @default(now())
   updatedAt               DateTime     @updatedAt
 
-  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset       Asset          @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  linkedEvent CalendarEvent? @relation(fields: [linkedEventId], references: [id], onDelete: SetNull)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([assetId])
   @@index([userId])
@@ -499,8 +512,9 @@ model CalendarEvent {
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
-  createdBy    User               @relation("EventCreator", fields: [createdById], references: [id], onDelete: Cascade)
-  participants EventParticipant[]
+  createdBy         User               @relation("EventCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  maintenanceRecord MaintenanceRecord?
+  participants      EventParticipant[]
 
   @@index([createdById])
   @@index([startDate])

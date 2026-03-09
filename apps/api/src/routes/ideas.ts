@@ -14,6 +14,14 @@ import {
 const router = Router();
 router.use(authenticate);
 
+async function getNextIdeaTopicSortOrder(userId: string) {
+    const aggregate = await prisma.ideaTopic.aggregate({
+        where: { userId },
+        _max: { sortOrder: true },
+    });
+    return (aggregate._max.sortOrder ?? -1) + 1;
+}
+
 router.get('/topics', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const where: any = {
@@ -29,17 +37,39 @@ router.get('/topics', async (req: Request, res: Response, next: NextFunction) =>
                     orderBy: { createdAt: 'desc' },
                 },
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
         });
         sendSuccess(res, topics);
     } catch (err) { next(err); }
 });
 
+router.post('/topics/reorder', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { ids } = req.body as { ids: string[] };
+        if (!Array.isArray(ids)) return sendMessage(res, 'Invalid');
+
+        const ownedTopics = await prisma.ideaTopic.findMany({
+            where: { id: { in: ids }, userId: req.user!.userId },
+            select: { id: true },
+        });
+        const ownedIds = ids.filter((id) => ownedTopics.some((topic) => topic.id === id));
+        if (!ownedIds.length) throw new NotFoundError('Idea topic not found');
+
+        await prisma.$transaction(ownedIds.map((id, index) => prisma.ideaTopic.update({
+            where: { id },
+            data: { sortOrder: index },
+        })));
+        sendMessage(res, 'Reordered');
+    } catch (err) { next(err); }
+});
+
 router.post('/topics', validate(createIdeaTopicSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const sortOrder = await getNextIdeaTopicSortOrder(req.user!.userId);
         const topic = await prisma.ideaTopic.create({
             data: {
                 ...req.body,
+                sortOrder,
                 userId: req.user!.userId,
             },
             include: { logs: true },

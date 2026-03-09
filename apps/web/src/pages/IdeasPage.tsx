@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Calendar, Copy, Lightbulb, Pencil, Pin, Plus, Tag, Trash2, X } from 'lucide-react';
+import { Calendar, Copy, GripVertical, Lightbulb, Pencil, Pin, Plus, Tag, Trash2, X } from 'lucide-react';
 
 const emptyTopicForm = () => ({ title: '', description: '', isShared: false });
 const emptyLogForm = () => ({ title: '', content: '', category: '', status: 'OPEN', tags: [] as string[] });
@@ -16,6 +16,8 @@ export default function IdeasPage() {
     const [topicForm, setTopicForm] = useState(emptyTopicForm());
     const [logForm, setLogForm] = useState(emptyLogForm());
     const [tagInput, setTagInput] = useState('');
+    const [draggingTopicId, setDraggingTopicId] = useState<string | null>(null);
+    const [dragOverTopicId, setDragOverTopicId] = useState<string | null>(null);
 
     const { data: topics, isLoading } = useQuery({
         queryKey: ['idea_topics'],
@@ -46,6 +48,11 @@ export default function IdeasPage() {
             qc.invalidateQueries({ queryKey: ['idea_topics'] });
             if (selectedTopicId === id) setSelectedTopicId(null);
         },
+    });
+
+    const reorderTopicsMut = useMutation({
+        mutationFn: (ids: string[]) => api.post('/ideas/topics/reorder', { ids }),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['idea_topics'] }),
     });
 
     const createLogMut = useMutation({
@@ -153,6 +160,30 @@ export default function IdeasPage() {
         setTagInput('');
     }
 
+    function handleTopicDrop(targetId: string) {
+        if (!draggingTopicId || draggingTopicId === targetId) {
+            setDraggingTopicId(null);
+            setDragOverTopicId(null);
+            return;
+        }
+
+        const ids = topicList.map((topic: any) => topic.id);
+        const from = ids.indexOf(draggingTopicId);
+        const to = ids.indexOf(targetId);
+        if (from === -1 || to === -1) {
+            setDraggingTopicId(null);
+            setDragOverTopicId(null);
+            return;
+        }
+
+        const reordered = [...ids];
+        reordered.splice(from, 1);
+        reordered.splice(to, 0, draggingTopicId);
+        reorderTopicsMut.mutate(reordered);
+        setDraggingTopicId(null);
+        setDragOverTopicId(null);
+    }
+
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center justify-between">
@@ -167,20 +198,48 @@ export default function IdeasPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1 space-y-4">
-                    <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Idea Topics</h3>
+                    <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Idea Topics</h3>
+                        <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>Drag to arrange</span>
+                    </div>
                     {isLoading ? (
                         <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="card p-4 h-16 animate-pulse bg-gray-50" />)}</div>
                     ) : (
                         <div className="space-y-3">
                             {topicList.map((topic: any) => (
-                                <div key={topic.id} className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''}`} onClick={() => setSelectedTopicId(topic.id)} style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}>
+                                <div
+                                    key={topic.id}
+                                    draggable
+                                    onDragStart={() => setDraggingTopicId(topic.id)}
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        if (dragOverTopicId !== topic.id) setDragOverTopicId(topic.id);
+                                    }}
+                                    onDragLeave={() => {
+                                        if (dragOverTopicId === topic.id) setDragOverTopicId(null);
+                                    }}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        handleTopicDrop(topic.id);
+                                    }}
+                                    onDragEnd={() => {
+                                        setDraggingTopicId(null);
+                                        setDragOverTopicId(null);
+                                    }}
+                                    className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''} ${draggingTopicId === topic.id ? 'opacity-60' : ''} ${dragOverTopicId === topic.id ? 'ring-2 ring-slate-300' : ''}`}
+                                    onClick={() => setSelectedTopicId(topic.id)}
+                                    style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}
+                                >
                                     <div className="flex items-start justify-between gap-3">
-                                        <div>
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{topic.title}</h4>
-                                                {topic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                        <div className="flex items-start gap-2">
+                                            <GripVertical className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--color-text-secondary)' }} />
+                                            <div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{topic.title}</h4>
+                                                    {topic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                                </div>
+                                                <p className="text-[10px] uppercase font-bold mt-1" style={{ color: 'var(--color-text-secondary)' }}>{topic.logs?.length || 0} logs</p>
                                             </div>
-                                            <p className="text-[10px] uppercase font-bold mt-1" style={{ color: 'var(--color-text-secondary)' }}>{topic.logs?.length || 0} logs</p>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>

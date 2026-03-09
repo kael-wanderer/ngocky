@@ -101,6 +101,7 @@ export default function DashboardPage() {
     const [timeRange, setTimeRange] = useState<TimeRange>('THIS_WEEK');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('PENDING');
     const [categories, setCategories] = useState<Category[]>([...CATEGORY_OPTIONS]);
+    const [autoRefresh, setAutoRefresh] = useState(false);
     const [sectionOrder, setSectionOrder] = useState<SectionId[]>(() => {
         try {
             const saved = localStorage.getItem(SECTION_STORAGE_KEY);
@@ -132,6 +133,8 @@ export default function DashboardPage() {
     const { data, isLoading } = useQuery({
         queryKey: ['dashboard', timeRange, statusFilter],
         queryFn: async () => (await api.get(`/dashboard?timeRange=${timeRange}&status=${statusFilter}`)).data.data,
+        refetchInterval: autoRefresh ? 60000 : false,
+        refetchIntervalInBackground: true,
     });
 
     const s = data?.summary || {};
@@ -506,7 +509,7 @@ export default function DashboardPage() {
                     {format(new Date(), 'EEEE, MMMM d, yyyy')}
                 </p>
 
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label className="label">Time</label>
                         <select className="input" value={timeRange} onChange={(e) => setTimeRange(e.target.value as TimeRange)}>
@@ -537,6 +540,12 @@ export default function DashboardPage() {
                                 ))}
                             </div>
                         </details>
+                    </div>
+                    <div className="flex items-end">
+                        <label className="flex h-[42px] w-full items-center gap-2 rounded-lg border px-3 text-sm" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
+                            <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
+                            Auto-refresh (60s)
+                        </label>
                     </div>
                 </div>
             </div>

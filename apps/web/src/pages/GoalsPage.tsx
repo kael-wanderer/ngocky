@@ -14,6 +14,8 @@ const unitOptions = [
     { value: 'minutes', label: 'Minute' },
 ] as const;
 
+const expensePayCategories = ['Food', 'Utilities', 'Healthcare', 'Shopping', 'Transport', 'Home Maintenance', 'Education', 'AI', 'Entertainment', 'Other'];
+
 const goalEmptyForm = {
     title: '',
     description: '',
@@ -29,6 +31,9 @@ const goalEmptyForm = {
 const taskEmptyForm = {
     title: '',
     description: '',
+    taskType: 'TASK',
+    amount: '',
+    expenseCategory: expensePayCategories[0],
     isShared: false,
     pinToDashboard: false,
     dueDate: '',
@@ -151,6 +156,9 @@ function TaskForm({
             const payload: any = {
                 title: form.title,
                 description: form.description,
+                taskType: form.taskType,
+                amount: form.taskType === 'PAYMENT' ? Number(form.amount) : null,
+                expenseCategory: form.taskType === 'PAYMENT' ? form.expenseCategory : null,
                 isShared: form.isShared,
                 pinToDashboard: form.pinToDashboard,
                 priority: form.priority,
@@ -173,6 +181,36 @@ function TaskForm({
                 <label className="label">Description</label>
                 <textarea className="input" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional notes" />
             </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                    <label className="label">Type</label>
+                    <select className="input" value={form.taskType} onChange={(e) => setForm({
+                        ...form,
+                        taskType: e.target.value,
+                        amount: e.target.value === 'PAYMENT' ? form.amount : '',
+                        expenseCategory: e.target.value === 'PAYMENT' ? form.expenseCategory : expensePayCategories[0],
+                    })}>
+                        <option value="TASK">Task</option>
+                        <option value="PAYMENT">Payment</option>
+                    </select>
+                </div>
+                {form.taskType === 'PAYMENT' && (
+                    <div>
+                        <label className="label">Amount <span className="text-red-500">*</span></label>
+                        <input type="number" min={1} step="0.01" className="input" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
+                    </div>
+                )}
+            </div>
+            {form.taskType === 'PAYMENT' && (
+                <div>
+                    <label className="label">Category <span className="text-red-500">*</span></label>
+                    <select className="input" value={form.expenseCategory} onChange={(e) => setForm({ ...form, expenseCategory: e.target.value })} required>
+                        {expensePayCategories.map((category) => (
+                            <option key={category} value={category}>{category}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="label">Due Date</label>
@@ -336,6 +374,7 @@ export default function GoalsPage() {
         mutationFn: (body: any) => api.post('/tasks', body),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['tasks'] });
+            qc.invalidateQueries({ queryKey: ['dashboard'] });
             setShowTaskModal(false);
             setTaskForm({ ...taskEmptyForm });
         },
@@ -345,18 +384,26 @@ export default function GoalsPage() {
         mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/tasks/${id}`, body),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['tasks'] });
+            qc.invalidateQueries({ queryKey: ['dashboard'] });
             setEditTask(null);
         },
     });
 
     const completeTaskMut = useMutation({
         mutationFn: (id: string) => api.post(`/tasks/${id}/complete`),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['tasks'] });
+            qc.invalidateQueries({ queryKey: ['dashboard'] });
+            qc.invalidateQueries({ queryKey: ['expenses'] });
+        },
     });
 
     const deleteTaskMut = useMutation({
         mutationFn: (id: string) => api.delete(`/tasks/${id}`),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['tasks'] });
+            qc.invalidateQueries({ queryKey: ['dashboard'] });
+        },
     });
 
     const goals = goalsData || [];
@@ -446,6 +493,9 @@ export default function GoalsPage() {
         setTaskForm({
             title: task.title || '',
             description: task.description || '',
+            taskType: task.taskType || 'TASK',
+            amount: task.amount != null ? String(task.amount) : '',
+            expenseCategory: task.expenseCategory || expensePayCategories[0],
             isShared: !!task.isShared,
             pinToDashboard: !!task.pinToDashboard,
             dueDate: task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : '',
@@ -464,6 +514,9 @@ export default function GoalsPage() {
         setTaskForm({
             title: `${task.title} (Copy)`,
             description: task.description || '',
+            taskType: task.taskType || 'TASK',
+            amount: task.amount != null ? String(task.amount) : '',
+            expenseCategory: task.expenseCategory || expensePayCategories[0],
             isShared: !!task.isShared,
             pinToDashboard: !!task.pinToDashboard,
             dueDate: task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : '',
@@ -722,6 +775,9 @@ export default function GoalsPage() {
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <h4 className="font-semibold" style={{ color: 'var(--color-text)' }}>{task.title}</h4>
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.taskType === 'PAYMENT' ? 'bg-orange-50 text-orange-700' : 'bg-slate-100 text-slate-700'}`}>
+                                                        {task.taskType === 'PAYMENT' ? 'Payment' : 'Task'}
+                                                    </span>
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.status === 'DONE' ? 'bg-emerald-50 text-emerald-700' : task.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700' : task.status === 'ARCHIVED' ? 'bg-gray-100 text-gray-600' : 'bg-blue-50 text-blue-700'}`}>{task.status.replace('_', ' ')}</span>
                                                     {task.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                                                     {task.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
@@ -740,6 +796,20 @@ export default function GoalsPage() {
                                                 <span style={{ color: 'var(--color-text-secondary)' }}>Priority</span>
                                                 <span className="font-semibold" style={{ color: task.priority === 'URGENT' ? '#dc2626' : task.priority === 'HIGH' ? '#d97706' : 'var(--color-text)' }}>{task.priority}</span>
                                             </div>
+                                            {task.taskType === 'PAYMENT' && (
+                                                <>
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span style={{ color: 'var(--color-text-secondary)' }}>Amount</span>
+                                                        <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+                                                            {task.amount != null ? Number(task.amount).toLocaleString('en-US') : '-'} VND
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span style={{ color: 'var(--color-text-secondary)' }}>Category</span>
+                                                        <span className="font-semibold" style={{ color: 'var(--color-text)' }}>{task.expenseCategory || '-'}</span>
+                                                    </div>
+                                                </>
+                                            )}
                                             <div className="flex items-center justify-between text-xs">
                                                 <span style={{ color: 'var(--color-text-secondary)' }}>Due</span>
                                                 <span className="font-semibold" style={{ color: isOverdue ? 'var(--color-danger)' : 'var(--color-text)' }}>

@@ -243,7 +243,7 @@ export default function SettingsPage() {
                                 <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Enable notifications</span>
                             </label>
                             <div>
-                                <label className="label">Channel</label>
+                                <label className="label">Notification Channel</label>
                                 <select className="input max-w-xs" value={profile.notificationChannel}
                                     onChange={(e) => updateProfile.mutate({ notificationChannel: e.target.value })}
                                 >
@@ -252,22 +252,18 @@ export default function SettingsPage() {
                                     <option value="BOTH">Both</option>
                                 </select>
                             </div>
-                            {(profile.notificationChannel === 'EMAIL' || profile.notificationChannel === 'BOTH') && (
-                                <div>
-                                    <label className="label">Notification Email</label>
-                                    <input className="input max-w-sm" defaultValue={profile.notificationEmail || ''}
-                                        onBlur={(e) => updateProfile.mutate({ notificationEmail: e.target.value || null })}
-                                    />
-                                </div>
-                            )}
-                            {(profile.notificationChannel === 'TELEGRAM' || profile.notificationChannel === 'BOTH') && (
-                                <div>
-                                    <label className="label">Telegram Chat ID</label>
-                                    <input className="input max-w-sm" defaultValue={profile.telegramChatId || ''}
-                                        onBlur={(e) => updateProfile.mutate({ telegramChatId: e.target.value || null })}
-                                    />
-                                </div>
-                            )}
+                            <div>
+                                <label className="label">Email</label>
+                                <input className="input max-w-sm" defaultValue={profile.notificationEmail || ''}
+                                    onBlur={(e) => updateProfile.mutate({ notificationEmail: e.target.value || null })}
+                                />
+                            </div>
+                            <div>
+                                <label className="label">Telegram ID</label>
+                                <input className="input max-w-sm" defaultValue={profile.telegramChatId || ''}
+                                    onBlur={(e) => updateProfile.mutate({ telegramChatId: e.target.value || null })}
+                                />
+                            </div>
                         </div>
                     )}
 

@@ -14,6 +14,14 @@ import {
 const router = Router();
 router.use(authenticate);
 
+async function getNextLearningTopicSortOrder(userId: string) {
+    const aggregate = await prisma.learningTopic.aggregate({
+        where: { userId },
+        _max: { sortOrder: true },
+    });
+    return (aggregate._max.sortOrder ?? -1) + 1;
+}
+
 router.get('/topics', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
@@ -30,17 +38,39 @@ router.get('/topics', async (req: Request, res: Response, next: NextFunction) =>
                     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
                 },
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
         });
         sendSuccess(res, topics);
     } catch (err) { next(err); }
 });
 
+router.post('/topics/reorder', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { ids } = req.body as { ids: string[] };
+        if (!Array.isArray(ids)) return sendMessage(res, 'Invalid');
+
+        const ownedTopics = await prisma.learningTopic.findMany({
+            where: { id: { in: ids }, userId: req.user!.userId },
+            select: { id: true },
+        });
+        const ownedIds = ids.filter((id) => ownedTopics.some((topic) => topic.id === id));
+        if (!ownedIds.length) throw new NotFoundError('Learning topic not found');
+
+        await prisma.$transaction(ownedIds.map((id, index) => prisma.learningTopic.update({
+            where: { id },
+            data: { sortOrder: index },
+        })));
+        sendMessage(res, 'Reordered');
+    } catch (err) { next(err); }
+});
+
 router.post('/topics', validate(createLearningTopicSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const sortOrder = await getNextLearningTopicSortOrder(req.user!.userId);
         const topic = await prisma.learningTopic.create({
             data: {
                 ...req.body,
+                sortOrder,
                 userId: req.user!.userId,
             },
             include: { histories: true },

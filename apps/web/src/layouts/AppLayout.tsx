@@ -19,7 +19,7 @@ const navItems = [
     { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
     { to: '/alerts', icon: BellRing, label: 'Reports & Notifications' },
     { to: '/reports', icon: BarChart3, label: 'Reports' },
-    { to: '/settings', icon: Settings, label: 'Settings' },
+    { to: '/settings', icon: Settings, label: 'User Settings' },
 ];
 
 const adminItems = [

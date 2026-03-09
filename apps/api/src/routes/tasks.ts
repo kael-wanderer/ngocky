@@ -59,6 +59,8 @@ router.post('/', validate(createStandaloneTaskSchema), async (req: Request, res:
         const task = await prisma.task.create({
             data: {
                 ...req.body,
+                amount: req.body.amount ?? null,
+                expenseCategory: req.body.expenseCategory ?? null,
                 dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
                 repeatUntil: req.body.repeatUntil ? new Date(req.body.repeatUntil) : null,
                 notificationDate: req.body.notificationDate ? new Date(req.body.notificationDate) : null,
@@ -80,6 +82,8 @@ router.patch('/:id', validate(updateStandaloneTaskSchema), async (req: Request, 
             where: { id: req.params.id },
             data: {
                 ...req.body,
+                amount: req.body.amount === null ? null : req.body.amount ?? undefined,
+                expenseCategory: req.body.expenseCategory === null ? null : req.body.expenseCategory ?? undefined,
                 dueDate: req.body.dueDate === null ? null : req.body.dueDate ? new Date(req.body.dueDate) : undefined,
                 repeatUntil: req.body.repeatUntil === null ? null : req.body.repeatUntil ? new Date(req.body.repeatUntil) : undefined,
                 notificationDate: req.body.notificationDate === null ? null : req.body.notificationDate ? new Date(req.body.notificationDate) : undefined,
@@ -97,28 +101,50 @@ router.post('/:id/complete', async (req: Request, res: Response, next: NextFunct
         if (!existing) throw new NotFoundError('Task');
         if (existing.userId !== req.user!.userId) throw new NotFoundError('Task');
 
-        const completedAt = new Date();
-        if (existing.repeatFrequency && existing.dueDate) {
-            const nextDueDate = addRepeat(existing.dueDate, existing.repeatFrequency);
-            const repeatLimit = existing.repeatEndType === 'ON_DATE' && existing.repeatUntil
-                ? endOfDay(existing.repeatUntil)
-                : null;
+        const paymentTask = existing as typeof existing & {
+            taskType?: 'TASK' | 'PAYMENT';
+            amount?: number | null;
+            expenseCategory?: string | null;
+        };
 
-            const updated = await prisma.task.update({
+        const completedAt = new Date();
+        const updated = await prisma.$transaction(async (tx) => {
+            if (paymentTask.taskType === 'PAYMENT' && paymentTask.amount && paymentTask.expenseCategory) {
+                await tx.expense.create({
+                    data: {
+                        description: paymentTask.title,
+                        type: 'PAY',
+                        category: paymentTask.expenseCategory,
+                        date: completedAt,
+                        amount: paymentTask.amount,
+                        note: 'Automated task item',
+                        scope: 'PERSONAL',
+                        isShared: false,
+                        userId: paymentTask.userId,
+                    },
+                });
+            }
+
+            if (existing.repeatFrequency && existing.dueDate) {
+                const nextDueDate = addRepeat(existing.dueDate, existing.repeatFrequency);
+                const repeatLimit = existing.repeatEndType === 'ON_DATE' && existing.repeatUntil
+                    ? endOfDay(existing.repeatUntil)
+                    : null;
+
+                return tx.task.update({
+                    where: { id: existing.id },
+                    data: repeatLimit && nextDueDate > repeatLimit
+                        ? { status: 'DONE', completedAt }
+                        : { dueDate: nextDueDate, status: 'PLANNED', completedAt },
+                    include: { user: { select: { id: true, name: true } } },
+                });
+            }
+
+            return tx.task.update({
                 where: { id: existing.id },
-                data: repeatLimit && nextDueDate > repeatLimit
-                    ? { status: 'DONE', completedAt }
-                    : { dueDate: nextDueDate, status: 'PLANNED', completedAt },
+                data: { status: 'DONE', completedAt },
                 include: { user: { select: { id: true, name: true } } },
             });
-            sendSuccess(res, updated);
-            return;
-        }
-
-        const updated = await prisma.task.update({
-            where: { id: existing.id },
-            data: { status: 'DONE', completedAt },
-            include: { user: { select: { id: true, name: true } } },
         });
         sendSuccess(res, updated);
     } catch (err) { next(err); }

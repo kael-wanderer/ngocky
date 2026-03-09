@@ -49,6 +49,9 @@ export const updateGoalSchema = z.object({
 const standaloneTaskSchemaBase = z.object({
     title: z.string().min(1).max(200),
     description: z.string().optional(),
+    taskType: z.enum(['TASK', 'PAYMENT']).optional(),
+    amount: z.number().positive().nullable().optional(),
+    expenseCategory: z.string().optional().nullable(),
     isShared: z.boolean().optional(),
     dueDate: z.string().datetime().nullable().optional(),
     priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
@@ -74,13 +77,26 @@ function validateStandaloneTaskRepeat(data: any, ctx: z.RefinementCtx) {
     }
 }
 
+function validateStandaloneTaskPayment(data: any, ctx: z.RefinementCtx) {
+    if (data.taskType !== 'PAYMENT') return;
+
+    if (data.amount == null || Number.isNaN(data.amount)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['amount'], message: 'amount is required for payment tasks' });
+    }
+    if (!data.expenseCategory) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['expenseCategory'], message: 'expenseCategory is required for payment tasks' });
+    }
+}
+
 export const createStandaloneTaskSchema = standaloneTaskSchemaBase.superRefine((data, ctx) => {
     validateStandaloneTaskRepeat(data, ctx);
+    validateStandaloneTaskPayment(data, ctx);
     notificationRefinement(data, ctx);
 });
 
 export const updateStandaloneTaskSchema = standaloneTaskSchemaBase.partial().superRefine((data, ctx) => {
     validateStandaloneTaskRepeat(data, ctx);
+    validateStandaloneTaskPayment(data, ctx);
     notificationRefinement(data, ctx);
 });
 
