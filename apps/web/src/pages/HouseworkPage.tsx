@@ -218,6 +218,7 @@ export default function HouseworkPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [form, setForm] = useState({ ...emptyForm });
     const [frequencyFilter, setFrequencyFilter] = useState<string>('ALL');
+    const [showCompleted, setShowCompleted] = useState(true);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const editIdParam = searchParams.get('editId');
 
@@ -348,8 +349,9 @@ export default function HouseworkPage() {
     const unscheduledItems = activeItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'unscheduled');
     const completedItems = allItems.filter((item: any) => !!item.lastCompletedDate);
 
-    const renderItem = (item: any, tone: 'normal' | 'overdue' = 'normal') => {
+    const renderItem = (item: any, tone: 'normal' | 'overdue' = 'normal', options?: { completedView?: boolean }) => {
         const overdue = tone === 'overdue';
+        const completedView = !!options?.completedView;
         const recurrenceLabel = buildRecurrenceLabel(item);
 
         if (viewMode === 'grid') {
@@ -380,14 +382,21 @@ export default function HouseworkPage() {
                                     Due {format(new Date(item.nextDueDate), 'MMM d')}
                                 </span>
                             )}
+                            {completedView && item.lastCompletedDate && (
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                                    Completed {format(new Date(item.lastCompletedDate), 'MMM d')}
+                                </span>
+                            )}
                         </div>
-                        <button
-                            onClick={() => completeMut.mutate(item.id)}
-                            disabled={completeMut.isPending}
-                            className={`btn-primary text-xs flex-shrink-0 ${overdue ? 'bg-red-600 hover:bg-red-700' : ''}`}
-                        >
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Done
-                        </button>
+                        {!completedView && (
+                            <button
+                                onClick={() => completeMut.mutate(item.id)}
+                                disabled={completeMut.isPending}
+                                className={`btn-primary text-xs flex-shrink-0 ${overdue ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                            >
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Done
+                            </button>
+                        )}
                     </div>
                 </div>
             );
@@ -396,14 +405,16 @@ export default function HouseworkPage() {
         // List view
         return (
             <div key={item.id} className={`card p-4 flex items-center gap-4 group animate-slide-up ${overdue ? 'border-red-200' : ''}`}>
-                <button
-                    onClick={() => completeMut.mutate(item.id)}
-                    disabled={completeMut.isPending}
-                    className={`btn-primary flex-shrink-0 text-xs ${overdue ? 'bg-red-600 hover:bg-red-700' : ''}`}
-                    title="Mark complete"
-                >
-                    <CheckCircle2 className="w-4 h-4" /> Mark Complete
-                </button>
+                {!completedView && (
+                    <button
+                        onClick={() => completeMut.mutate(item.id)}
+                        disabled={completeMut.isPending}
+                        className={`btn-primary flex-shrink-0 text-xs ${overdue ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                        title="Mark complete"
+                    >
+                        <CheckCircle2 className="w-4 h-4" /> Mark Complete
+                    </button>
+                )}
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -475,6 +486,10 @@ export default function HouseworkPage() {
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Housework</h2>
                 </div>
                 <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
+                        <input type="checkbox" checked={showCompleted} onChange={(e) => setShowCompleted(e.target.checked)} />
+                        Show completed
+                    </label>
                     <select className="input" value={frequencyFilter} onChange={(e) => setFrequencyFilter(e.target.value)}>
                         <option value="ALL">All</option>
                         {frequencyOptions.map((k) => <option key={k} value={k}>{freqLabels[k]}</option>)}
@@ -561,12 +576,14 @@ export default function HouseworkPage() {
                                     </div>
                                 )}
 
-                                <div>
-                                    <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Completed ({completedItems.length})</h3>
-                                    {completedItems.length === 0
-                                        ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No completed housework yet</p>
-                                        : <div className={itemCls}>{completedItems.map((item: any) => renderItem(item))}</div>}
-                                </div>
+                                {showCompleted && (
+                                    <div>
+                                        <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Completed ({completedItems.length})</h3>
+                                        {completedItems.length === 0
+                                            ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No completed housework yet</p>
+                                            : <div className={itemCls}>{completedItems.map((item: any) => renderItem(item, 'normal', { completedView: true }))}</div>}
+                                    </div>
+                                )}
                             </>
                         );
                     })()}

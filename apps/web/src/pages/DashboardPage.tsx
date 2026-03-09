@@ -34,6 +34,14 @@ const TIME_OPTIONS = [
 ] as const;
 type TimeRange = typeof TIME_OPTIONS[number]['value'];
 
+const taskCardLabels: Record<TimeRange, string> = {
+    TODAY: 'Tasks Today',
+    THIS_WEEK: 'Tasks This Week',
+    NEXT_WEEK: 'Tasks Next Week',
+    THIS_MONTH: 'Tasks This Month',
+    NEXT_MONTH: 'Tasks Next Month',
+};
+
 type StatusFilter = 'ALL' | 'PENDING' | 'COMPLETED' | 'OVERDUE';
 const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
     { value: 'ALL', label: 'All' },
@@ -142,7 +150,7 @@ export default function DashboardPage() {
     todayStart.setHours(0, 0, 0, 0);
 
     const cards = [
-        { label: 'Tasks This Week', value: s.tasksThisWeek, icon: FolderKanban, color: '#4f46e5', bg: '#eef2ff', to: '/goals?tab=tasks' },
+        { label: taskCardLabels[timeRange], value: s.tasksInRange ?? 0, icon: FolderKanban, color: '#4f46e5', bg: '#eef2ff', to: '/goals?tab=tasks' },
         { label: 'Housework Due', value: s.houseworkThisWeek, icon: Home, color: '#059669', bg: '#ecfdf5', to: '/housework' },
         { label: 'Upcoming Events', value: s.upcomingEventsCount, icon: Calendar, color: '#7c3aed', bg: '#f5f3ff', to: '/calendar' },
         { label: 'Overdue Items', value: s.overdueItemsTotal || 0, icon: AlertTriangle, color: '#dc2626', bg: '#fef2f2', to: '/' },

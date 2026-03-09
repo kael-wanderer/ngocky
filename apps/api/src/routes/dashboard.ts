@@ -108,6 +108,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         };
 
         const [
+            tasksInRange,
+            personalTasksInRange,
             tasksThisWeek, tasksThisMonth,
             personalTasksThisWeek, personalTasksThisMonth,
             houseworkThisWeek, houseworkThisMonth,
@@ -118,6 +120,20 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             pinnedGoals, pinnedProjects, pinnedStandaloneTasks, pinnedHousework, pinnedBoards, pinnedEvents, pinnedAssets, pinnedLearning, pinnedIdeas,
             goals, recentIdeas,
         ] = await Promise.all([
+            prisma.projectTask.count({
+                where: {
+                    ...visibleTaskWhere,
+                    deadline: { gte: filterStart, lt: filterEnd },
+                    status: { notIn: ['DONE', 'ARCHIVED'] },
+                },
+            }),
+            prisma.task.count({
+                where: {
+                    ...visibleStandaloneTaskWhere,
+                    dueDate: { gte: filterStart, lt: filterEnd },
+                    status: { notIn: ['DONE', 'ARCHIVED'] },
+                },
+            }),
             // Tasks (projects) due this week
             prisma.projectTask.count({
                 where: { ...visibleTaskWhere, deadline: { gte: weekStart, lt: weekEnd }, status: { not: 'DONE' } },
@@ -546,6 +562,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             filterStart,
             filterEnd,
             summary: {
+                tasksInRange: tasksInRange + personalTasksInRange,
                 tasksThisWeek: tasksThisWeek + personalTasksThisWeek,
                 tasksThisMonth: tasksThisMonth + personalTasksThisMonth,
                 personalTasksThisWeek,
