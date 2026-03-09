@@ -5,6 +5,8 @@ import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin, Layout
 import { format } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
+import { useAuthStore } from '../stores/auth';
+import { getSharedOwnerName } from '../utils/sharedOwnership';
 
 const freqLabels: Record<string, string> = {
     ONE_TIME: 'One time',
@@ -30,6 +32,7 @@ const frequencyOptions = ['ONE_TIME', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY',
 type HouseworkFormState = {
     title: string;
     description: string;
+    isShared: boolean;
     frequencyType: string;
     nextDueDate: string;
     pinToDashboard: boolean;
@@ -47,6 +50,7 @@ type HouseworkFormState = {
 const emptyForm: HouseworkFormState = {
     title: '',
     description: '',
+    isShared: false,
     frequencyType: 'WEEKLY',
     nextDueDate: '',
     pinToDashboard: false,
@@ -185,6 +189,10 @@ function HouseworkForm({
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
             <div><label className="label">Title <span className="text-red-500">*</span></label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
             <div><label className="label">Description</label><textarea className="input" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+            <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} />
+                Shared
+            </label>
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="label">Frequency <span className="text-red-500">*</span></label>
@@ -213,6 +221,7 @@ function HouseworkForm({
 
 export default function HouseworkPage() {
     const qc = useQueryClient();
+    const { user } = useAuthStore();
     const [searchParams, setSearchParams] = useSearchParams();
     const [showCreate, setShowCreate] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
@@ -259,6 +268,7 @@ export default function HouseworkPage() {
         const body: any = {
             title: form.title,
             description: form.description,
+            isShared: form.isShared,
             frequencyType: form.frequencyType,
         };
 
@@ -284,6 +294,7 @@ export default function HouseworkPage() {
         setForm(getNormalizedFormByFrequency({
             title: `${item.title} (copy)`,
             description: item.description || '',
+            isShared: !!item.isShared,
             frequencyType: item.frequencyType || 'WEEKLY',
             nextDueDate: item.nextDueDate ? new Date(item.nextDueDate).toISOString().split('T')[0] : '',
             pinToDashboard: !!item.pinToDashboard,
@@ -301,6 +312,7 @@ export default function HouseworkPage() {
         setForm(getNormalizedFormByFrequency({
             title: item.title || '',
             description: item.description || '',
+            isShared: !!item.isShared,
             frequencyType: item.frequencyType || 'WEEKLY',
             nextDueDate: item.nextDueDate ? new Date(item.nextDueDate).toISOString().split('T')[0] : '',
             pinToDashboard: !!item.pinToDashboard,
@@ -353,6 +365,8 @@ export default function HouseworkPage() {
         const overdue = tone === 'overdue';
         const completedView = !!options?.completedView;
         const recurrenceLabel = buildRecurrenceLabel(item);
+        const sharedOwnerName = getSharedOwnerName(item, user?.id);
+        const canManage = !sharedOwnerName;
 
         if (viewMode === 'grid') {
             return (
@@ -362,20 +376,24 @@ export default function HouseworkPage() {
                             <h3 className="font-bold text-lg truncate" style={{ color: 'var(--color-text)' }}>{item.title}</h3>
                             {overdue && <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />}
                         </div>
-                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all flex-shrink-0">
-                            <button onClick={() => updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } })} className={`p-1 ${item.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin"><Pin className="w-4 h-4" /></button>
-                            <button onClick={() => duplicateItem(item)} className="p-1 hover:text-indigo-500" title="Duplicate"><Copy className="w-4 h-4" /></button>
-                            <button onClick={() => openEdit(item)} className="p-1 hover:text-indigo-500" title="Edit"><Pencil className="w-4 h-4" /></button>
-                            <button onClick={() => handleDelete(item.id)} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-4 h-4" /></button>
-                        </div>
+                        {canManage && (
+                            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all flex-shrink-0">
+                                <button onClick={() => updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } })} className={`p-1 ${item.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin"><Pin className="w-4 h-4" /></button>
+                                <button onClick={() => duplicateItem(item)} className="p-1 hover:text-indigo-500" title="Duplicate"><Copy className="w-4 h-4" /></button>
+                                <button onClick={() => openEdit(item)} className="p-1 hover:text-indigo-500" title="Edit"><Pencil className="w-4 h-4" /></button>
+                                <button onClick={() => handleDelete(item.id)} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                            </div>
+                        )}
                     </div>
                     <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>
                         {item.description || 'No description provided.'}
                     </p>
+                    {sharedOwnerName && <p className="text-[11px] mb-3" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
                     <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
                         <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{freqLabels[item.frequencyType]}</span>
                             {recurrenceLabel && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{recurrenceLabel}</span>}
+                            {item.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
                             {item.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
                             {item.nextDueDate && (
                                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: overdue ? '#fee2e2' : '#f0fdf4', color: overdue ? '#dc2626' : '#059669' }}>
@@ -388,7 +406,7 @@ export default function HouseworkPage() {
                                 </span>
                             )}
                         </div>
-                        {!completedView && (
+                        {!completedView && canManage && (
                             <button
                                 onClick={() => completeMut.mutate(item.id)}
                                 disabled={completeMut.isPending}
@@ -405,7 +423,7 @@ export default function HouseworkPage() {
         // List view
         return (
             <div key={item.id} className={`card p-4 flex items-center gap-4 group animate-slide-up ${overdue ? 'border-red-200' : ''}`}>
-                {!completedView && (
+                {!completedView && canManage && (
                     <button
                         onClick={() => completeMut.mutate(item.id)}
                         disabled={completeMut.isPending}
@@ -423,6 +441,8 @@ export default function HouseworkPage() {
                     </div>
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
                         <span className="badge-primary text-[10px]">{freqLabels[item.frequencyType]}</span>
+                        {item.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                        {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
                         {item.nextDueDate && (
                             <span className="text-xs" style={{ color: overdue ? '#dc2626' : 'var(--color-text-secondary)' }}>
                                 Due: {format(new Date(item.nextDueDate), 'MMM d, yyyy')}
@@ -446,32 +466,34 @@ export default function HouseworkPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                        onClick={() => updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } })}
-                        className={`p-2 rounded-lg transition-colors ${item.pinToDashboard ? 'text-amber-500 hover:bg-amber-50' : 'hover:bg-gray-100'}`}
-                        title="Pin item"
-                    >
-                        <Pin className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => duplicateItem(item)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Duplicate">
-                        <Copy className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={() => openEdit(item)}
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                        title="Edit item"
-                    >
-                        <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={() => handleDelete(item.id)}
-                        className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
-                        title="Delete item"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
-                </div>
+                {canManage && (
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                            onClick={() => updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } })}
+                            className={`p-2 rounded-lg transition-colors ${item.pinToDashboard ? 'text-amber-500 hover:bg-amber-50' : 'hover:bg-gray-100'}`}
+                            title="Pin item"
+                        >
+                            <Pin className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => duplicateItem(item)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Duplicate">
+                            <Copy className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => openEdit(item)}
+                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            title="Edit item"
+                        >
+                            <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => handleDelete(item.id)}
+                            className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
+                            title="Delete item"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
 
                 {!item.active && <span className="badge bg-gray-100 text-gray-500">Inactive</span>}
             </div>

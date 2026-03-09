@@ -432,6 +432,7 @@ model HouseworkItem {
   description         String?
   assigneeId          String?
   createdById         String
+  isShared            Boolean       @default(false)
   frequencyType       FrequencyType @default(ONE_TIME)
   dayOfWeek           Int?
   dayOfMonth          Int?

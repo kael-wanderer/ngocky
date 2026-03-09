@@ -110,8 +110,14 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const page = Math.max(1, parseInt(req.query.page as string) || 1);
         const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
         const active = req.query.active !== undefined ? req.query.active === 'true' : undefined;
+        const currentUserId = req.user!.userId;
 
-        const where: any = {};
+        const where: any = {
+            OR: [
+                { createdById: currentUserId },
+                { isShared: true },
+            ],
+        };
         if (active !== undefined) where.active = active;
 
         const [items, total] = await Promise.all([
@@ -143,7 +149,10 @@ router.post('/', validate(createHouseworkSchema), async (req: Request, res: Resp
                 nextDueDate: req.body.nextDueDate ? new Date(req.body.nextDueDate) : undefined,
                 createdById: req.user!.userId,
             },
-            include: { assignee: { select: { id: true, name: true } } },
+            include: {
+                assignee: { select: { id: true, name: true } },
+                createdBy: { select: { id: true, name: true } },
+            },
         });
         sendCreated(res, item);
     } catch (err) { next(err); }
@@ -160,6 +169,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
             },
         });
         if (!item) throw new NotFoundError('Housework item');
+        if (item.createdById !== req.user!.userId && !item.isShared) throw new NotFoundError('Housework item');
         sendSuccess(res, item);
     } catch (err) { next(err); }
 });
@@ -169,6 +179,7 @@ router.patch('/:id', validate(updateHouseworkSchema), async (req: Request, res: 
     try {
         const existing = await prisma.houseworkItem.findUnique({ where: { id: req.params.id } });
         if (!existing) throw new NotFoundError('Housework item');
+        if (existing.createdById !== req.user!.userId) throw new NotFoundError('Housework item');
         const reminderFields = resolveReminderFields(
             { ...existing, ...req.body },
             {
@@ -185,7 +196,10 @@ router.patch('/:id', validate(updateHouseworkSchema), async (req: Request, res: 
                 nextDueDate: req.body.nextDueDate ? new Date(req.body.nextDueDate) : req.body.nextDueDate,
                 lastCompletedDate: req.body.lastCompletedDate ? new Date(req.body.lastCompletedDate) : req.body.lastCompletedDate,
             },
-            include: { assignee: { select: { id: true, name: true } } },
+            include: {
+                assignee: { select: { id: true, name: true } },
+                createdBy: { select: { id: true, name: true } },
+            },
         });
         sendSuccess(res, item);
     } catch (err) { next(err); }
@@ -196,6 +210,7 @@ router.post('/:id/complete', async (req: Request, res: Response, next: NextFunct
     try {
         const item = await prisma.houseworkItem.findUnique({ where: { id: req.params.id } });
         if (!item) throw new NotFoundError('Housework item');
+        if (item.createdById !== req.user!.userId) throw new NotFoundError('Housework item');
 
         const now = new Date();
         const data: any = { lastCompletedDate: now };
@@ -225,7 +240,10 @@ router.post('/:id/complete', async (req: Request, res: Response, next: NextFunct
         const updated = await prisma.houseworkItem.update({
             where: { id: req.params.id },
             data,
-            include: { assignee: { select: { id: true, name: true } } },
+            include: {
+                assignee: { select: { id: true, name: true } },
+                createdBy: { select: { id: true, name: true } },
+            },
         });
         sendSuccess(res, updated);
     } catch (err) { next(err); }
@@ -234,6 +252,9 @@ router.post('/:id/complete', async (req: Request, res: Response, next: NextFunct
 // Delete
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const item = await prisma.houseworkItem.findUnique({ where: { id: req.params.id } });
+        if (!item) throw new NotFoundError('Housework item');
+        if (item.createdById !== req.user!.userId) throw new NotFoundError('Housework item');
         await prisma.houseworkItem.delete({ where: { id: req.params.id } });
         sendMessage(res, 'Housework item deleted');
     } catch (err) { next(err); }

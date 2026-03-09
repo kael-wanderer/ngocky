@@ -163,6 +163,7 @@ const houseworkSchemaBase = z.object({
     title: z.string().min(1).max(200),
     description: z.string().optional(),
     assigneeId: z.string().optional(),
+    isShared: z.boolean().optional(),
     frequencyType: z.enum(['ONE_TIME', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY', 'CUSTOM']).optional(),
     dayOfWeek: z.number().int().min(1).max(7).optional(),
     dayOfMonth: z.number().int().min(1).max(31).optional(),
