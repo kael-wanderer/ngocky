@@ -29,11 +29,11 @@ const taskTypeOptions = [
     { value: 'PAYMENT', label: 'Payment' },
 ];
 
-type ReportTimeRange = 'TODAY' | 'WEEK' | 'MONTH' | 'CUSTOM';
+type ReportTimeRange = 'ALL' | 'TODAY' | 'WEEK' | 'MONTH' | 'CUSTOM';
 
 export default function ReportsPage() {
     const [activeTab, setActiveTab] = useState('tasks');
-    const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('MONTH');
+    const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('ALL');
     const [filters, setFilters] = useState({ type: '', scope: '', category: '', dateFrom: '', dateTo: '' });
 
     useEffect(() => {
@@ -43,7 +43,7 @@ export default function ReportsPage() {
     const baseQuery = useMemo(() => {
         const params = new URLSearchParams();
         params.set('groupBy', 'category');
-        if (reportTimeRange !== 'CUSTOM') params.set('timeRange', reportTimeRange);
+        if (!['ALL', 'CUSTOM'].includes(reportTimeRange)) params.set('timeRange', reportTimeRange);
         if (filters.type) params.set('type', filters.type);
         if (filters.scope) params.set('scope', filters.scope);
         if (filters.category) params.set('category', filters.category);
@@ -182,10 +182,11 @@ export default function ReportsPage() {
             <div className="card p-4 space-y-3">
                 <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
-                    <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Analytics Filters</span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Analytics Filters · Time Scope</span>
                 </div>
                 <div className={`grid ${filterGridClass} gap-3`}>
                     <select className="input text-sm" value={reportTimeRange} onChange={(e) => setReportTimeRange(e.target.value as ReportTimeRange)}>
+                        <option value="ALL">All Time</option>
                         <option value="TODAY">Today</option>
                         <option value="WEEK">Week</option>
                         <option value="MONTH">Month</option>
