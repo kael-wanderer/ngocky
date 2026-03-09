@@ -29,6 +29,7 @@ export default function SettingsPage() {
     const [msg, setMsg] = useState('');
     const [mfaEnableCode, setMfaEnableCode] = useState('');
     const [mfaDisableCode, setMfaDisableCode] = useState('');
+    const mfaDisableInputRef = useRef<HTMLInputElement>(null);
 
     const { data: profile } = useQuery({
         queryKey: ['profile'],
@@ -141,7 +142,7 @@ export default function SettingsPage() {
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center gap-2">
                 <SettingsIcon className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Settings</h2>
+                <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>User Settings</h2>
             </div>
 
             {msg && <div className="p-3 rounded-lg bg-emerald-50 text-emerald-700 text-sm animate-fade-in">{msg}</div>}
@@ -277,11 +278,24 @@ export default function SettingsPage() {
                                     className="rounded"
                                     checked={!!profile.mfaEnabled || !!mfaState?.pending}
                                     onChange={(e) => {
-                                        if (e.target.checked) setupMfa.mutate();
+                                        if (e.target.checked) {
+                                            setupMfa.mutate();
+                                            return;
+                                        }
+                                        if (profile.mfaEnabled) {
+                                            setMsg('Enter your 6-digit authenticator code below to disable MFA.');
+                                            setTimeout(() => setMsg(''), 4000);
+                                            setTimeout(() => mfaDisableInputRef.current?.focus(), 0);
+                                        }
                                     }}
                                 />
                                 <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Enable MFA</span>
                             </label>
+                            {profile.mfaEnabled && (
+                                <p className="text-xs -mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+                                    Unchecking requires verification below before MFA is actually disabled.
+                                </p>
+                            )}
 
                             {!profile.mfaEnabled && mfaState?.pending && (
                                 <div className="space-y-4 rounded-xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
@@ -303,6 +317,7 @@ export default function SettingsPage() {
                                         <div>
                                             <label className="label">Verification code</label>
                                             <input
+                                                ref={mfaDisableInputRef}
                                                 className="input tracking-[0.35em] text-center"
                                                 inputMode="numeric"
                                                 pattern="[0-9]*"
