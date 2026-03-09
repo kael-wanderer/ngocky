@@ -301,12 +301,13 @@ router.get('/due-notifications', async (_req: Request, res: Response, next: Next
         const userSelect = {
             id: true,
             name: true,
+            email: true,
             notificationChannel: true,
             notificationEmail: true,
             telegramChatId: true,
         };
 
-        const [goals, projectTasks, tasks, housework, maintenance, calendar] = await Promise.all([
+        const [goals, projectTasks, tasks, housework, maintenance, calendar, alertRules] = await Promise.all([
             prisma.goal.findMany({
                 where: { notificationEnabled: true, active: true, notificationDate: { gte: windowStart, lte: windowEnd } },
                 include: { user: { select: userSelect } },
@@ -336,6 +337,10 @@ router.get('/due-notifications', async (_req: Request, res: Response, next: Next
             prisma.calendarEvent.findMany({
                 where: { notificationEnabled: true, notificationDate: { gte: windowStart, lte: windowEnd } },
                 include: { createdBy: { select: userSelect } },
+            }),
+            prisma.alertRule.findMany({
+                where: { active: true },
+                include: { user: { select: userSelect } },
             }),
         ]);
 
@@ -419,6 +424,198 @@ router.get('/due-notifications', async (_req: Request, res: Response, next: Next
                 })),
         ];
 
+        const vnNow = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+        const currentDay = vnNow.getUTCDay();
+        const currentTotalMinutes = vnNow.getUTCHours() * 60 + vnNow.getUTCMinutes();
+        const TIME_WINDOW = 15;
+        const firedRuleIds = new Set<string>();
+
+        const isAlertRuleDue = (rule: { time: string | null; frequency: string; dayOfWeek: number | null; dayOfMonth: number | null; lastSentAt: Date | null; cooldownHours: number }) => {
+            const [h, m] = (rule.time || '08:00').split(':').map(Number);
+            const diff = currentTotalMinutes - (h * 60 + m);
+            if (diff < 0 || diff >= TIME_WINDOW) return false;
+            if (rule.lastSentAt && (now.getTime() - rule.lastSentAt.getTime()) < rule.cooldownHours * 60 * 60 * 1000) return false;
+            if (rule.frequency === 'DAILY') return true;
+            if (rule.frequency === 'WEEKLY') return currentDay === (rule.dayOfWeek ?? 1);
+            if (rule.frequency === 'MONTHLY') return vnNow.getUTCDate() === (rule.dayOfMonth ?? 1);
+            return false;
+        };
+
+        const activeGoals = await prisma.goal.findMany({
+            where: { active: true },
+            include: { user: { select: userSelect } },
+        });
+        const standaloneTasks = await prisma.task.findMany({
+            where: { status: { notIn: ['DONE', 'ARCHIVED'] } },
+            include: { user: { select: userSelect } },
+        });
+        const allCalendarEvents = await prisma.calendarEvent.findMany({
+            include: { createdBy: { select: userSelect } },
+        });
+        const activeHousework = await prisma.houseworkItem.findMany({
+            where: { active: true },
+            include: { createdBy: { select: userSelect } },
+        });
+        const upcomingMaintenance = await prisma.maintenanceRecord.findMany({
+            where: { nextRecommendedDate: { not: null } },
+            include: {
+                asset: { select: { name: true } },
+                user: { select: userSelect },
+            },
+        });
+        const todayStart = new Date(now);
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date(todayStart);
+        todayEnd.setHours(23, 59, 59, 999);
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        for (const rule of alertRules) {
+            if (!isAlertRuleDue(rule)) continue;
+
+            if (rule.moduleType === 'GOAL' && rule.conditionType === 'PROGRESS_BELOW') {
+                const threshold = Number(rule.conditionValue ?? 0);
+                const matches = activeGoals.filter((goal) => {
+                    if (goal.userId !== rule.userId || goal.targetCount <= 0) return false;
+                    const progress = (goal.currentCount / goal.targetCount) * 100;
+                    return progress < threshold;
+                });
+
+                matches.forEach((goal) => {
+                    const progress = Math.round((goal.currentCount / goal.targetCount) * 100);
+                    notifications.push({
+                        type: 'GOAL',
+                        sourceType: 'ALERT_RULE',
+                        id: `${rule.id}:${goal.id}`,
+                        ruleId: rule.id,
+                        title: goal.title,
+                        subtitle: `${rule.name}: ${progress}% < ${threshold}%`,
+                        dueDate: getGoalPeriodEnd(goal.currentPeriodStart, goal.periodType),
+                        user: rule.user,
+                    } as any);
+                });
+                if (matches.length > 0) firedRuleIds.add(rule.id);
+            }
+
+            if (rule.moduleType === 'TASK' && (rule.conditionType === 'OVERDUE' || rule.conditionType === 'DUE_TODAY')) {
+                const matches = standaloneTasks.filter((task) => {
+                    if (task.userId !== rule.userId || !task.dueDate) return false;
+                    if (rule.conditionType === 'OVERDUE') return task.dueDate < todayStart;
+                    return task.dueDate >= todayStart && task.dueDate <= todayEnd;
+                });
+
+                matches.forEach((task) => {
+                    notifications.push({
+                        type: 'TASK',
+                        sourceType: 'ALERT_RULE',
+                        id: `${rule.id}:${task.id}`,
+                        ruleId: rule.id,
+                        title: task.title,
+                        subtitle: rule.name,
+                        dueDate: task.dueDate,
+                        priority: task.priority,
+                        user: rule.user,
+                    } as any);
+                });
+                if (matches.length > 0) firedRuleIds.add(rule.id);
+            }
+
+            if (rule.moduleType === 'HOUSEWORK' && (rule.conditionType === 'OVERDUE' || rule.conditionType === 'DUE_TODAY')) {
+                const matches = activeHousework.filter((item) => {
+                    if (item.createdById !== rule.userId || !item.nextDueDate) return false;
+                    if (rule.conditionType === 'OVERDUE') return item.nextDueDate < todayStart;
+                    return item.nextDueDate >= todayStart && item.nextDueDate <= todayEnd;
+                });
+
+                matches.forEach((item) => {
+                    notifications.push({
+                        type: 'HOUSEWORK',
+                        sourceType: 'ALERT_RULE',
+                        id: `${rule.id}:${item.id}`,
+                        ruleId: rule.id,
+                        title: item.title,
+                        subtitle: rule.name,
+                        dueDate: item.nextDueDate,
+                        user: rule.user,
+                    } as any);
+                });
+                if (matches.length > 0) firedRuleIds.add(rule.id);
+            }
+
+            if (rule.moduleType === 'CALENDAR' && rule.conditionType === 'DUE_TODAY') {
+                const matches = allCalendarEvents.filter((event) => {
+                    if (event.createdById !== rule.userId) return false;
+                    return event.startDate >= todayStart && event.startDate <= todayEnd;
+                });
+
+                matches.forEach((event) => {
+                    notifications.push({
+                        type: 'CALENDAR',
+                        sourceType: 'ALERT_RULE',
+                        id: `${rule.id}:${event.id}`,
+                        ruleId: rule.id,
+                        title: event.title,
+                        subtitle: rule.name,
+                        dueDate: event.startDate,
+                        location: event.location,
+                        allDay: event.allDay,
+                        user: rule.user,
+                    } as any);
+                });
+                if (matches.length > 0) firedRuleIds.add(rule.id);
+            }
+
+            if (rule.moduleType === 'ASSETS' && rule.conditionType === 'MAINTENANCE_DUE') {
+                const matches = upcomingMaintenance.filter((record) => (
+                    record.userId === rule.userId
+                    && !!record.nextRecommendedDate
+                    && record.nextRecommendedDate <= todayEnd
+                ));
+
+                matches.forEach((record) => {
+                    notifications.push({
+                        type: 'MAINTENANCE',
+                        sourceType: 'ALERT_RULE',
+                        id: `${rule.id}:${record.id}`,
+                        ruleId: rule.id,
+                        title: record.description,
+                        subtitle: `${record.asset.name} · ${rule.name}`,
+                        dueDate: record.nextRecommendedDate,
+                        user: rule.user,
+                    } as any);
+                });
+                if (matches.length > 0) firedRuleIds.add(rule.id);
+            }
+
+            if (rule.moduleType === 'EXPENSE' && rule.conditionType === 'THRESHOLD_EXCEEDED') {
+                const threshold = Number(rule.conditionValue ?? 0);
+                const expensesForMonth = await prisma.expense.findMany({
+                    where: { userId: rule.userId, type: 'PAY', date: { gte: monthStart, lte: monthEnd } },
+                });
+                const total = expensesForMonth.reduce((sum, expense) => sum + expense.amount, 0);
+                if (total > threshold) {
+                    notifications.push({
+                        type: 'TASK',
+                        sourceType: 'ALERT_RULE',
+                        id: `${rule.id}:expenses`,
+                        ruleId: rule.id,
+                        title: 'Budget exceeded',
+                        subtitle: `${rule.name}: ${Math.round(total)} > ${Math.round(threshold)}`,
+                        dueDate: now,
+                        user: rule.user,
+                    } as any);
+                    firedRuleIds.add(rule.id);
+                }
+            }
+        }
+
+        if (firedRuleIds.size > 0) {
+            await prisma.alertRule.updateMany({
+                where: { id: { in: Array.from(firedRuleIds) } },
+                data: { lastSentAt: now },
+            });
+        }
+
         sendSuccess(res, notifications);
     } catch (err) { next(err); }
 });
@@ -448,6 +645,9 @@ router.post('/due-notifications/sent', async (req: Request, res: Response, next:
                 break;
             case 'CALENDAR':
                 await prisma.calendarEvent.update({ where: { id }, data });
+                break;
+            case 'ALERT_RULE':
+                await prisma.alertRule.update({ where: { id: id.split(':')[0] }, data: { lastSentAt: new Date() } });
                 break;
             default:
                 throw new ValidationError('Unsupported sourceType');
