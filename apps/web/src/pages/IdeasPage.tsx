@@ -212,11 +212,12 @@ export default function IdeasPage() {
                             {topicList.map((topic: any) => (
                                 (() => {
                                     const sharedOwnerName = getSharedOwnerName(topic, user?.id);
+                                    const canManage = !sharedOwnerName;
                                     return (
                                         <div
                                             key={topic.id}
-                                            draggable
-                                            onDragStart={() => setDraggingTopicId(topic.id)}
+                                            draggable={canManage}
+                                            onDragStart={() => canManage && setDraggingTopicId(topic.id)}
                                             onDragOver={(e) => {
                                                 e.preventDefault();
                                                 if (dragOverTopicId !== topic.id) setDragOverTopicId(topic.id);
@@ -248,11 +249,13 @@ export default function IdeasPage() {
                                                         <p className="text-[10px] uppercase font-bold mt-1" style={{ color: 'var(--color-text-secondary)' }}>{topic.logs?.length || 0} logs</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>
-                                                    <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}><Pencil className="w-3.5 h-3.5" /></button>
-                                                    <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this idea topic and all logs?')) deleteTopicMut.mutate(topic.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
-                                                </div>
+                                                {canManage && (
+                                                    <div className="flex items-center gap-1">
+                                                        <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}><Pencil className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this idea topic and all logs?')) deleteTopicMut.mutate(topic.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -280,28 +283,37 @@ export default function IdeasPage() {
                                     {getSharedOwnerName(activeTopic, user?.id) && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {getSharedOwnerName(activeTopic, user?.id)}</p>}
                                     <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{activeTopic.description || 'No topic description yet.'}</p>
                                 </div>
-                                <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateLog}>
-                                    <Plus className="w-3.5 h-3.5" /> Add Log
-                                </button>
+                                {!getSharedOwnerName(activeTopic, user?.id) && (
+                                    <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateLog}>
+                                        <Plus className="w-3.5 h-3.5" /> Add Log
+                                    </button>
+                                )}
                             </div>
 
                             <div className="columns-1 md:columns-2 gap-4 space-y-4">
-                                {logs.map((log: any) => (
+                                {logs.map((log: any) => {
+                                    const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
+                                    const canManage = !sharedOwnerName;
+                                    return (
                                     <div key={log.id} className="card p-5 group break-inside-avoid animate-fade-in hover:shadow-lg transition-all duration-300">
                                         <div className="flex items-start justify-between mb-3">
                                             {log.category && <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-600">{log.category}</span>}
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className={`p-1 ${log.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={() => togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
-                                                <button className="p-1 hover:text-indigo-500" onClick={() => duplicateLog(log)}><Copy className="w-3.5 h-3.5" /></button>
-                                                <button className="p-1 hover:text-indigo-500" onClick={() => openEditLog(log)}><Pencil className="w-3.5 h-3.5" /></button>
-                                                <button className="p-1 hover:text-red-500" onClick={() => { if (window.confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
-                                            </div>
+                                            {canManage && (
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button className={`p-1 ${log.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={() => togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
+                                                    <button className="p-1 hover:text-indigo-500" onClick={() => duplicateLog(log)}><Copy className="w-3.5 h-3.5" /></button>
+                                                    <button className="p-1 hover:text-indigo-500" onClick={() => openEditLog(log)}><Pencil className="w-3.5 h-3.5" /></button>
+                                                    <button className="p-1 hover:text-red-500" onClick={() => { if (window.confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="flex items-center gap-2 mb-2">
                                             <h3 className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{log.title}</h3>
+                                            {activeTopic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                                             {log.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                                         </div>
+                                        {sharedOwnerName && <p className="text-[11px] mb-2" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
                                         <p className="text-xs whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{log.content}</p>
 
                                         <div className="mt-4 flex flex-wrap gap-1.5">
@@ -315,7 +327,7 @@ export default function IdeasPage() {
                                             <span className="text-[9px] font-bold text-emerald-600 uppercase">{log.status}</span>
                                         </div>
                                     </div>
-                                ))}
+                                )})}
                                 {logs.length === 0 && (
                                     <div className="py-16 card border-dashed border-2 flex flex-col items-center">
                                         <Lightbulb className="w-10 h-10 mb-4 opacity-10" />

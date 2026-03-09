@@ -132,6 +132,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 where,
                 skip,
                 take: limit,
+                include: {
+                    user: { select: { id: true, name: true } },
+                },
                 orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
             }),
             prisma.asset.count({ where }),

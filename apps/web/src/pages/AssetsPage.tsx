@@ -5,6 +5,8 @@ import { Calendar, Copy, GripVertical, Microwave, Pencil, Pin, Plus, Trash2, Wre
 import { format } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
+import { useAuthStore } from '../stores/auth';
+import { getSharedOwnerName } from '../utils/sharedOwnership';
 
 const emptyAssetForm = () => ({
     name: '',
@@ -36,6 +38,7 @@ const formatVND = (amount: number) => `${new Intl.NumberFormat('en-US', { maximu
 
 export default function AssetsPage() {
     const qc = useQueryClient();
+    const { user } = useAuthStore();
     const [searchParams, setSearchParams] = useSearchParams();
     const [selectedAsset, setSelectedAsset] = useState<any>(null);
     const [showAssetModal, setShowAssetModal] = useState(false);
@@ -330,6 +333,10 @@ export default function AssetsPage() {
                     ) : (
                         <div className="space-y-3">
                             {(assets || []).map((asset: any) => (
+                                (() => {
+                                    const sharedOwnerName = getSharedOwnerName(asset, user?.id);
+                                    const canManage = !sharedOwnerName;
+                                    return (
                                 <div
                                     key={asset.id}
                                     draggable
@@ -358,24 +365,32 @@ export default function AssetsPage() {
                                             <GripVertical className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--color-text-secondary)' }} />
                                             <div className="min-w-0">
                                                 <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{asset.name}</h4>
+                                                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                    {asset.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                                    {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
+                                                </div>
                                                 <p className="text-[10px] uppercase font-bold mt-1" style={{ color: 'var(--color-text-secondary)' }}>
                                                     {[asset.brand, asset.model].filter(Boolean).join(' ') || asset.type || 'No brand/model'}
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-1 shrink-0">
-                                            <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditAsset(asset); }}>
-                                                <Pencil className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateAsset(asset); }}>
-                                                <Copy className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); handleDeleteAsset(asset.id); }}>
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
+                                        {canManage && (
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditAsset(asset); }}>
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateAsset(asset); }}>
+                                                    <Copy className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); handleDeleteAsset(asset.id); }}>
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
+                                    );
+                                })()
                             ))}
                             {assets?.length === 0 && (
                                 <div className="text-center py-8 card border-dashed border-2">
@@ -390,10 +405,18 @@ export default function AssetsPage() {
                 <div className="lg:col-span-2 space-y-6">
                     {selectedAsset ? (
                         <div className="animate-fade-in space-y-6">
+                            {(() => {
+                                const sharedOwnerName = getSharedOwnerName(selectedAsset, user?.id);
+                                const canManage = !sharedOwnerName;
+                                return (
                             <div className="card p-6">
                                 <div className="flex items-start justify-between mb-6 gap-4">
                                     <div>
                                         <h3 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{selectedAsset.name}</h3>
+                                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                            {selectedAsset.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                            {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
+                                        </div>
                                         <div className="flex flex-wrap gap-4 mt-2">
                                             <div className="text-xs">
                                                 <span className="font-semibold block mb-0.5" style={{ color: 'var(--color-text-secondary)' }}>Type</span>
@@ -417,17 +440,19 @@ export default function AssetsPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex flex-wrap gap-2 justify-end">
-                                        <button className="btn-secondary py-1.5 px-3 text-xs" onClick={() => openEditAsset(selectedAsset)}>
-                                            <Pencil className="w-3.5 h-3.5" /> Edit Asset
-                                        </button>
-                                        <button className="btn-secondary py-1.5 px-3 text-xs" onClick={() => duplicateAsset(selectedAsset)}>
-                                            <Copy className="w-3.5 h-3.5" /> Duplicate Asset
-                                        </button>
-                                        <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateRecord}>
-                                            <Wrench className="w-3.5 h-3.5" /> Add Log
-                                        </button>
-                                    </div>
+                                    {canManage && (
+                                        <div className="flex flex-wrap gap-2 justify-end">
+                                            <button className="btn-secondary py-1.5 px-3 text-xs" onClick={() => openEditAsset(selectedAsset)}>
+                                                <Pencil className="w-3.5 h-3.5" /> Edit Asset
+                                            </button>
+                                            <button className="btn-secondary py-1.5 px-3 text-xs" onClick={() => duplicateAsset(selectedAsset)}>
+                                                <Copy className="w-3.5 h-3.5" /> Duplicate Asset
+                                            </button>
+                                            <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateRecord}>
+                                                <Wrench className="w-3.5 h-3.5" /> Add Log
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {selectedAsset.note && (
@@ -519,6 +544,8 @@ export default function AssetsPage() {
                                     )}
                                 </div>
                             </div>
+                                );
+                            })()}
                         </div>
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center card p-12 text-center border-dashed border-2">

@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { sendSuccess } from '../utils/response';
+import { buildVisibleCalendarEventWhere } from '../utils/calendarVisibility';
 
 const router = Router();
 router.use(authenticate);
@@ -59,36 +60,199 @@ function getGoalPeriodEnd(goal: { currentPeriodStart: Date; periodType: string }
     return end;
 }
 
+function buildVisibleStandaloneTaskWhere(userId: string) {
+    return {
+        OR: [
+            { userId },
+            { isShared: true },
+        ],
+    };
+}
+
+function buildVisibleProjectItemWhere(userId: string) {
+    return {
+        OR: [
+            { project: { ownerId: userId } },
+            { project: { isShared: true } },
+            { isShared: true },
+        ],
+    };
+}
+
+function buildVisibleAssetWhere(userId: string) {
+    return {
+        OR: [
+            { userId },
+            { isShared: true },
+        ],
+    };
+}
+
 // Tasks by status
-router.get('/tasks-by-status', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/tasks-by-status', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const result = await prisma.projectTask.groupBy({
+        const userId = req.user!.userId;
+        const result = await prisma.task.groupBy({
             by: ['status'],
+            where: buildVisibleStandaloneTaskWhere(userId),
             _count: { id: true },
         });
         sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count.id })));
     } catch (err) { next(err); }
 });
 
-// Overdue tasks
-router.get('/overdue-tasks', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/project-items-by-status', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = req.user!.userId;
+        const result = await prisma.projectTask.groupBy({
+            by: ['status'],
+            where: buildVisibleProjectItemWhere(userId),
+            _count: { id: true },
+        });
+        sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count.id })));
+    } catch (err) { next(err); }
+});
+
+router.get('/project-items-by-type', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.userId;
+        const result = await prisma.projectTask.groupBy({
+            by: ['type'],
+            where: buildVisibleProjectItemWhere(userId),
+            _count: { id: true },
+        });
+        sendSuccess(res, result.map((r) => ({ type: r.type, count: r._count.id })));
+    } catch (err) { next(err); }
+});
+
+// Overdue tasks
+router.get('/overdue-tasks', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.userId;
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const tasks = await prisma.projectTask.findMany({
-            where: { deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
-            include: { assignee: { select: { name: true } } },
-            orderBy: { deadline: 'asc' },
+        const tasks = await prisma.task.findMany({
+            where: {
+                ...buildVisibleStandaloneTaskWhere(userId),
+                dueDate: { lt: todayStart },
+                status: { notIn: ['DONE', 'ARCHIVED'] },
+            },
+            include: { user: { select: { name: true } } },
+            orderBy: { dueDate: 'asc' },
         });
         sendSuccess(res, tasks);
     } catch (err) { next(err); }
 });
 
-// Goal completion rates
-router.get('/goal-completion', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/calendar-overview', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = req.user!.userId;
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrowStart = new Date(todayStart);
+        tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+        const events = await prisma.calendarEvent.findMany({
+            where: buildVisibleCalendarEventWhere(userId),
+            select: {
+                id: true,
+                startDate: true,
+                allDay: true,
+            },
+        });
+        const summary = {
+            total: events.length,
+            today: 0,
+            upcoming: 0,
+            past: 0,
+            allDay: 0,
+        };
+        events.forEach((event) => {
+            if (event.allDay) summary.allDay += 1;
+            if (event.startDate >= todayStart && event.startDate < tomorrowStart) summary.today += 1;
+            else if (event.startDate >= tomorrowStart) summary.upcoming += 1;
+            else summary.past += 1;
+        });
+        sendSuccess(res, summary);
+    } catch (err) { next(err); }
+});
+
+router.get('/calendar-by-category', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.userId;
+        const events = await prisma.calendarEvent.findMany({
+            where: buildVisibleCalendarEventWhere(userId),
+            select: { category: true },
+        });
+        const grouped = new Map<string, number>();
+        events.forEach((event) => {
+            const key = event.category || 'General';
+            grouped.set(key, (grouped.get(key) || 0) + 1);
+        });
+        sendSuccess(res, Array.from(grouped.entries()).map(([category, count]) => ({ category, count })));
+    } catch (err) { next(err); }
+});
+
+router.get('/asset-overview', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.userId;
+        const visibleAssets = buildVisibleAssetWhere(userId);
+        const [assets, maintenance] = await Promise.all([
+            prisma.asset.findMany({
+                where: visibleAssets,
+                select: {
+                    id: true,
+                    type: true,
+                    purchaseDate: true,
+                    warrantyMonths: true,
+                },
+            }),
+            prisma.maintenanceRecord.findMany({
+                where: { asset: visibleAssets },
+                select: {
+                    cost: true,
+                    nextRecommendedDate: true,
+                },
+            }),
+        ]);
+        const now = new Date();
+        const summary = {
+            totalAssets: assets.length,
+            withWarranty: assets.filter((asset) => !!asset.warrantyMonths).length,
+            upcomingMaintenance: maintenance.filter((record) => record.nextRecommendedDate && record.nextRecommendedDate >= now).length,
+            totalMaintenanceCost: maintenance.reduce((sum, record) => sum + (record.cost || 0), 0),
+        };
+        sendSuccess(res, summary);
+    } catch (err) { next(err); }
+});
+
+router.get('/assets-by-type', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.userId;
+        const assets = await prisma.asset.findMany({
+            where: buildVisibleAssetWhere(userId),
+            select: { type: true },
+        });
+        const grouped = new Map<string, number>();
+        assets.forEach((asset) => {
+            const key = asset.type || 'Uncategorized';
+            grouped.set(key, (grouped.get(key) || 0) + 1);
+        });
+        sendSuccess(res, Array.from(grouped.entries()).map(([type, count]) => ({ type, count })));
+    } catch (err) { next(err); }
+});
+
+// Goal completion rates
+router.get('/goal-completion', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.userId;
         const goals = await prisma.goal.findMany({
-            where: { active: true },
+            where: {
+                active: true,
+                OR: [
+                    { userId },
+                    { isShared: true },
+                ],
+            },
             select: { id: true, title: true, targetCount: true, currentCount: true, periodType: true, userId: true },
             orderBy: { title: 'asc' },
         });
@@ -101,24 +265,40 @@ router.get('/goal-completion', async (_req: Request, res: Response, next: NextFu
 });
 
 // Housework completion/overdue
-router.get('/housework-status', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/housework-status', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = req.user!.userId;
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const where: any = {
+            active: true,
+            OR: [
+                { assigneeId: userId },
+                { createdById: userId },
+                { isShared: true },
+            ],
+        };
         const [total, overdue, completed] = await Promise.all([
-            prisma.houseworkItem.count({ where: { active: true } }),
-            prisma.houseworkItem.count({ where: { active: true, nextDueDate: { lt: todayStart } } }),
-            prisma.houseworkItem.count({ where: { active: true, lastCompletedDate: { not: null } } }),
+            prisma.houseworkItem.count({ where }),
+            prisma.houseworkItem.count({ where: { ...where, nextDueDate: { lt: todayStart } } }),
+            prisma.houseworkItem.count({ where: { ...where, lastCompletedDate: { not: null } } }),
         ]);
         sendSuccess(res, { total, overdue, completed, onTrack: total - overdue });
     } catch (err) { next(err); }
 });
 
 // Learning by status
-router.get('/learning-status', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/learning-status', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = req.user!.userId;
         const result = await prisma.learningItem.groupBy({
             by: ['status'],
+            where: {
+                OR: [
+                    { userId },
+                    { topic: { isShared: true } },
+                ],
+            },
             _count: { id: true },
         });
         sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count.id })));
@@ -126,9 +306,16 @@ router.get('/learning-status', async (_req: Request, res: Response, next: NextFu
 });
 
 // Learning by topic
-router.get('/learning-topics', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/learning-topics', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = req.user!.userId;
         const topics = await prisma.learningTopic.findMany({
+            where: {
+                OR: [
+                    { userId },
+                    { isShared: true },
+                ],
+            },
             include: { _count: { select: { histories: true } } },
             orderBy: { title: 'asc' },
         });
@@ -140,10 +327,17 @@ router.get('/learning-topics', async (_req: Request, res: Response, next: NextFu
 });
 
 // Ideas by status
-router.get('/ideas-status', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/ideas-status', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = req.user!.userId;
         const result = await prisma.idea.groupBy({
             by: ['status'],
+            where: {
+                OR: [
+                    { userId },
+                    { topic: { isShared: true } },
+                ],
+            },
             _count: { id: true },
         });
         sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count.id })));
@@ -151,9 +345,16 @@ router.get('/ideas-status', async (_req: Request, res: Response, next: NextFunct
 });
 
 // Ideas by topic
-router.get('/idea-topics', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/idea-topics', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = req.user!.userId;
         const topics = await prisma.ideaTopic.findMany({
+            where: {
+                OR: [
+                    { userId },
+                    { isShared: true },
+                ],
+            },
             include: { _count: { select: { logs: true } } },
             orderBy: { title: 'asc' },
         });
@@ -167,6 +368,7 @@ router.get('/idea-topics', async (_req: Request, res: Response, next: NextFuncti
 // Expense summary by period/category
 router.get('/expense-summary', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = req.user!.userId;
         const preset = req.query.timeRange as string;
         const presetRange = getRangeFromPreset(preset);
         const dateFrom = (req.query.dateFrom as string) || presetRange?.start?.toISOString();
@@ -176,7 +378,12 @@ router.get('/expense-summary', async (req: Request, res: Response, next: NextFun
         const scope = req.query.scope as string;
         const category = req.query.category as string;
 
-        const where: any = {};
+        const where: any = {
+            OR: [
+                { userId },
+                { isShared: true },
+            ],
+        };
         if (dateFrom || dateTo) {
             where.date = {};
             if (dateFrom) where.date.gte = new Date(dateFrom);

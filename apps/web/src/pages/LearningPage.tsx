@@ -255,11 +255,12 @@ export default function LearningPage() {
                             {topicList.map((topic: any) => (
                                 (() => {
                                     const sharedOwnerName = getSharedOwnerName(topic, user?.id);
+                                    const canManage = !sharedOwnerName;
                                     return (
                                         <div
                                             key={topic.id}
-                                            draggable
-                                            onDragStart={() => setDraggingTopicId(topic.id)}
+                                            draggable={canManage}
+                                            onDragStart={() => canManage && setDraggingTopicId(topic.id)}
                                             onDragOver={(e) => {
                                                 e.preventDefault();
                                                 if (dragOverTopicId !== topic.id) setDragOverTopicId(topic.id);
@@ -291,11 +292,13 @@ export default function LearningPage() {
                                                         <p className="text-[10px] uppercase font-bold mt-1" style={{ color: 'var(--color-text-secondary)' }}>{topic.histories?.length || 0} histories</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>
-                                                    <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}><Pencil className="w-3.5 h-3.5" /></button>
-                                                    <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this topic and all histories?')) deleteTopicMut.mutate(topic.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
-                                                </div>
+                                                {canManage && (
+                                                    <div className="flex items-center gap-1">
+                                                        <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}><Pencil className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this topic and all histories?')) deleteTopicMut.mutate(topic.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -323,9 +326,11 @@ export default function LearningPage() {
                                     {getSharedOwnerName(activeTopic, user?.id) && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {getSharedOwnerName(activeTopic, user?.id)}</p>}
                                     <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{activeTopic.description || 'No topic description yet.'}</p>
                                 </div>
-                                <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateHistory}>
-                                    <Plus className="w-3.5 h-3.5" /> Add History
-                                </button>
+                                {!getSharedOwnerName(activeTopic, user?.id) && (
+                                    <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateHistory}>
+                                        <Plus className="w-3.5 h-3.5" /> Add History
+                                    </button>
+                                )}
                             </div>
 
                             <div className="space-y-4">
@@ -334,22 +339,29 @@ export default function LearningPage() {
                                     <div className="text-center py-10 opacity-40"><p className="text-xs">No histories recorded for this topic.</p></div>
                                 ) : (
                                     <div className="grid gap-4 md:grid-cols-2">
-                                        {histories.map((history: any) => (
+                                        {histories.map((history: any) => {
+                                            const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
+                                            const canManage = !sharedOwnerName;
+                                            return (
                                             <div key={history.id} className="card p-5 group flex flex-col h-full">
                                                 <div className="flex items-start justify-between mb-2">
                                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getStatusColor(history.status)}`}>{history.status.replace('_', ' ')}</span>
-                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button className={`p-1.5 rounded ${history.pinToDashboard ? 'text-amber-500' : 'hover:bg-amber-50 hover:text-amber-500 text-gray-400'}`} onClick={() => togglePinHistoryMut.mutate({ id: history.id, pinToDashboard: !history.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditHistory(history)}><Pencil className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1.5 hover:bg-red-50 hover:text-red-500 rounded text-gray-400" onClick={() => { if (window.confirm('Delete this history?')) deleteHistoryMut.mutate(history.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
-                                                    </div>
+                                                    {canManage && (
+                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button className={`p-1.5 rounded ${history.pinToDashboard ? 'text-amber-500' : 'hover:bg-amber-50 hover:text-amber-500 text-gray-400'}`} onClick={() => togglePinHistoryMut.mutate({ id: history.id, pinToDashboard: !history.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
+                                                            <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
+                                                            <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditHistory(history)}><Pencil className="w-3.5 h-3.5" /></button>
+                                                            <button className="p-1.5 hover:bg-red-50 hover:text-red-500 rounded text-gray-400" onClick={() => { if (window.confirm('Delete this history?')) deleteHistoryMut.mutate(history.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 <div className="flex items-center gap-2">
                                                     <h3 className="font-semibold text-sm line-clamp-1" style={{ color: 'var(--color-text)' }}>{history.title}</h3>
+                                                    {activeTopic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                                                     {history.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                                                 </div>
+                                                {sharedOwnerName && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
                                                 <p className="text-xs mt-2 line-clamp-2 flex-grow" style={{ color: 'var(--color-text-secondary)' }}>{history.description || 'No description provided.'}</p>
 
                                                 <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
@@ -366,7 +378,7 @@ export default function LearningPage() {
                                                             <Clock className="w-3 h-3" />
                                                             {history.deadline ? new Date(history.deadline).toLocaleDateString() : 'No deadline'}
                                                         </div>
-                                                        {history.status !== 'DONE' && (
+                                                        {history.status !== 'DONE' && canManage && (
                                                             <button className="p-1.5 hover:bg-emerald-50 text-emerald-600 rounded-md transition-colors" onClick={() => updateHistoryMut.mutate({ id: history.id, body: { status: 'DONE', progress: 100 } })} title="Mark as Done">
                                                                 <CheckCircle2 className="w-4 h-4" />
                                                             </button>
@@ -374,7 +386,7 @@ export default function LearningPage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                        ))}
+                                        )})}
                                     </div>
                                 )}
                             </div>

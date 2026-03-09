@@ -773,6 +773,7 @@ export default function GoalsPage() {
                         <div className="grid gap-4 md:grid-cols-2">
                             {filteredTasks.map((task: any) => {
                                 const sharedOwnerName = getSharedOwnerName(task, user?.id);
+                                const canManage = !sharedOwnerName;
                                 const notifText = formatNotification(task);
                                 const repeatText = formatTaskRepeat(task);
                                 const isDone = task.status === 'DONE';
@@ -795,12 +796,14 @@ export default function GoalsPage() {
                                                 {task.description && <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>{task.description}</p>}
                                                 {sharedOwnerName && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
                                             </div>
-                                            <div className="flex items-center gap-1 flex-shrink-0">
-                                                <button onClick={() => updateTaskMut.mutate({ id: task.id, body: { pinToDashboard: !task.pinToDashboard } })} className={`p-1 ${task.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin task"><Pin className="w-3.5 h-3.5" /></button>
-                                                <button onClick={() => openEditTask(task)} className="p-1 hover:text-indigo-500" title="Edit task"><Pencil className="w-3.5 h-3.5" /></button>
-                                                <button onClick={() => openDuplicateTask(task)} className="p-1 hover:text-sky-500" title="Duplicate task"><Copy className="w-3.5 h-3.5" /></button>
-                                                <button onClick={() => { if (window.confirm('Delete this task?')) deleteTaskMut.mutate(task.id); }} className="p-1 hover:text-red-500" title="Delete task"><Trash2 className="w-3.5 h-3.5" /></button>
-                                            </div>
+                                            {canManage && (
+                                                <div className="flex items-center gap-1 flex-shrink-0">
+                                                    <button onClick={() => updateTaskMut.mutate({ id: task.id, body: { pinToDashboard: !task.pinToDashboard } })} className={`p-1 ${task.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin task"><Pin className="w-3.5 h-3.5" /></button>
+                                                    <button onClick={() => openEditTask(task)} className="p-1 hover:text-indigo-500" title="Edit task"><Pencil className="w-3.5 h-3.5" /></button>
+                                                    <button onClick={() => openDuplicateTask(task)} className="p-1 hover:text-sky-500" title="Duplicate task"><Copy className="w-3.5 h-3.5" /></button>
+                                                    <button onClick={() => { if (window.confirm('Delete this task?')) deleteTaskMut.mutate(task.id); }} className="p-1 hover:text-red-500" title="Delete task"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="mt-4 space-y-2">
                                             <div className="flex items-center justify-between text-xs">
@@ -843,7 +846,7 @@ export default function GoalsPage() {
                                             <div className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
                                                 {task.user?.name || 'Task'}{task.completedAt ? ` · Completed ${format(new Date(task.completedAt), 'MMM d')}` : ''}
                                             </div>
-                                            {!isDone && !isArchived ? (
+                                            {!isDone && !isArchived && canManage ? (
                                                 <button className="btn-primary text-xs py-1.5 px-3" onClick={() => completeTaskMut.mutate(task.id)} disabled={completeTaskMut.isPending}>
                                                     <CheckCircle2 className="w-3.5 h-3.5" /> Mark Done
                                                 </button>

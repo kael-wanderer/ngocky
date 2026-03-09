@@ -48,9 +48,29 @@ export default function ReportsPage() {
         queryFn: async () => (await api.get('/reports/tasks-by-status')).data.data,
     });
 
+    const { data: projectItemsByStatus } = useQuery({
+        queryKey: ['reports', 'project-items-by-status'],
+        queryFn: async () => (await api.get('/reports/project-items-by-status')).data.data,
+    });
+
+    const { data: projectItemsByType } = useQuery({
+        queryKey: ['reports', 'project-items-by-type'],
+        queryFn: async () => (await api.get('/reports/project-items-by-type')).data.data,
+    });
+
     const { data: goalCompletion } = useQuery({
         queryKey: ['reports', 'goal-completion'],
         queryFn: async () => (await api.get('/reports/goal-completion')).data.data,
+    });
+
+    const { data: calendarOverview } = useQuery({
+        queryKey: ['reports', 'calendar-overview'],
+        queryFn: async () => (await api.get('/reports/calendar-overview')).data.data,
+    });
+
+    const { data: calendarByCategory } = useQuery({
+        queryKey: ['reports', 'calendar-by-category'],
+        queryFn: async () => (await api.get('/reports/calendar-by-category')).data.data,
     });
 
     const { data: houseworkStatus } = useQuery({
@@ -66,6 +86,16 @@ export default function ReportsPage() {
     const { data: expenseTrend } = useQuery({
         queryKey: ['reports', 'expense-trend', expenseTrendQuery],
         queryFn: async () => (await api.get(`/reports/expense-summary?${expenseTrendQuery}`)).data.data,
+    });
+
+    const { data: assetOverview } = useQuery({
+        queryKey: ['reports', 'asset-overview'],
+        queryFn: async () => (await api.get('/reports/asset-overview')).data.data,
+    });
+
+    const { data: assetsByType } = useQuery({
+        queryKey: ['reports', 'assets-by-type'],
+        queryFn: async () => (await api.get('/reports/assets-by-type')).data.data,
     });
 
     const { data: learningStatus } = useQuery({
@@ -89,10 +119,13 @@ export default function ReportsPage() {
     });
 
     const tabs = [
+        { id: 'project', label: 'Project' },
         { id: 'tasks', label: 'Tasks' },
         { id: 'goals', label: 'Goals' },
+        { id: 'calendar', label: 'Calendar' },
         { id: 'housework', label: 'Housework' },
         { id: 'expenses', label: 'Expenses' },
+        { id: 'assets', label: 'Asset' },
         { id: 'learning', label: 'Learning' },
         { id: 'ideas', label: 'Ideas' },
     ];
@@ -145,10 +178,39 @@ export default function ReportsPage() {
                 ))}
             </div>
 
+            {activeTab === 'project' && (
+                <div className="grid gap-6 md:grid-cols-2">
+                    <div className="card p-5">
+                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Project Items by Status</h3>
+                        <ResponsiveContainer width="100%" height={280}>
+                            <BarChart data={projectItemsByStatus || []}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                <XAxis dataKey="status" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <Tooltip />
+                                <Bar dataKey="count" fill="#0f766e" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <div className="card p-5">
+                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Project Items by Type</h3>
+                        <ResponsiveContainer width="100%" height={280}>
+                            <PieChart>
+                                <Pie data={projectItemsByType || []} dataKey="count" nameKey="type" cx="50%" cy="50%" outerRadius={100} label>
+                                    {(projectItemsByType || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+
             {activeTab === 'tasks' && (
                 <div className="grid gap-6 md:grid-cols-2">
                     <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Tasks by Status</h3>
+                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Task Navigator Items by Status</h3>
                         <ResponsiveContainer width="100%" height={280}>
                             <BarChart data={tasksByStatus || []}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
@@ -160,11 +222,41 @@ export default function ReportsPage() {
                         </ResponsiveContainer>
                     </div>
                     <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Status Distribution</h3>
+                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Task Status Distribution</h3>
                         <ResponsiveContainer width="100%" height={280}>
                             <PieChart>
                                 <Pie data={tasksByStatus || []} dataKey="count" nameKey="status" cx="50%" cy="50%" outerRadius={100} label>
                                     {(tasksByStatus || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'calendar' && calendarOverview && (
+                <div className="space-y-6">
+                    <div className="grid gap-4 md:grid-cols-4">
+                        {[
+                            { label: 'Total Events', value: calendarOverview.total, color: '#4f46e5' },
+                            { label: 'Today', value: calendarOverview.today, color: '#059669' },
+                            { label: 'Upcoming', value: calendarOverview.upcoming, color: '#d97706' },
+                            { label: 'All Day', value: calendarOverview.allDay, color: '#7c3aed' },
+                        ].map((item) => (
+                            <div key={item.label} className="card p-6 text-center">
+                                <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{item.label}</p>
+                                <p className="text-4xl font-bold" style={{ color: item.color }}>{item.value}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="card p-5">
+                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Events by Category</h3>
+                        <ResponsiveContainer width="100%" height={280}>
+                            <PieChart>
+                                <Pie data={calendarByCategory || []} dataKey="count" nameKey="category" cx="50%" cy="50%" outerRadius={100} label>
+                                    {(calendarByCategory || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                                 </Pie>
                                 <Tooltip />
                                 <Legend />
@@ -228,6 +320,36 @@ export default function ReportsPage() {
                                 <Tooltip formatter={(v: any) => formatVND(Number(v))} />
                                 <Bar dataKey="total" fill="#d97706" radius={[4, 4, 0, 0]} />
                             </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'assets' && assetOverview && (
+                <div className="space-y-6">
+                    <div className="grid gap-4 md:grid-cols-4">
+                        {[
+                            { label: 'Total Assets', value: assetOverview.totalAssets, color: '#4f46e5' },
+                            { label: 'With Warranty', value: assetOverview.withWarranty, color: '#0891b2' },
+                            { label: 'Upcoming Maintenance', value: assetOverview.upcomingMaintenance, color: '#d97706' },
+                            { label: 'Maintenance Cost', value: formatVND(Number(assetOverview.totalMaintenanceCost || 0)), color: '#059669' },
+                        ].map((item) => (
+                            <div key={item.label} className="card p-6 text-center">
+                                <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{item.label}</p>
+                                <p className="text-2xl font-bold" style={{ color: item.color }}>{item.value}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="card p-5">
+                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Assets by Type</h3>
+                        <ResponsiveContainer width="100%" height={280}>
+                            <PieChart>
+                                <Pie data={assetsByType || []} dataKey="count" nameKey="type" cx="50%" cy="50%" outerRadius={100} label>
+                                    {(assetsByType || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                            </PieChart>
                         </ResponsiveContainer>
                     </div>
                 </div>

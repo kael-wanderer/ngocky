@@ -315,11 +315,24 @@ This rule currently applies to:
 - standalone Tasks
 - Project boards
 - Project tasks
+- Housework items
 - Calendar events
 - Expenses
 - Assets
 - Learning topics
 - Idea topics
+
+### Shared Item Display Rule
+
+Shared items use a consistent ownership display pattern across modules:
+
+- owner view: show `Shared` under or beside the item so the owner knows the item is shared
+- non-owner view: still show the shared item, but also show `Owner: <name>` under the item to avoid confusion about ownership
+
+Interaction rule:
+
+- shared visibility does not grant edit/delete/complete rights by default
+- unless a module explicitly supports collaborative editing, non-owners should be view-only
 
 ---
 
