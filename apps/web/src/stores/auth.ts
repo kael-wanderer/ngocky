@@ -24,6 +24,9 @@ const applyTheme = (theme?: string) => {
     document.documentElement.className = '';
     if (theme === 'GREY_BLACK') document.documentElement.classList.add('theme-grey-black');
     else if (theme === 'RED_ACCENT') document.documentElement.classList.add('theme-red-accent');
+    else if (theme === 'DARK') document.documentElement.classList.add('theme-dark');
+    else if (theme === 'MODERN_GREEN') document.documentElement.classList.add('theme-modern-green');
+    else if (theme === 'MULTI_COLOR_BLOCK') document.documentElement.classList.add('theme-multi-color-block');
 };
 
 export const useAuthStore = create<AuthState>((set) => ({

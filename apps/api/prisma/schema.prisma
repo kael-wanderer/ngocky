@@ -110,6 +110,9 @@ enum Theme {
   BLUE_PURPLE
   GREY_BLACK
   RED_ACCENT
+  DARK
+  MODERN_GREEN
+  MULTI_COLOR_BLOCK
 }
 
 enum RepeatFrequency {

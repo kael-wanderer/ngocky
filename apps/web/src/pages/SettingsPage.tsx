@@ -136,6 +136,9 @@ export default function SettingsPage() {
         { id: 'BLUE_PURPLE', name: 'Blue Purple', colors: ['#4f46e5', '#7c3aed', '#eef2ff'] },
         { id: 'GREY_BLACK', name: 'Dark Mode', colors: ['#1f2937', '#374151', '#111827'] },
         { id: 'RED_ACCENT', name: 'Red Accent', colors: ['#dc2626', '#ef4444', '#fef2f2'] },
+        { id: 'DARK', name: 'Dark', colors: ['#0b1220', '#60a5fa', '#131c2e'] },
+        { id: 'MODERN_GREEN', name: 'Modern Green', colors: ['#1f9d68', '#34d399', '#ddf6ea'] },
+        { id: 'MULTI_COLOR_BLOCK', name: 'Multi Color Block', colors: ['#f97316', '#10b981', '#3b82f6'] },
     ];
 
     return (
