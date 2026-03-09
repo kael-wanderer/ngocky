@@ -12,9 +12,11 @@ router.use(authenticate);
 
 router.post('/', validate(createScheduledReportSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const frequency = req.body.frequency === 'NONE' ? 'ONE_TIME' : req.body.frequency;
         const item = await prisma.scheduledReport.create({
             data: {
                 ...req.body,
+                frequency,
                 userId: req.user!.userId,
             },
         });
@@ -50,9 +52,13 @@ router.patch('/:id', validate(updateScheduledReportSchema), async (req: Request,
         });
         if (!item) throw new NotFoundError('Scheduled report not found');
 
+        const frequency = req.body.frequency === 'NONE' ? 'ONE_TIME' : req.body.frequency;
         const updated = await prisma.scheduledReport.update({
             where: { id },
-            data: req.body,
+            data: {
+                ...req.body,
+                ...(frequency ? { frequency } : {}),
+            },
         });
         sendSuccess(res, updated);
     } catch (err) { next(err); }

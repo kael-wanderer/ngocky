@@ -101,7 +101,7 @@ export default function ReportsPage() {
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center gap-2">
                 <BarChart3 className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Reports</h2>
+                <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Analytics</h2>
             </div>
 
             <div className="card p-4 space-y-3">

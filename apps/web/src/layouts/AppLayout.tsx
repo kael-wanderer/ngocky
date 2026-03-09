@@ -18,7 +18,7 @@ const navItems = [
     { to: '/learning', icon: GraduationCap, label: 'Learning' },
     { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
     { to: '/alerts', icon: BellRing, label: 'Reports & Notifications' },
-    { to: '/reports', icon: BarChart3, label: 'Reports' },
+    { to: '/reports', icon: BarChart3, label: 'Analytics' },
     { to: '/settings', icon: Settings, label: 'User Settings' },
 ];
 

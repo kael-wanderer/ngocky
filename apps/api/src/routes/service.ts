@@ -46,11 +46,28 @@ router.get('/due-reports', async (_req: Request, res: Response, next: NextFuncti
             const diff = currentTotalMinutes - (h * 60 + m);
             // One-sided window: fire only when current time is 0–14 min past scheduled time
             if (diff < 0 || diff >= TIME_WINDOW) return false;
+            if (report.frequency === 'ONE_TIME') return true;
             if (report.frequency === 'DAILY') return true;
             if (report.frequency === 'WEEKLY') return currentDay === (report.dayOfWeek ?? 1);
             if (report.frequency === 'MONTHLY') return vnNow.getUTCDate() === (report.dayOfMonth ?? 1);
             return false;
         });
+
+        const oneTimeIds = due
+            .filter(report => report.frequency === 'ONE_TIME')
+            .map(report => report.id);
+
+        if (oneTimeIds.length > 0) {
+            await prisma.scheduledReport.updateMany({
+                where: { id: { in: oneTimeIds } },
+                data: { active: false },
+            });
+            due.forEach((report) => {
+                if (oneTimeIds.includes(report.id)) {
+                    report.active = false;
+                }
+            });
+        }
 
         sendSuccess(res, due);
     } catch (err) { next(err); }

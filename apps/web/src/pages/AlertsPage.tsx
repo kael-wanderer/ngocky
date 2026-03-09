@@ -81,8 +81,12 @@ function getDefaultSections(reportType: string) {
 }
 
 function getDefaultFrequency(reportType: string) {
-    if (reportType === 'TOMORROW_TASKS') return 'NONE';
+    if (reportType === 'TOMORROW_TASKS') return 'ONE_TIME';
     return 'WEEKLY';
+}
+
+function normalizeReportFrequency(frequency?: string) {
+    return frequency === 'NONE' ? 'ONE_TIME' : (frequency || 'WEEKLY');
 }
 
 const emptyReportForm = (reportType = 'WEEKLY_SUMMARY') => ({
@@ -145,6 +149,11 @@ export default function AlertsPage() {
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['scheduled-reports'] }); closeReportModal(); },
     });
 
+    const toggleReportMut = useMutation({
+        mutationFn: ({ id, active }: { id: string; active: boolean }) => api.patch(`/scheduled-reports/${id}`, { active }),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduled-reports'] }),
+    });
+
     const deleteReportMut = useMutation({
         mutationFn: (id: string) => api.delete(`/scheduled-reports/${id}`),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduled-reports'] }),
@@ -205,7 +214,7 @@ export default function AlertsPage() {
         setEditingReport(report);
         setReportForm({
             reportType: report.reportType || 'WEEKLY_SUMMARY',
-            frequency: report.frequency || getDefaultFrequency(report.reportType || 'WEEKLY_SUMMARY'),
+            frequency: normalizeReportFrequency(report.frequency) || getDefaultFrequency(report.reportType || 'WEEKLY_SUMMARY'),
             dayOfWeek: report.dayOfWeek ?? 1,
             dayOfMonth: report.dayOfMonth ?? 1,
             time: report.time || '08:00',
@@ -218,7 +227,7 @@ export default function AlertsPage() {
     function duplicateReport(report: any) {
         createReportMut.mutate({
             reportType: report.reportType,
-            frequency: report.frequency,
+            frequency: normalizeReportFrequency(report.frequency),
             dayOfWeek: report.dayOfWeek,
             dayOfMonth: report.dayOfMonth,
             time: report.time,
@@ -321,19 +330,27 @@ export default function AlertsPage() {
                     ) : (
                         <div className="grid gap-4">
                             {(reports || []).map((report: any) => (
-                                <div key={report.id} className="card p-5 group flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div key={report.id} className={`card p-5 group flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${!report.active ? 'opacity-60 bg-gray-50' : ''}`}>
                                     <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-purple-50 rounded-xl">
-                                            <FileText className="w-5 h-5 text-purple-600" />
+                                        <div className={`p-3 rounded-xl ${!report.active ? 'bg-gray-200' : 'bg-purple-50'}`}>
+                                            <FileText className={`w-5 h-5 ${!report.active ? 'text-gray-400' : 'text-purple-600'}`} />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-sm" style={{ color: 'var(--color-text)' }}>{REPORT_TYPE_LABELS[report.reportType] || report.reportType}</h4>
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="font-bold text-sm" style={{ color: 'var(--color-text)' }}>{REPORT_TYPE_LABELS[report.reportType] || report.reportType}</h4>
+                                                <button
+                                                    className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${report.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
+                                                    onClick={() => toggleReportMut.mutate({ id: report.id, active: !report.active })}
+                                                >
+                                                    {report.active ? 'ENABLED' : 'DISABLED'}
+                                                </button>
+                                            </div>
                                             <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                                {report.frequency === 'NONE'
-                                                    ? 'Manual only'
-                                                    : report.frequency === 'WEEKLY'
+                                                {normalizeReportFrequency(report.frequency) === 'ONE_TIME'
+                                                    ? `One time at ${report.time}`
+                                                    : normalizeReportFrequency(report.frequency) === 'WEEKLY'
                                                     ? `Every ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][report.dayOfWeek ?? 1]} at ${report.time}`
-                                                    : report.frequency === 'MONTHLY'
+                                                    : normalizeReportFrequency(report.frequency) === 'MONTHLY'
                                                     ? `Monthly on day ${report.dayOfMonth ?? 1} at ${report.time}`
                                                     : `Daily at ${report.time}`}
                                             </p>
@@ -482,6 +499,16 @@ export default function AlertsPage() {
                                 </p>
                             </div>
 
+                            <label className="flex items-center gap-2 text-sm cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={ruleForm.active}
+                                    onChange={(e) => setRuleForm({ ...ruleForm, active: e.target.checked })}
+                                    className="rounded"
+                                />
+                                <span style={{ color: 'var(--color-text)' }}>Enable notification</span>
+                            </label>
+
                             <button type="submit" className="btn-primary w-full" disabled={createRuleMut.isPending || updateRuleMut.isPending}>
                                 {editingRule ? 'Save Notification' : 'Create Notification'}
                             </button>
@@ -528,11 +555,12 @@ export default function AlertsPage() {
                                     <select className="input" value={reportForm.frequency} onChange={(e) => setReportForm({ ...reportForm, frequency: e.target.value })}>
                                         {reportForm.reportType === 'TOMORROW_TASKS' ? (
                                             <>
-                                                <option value="NONE">None</option>
+                                                <option value="ONE_TIME">One Time</option>
                                                 <option value="DAILY">Daily</option>
                                             </>
                                         ) : (
                                             <>
+                                                <option value="ONE_TIME">One Time</option>
                                                 <option value="DAILY">Daily</option>
                                                 <option value="WEEKLY">Weekly</option>
                                                 <option value="MONTHLY">Monthly</option>
@@ -599,6 +627,15 @@ export default function AlertsPage() {
                             <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                                 Delivered via your notification channel in Settings.
                             </p>
+                            <label className="flex items-center gap-2 text-sm cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={reportForm.active}
+                                    onChange={(e) => setReportForm({ ...reportForm, active: e.target.checked })}
+                                    className="rounded"
+                                />
+                                <span style={{ color: 'var(--color-text)' }}>Enable schedule</span>
+                            </label>
                             <button type="submit" className="btn-primary w-full" disabled={createReportMut.isPending || updateReportMut.isPending}>
                                 {editingReport ? 'Save Schedule' : 'Schedule Report'}
                             </button>

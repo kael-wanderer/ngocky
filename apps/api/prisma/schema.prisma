@@ -94,7 +94,7 @@ enum AlertFrequency {
 }
 
 enum ReportFrequency {
-  NONE
+  ONE_TIME
   DAILY
   WEEKLY
   MONTHLY
