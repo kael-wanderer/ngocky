@@ -34,6 +34,7 @@ router.get('/topics', async (req: Request, res: Response, next: NextFunction) =>
         const topics = await prisma.learningTopic.findMany({
             where,
             include: {
+                user: { select: { id: true, name: true } },
                 histories: {
                     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
                 },

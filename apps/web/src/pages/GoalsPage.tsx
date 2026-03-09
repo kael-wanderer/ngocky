@@ -8,6 +8,8 @@ import {
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
+import { useAuthStore } from '../stores/auth';
+import { getSharedOwnerName } from '../utils/sharedOwnership';
 
 const unitOptions = [
     { value: 'times', label: 'Time' },
@@ -287,6 +289,7 @@ function TaskForm({
 
 export default function GoalsPage() {
     const qc = useQueryClient();
+    const { user } = useAuthStore();
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState<'GOALS' | 'TASKS'>(() => (searchParams.get('tab') || '').toUpperCase() === 'TASKS' ? 'TASKS' : 'GOALS');
     const [showCreate, setShowCreate] = useState(false);
@@ -636,6 +639,7 @@ export default function GoalsPage() {
                     ) : viewMode === 'grid' ? (
                         <div className="grid gap-4 md:grid-cols-2">
                             {filteredGoals.map((goal: any) => {
+                                const sharedOwnerName = getSharedOwnerName(goal, user?.id);
                                 const progressPct = goal.targetCount > 0 ? (goal.currentCount / goal.targetCount) * 100 : 0;
                                 const barPct = Math.min(100, progressPct);
                                 const completed = goal.currentCount >= goal.targetCount;
@@ -664,6 +668,9 @@ export default function GoalsPage() {
                                                     <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-100" style={{ color: 'var(--color-text-secondary)' }}>{goal.trackingType === 'BY_FREQUENCY' ? 'Count-based' : 'Amount-based'}</span>
                                                     <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{goal.periodType}</span>
                                                 </div>
+                                                {sharedOwnerName && (
+                                                    <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-1 flex-shrink-0">
                                                 <button onClick={() => updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } })} className={`p-1 transition-colors ${goal.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
@@ -695,6 +702,7 @@ export default function GoalsPage() {
                     ) : (
                         <div className="card divide-y">
                             {filteredGoals.map((goal: any) => {
+                                const sharedOwnerName = getSharedOwnerName(goal, user?.id);
                                 const progressPct = goal.targetCount > 0 ? (goal.currentCount / goal.targetCount) * 100 : 0;
                                 const barPct = Math.min(100, progressPct);
                                 const completed = goal.currentCount >= goal.targetCount;
@@ -709,6 +717,7 @@ export default function GoalsPage() {
                                                 {goal.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold flex-shrink-0">Shared</span>}
                                                 {goal.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold flex-shrink-0">Pinned</span>}
                                             </div>
+                                            {sharedOwnerName && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
                                         </div>
                                         <div className="w-56 flex-shrink-0">
                                             <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>{goal.description || '—'}</p>
@@ -763,6 +772,7 @@ export default function GoalsPage() {
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2">
                             {filteredTasks.map((task: any) => {
+                                const sharedOwnerName = getSharedOwnerName(task, user?.id);
                                 const notifText = formatNotification(task);
                                 const repeatText = formatTaskRepeat(task);
                                 const isDone = task.status === 'DONE';
@@ -783,6 +793,7 @@ export default function GoalsPage() {
                                                     {task.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                                                 </div>
                                                 {task.description && <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>{task.description}</p>}
+                                                {sharedOwnerName && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
                                             </div>
                                             <div className="flex items-center gap-1 flex-shrink-0">
                                                 <button onClick={() => updateTaskMut.mutate({ id: task.id, body: { pinToDashboard: !task.pinToDashboard } })} className={`p-1 ${task.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin task"><Pin className="w-3.5 h-3.5" /></button>

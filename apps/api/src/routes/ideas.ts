@@ -33,6 +33,7 @@ router.get('/topics', async (req: Request, res: Response, next: NextFunction) =>
         const topics = await prisma.ideaTopic.findMany({
             where,
             include: {
+                user: { select: { id: true, name: true } },
                 logs: {
                     orderBy: { createdAt: 'desc' },
                 },

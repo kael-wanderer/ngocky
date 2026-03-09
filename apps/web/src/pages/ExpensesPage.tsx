@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, Wallet, Filter, Pencil, Plus, Trash2, X } from 'luc
 import { format } from 'date-fns';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
+import { getSharedOwnerName } from '../utils/sharedOwnership';
 
 const payCategories = ['Food', 'Utilities', 'Healthcare', 'Shopping', 'Transport', 'Home Maintenance', 'Education', 'AI', 'Entertainment', 'Other'];
 const receiveCategories = ['Salary', 'Top-up', 'Sell'];
@@ -408,6 +409,7 @@ export default function ExpensesPage() {
                                 {sortedExpenses.map((expense: any) => {
                                     const isReceive = expense.type === 'RECEIVE';
                                     const canEdit = expense.userId === user?.id;
+                                    const sharedOwnerName = getSharedOwnerName(expense, user?.id);
                                     return (
                                         <tr key={expense.id}>
                                             <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(expense.date), 'MMM d, yyyy')}</td>
@@ -419,6 +421,7 @@ export default function ExpensesPage() {
                                                 <div className="font-medium" style={{ color: 'var(--color-text)' }}>{expense.description}</div>
                                                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                                                     {expense.isShared && <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                                    {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
                                                     {expense.note && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{expense.note}</span>}
                                                 </div>
                                                 {canEdit && (

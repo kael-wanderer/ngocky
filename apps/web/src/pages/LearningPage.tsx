@@ -4,6 +4,8 @@ import api from '../api/client';
 import { BookOpen, CheckCircle2, Clock, Copy, GraduationCap, GripVertical, Pencil, Pin, Plus, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
+import { useAuthStore } from '../stores/auth';
+import { getSharedOwnerName } from '../utils/sharedOwnership';
 
 const emptyTopicForm = () => ({ title: '', description: '', isShared: false });
 const emptyHistoryForm = () => ({
@@ -35,6 +37,7 @@ const getStatusColor = (status: string) => {
 
 export default function LearningPage() {
     const qc = useQueryClient();
+    const { user } = useAuthStore();
     const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
     const [showTopicModal, setShowTopicModal] = useState(false);
     const [editingTopic, setEditingTopic] = useState<any>(null);
@@ -250,47 +253,53 @@ export default function LearningPage() {
                     ) : (
                         <div className="space-y-3">
                             {topicList.map((topic: any) => (
-                                <div
-                                    key={topic.id}
-                                    draggable
-                                    onDragStart={() => setDraggingTopicId(topic.id)}
-                                    onDragOver={(e) => {
-                                        e.preventDefault();
-                                        if (dragOverTopicId !== topic.id) setDragOverTopicId(topic.id);
-                                    }}
-                                    onDragLeave={() => {
-                                        if (dragOverTopicId === topic.id) setDragOverTopicId(null);
-                                    }}
-                                    onDrop={(e) => {
-                                        e.preventDefault();
-                                        handleTopicDrop(topic.id);
-                                    }}
-                                    onDragEnd={() => {
-                                        setDraggingTopicId(null);
-                                        setDragOverTopicId(null);
-                                    }}
-                                    className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''} ${draggingTopicId === topic.id ? 'opacity-60' : ''} ${dragOverTopicId === topic.id ? 'ring-2 ring-slate-300' : ''}`}
-                                    onClick={() => setSelectedTopicId(topic.id)}
-                                    style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex items-start gap-2">
-                                            <GripVertical className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--color-text-secondary)' }} />
-                                            <div>
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{topic.title}</h4>
-                                                    {topic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                (() => {
+                                    const sharedOwnerName = getSharedOwnerName(topic, user?.id);
+                                    return (
+                                        <div
+                                            key={topic.id}
+                                            draggable
+                                            onDragStart={() => setDraggingTopicId(topic.id)}
+                                            onDragOver={(e) => {
+                                                e.preventDefault();
+                                                if (dragOverTopicId !== topic.id) setDragOverTopicId(topic.id);
+                                            }}
+                                            onDragLeave={() => {
+                                                if (dragOverTopicId === topic.id) setDragOverTopicId(null);
+                                            }}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                handleTopicDrop(topic.id);
+                                            }}
+                                            onDragEnd={() => {
+                                                setDraggingTopicId(null);
+                                                setDragOverTopicId(null);
+                                            }}
+                                            className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''} ${draggingTopicId === topic.id ? 'opacity-60' : ''} ${dragOverTopicId === topic.id ? 'ring-2 ring-slate-300' : ''}`}
+                                            onClick={() => setSelectedTopicId(topic.id)}
+                                            style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex items-start gap-2">
+                                                    <GripVertical className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--color-text-secondary)' }} />
+                                                    <div>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{topic.title}</h4>
+                                                            {topic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                                        </div>
+                                                        {sharedOwnerName && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
+                                                        <p className="text-[10px] uppercase font-bold mt-1" style={{ color: 'var(--color-text-secondary)' }}>{topic.histories?.length || 0} histories</p>
+                                                    </div>
                                                 </div>
-                                                <p className="text-[10px] uppercase font-bold mt-1" style={{ color: 'var(--color-text-secondary)' }}>{topic.histories?.length || 0} histories</p>
+                                                <div className="flex items-center gap-1">
+                                                    <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>
+                                                    <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}><Pencil className="w-3.5 h-3.5" /></button>
+                                                    <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this topic and all histories?')) deleteTopicMut.mutate(topic.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-1">
-                                            <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>
-                                            <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}><Pencil className="w-3.5 h-3.5" /></button>
-                                            <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this topic and all histories?')) deleteTopicMut.mutate(topic.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
-                                        </div>
-                                    </div>
-                                </div>
+                                    );
+                                })()
                             ))}
                             {topicList.length === 0 && (
                                 <div className="text-center py-8 card border-dashed border-2">
@@ -311,6 +320,7 @@ export default function LearningPage() {
                                         <h3 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTopic.title}</h3>
                                         {activeTopic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                                     </div>
+                                    {getSharedOwnerName(activeTopic, user?.id) && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {getSharedOwnerName(activeTopic, user?.id)}</p>}
                                     <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{activeTopic.description || 'No topic description yet.'}</p>
                                 </div>
                                 <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateHistory}>

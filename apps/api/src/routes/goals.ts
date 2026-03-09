@@ -32,7 +32,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const [goals, total] = await Promise.all([
             prisma.goal.findMany({
                 where, skip: (page - 1) * limit, take: limit,
-                include: { _count: { select: { checkIns: true } } },
+                include: {
+                    _count: { select: { checkIns: true } },
+                    user: { select: { id: true, name: true } },
+                },
                 orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
             }),
             prisma.goal.count({ where }),
@@ -118,6 +121,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
         const goal = await prisma.goal.findUnique({
             where: { id: req.params.id },
             include: {
+                user: { select: { id: true, name: true } },
                 checkIns: { orderBy: { date: 'desc' }, take: 20 },
                 _count: { select: { checkIns: true } },
             },

@@ -28,7 +28,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                     { isShared: true },
                 ],
             },
-            include: { _count: { select: { tasks: true } } },
+            include: {
+                _count: { select: { tasks: true } },
+                owner: { select: { id: true, name: true } },
+            },
             orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
         });
         sendSuccess(res, boards);
@@ -65,6 +68,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
         const board = await prisma.project.findUnique({
             where: { id: req.params.id },
             include: {
+                owner: { select: { id: true, name: true } },
                 tasks: {
                     include: {
                         assignee: { select: { id: true, name: true } },

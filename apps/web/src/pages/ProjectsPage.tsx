@@ -6,6 +6,7 @@ import NotificationFields, { buildNotificationPayload, emptyNotification, loadNo
 import { format } from 'date-fns';
 import { useAuthStore } from '../stores/auth';
 import { useSearchParams } from 'react-router-dom';
+import { getSharedOwnerName } from '../utils/sharedOwnership';
 
 const STATUS_COLS = ['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED'] as const;
 const statusLabels: Record<string, string> = { PLANNED: 'Planned', IN_PROGRESS: 'In Progress', DONE: 'Done', ARCHIVED: 'Archived' };
@@ -239,41 +240,54 @@ export default function ProjectsPage() {
                         {visibleBoards?.map((b: any) => (
                             boardListView === 'grid' ? (
                                 /* ── Grid card ── */
-                                <div
-                                    key={b.id}
-                                    className={`card p-5 transition-all group cursor-grab active:cursor-grabbing ${dragOverBoardId === b.id ? 'ring-2 shadow-lg' : 'hover:shadow-lg'}`}
-                                    style={dragOverBoardId === b.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
-                                    draggable
-                                    onDragStart={() => setDraggingBoardId(b.id)}
-                                    onDragOver={(e) => { e.preventDefault(); setDragOverBoardId(b.id); }}
-                                    onDragLeave={() => setDragOverBoardId(null)}
-                                    onDrop={() => handleBoardDrop(b.id)}
-                                    onDragEnd={() => { setDraggingBoardId(null); setDragOverBoardId(null); }}
-                                    onClick={() => setSelectedBoardId(b.id)}
-                                >
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h3 className="font-bold text-lg" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
-                                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
-                                            <button onClick={(e) => { e.stopPropagation(); updateBoardMut.mutate({ id: b.id, data: { pinToDashboard: !b.pinToDashboard } }); }} className={`p-1 ${b.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin board"><Pin className="w-4 h-4" /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); setBoardForm({ name: b.name || '', description: b.description || '', type: b.type || 'PERSONAL', boardStatus: b.boardStatus || 'PLAN', isShared: !!b.isShared, pinToDashboard: !!b.pinToDashboard }); setEditingBoard(b); }} className="p-1 hover:text-indigo-500" title="Edit board"><Pencil className="w-4 h-4" /></button>
-                                            {b.ownerId === user?.id && <button onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id, b.name); }} className="p-1 hover:text-red-500" title="Delete board"><Trash2 className="w-4 h-4" /></button>}
+                                (() => {
+                                    const sharedOwnerName = getSharedOwnerName(b, user?.id);
+                                    return (
+                                        <div
+                                            key={b.id}
+                                            className={`card p-5 transition-all group cursor-grab active:cursor-grabbing ${dragOverBoardId === b.id ? 'ring-2 shadow-lg' : 'hover:shadow-lg'}`}
+                                            style={dragOverBoardId === b.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
+                                            draggable
+                                            onDragStart={() => setDraggingBoardId(b.id)}
+                                            onDragOver={(e) => { e.preventDefault(); setDragOverBoardId(b.id); }}
+                                            onDragLeave={() => setDragOverBoardId(null)}
+                                            onDrop={() => handleBoardDrop(b.id)}
+                                            onDragEnd={() => { setDraggingBoardId(null); setDragOverBoardId(null); }}
+                                            onClick={() => setSelectedBoardId(b.id)}
+                                        >
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="font-bold text-lg" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
+                                                <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
+                                                    <button onClick={(e) => { e.stopPropagation(); updateBoardMut.mutate({ id: b.id, data: { pinToDashboard: !b.pinToDashboard } }); }} className={`p-1 ${b.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin board"><Pin className="w-4 h-4" /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); setBoardForm({ name: b.name || '', description: b.description || '', type: b.type || 'PERSONAL', boardStatus: b.boardStatus || 'PLAN', isShared: !!b.isShared, pinToDashboard: !!b.pinToDashboard }); setEditingBoard(b); }} className="p-1 hover:text-indigo-500" title="Edit board"><Pencil className="w-4 h-4" /></button>
+                                                    {b.ownerId === user?.id && <button onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id, b.name); }} className="p-1 hover:text-red-500" title="Delete board"><Trash2 className="w-4 h-4" /></button>}
+                                                </div>
+                                            </div>
+                                            <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>{b.description || 'No description provided.'}</p>
+                                            <div className="space-y-2 mt-auto pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{b._count?.tasks || 0} tasks</span>
+                                                        {b.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
+                                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{String(b.type || 'PERSONAL').replace('_', ' ')}</span>
+                                                        {b.boardStatus && <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${boardStatusColors[b.boardStatus]}20`, color: boardStatusColors[b.boardStatus] }}>{boardStatusLabels[b.boardStatus]}</span>}
+                                                        {b.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
+                                                    </div>
+                                                    <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>Updated {format(new Date(b.updatedAt), 'MMM d')}</span>
+                                                </div>
+                                                {sharedOwnerName && (
+                                                    <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                    <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>{b.description || 'No description provided.'}</p>
-                                    <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{b._count?.tasks || 0} tasks</span>
-                                            {b.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
-                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{String(b.type || 'PERSONAL').replace('_', ' ')}</span>
-                                            {b.boardStatus && <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${boardStatusColors[b.boardStatus]}20`, color: boardStatusColors[b.boardStatus] }}>{boardStatusLabels[b.boardStatus]}</span>}
-                                            {b.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
-                                        </div>
-                                        <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>Updated {format(new Date(b.updatedAt), 'MMM d')}</span>
-                                    </div>
-                                </div>
+                                    );
+                                })()
                             ) : (
                                 /* ── List row ── */
-                                <div key={b.id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => setSelectedBoardId(b.id)}>
+                                (() => {
+                                    const sharedOwnerName = getSharedOwnerName(b, user?.id);
+                                    return (
+                                        <div key={b.id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => setSelectedBoardId(b.id)}>
                                     {/* Col 1: name */}
                                     <div className="w-44 flex-shrink-0">
                                         <h3 className="font-bold text-sm truncate" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
@@ -286,6 +300,7 @@ export default function ProjectsPage() {
                                     <div className="flex-1 flex items-center gap-2 flex-wrap">
                                         <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{b._count?.tasks || 0} tasks</span>
                                         {b.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
+                                        {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
                                         <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{String(b.type || 'PERSONAL').replace('_', ' ')}</span>
                                         {b.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
                                         <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Updated {format(new Date(b.updatedAt), 'MMM d')}</span>
@@ -300,6 +315,8 @@ export default function ProjectsPage() {
                                         </div>
                                     </div>
                                 </div>
+                                    );
+                                })()
                             )
                         ))}
                     </div>
@@ -413,6 +430,7 @@ export default function ProjectsPage() {
 
     // --- Task View ---
     const tasks = activeBoard?.tasks || [];
+    const activeBoardSharedOwnerName = getSharedOwnerName(activeBoard, user?.id);
 
     return (
         <div className="space-y-6">
@@ -423,6 +441,7 @@ export default function ProjectsPage() {
                     </button>
                     <div>
                         <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeBoard?.name}</h2>
+                        {activeBoardSharedOwnerName && <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {activeBoardSharedOwnerName}</p>}
                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Project Management</p>
                     </div>
                 </div>
@@ -591,18 +610,18 @@ export default function ProjectsPage() {
                                         onDragStart={() => setDraggingTaskId(t.id)}
                                         onClick={() => {
                                             setEditingTask(t);
-                                        setTaskForm({
-                                            title: t.title || '',
-                                            description: t.description || '',
-                                            category: t.category || '',
-                                            priority: t.priority || 'MEDIUM',
-                                            status: t.status || 'PLANNED',
-                                            deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : '',
-                                            isShared: !!t.isShared,
-                                            pinToDashboard: !!t.pinToDashboard,
-                                            ...loadNotificationState(t),
-                                        });
-                                    }}
+                                            setTaskForm({
+                                                title: t.title || '',
+                                                description: t.description || '',
+                                                category: t.category || '',
+                                                priority: t.priority || 'MEDIUM',
+                                                status: t.status || 'PLANNED',
+                                                deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : '',
+                                                isShared: !!t.isShared,
+                                                pinToDashboard: !!t.pinToDashboard,
+                                                ...loadNotificationState(t),
+                                            });
+                                        }}
                                     >
                                         <div className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
                                             <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: t.id, data: { pinToDashboard: !t.pinToDashboard } }); }} className={`p-1 ${t.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`}><Pin className="w-3.5 h-3.5" /></button>
@@ -636,6 +655,7 @@ export default function ProjectsPage() {
                                                 </span>
                                             )}
                                         </div>
+                                        {getSharedOwnerName(t, user?.id) && <p className="text-[11px] mt-2" style={{ color: 'var(--color-text-secondary)' }}>Owner: {getSharedOwnerName(t, user?.id)}</p>}
                                     </div>
                                 ))}
                                 {tasks.filter((t: any) => t.status === status).length === 0 && (
@@ -677,6 +697,7 @@ export default function ProjectsPage() {
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <span>{t.category || '-'}</span>
                                                 {t.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                                {getSharedOwnerName(t, user?.id) && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {getSharedOwnerName(t, user?.id)}</span>}
                                                 {t.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                                             </div>
                                         </td>
