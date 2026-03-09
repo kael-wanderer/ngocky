@@ -20,7 +20,38 @@ Tracks personal habits and achievement targets over specific time intervals.
 - **UI**: Visual progress bars showing percentage completion, supporting >100% achievements.
 - **Reminder Model**: Goals can enable reminders using `notificationEnabled` plus a reminder offset (`MINUTES`, `HOURS`, `DAYS`) relative to the current goal period end.
 
-### 2. Project Management (Two-Level Kanban)
+### 2. Goal & Tasks Workspace
+
+The current Goals area evolves into a two-tab workspace:
+
+- **Goals**: existing goal tracking experience
+- **Tasks**: standalone personal tasks that do not need to belong to a project board
+
+This keeps personal planning in one place without forcing all work into Project boards or Calendar events.
+
+Task intent is:
+
+- **Task** = something actionable that the user needs to do
+- **Calendar event** = something scheduled to happen at a date/time
+- **Expense** = historical money movement after something happened
+
+Initial standalone task capabilities:
+
+- one-time or recurring task
+- due date / next due date
+- status such as `PENDING`, `DONE`, `ARCHIVED`
+- reminder support
+- optional dashboard pinning
+
+Follow-on workflow automation direction:
+
+- a task may optionally represent a scheduled payment
+- when a payment task is marked done, the app can automatically create an `Expense`
+- asset maintenance records may optionally generate or sync a future Calendar event from `nextRecommendedDate`
+
+This keeps each module as the source of truth for its own domain while allowing controlled cross-module automation.
+
+### 3. Project Management (Two-Level Kanban)
 
 Allows organizing tasks into distinct boards with a modern Kanban view.
 
@@ -32,7 +63,7 @@ Allows organizing tasks into distinct boards with a modern Kanban view.
 - **Task Reminders**: Tasks can enable reminders with an offset before `deadline`.
 - **Navigation**: Uses a project selection flow first, then enters the board view with breadcrumb navigation.
 
-### 3. Expense Tracking
+### 4. Expense Tracking
 
 Monitors family and personal spending.
 
@@ -49,7 +80,9 @@ Monitors family and personal spending.
   - Expense input accepts shorthand values such as `82M` and stores them as numeric VND amounts.
   - Expense summary is split into `Total income`, `Total payment`, and `Remaining fund`.
 
-### 4. Learning Topics & Histories
+Scheduled or future payments should not live directly in Expenses. They belong to Tasks first, and generate Expenses only when completed if automation is enabled.
+
+### 5. Learning Topics & Histories
 
 Learning is organized in two layers:
 
@@ -64,7 +97,7 @@ This mirrors the asset/log interaction model:
 
 Learning topics can be shared to all users. Histories are records, not deadline-managed tasks.
 
-### 5. Idea Topics & Logs
+### 6. Idea Topics & Logs
 
 Ideas follow the same two-layer structure as Learning and Assets:
 
@@ -81,7 +114,7 @@ This replaces the old flat "add idea item" flow and avoids invalid log creation 
 
 Idea topics can be shared to all users. Idea logs are records, not deadline-managed tasks.
 
-### 6. Calendar Events
+### 7. Calendar Events
 
 Calendar items are events:
 
@@ -91,7 +124,9 @@ Calendar items are events:
 - they may define an optional reminder offset before `startDate`
 - they are not treated as `Pending`, `Completed`, or `Overdue`
 
-### 7. Record Modules
+Calendar also serves as a destination module for linked reminders generated from other domains, such as future asset maintenance follow-ups.
+
+### 8. Record Modules
 
 The following modules are treated as records:
 
@@ -101,6 +136,26 @@ The following modules are treated as records:
 - Idea logs
 
 Records are date-based entries. They are shown by time range but not by overdue/deadline logic.
+
+### 9. Cross-Module Automation Principles
+
+Cross-module automation is allowed when one record is clearly derived from another module's completion or scheduling state.
+
+Planned patterns:
+
+- `Task -> Expense`
+  - Use case: scheduled payment
+  - Rule: only create the expense when the task is marked done
+- `MaintenanceRecord -> CalendarEvent`
+  - Use case: remind the user about the next recommended service date
+  - Rule: create or sync a linked calendar event when `nextRecommendedDate` is set
+
+Design constraints:
+
+- each automation should store a link to its derived record to avoid duplicates
+- updates should sync the linked record instead of creating a new one
+- source modules remain editable without losing the derived relationship
+- automations should be optional and explicit, not implicit for every record
 
 ---
 
@@ -164,12 +219,14 @@ Dashboard supports:
 Multi-select categories on Dashboard:
 
 - `goal`
+- `task`
 - `project`
 - `housework`
 - `calendar`
 - `expense`
 - `assets`
 - `learning`
+- `idea`
 
 ### Reports Coverage
 
@@ -212,6 +269,7 @@ Shared modules use a consistent visibility rule:
 This rule currently applies to:
 
 - Goals
+- standalone Tasks
 - Project boards
 - Project tasks
 - Calendar events

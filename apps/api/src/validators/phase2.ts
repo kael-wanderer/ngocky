@@ -49,6 +49,7 @@ export const createLearningHistorySchema = z.object({
     deadline: z.string().datetime().nullable().optional(),
     status: z.enum(['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED']).optional(),
     notificationEnabled: z.boolean().optional(),
+    pinToDashboard: z.boolean().optional(),
 });
 
 export const updateLearningHistorySchema = createLearningHistorySchema.partial().omit({ topicId: true });
@@ -68,6 +69,7 @@ export const createIdeaLogSchema = z.object({
     category: z.string().optional(),
     tags: z.array(z.string()).optional(),
     status: z.enum(['OPEN', 'REVIEWING', 'ARCHIVED']).optional(),
+    pinToDashboard: z.boolean().optional(),
 });
 
 export const updateIdeaLogSchema = createIdeaLogSchema.partial().omit({ topicId: true });

@@ -4,7 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createEventSchema, updateEventSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError, ValidationError } from '../utils/errors';
 import { buildVisibleCalendarEventWhere } from '../utils/calendarVisibility';
 
 const router = Router();
@@ -30,6 +30,18 @@ function endOfDayLocal(date: Date) {
     const next = new Date(date);
     next.setHours(23, 59, 59, 999);
     return next;
+}
+
+function assertEndAfterStart(startDate?: string | Date | null, endDate?: string | Date | null) {
+    if (!startDate || !endDate) return;
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
+
+    if (end <= start) {
+        throw new ValidationError('End time must be after start time');
+    }
 }
 
 function expandRecurringEvent(event: any, rangeStart?: Date, rangeEnd?: Date) {
@@ -130,6 +142,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 router.post('/', validate(createEventSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { participantIds, ...data } = req.body;
+        assertEndAfterStart(data.startDate, data.endDate);
         const event = await prisma.calendarEvent.create({
             data: {
                 ...data,
@@ -170,6 +183,16 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 router.patch('/:id', validate(updateEventSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { participantIds, ...data } = req.body;
+        const existing = await prisma.calendarEvent.findUnique({
+            where: { id: req.params.id },
+            select: { id: true, startDate: true, endDate: true },
+        });
+        if (!existing) throw new NotFoundError('Event');
+
+        assertEndAfterStart(
+            data.startDate ?? existing.startDate,
+            data.endDate === undefined ? existing.endDate : data.endDate,
+        );
 
         if (participantIds !== undefined) {
             await prisma.eventParticipant.deleteMany({ where: { eventId: req.params.id } });

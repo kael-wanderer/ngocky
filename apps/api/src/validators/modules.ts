@@ -46,6 +46,44 @@ export const updateGoalSchema = z.object({
     active: z.boolean().optional(),
 }).superRefine(notificationRefinement);
 
+const standaloneTaskSchemaBase = z.object({
+    title: z.string().min(1).max(200),
+    description: z.string().optional(),
+    isShared: z.boolean().optional(),
+    dueDate: z.string().datetime().nullable().optional(),
+    priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
+    status: z.enum(['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED']).optional(),
+    ...notificationFields,
+    pinToDashboard: z.boolean().optional(),
+    repeatFrequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).nullable().optional(),
+    repeatEndType: z.enum(['NEVER', 'ON_DATE']).nullable().optional(),
+    repeatUntil: z.string().datetime().nullable().optional(),
+});
+
+function validateStandaloneTaskRepeat(data: any, ctx: z.RefinementCtx) {
+    if (data.repeatFrequency) {
+        if (!data.repeatEndType) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repeatEndType'], message: 'repeatEndType is required when repeatFrequency is set' });
+        }
+        if (data.repeatEndType === 'ON_DATE' && !data.repeatUntil) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repeatUntil'], message: 'repeatUntil is required when repeat ends on date' });
+        }
+        if (!data.dueDate) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['dueDate'], message: 'dueDate is required for recurring tasks' });
+        }
+    }
+}
+
+export const createStandaloneTaskSchema = standaloneTaskSchemaBase.superRefine((data, ctx) => {
+    validateStandaloneTaskRepeat(data, ctx);
+    notificationRefinement(data, ctx);
+});
+
+export const updateStandaloneTaskSchema = standaloneTaskSchemaBase.partial().superRefine((data, ctx) => {
+    validateStandaloneTaskRepeat(data, ctx);
+    notificationRefinement(data, ctx);
+});
+
 export const createCheckInSchema = z.object({
     goalId: z.string().min(1),
     quantity: z.number().int().positive().default(1),
@@ -201,7 +239,24 @@ const eventSchemaBase = z.object({
     participantIds: z.array(z.string()).optional(),
 });
 
+function validateEventDateRange(data: { startDate?: string; endDate?: string }, ctx: z.RefinementCtx) {
+    if (!data.startDate || !data.endDate) return;
+
+    const start = new Date(data.startDate);
+    const end = new Date(data.endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
+
+    if (end <= start) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['endDate'],
+            message: 'End time must be after start time',
+        });
+    }
+}
+
 export const createEventSchema = eventSchemaBase.superRefine((data, ctx) => {
+    validateEventDateRange(data, ctx);
     if (data.repeatFrequency) {
         if (!data.repeatEndType) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repeatEndType'], message: 'repeatEndType is required when repeatFrequency is set' });
@@ -214,6 +269,7 @@ export const createEventSchema = eventSchemaBase.superRefine((data, ctx) => {
 });
 
 export const updateEventSchema = eventSchemaBase.partial().superRefine((data, ctx) => {
+    validateEventDateRange(data, ctx);
     if (data.repeatFrequency) {
         if (!data.repeatEndType) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repeatEndType'], message: 'repeatEndType is required when repeatFrequency is set' });

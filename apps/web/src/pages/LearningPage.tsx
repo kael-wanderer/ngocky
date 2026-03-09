@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { BookOpen, CheckCircle2, Clock, Copy, GraduationCap, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { BookOpen, CheckCircle2, Clock, Copy, GraduationCap, Pencil, Pin, Plus, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 
@@ -92,6 +92,10 @@ export default function LearningPage() {
 
     const deleteHistoryMut = useMutation({
         mutationFn: (id: string) => api.delete(`/learning/histories/${id}`),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['learning_topics'] }),
+    });
+    const togglePinHistoryMut = useMutation({
+        mutationFn: ({ id, pinToDashboard }: { id: string; pinToDashboard: boolean }) => api.patch(`/learning/histories/${id}`, { pinToDashboard }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['learning_topics'] }),
     });
 
@@ -266,13 +270,17 @@ export default function LearningPage() {
                                                 <div className="flex items-start justify-between mb-2">
                                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getStatusColor(history.status)}`}>{history.status.replace('_', ' ')}</span>
                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button className={`p-1.5 rounded ${history.pinToDashboard ? 'text-amber-500' : 'hover:bg-amber-50 hover:text-amber-500 text-gray-400'}`} onClick={() => togglePinHistoryMut.mutate({ id: history.id, pinToDashboard: !history.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
                                                         <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
                                                         <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditHistory(history)}><Pencil className="w-3.5 h-3.5" /></button>
                                                         <button className="p-1.5 hover:bg-red-50 hover:text-red-500 rounded text-gray-400" onClick={() => { if (window.confirm('Delete this history?')) deleteHistoryMut.mutate(history.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                                     </div>
                                                 </div>
 
-                                                <h3 className="font-semibold text-sm line-clamp-1" style={{ color: 'var(--color-text)' }}>{history.title}</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="font-semibold text-sm line-clamp-1" style={{ color: 'var(--color-text)' }}>{history.title}</h3>
+                                                    {history.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
+                                                </div>
                                                 <p className="text-xs mt-2 line-clamp-2 flex-grow" style={{ color: 'var(--color-text-secondary)' }}>{history.description || 'No description provided.'}</p>
 
                                                 <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>

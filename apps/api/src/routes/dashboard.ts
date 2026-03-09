@@ -73,6 +73,12 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 { isShared: true },
             ],
         };
+        const visibleStandaloneTaskWhere = {
+            OR: [
+                { userId },
+                { isShared: true },
+            ],
+        };
         const visibleGoalWhere = {
             OR: [
                 { userId },
@@ -103,21 +109,28 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
         const [
             tasksThisWeek, tasksThisMonth,
+            personalTasksThisWeek, personalTasksThisMonth,
             houseworkThisWeek, houseworkThisMonth,
-            upcomingEvents, dueTasks,
+            upcomingEvents, dueTasks, personalDueTasks,
             dueHousework, learningRecords, expensesInRange, assetRecords,
             overdueHousework, overdueProjects,
-            overdueTaskItems, overdueHouseworkItems,
-            pinnedGoals, pinnedProjects, pinnedHousework, pinnedBoards, pinnedEvents, pinnedAssets,
+            overdueTaskItems, overduePersonalTaskItems, overdueHouseworkItems,
+            pinnedGoals, pinnedProjects, pinnedStandaloneTasks, pinnedHousework, pinnedBoards, pinnedEvents, pinnedAssets, pinnedLearning, pinnedIdeas,
             goals, recentIdeas,
         ] = await Promise.all([
             // Tasks (projects) due this week
             prisma.projectTask.count({
                 where: { ...visibleTaskWhere, deadline: { gte: weekStart, lt: weekEnd }, status: { not: 'DONE' } },
             }),
+            prisma.task.count({
+                where: { ...visibleStandaloneTaskWhere, dueDate: { gte: weekStart, lt: weekEnd }, status: { not: 'DONE' } },
+            }),
             // Tasks due this month
             prisma.projectTask.count({
                 where: { ...visibleTaskWhere, deadline: { gte: monthStart, lt: monthEnd }, status: { not: 'DONE' } },
+            }),
+            prisma.task.count({
+                where: { ...visibleStandaloneTaskWhere, dueDate: { gte: monthStart, lt: monthEnd }, status: { not: 'DONE' } },
             }),
             // Housework due this week
             prisma.houseworkItem.count({
@@ -167,6 +180,33 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                     assignee: { select: { name: true } },
                     project: { select: { name: true } },
                 },
+            }),
+            prisma.task.findMany({
+                where: {
+                    ...visibleStandaloneTaskWhere,
+                    ...(statusFilter === 'OVERDUE'
+                        ? {
+                            dueDate: { lt: todayStart },
+                            status: { notIn: ['DONE', 'ARCHIVED'] },
+                        }
+                        : statusFilter === 'COMPLETED'
+                            ? {
+                                dueDate: { gte: filterStart, lt: filterEnd },
+                                status: 'DONE',
+                            }
+                            : statusFilter === 'ALL'
+                                ? {
+                                    dueDate: { gte: filterStart, lt: filterEnd },
+                                    status: { not: 'ARCHIVED' },
+                                }
+                                : {
+                                    dueDate: { gte: filterStart, lt: filterEnd },
+                                    status: { notIn: ['DONE', 'ARCHIVED'] },
+                                }),
+                },
+                orderBy: { dueDate: 'asc' },
+                take: 50,
+                include: { user: { select: { name: true } } },
             }),
             // Housework due in selected range
             prisma.houseworkItem.findMany({
@@ -234,6 +274,12 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             prisma.projectTask.count({
                 where: { ...visibleTaskWhere, deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
             }),
+            prisma.task.findMany({
+                where: { ...visibleStandaloneTaskWhere, dueDate: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+                orderBy: { dueDate: 'asc' },
+                take: 20,
+                include: { user: { select: { name: true } } },
+            }),
             // Overdue task items
             prisma.projectTask.findMany({
                 where: { ...visibleTaskWhere, deadline: { lt: todayStart }, status: { notIn: ['DONE', 'ARCHIVED'] } },
@@ -270,6 +316,15 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                     assignee: { select: { name: true } },
                     project: { select: { name: true } },
                 },
+            }),
+            prisma.task.findMany({
+                where: {
+                    ...visibleStandaloneTaskWhere,
+                    pinToDashboard: true,
+                    status: { notIn: ['DONE', 'ARCHIVED'] },
+                },
+                take: 10,
+                include: { user: { select: { name: true } } },
             }),
             // Pinned housework
             prisma.houseworkItem.findMany({
@@ -310,15 +365,35 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                     user: { select: { name: true } },
                 },
             }),
+            prisma.learningItem.findMany({
+                where: {
+                    ...visibleLearningWhere,
+                    pinToDashboard: true,
+                },
+                take: 10,
+                include: { user: { select: { name: true } }, topic: { select: { title: true } } },
+            }),
+            prisma.idea.findMany({
+                where: {
+                    userId,
+                    pinToDashboard: true,
+                },
+                take: 10,
+                include: { topic: { select: { title: true } } },
+                orderBy: { createdAt: 'desc' },
+            }),
             // Active goals for current user
             prisma.goal.findMany({
                 where: visibleGoalWhere,
                 take: 50,
                 include: { _count: { select: { checkIns: true } } },
             }),
-            // Recent ideas
+            // Ideas in selected range. Records do not participate in status/overdue.
             prisma.idea.findMany({
-                where: { userId },
+                where: {
+                    userId,
+                    createdAt: { gte: filterStart, lt: filterEnd },
+                },
                 orderBy: { createdAt: 'desc' },
                 take: 8,
                 include: { topic: { select: { title: true } } },
@@ -326,6 +401,15 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         ]);
 
         const filteredGoals = goals.slice(0, 10);
+
+        const mergedDueTasks = [
+            ...dueTasks.map((task: any) => ({ ...task, taskKind: 'PROJECT' })),
+            ...personalDueTasks.map((task: any) => ({ ...task, taskKind: 'STANDALONE' })),
+        ].sort((a: any, b: any) => {
+            const ta = a.deadline ? new Date(a.deadline).getTime() : a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+            const tb = b.deadline ? new Date(b.deadline).getTime() : b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+            return ta - tb;
+        });
 
         const dueProjects = Array.from(
             dueTasks.reduce((acc: Map<string, any>, task: any) => {
@@ -372,6 +456,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 projectId: t.projectId,
                 meta: [t.project?.name, t.status, t.assignee?.name].filter(Boolean).join(' · ') || null,
             })),
+            ...pinnedStandaloneTasks.map((t: any) => ({
+                id: t.id,
+                type: 'TASK',
+                title: t.title,
+                date: t.dueDate,
+                meta: ['Personal task', t.status, t.user?.name].filter(Boolean).join(' · ') || null,
+            })),
             ...pinnedHousework.map((h: any) => ({
                 id: h.id,
                 type: 'HOUSEWORK',
@@ -401,6 +492,20 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 date: a.serviceDate,
                 meta: [a.description, a.user?.name].filter(Boolean).join(' · ') || null,
             })),
+            ...pinnedLearning.map((l: any) => ({
+                id: l.id,
+                type: 'LEARNING',
+                title: l.title,
+                date: l.createdAt,
+                meta: [l.topic?.title, l.user?.name].filter(Boolean).join(' · ') || null,
+            })),
+            ...pinnedIdeas.map((i: any) => ({
+                id: i.id,
+                type: 'IDEA',
+                title: i.title,
+                date: i.createdAt,
+                meta: i.topic?.title || null,
+            })),
         ].sort((a, b) => {
             const ta = a.date ? new Date(a.date).getTime() : Number.MAX_SAFE_INTEGER;
             const tb = b.date ? new Date(b.date).getTime() : Number.MAX_SAFE_INTEGER;
@@ -414,6 +519,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 title: t.title,
                 date: t.deadline,
                 meta: [t.project?.name, t.assignee?.name].filter(Boolean).join(' · ') || null,
+            })),
+            ...overduePersonalTaskItems.map((t: any) => ({
+                id: t.id,
+                type: 'TASK',
+                title: t.title,
+                date: t.dueDate,
+                meta: ['Personal task', t.user?.name].filter(Boolean).join(' · ') || null,
             })),
             ...overdueHouseworkItems.map((h: any) => ({
                 id: h.id,
@@ -434,20 +546,22 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             filterStart,
             filterEnd,
             summary: {
-                tasksThisWeek,
-                tasksThisMonth,
+                tasksThisWeek: tasksThisWeek + personalTasksThisWeek,
+                tasksThisMonth: tasksThisMonth + personalTasksThisMonth,
+                personalTasksThisWeek,
+                personalTasksThisMonth,
                 houseworkThisWeek,
                 houseworkThisMonth,
                 upcomingEventsCount: upcomingEvents.length,
                 overdueHousework,
-                overdueTasks: overdueProjects,
+                overdueTasks: overdueProjects + overduePersonalTaskItems.length,
                 overdueLearning: 0,
                 overdueAssets: 0,
                 overdueEvents: 0,
-                overdueItemsTotal: overdueHousework + overdueProjects,
+                overdueItemsTotal: overdueHousework + overdueProjects + overduePersonalTaskItems.length,
             },
             upcomingEvents,
-            dueTasks,
+            dueTasks: mergedDueTasks,
             dueProjects,
             dueHousework,
             dueLearning: learningRecords,

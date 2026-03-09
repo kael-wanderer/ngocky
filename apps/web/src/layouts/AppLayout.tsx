@@ -44,6 +44,7 @@ export default function AppLayout() {
         const current = [...navItems, ...adminItems].find(
             (i) => i.to === location.pathname || (i.to !== '/' && location.pathname.startsWith(i.to))
         );
+        if (location.pathname.startsWith('/goals')) return 'Goals & Tasks';
         return current?.label || 'NgốcKý';
     })();
 

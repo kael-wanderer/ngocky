@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Calendar, Copy, Lightbulb, Pencil, Plus, Tag, Trash2, X } from 'lucide-react';
+import { Calendar, Copy, Lightbulb, Pencil, Pin, Plus, Tag, Trash2, X } from 'lucide-react';
 
 const emptyTopicForm = () => ({ title: '', description: '', isShared: false });
 const emptyLogForm = () => ({ title: '', content: '', category: '', status: 'OPEN', tags: [] as string[] });
@@ -66,6 +66,10 @@ export default function IdeasPage() {
 
     const deleteLogMut = useMutation({
         mutationFn: (id: string) => api.delete(`/ideas/logs/${id}`),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['idea_topics'] }),
+    });
+    const togglePinLogMut = useMutation({
+        mutationFn: ({ id, pinToDashboard }: { id: string; pinToDashboard: boolean }) => api.patch(`/ideas/logs/${id}`, { pinToDashboard }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['idea_topics'] }),
     });
 
@@ -218,13 +222,17 @@ export default function IdeasPage() {
                                         <div className="flex items-start justify-between mb-3">
                                             {log.category && <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-600">{log.category}</span>}
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button className={`p-1 ${log.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={() => togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
                                                 <button className="p-1 hover:text-indigo-500" onClick={() => duplicateLog(log)}><Copy className="w-3.5 h-3.5" /></button>
                                                 <button className="p-1 hover:text-indigo-500" onClick={() => openEditLog(log)}><Pencil className="w-3.5 h-3.5" /></button>
                                                 <button className="p-1 hover:text-red-500" onClick={() => { if (window.confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                             </div>
                                         </div>
 
-                                        <h3 className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{log.title}</h3>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <h3 className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{log.title}</h3>
+                                            {log.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
+                                        </div>
                                         <p className="text-xs whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{log.content}</p>
 
                                         <div className="mt-4 flex flex-wrap gap-1.5">

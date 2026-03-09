@@ -18,10 +18,10 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-const CATEGORY_OPTIONS = ['goal', 'project', 'housework', 'calendar', 'expense', 'assets', 'learning', 'idea'] as const;
+const CATEGORY_OPTIONS = ['goal', 'task', 'project', 'housework', 'calendar', 'expense', 'assets', 'learning', 'idea'] as const;
 type Category = typeof CATEGORY_OPTIONS[number];
 const categoryLabels: Record<Category, string> = {
-    goal: 'Goal', project: 'Project', housework: 'Housework', calendar: 'Calendar',
+    goal: 'Goal', task: 'Task', project: 'Project', housework: 'Housework', calendar: 'Calendar',
     expense: 'Expense', assets: 'Assets', learning: 'Learning', idea: 'Ideas',
 };
 
@@ -139,7 +139,7 @@ export default function DashboardPage() {
     todayStart.setHours(0, 0, 0, 0);
 
     const cards = [
-        { label: 'Tasks This Week', value: s.tasksThisWeek, icon: FolderKanban, color: '#4f46e5', bg: '#eef2ff', to: '/projects' },
+        { label: 'Tasks This Week', value: s.tasksThisWeek, icon: FolderKanban, color: '#4f46e5', bg: '#eef2ff', to: '/goals?tab=tasks' },
         { label: 'Housework Due', value: s.houseworkThisWeek, icon: Home, color: '#059669', bg: '#ecfdf5', to: '/housework' },
         { label: 'Upcoming Events', value: s.upcomingEventsCount, icon: Calendar, color: '#7c3aed', bg: '#f5f3ff', to: '/calendar' },
         { label: 'Overdue Items', value: s.overdueItemsTotal || 0, icon: AlertTriangle, color: '#dc2626', bg: '#fef2f2', to: '/' },
@@ -151,11 +151,12 @@ export default function DashboardPage() {
     };
 
     const showPinnedItems = useMemo(() => {
-        return categories.some(c => c === 'goal' || c === 'project' || c === 'housework' || c === 'calendar' || c === 'assets');
+        return categories.some(c => c === 'goal' || c === 'task' || c === 'project' || c === 'housework' || c === 'calendar' || c === 'assets' || c === 'learning' || c === 'idea');
     }, [categories]);
 
     const overdueByCategory = (type: string): Category => {
         if (type === 'PROJECT') return 'project';
+        if (type === 'TASK') return 'task';
         if (type === 'HOUSEWORK') return 'housework';
         return 'project';
     };
@@ -266,7 +267,7 @@ export default function DashboardPage() {
                 );
 
             case 'task':
-                if (!sectionVisible('project')) return null;
+                if (!sectionVisible('task')) return null;
                 return (
                     <div className="card p-5 h-full">
                         <div className="flex items-center gap-2 mb-4 pr-7">
@@ -278,18 +279,20 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No tasks with deadline in selected time</p>
                             )}
                             {(data?.dueTasks || []).map((t: any) => (
-                                <button key={t.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(`/projects?boardId=${t.projectId}&taskId=${t.id}`)}>
+                                <button key={t.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => t.taskKind === 'STANDALONE' ? navigate('/goals?tab=tasks') : navigate(`/projects?boardId=${t.projectId}&taskId=${t.id}`)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{t.title}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                                            {t.project?.name || 'Project'}{t.assignee?.name ? ` · ${t.assignee.name}` : ''}
+                                            {t.taskKind === 'STANDALONE'
+                                                ? `Personal task${t.user?.name ? ` · ${t.user.name}` : ''}`
+                                                : `${t.project?.name || 'Project'}${t.assignee?.name ? ` · ${t.assignee.name}` : ''}`}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        {statusBadge(t.status, t.status === 'DONE' ? 'success' : (t.deadline && new Date(t.deadline) < todayStart) ? 'danger' : 'normal')}
-                                        {t.deadline && (
-                                            <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(t.deadline) < todayStart ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
-                                                {format(new Date(t.deadline), 'MMM d')}
+                                        {statusBadge(t.status, t.status === 'DONE' ? 'success' : ((t.deadline || t.dueDate) && new Date(t.deadline || t.dueDate) < todayStart) ? 'danger' : 'normal')}
+                                        {(t.deadline || t.dueDate) && (
+                                            <span className="text-xs font-semibold whitespace-nowrap" style={{ color: new Date(t.deadline || t.dueDate) < todayStart ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                                                {format(new Date(t.deadline || t.dueDate), 'MMM d')}
                                             </span>
                                         )}
                                     </div>
@@ -355,6 +358,9 @@ export default function DashboardPage() {
                                         else if (p.type === 'HOUSEWORK') navigate(`/housework?editId=${p.id}`);
                                         else if (p.type === 'CALENDAR') navigate(`/calendar?eventId=${p.id}`);
                                         else if (p.type === 'ASSET') navigate(`/assets?assetId=${p.assetId || ''}`);
+                                        else if (p.type === 'LEARNING') navigate('/learning');
+                                        else if (p.type === 'IDEA') navigate('/ideas');
+                                        else if (p.type === 'TASK') navigate('/goals?tab=tasks');
                                     }}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{p.title}</p>
@@ -567,6 +573,7 @@ export default function DashboardPage() {
                         <button key={`${o.type}-${o.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-red-50 rounded px-1"
                             onClick={() => {
                                 if (o.type === 'PROJECT') navigate('/projects');
+                                else if (o.type === 'TASK') navigate('/goals?tab=tasks');
                                 else if (o.type === 'HOUSEWORK') navigate(`/housework?editId=${o.id}`);
                                 else if (o.type === 'CALENDAR') navigate(`/calendar?eventId=${o.id}`);
                                 else if (o.type === 'ASSET') navigate('/assets');

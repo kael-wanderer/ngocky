@@ -43,6 +43,7 @@ export default function CalendarPage() {
     const [editingEvent, setEditingEvent] = useState<any>(null);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [form, setForm] = useState({ ...emptyForm });
+    const [formError, setFormError] = useState('');
     const eventIdParam = searchParams.get('eventId');
     const dateParam = searchParams.get('date');
 
@@ -103,6 +104,7 @@ export default function CalendarPage() {
 
     const openCreate = () => {
         setEditingEvent(null);
+        setFormError('');
         const base = selectedDate || new Date();
         const now = new Date();
         let h = now.getHours();
@@ -125,6 +127,7 @@ export default function CalendarPage() {
     const openEdit = (event: any) => {
         setShowCreate(false);
         setEditingEvent(event);
+        setFormError('');
         setForm({
             title: event.title || '',
             description: event.description || '',
@@ -223,14 +226,21 @@ export default function CalendarPage() {
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
+                            setFormError('');
+                            const startAt = new Date(`${form.startDate}T${form.startTime}`);
+                            const endAt = form.endDate ? new Date(`${form.endDate}T${form.endTime || form.startTime}`) : null;
+                            if (endAt && endAt <= startAt) {
+                                setFormError('End time must be after start time.');
+                                return;
+                            }
                             const body: any = {
                                 ...form,
-                                startDate: new Date(`${form.startDate}T${form.startTime}`).toISOString(),
+                                startDate: startAt.toISOString(),
                                 repeatFrequency: form.repeatFrequency || null,
                                 repeatEndType: form.repeatFrequency ? (form.repeatEndType || 'NEVER') : null,
                                 ...buildNotificationPayload(form),
                             };
-                            if (form.endDate) body.endDate = new Date(`${form.endDate}T${form.endTime || form.startTime}`).toISOString();
+                            if (endAt) body.endDate = endAt.toISOString();
                             else delete body.endDate;
                             if (form.repeatFrequency && form.repeatEndType === 'ON_DATE' && form.repeatUntil) body.repeatUntil = new Date(`${form.repeatUntil}T23:59:59.999`).toISOString();
                             else body.repeatUntil = null;
@@ -301,6 +311,9 @@ export default function CalendarPage() {
                                     <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} className="rounded" /> Pin to dashboard</label>
                                 </div>
                             </div>
+                            {formError && (
+                                <p className="text-sm text-red-500">{formError}</p>
+                            )}
                             <NotificationFields form={form} setForm={setForm} />
                             <button type="submit" className="btn-primary w-full" disabled={createMut.isPending || updateMut.isPending}>{editingEvent ? 'Save Changes' : 'Create Event'}</button>
                         </form>

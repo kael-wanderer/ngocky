@@ -1,61 +1,81 @@
-# Implementation Plan - Phase 2: Core Enhancements
+# Implementation Plan - Goals & Tasks Expansion
 
-This document tracks the implementation status of Phase 2 features for the NgocKy Family Productivity Hub.
+This document tracks the next product expansion centered on the Goals area becoming a combined Goals and Tasks workspace.
 
 ---
 
 ## 🏗 Features & Refinements
 
-### 1. Goal Tracking System (Refined)
+### 1. Goals Workspace Refactor
 
-Goal: Enhance frequency/quantity tracking, progress visualization, and validation.
+Goal: keep the current Goals experience intact while refactoring the page into a two-tab workspace.
 
-- [x] **Units & Tracking Type**: Added `unit` and `trackingType` enum to Goal model.
-- [x] **Progress Logic**: Fixed calculation to show actual units (e.g., 1/2) instead of base check-in counts.
-- [x] **Over-achievement**: Enabled visualization of progress exceeding 100%.
-- [x] **Validation**: Restricted check-in dates to the last 45 days and prevented future dates.
-- [x] **Goal Deletion**: Added API and UI support for removing goals.
-- [x] **Auto-Reset**: Implemented background reset logic for Weekly (Monday) and Monthly (1st) cycles.
+- [x] **Goal features baseline**: Existing goal tracking remains available as the first tab.
+- [ ] **Page Rename**: Rename the page experience from a goals-only screen to a combined `Goals & Tasks` workspace.
+- [ ] **Tabbed Layout**: Add `Goals` and `Tasks` tabs similar to the existing `Reports & Notifications` tab pattern.
+- [ ] **Navigation Update**: Update sidebar/menu labels to reflect the combined workspace without breaking discoverability.
 
-### 2. Project Kanban Boards
+### 2. Standalone Tasks Module
 
-Goal: Restructure projects into a two-level hierarchy for better organization.
+Goal: add lightweight personal tasks outside the Project Kanban system.
 
-- [x] **Board Model**: Created `Project` boards to act as separate workspaces.
-- [x] **Sub-tasks**: Refactored `ProjectTask` items to reside within specific boards.
-- [x] **Navigation Flow**: Implemented a selection screen for boards before entering the Kanban view.
-- [x] **UX Improvements**: Added breadcrumbs and a back button for easier internal navigation.
+- [ ] **Task Model**: Introduce a standalone task entity for personal actionable items.
+- [ ] **Task Fields**: Support title, description, due date, repeat settings, status, reminders, and optional pin-to-dashboard.
+- [ ] **Tasks Tab UI**: Add list and create/edit flows under the new `Tasks` tab.
+- [ ] **Repeat Logic**: Support one-time and recurring tasks without forcing them into Calendar.
+- [ ] **Dashboard Integration**: Add standalone task visibility to Dashboard cards/filters where appropriate.
 
-### 3. UI/UX Polishing
+### 3. Scheduled Payment Workflow
 
-Goal: Improve form usability and general aesthetics.
+Goal: support future obligations that become expense records only after completion.
 
-- [x] **Mandatory Indicators**: Added red asterisks (`*`) to all required input fields.
-- [x] **Responsive Layout**: Ensured modals and board views scale correctly on mobile.
-- [x] **Status Badges**: Refined priority and status coloring in Kanban cards.
+- [ ] **Payment Task Extension**: Allow a task to optionally carry amount, expense type, category, and scope metadata.
+- [ ] **Completion Automation**: When a payment task is marked done, automatically create an `Expense` record.
+- [ ] **Duplicate Prevention**: Store a link between the task and generated expense so completion is idempotent.
+- [ ] **Audit Rules**: Define how editing/reopening a completed payment task affects the linked expense.
 
-### 4. Security & Production Stability
+### 4. Asset -> Calendar Automation
 
-Goal: Harden the system for VPS deployment and resolve auth issues.
+Goal: turn `nextRecommendedDate` on maintenance records into optional calendar reminders.
 
-- [x] **401 Unauthorized Fix**: Hardened CORS origin configuration and token synchronization.
-- [x] **Cookie Management**: Set `sameSite: 'none'` and `secure: true` for cross-domain auth support in production.
-- [x] **Token Persistence**: Improved handling of refresh tokens in HTTP-only cookies.
+- [ ] **Linked Calendar Event**: When a maintenance record has `nextRecommendedDate`, create or sync a related calendar event.
+- [ ] **Back-Reference Storage**: Store the linked calendar event id on the maintenance record or in a dedicated relation table.
+- [ ] **Sync Rules**: Update or remove the linked event when the maintenance record changes.
 
----
+### 5. UI/UX Notes
 
-## 🚀 Deployment Automation
+Goal: keep the first release additive and easy to understand.
 
-### GitHub Actions (CI/CD)
+- [ ] **Tab Consistency**: Reuse the `Reports & Notifications` tab interaction pattern for `Goals` and `Tasks`.
+- [ ] **Entry Points**: Add `Add Task` button only inside the `Tasks` tab.
+- [ ] **Terminology**: Keep module language consistent:
+  - Goal = target or habit
+  - Task = actionable work item
+  - Event = time-based calendar item
+  - Expense = historical payment/income record
 
-- [x] **VPS Connection**: Added support for `VPS_PORT` and `VPS_SSH_PASSPHRASE`.
-- [x] **Secret Injection**: Automated `.env` generation on the VPS using GitHub Secrets (DB Passwords, JWT Secrets, etc.).
-- [x] **Automated Seeding**: Deployment script now automatically runs `prisma migrate deploy` and `db:seed`.
+### 6. Delivery Sequence
 
----
+Recommended implementation order:
 
-## 🧪 Testing Coverage (Next Phase)
+1. **Docs and UX framing**
+   - finalize `Goals & Tasks` terminology and tab structure
+2. **Standalone tasks MVP**
+   - schema, API, UI, dashboard filter integration
+3. **Scheduled payment automation**
+   - task completion creates expense
+4. **Asset calendar automation**
+   - maintenance next date creates/syncs calendar event
 
-- [ ] **API Unit Tests**: Coverage for Auth, Goals, and Project routes using Vitest.
-- [ ] **E2E Tests**: Critical path testing for goal completion and expense tracking.
-- [ ] **Automated CI Tests**: Integrate test runs into the GitHub Action pipeline.
+## 🚀 Deployment / Migration Notes
+
+- [ ] Add Prisma migrations for standalone tasks and related automation links.
+- [ ] Regenerate Prisma client after schema changes.
+- [ ] Backfill or default task-related fields for existing users where needed.
+
+## 🧪 Testing Coverage
+
+- [ ] **API Tests**: task CRUD, recurrence, and completion flows.
+- [ ] **Automation Tests**: task -> expense and asset -> calendar sync behavior.
+- [ ] **UI Tests**: tab switching, task creation, and pin/filter behavior.
+- [ ] **Regression Tests**: verify Goals tab keeps current goal tracking behavior unchanged.
