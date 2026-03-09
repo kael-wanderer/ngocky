@@ -9,7 +9,7 @@ import {
 
 const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/goals', icon: Trophy, label: 'Goals' },
+    { to: '/goals', icon: Trophy, label: 'Goals & Tasks' },
     { to: '/projects', icon: FolderKanban, label: 'Projects' },
     { to: '/housework', icon: Home, label: 'Housework' },
     { to: '/calendar', icon: Calendar, label: 'Calendar' },

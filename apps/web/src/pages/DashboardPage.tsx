@@ -4,7 +4,7 @@ import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
 import { useNavigate } from 'react-router-dom';
 import {
-    FolderKanban, Home, Calendar, DollarSign,
+    FolderKanban, Home, Calendar, Wallet,
     AlertTriangle, Target, CheckCircle2, Pin, Package, ChevronDown,
     Lightbulb, Trophy, Microwave, GraduationCap, GripVertical,
 } from 'lucide-react';
@@ -378,7 +378,7 @@ export default function DashboardPage() {
                 return (
                     <div className="card p-5 h-full">
                         <div className="flex items-center gap-2 mb-4 pr-7">
-                            <DollarSign className="w-5 h-5" style={{ color: '#d97706' }} />
+                            <Wallet className="w-5 h-5" style={{ color: '#d97706' }} />
                             <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Expense</h3>
                         </div>
                         <div className="space-y-3">
