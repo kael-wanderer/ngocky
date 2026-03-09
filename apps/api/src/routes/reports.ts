@@ -31,6 +31,42 @@ function getRangeFromPreset(preset?: string) {
     }
 }
 
+function getDateBounds(req: Request) {
+    const preset = req.query.timeRange as string;
+    const presetRange = getRangeFromPreset(preset);
+    const dateFrom = (req.query.dateFrom as string) || presetRange?.start?.toISOString();
+    const dateTo = (req.query.dateTo as string) || presetRange?.end?.toISOString();
+    return {
+        dateFrom: dateFrom ? new Date(dateFrom) : null,
+        dateTo: dateTo ? new Date(dateTo) : null,
+    };
+}
+
+function buildRangeValue(start: Date | null, end: Date | null) {
+    if (!start && !end) return null;
+    const range: Record<string, Date> = {};
+    if (start) range.gte = start;
+    if (end) range.lte = end;
+    return range;
+}
+
+function buildDateFilter(req: Request, primaryField: string, fallbackField = 'createdAt') {
+    const { dateFrom, dateTo } = getDateBounds(req);
+    const range = buildRangeValue(dateFrom, dateTo);
+    if (!range) return {};
+    return {
+        OR: [
+            { [primaryField]: range },
+            {
+                AND: [
+                    { [primaryField]: null },
+                    { [fallbackField]: range },
+                ],
+            },
+        ],
+    };
+}
+
 function subtractReminderOffset(target: Date, value?: number | null, unit?: string | null) {
     const reminderAt = new Date(target);
     const amount = value && value > 0 ? value : 0;
@@ -92,36 +128,59 @@ function buildVisibleAssetWhere(userId: string) {
 router.get('/tasks-by-status', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        const type = req.query.type as string;
         const result = await prisma.task.groupBy({
             by: ['status'],
-            where: buildVisibleStandaloneTaskWhere(userId),
-            _count: { id: true },
+            where: {
+                AND: [
+                    buildVisibleStandaloneTaskWhere(userId),
+                    buildDateFilter(req, 'dueDate'),
+                    ...(type ? [{ taskType: type as any }] : []),
+                ],
+            },
+            _count: { _all: true },
         });
-        sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count.id })));
+        sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count._all })));
     } catch (err) { next(err); }
 });
 
 router.get('/project-items-by-status', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        const type = req.query.type as string;
+        const category = req.query.category as string;
         const result = await prisma.projectTask.groupBy({
             by: ['status'],
-            where: buildVisibleProjectItemWhere(userId),
-            _count: { id: true },
+            where: {
+                AND: [
+                    buildVisibleProjectItemWhere(userId),
+                    buildDateFilter(req, 'deadline'),
+                    ...(type ? [{ type: type as any }] : []),
+                    ...(category ? [{ category }] : []),
+                ],
+            },
+            _count: { _all: true },
         });
-        sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count.id })));
+        sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count._all })));
     } catch (err) { next(err); }
 });
 
 router.get('/project-items-by-type', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        const category = req.query.category as string;
         const result = await prisma.projectTask.groupBy({
             by: ['type'],
-            where: buildVisibleProjectItemWhere(userId),
-            _count: { id: true },
+            where: {
+                AND: [
+                    buildVisibleProjectItemWhere(userId),
+                    buildDateFilter(req, 'deadline'),
+                    ...(category ? [{ category }] : []),
+                ],
+            },
+            _count: { _all: true },
         });
-        sendSuccess(res, result.map((r) => ({ type: r.type, count: r._count.id })));
+        sendSuccess(res, result.map((r) => ({ type: r.type, count: r._count._all })));
     } catch (err) { next(err); }
 });
 
@@ -147,12 +206,19 @@ router.get('/overdue-tasks', async (req: Request, res: Response, next: NextFunct
 router.get('/calendar-overview', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        const category = req.query.category as string;
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const tomorrowStart = new Date(todayStart);
         tomorrowStart.setDate(tomorrowStart.getDate() + 1);
         const events = await prisma.calendarEvent.findMany({
-            where: buildVisibleCalendarEventWhere(userId),
+            where: {
+                AND: [
+                    buildVisibleCalendarEventWhere(userId),
+                    buildDateFilter(req, 'startDate'),
+                    ...(category ? [{ category }] : []),
+                ],
+            },
             select: {
                 id: true,
                 startDate: true,
@@ -180,7 +246,12 @@ router.get('/calendar-by-category', async (req: Request, res: Response, next: Ne
     try {
         const userId = req.user!.userId;
         const events = await prisma.calendarEvent.findMany({
-            where: buildVisibleCalendarEventWhere(userId),
+            where: {
+                AND: [
+                    buildVisibleCalendarEventWhere(userId),
+                    buildDateFilter(req, 'startDate'),
+                ],
+            },
             select: { category: true },
         });
         const grouped = new Map<string, number>();
@@ -195,10 +266,17 @@ router.get('/calendar-by-category', async (req: Request, res: Response, next: Ne
 router.get('/asset-overview', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        const type = req.query.type as string;
         const visibleAssets = buildVisibleAssetWhere(userId);
         const [assets, maintenance] = await Promise.all([
             prisma.asset.findMany({
-                where: visibleAssets,
+                where: {
+                    AND: [
+                        visibleAssets,
+                        buildDateFilter(req, 'purchaseDate'),
+                        ...(type ? [{ type }] : []),
+                    ],
+                },
                 select: {
                     id: true,
                     type: true,
@@ -229,7 +307,12 @@ router.get('/assets-by-type', async (req: Request, res: Response, next: NextFunc
     try {
         const userId = req.user!.userId;
         const assets = await prisma.asset.findMany({
-            where: buildVisibleAssetWhere(userId),
+            where: {
+                AND: [
+                    buildVisibleAssetWhere(userId),
+                    buildDateFilter(req, 'purchaseDate'),
+                ],
+            },
             select: { type: true },
         });
         const grouped = new Map<string, number>();
@@ -248,9 +331,14 @@ router.get('/goal-completion', async (req: Request, res: Response, next: NextFun
         const goals = await prisma.goal.findMany({
             where: {
                 active: true,
-                OR: [
-                    { userId },
-                    { isShared: true },
+                AND: [
+                    {
+                        OR: [
+                            { userId },
+                            { isShared: true },
+                        ],
+                    },
+                    buildDateFilter(req, 'startDate'),
                 ],
             },
             select: { id: true, title: true, targetCount: true, currentCount: true, periodType: true, userId: true },
@@ -272,10 +360,15 @@ router.get('/housework-status', async (req: Request, res: Response, next: NextFu
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const where: any = {
             active: true,
-            OR: [
-                { assigneeId: userId },
-                { createdById: userId },
-                { isShared: true },
+            AND: [
+                {
+                    OR: [
+                        { assigneeId: userId },
+                        { createdById: userId },
+                        { isShared: true },
+                    ],
+                },
+                buildDateFilter(req, 'nextDueDate'),
             ],
         };
         const [total, overdue, completed] = await Promise.all([
@@ -294,14 +387,19 @@ router.get('/learning-status', async (req: Request, res: Response, next: NextFun
         const result = await prisma.learningItem.groupBy({
             by: ['status'],
             where: {
-                OR: [
-                    { userId },
-                    { topic: { isShared: true } },
+                AND: [
+                    {
+                        OR: [
+                            { userId },
+                            { topic: { isShared: true } },
+                        ],
+                    },
+                    buildDateFilter(req, 'deadline'),
                 ],
             },
-            _count: { id: true },
+            _count: { _all: true },
         });
-        sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count.id })));
+        sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count._all })));
     } catch (err) { next(err); }
 });
 
@@ -311,9 +409,14 @@ router.get('/learning-topics', async (req: Request, res: Response, next: NextFun
         const userId = req.user!.userId;
         const topics = await prisma.learningTopic.findMany({
             where: {
-                OR: [
-                    { userId },
-                    { isShared: true },
+                AND: [
+                    {
+                        OR: [
+                            { userId },
+                            { isShared: true },
+                        ],
+                    },
+                    buildDateFilter(req, 'createdAt'),
                 ],
             },
             include: { _count: { select: { histories: true } } },
@@ -330,17 +433,24 @@ router.get('/learning-topics', async (req: Request, res: Response, next: NextFun
 router.get('/ideas-status', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        const category = req.query.category as string;
         const result = await prisma.idea.groupBy({
             by: ['status'],
             where: {
-                OR: [
-                    { userId },
-                    { topic: { isShared: true } },
+                AND: [
+                    {
+                        OR: [
+                            { userId },
+                            { topic: { isShared: true } },
+                        ],
+                    },
+                    buildDateFilter(req, 'createdAt'),
                 ],
+                ...(category ? { category } : {}),
             },
-            _count: { id: true },
+            _count: { _all: true },
         });
-        sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count.id })));
+        sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count._all })));
     } catch (err) { next(err); }
 });
 
@@ -350,9 +460,14 @@ router.get('/idea-topics', async (req: Request, res: Response, next: NextFunctio
         const userId = req.user!.userId;
         const topics = await prisma.ideaTopic.findMany({
             where: {
-                OR: [
-                    { userId },
-                    { isShared: true },
+                AND: [
+                    {
+                        OR: [
+                            { userId },
+                            { isShared: true },
+                        ],
+                    },
+                    buildDateFilter(req, 'createdAt'),
                 ],
             },
             include: { _count: { select: { logs: true } } },

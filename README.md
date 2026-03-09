@@ -1,6 +1,6 @@
 # NgốcKý – Family Record Management
 
-A private family record management web app for managing tasks, goals, housework, expenses, calendars, assets, learning records, and reports.
+A private family record management web app for managing goals, standalone tasks, project items, housework, calendars, expenses, assets, learning records, ideas, analytics, and notifications.
 
 ## Tech Stack
 
@@ -118,14 +118,21 @@ NgocKy/
 | Users | `GET/POST /api/users` | User management |
 | Dashboard | `GET /api/dashboard` | Summary data (`timeRange`, `status`) |
 | Goals | `GET/POST /api/goals` | Goal CRUD |
+| Tasks | `GET/POST /api/tasks` | Standalone task CRUD |
 | Check-ins | `POST /api/checkins` | Log check-ins |
 | Projects | `GET/POST /api/projects` | Project CRUD |
+| Assets | `GET/POST /api/assets` | Asset CRUD + maintenance |
+| Learning | `GET/POST /api/learning/*` | Topics and histories |
+| Ideas | `GET/POST /api/ideas/*` | Topics and logs |
 | Housework | `GET/POST /api/housework` | Housework CRUD |
 | Housework | `POST /api/housework/:id/complete` | Mark complete |
 | Calendar | `GET/POST /api/calendar` | Event CRUD |
 | Expenses | `GET/POST /api/expenses` | Expense CRUD |
-| Reports | `GET /api/reports/*` | Report data + CSV |
+| Analytics | `GET /api/reports/*` | Analytics chart data + CSV |
+| Alerts | `GET/POST /api/alerts` | Notification rule CRUD |
+| Scheduled Reports | `GET/POST /api/scheduled-reports` | Scheduled report CRUD |
 | Service | `GET /api/service/due-notifications` | n8n reminder polling |
+| Service | `GET /api/service/due-reports` | n8n scheduled report polling |
 | Settings | `GET/PATCH /api/settings/profile` | Profile settings |
 
 ## Architecture Decisions
@@ -168,17 +175,18 @@ Target reminder architecture:
 
 ## Modules
 
-- **Dashboard** – Summary cards, filters (`Today`, `This week`, `Next week`, `This month`, `Next month`, `Status`, `Category`), overdue feed for true due items, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Assets`, `Learning`, `Pinned Items`)
-- **Goals** – Recurring goals (weekly/monthly) with check-in tracking, progress bars, and optional pre-deadline reminders
-- **Projects** – Kanban board + list view with priorities, deadlines, assignees, drag-and-drop status updates, board edit/refresh, shared family boards, per-task sharing, and optional pre-deadline task reminders
-- **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete` action, grouped states (`Overdue`, `Due Today`, `Upcoming`, `Unscheduled`), and optional pre-due reminders
-- **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`), owner visibility, and optional pre-start reminders
-- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, expanded scopes (`Personal`, `Family`, `Keo`, `Project`), per-item sharing, sortable columns, and running totals for income, payment, and remaining fund in `VND`
-- **Learning** – Topic-first learning management with shared topics and duplicate actions; topic histories are treated as records
-- **Ideas** – Topic-first idea capture with shared topics and duplicate actions; idea logs are treated as records
-- **Reports** – Charts (bar, pie) for tasks, goals, housework, expenses, learning, and ideas
-- **Scheduled Action** – Rule management with edit/duplicate support and scheduled reports
-- **Settings** – Profile, notifications, theme picker (3 themes) with immediate apply, password change, and TOTP MFA enrollment
+- **Dashboard** – Summary cards, filters (`Today`, `This week`, `Next week`, `This month`, `Next month`, `Status`, `Category`), overdue feed for true due items, pinned items, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Assets`, `Learning`, `Ideas`)
+- **Goals & Tasks** – Combined workspace with recurring goals, check-in tracking, standalone tasks, payment tasks, progress bars, repeat rules, sharing, and optional reminders
+- **Projects** – Shared boards with kanban + list view, project item types (`Task`, `Bug`, `Feature`, `Story`, `Epic`), priorities, deadlines, assignees, drag-and-drop status updates, and per-item sharing
+- **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete`, grouped operational states, sharing, and optional reminders
+- **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`), shared visibility, participants, and optional pre-start reminders
+- **Assets** – Asset registry with sharing, warranty tracking, maintenance records, linked maintenance calendar events, and reminder support
+- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, and running totals in `VND`
+- **Learning** – Topic-first learning management with shared topics, shared ownership display on histories, duplicate actions, and progress/deadline tracking
+- **Ideas** – Topic-first idea capture with shared topics, shared ownership display on logs, duplicate actions, and category/status tracking
+- **Analytics** – Charts and summaries for project items, standalone tasks, goals, calendar, housework, expenses, assets, learning, and ideas with time-aware filters
+- **Reports & Notifications** – Alert rules, scheduled reports (`Weekly Summary`, `Next Week Tasks`, `Tomorrow Tasks`), enable/disable controls, one-time schedules, and n8n delivery integration
+- **Settings** – Profile, notifications, password change, TOTP MFA enrollment, and theme picker with immediate apply (`Blue Purple`, `Grey Black`, `Red Accent`, `Dark`, `Modern Green`, `Multi Color Block`)
 - **User Management** – Admin-only user creation, role assignment, activate/deactivate
 
 ## Dashboard Filters
@@ -222,13 +230,20 @@ Shared visibility uses the same basic rule across modules:
 Current shared modules include:
 
 - Goals
+- standalone Tasks
 - Project boards
-- Project tasks
+- Project items
+- Housework items
 - Calendar events
 - Expenses
 - Assets
 - Learning topics
 - Idea topics
+
+Shared child records follow the shared state of their parent container:
+
+- learning histories inherit topic sharing
+- idea logs inherit topic sharing
 
 Operational note:
 
@@ -247,20 +262,23 @@ Operational note:
 - `RECEIVE`: `Salary`, `Top-up`, `Sell`
 - `PAY`: `Food`, `Utilities`, `Healthcare`, `Shopping`, `Transport`, `Home Maintenance`, `Education`, `AI`, `Entertainment`, `Other`
 
-## 2026-03-08 Changes
+## Recent Changes
 
-Today’s updates include:
+Recent product updates include:
 
-- browser/tab branding updated to `NgốcKý - Family record management`
-- project type added: `Personal`, `Work`, `For Fun`, `Study`
-- calendar repeat added: `Daily`, `Weekly`, `Monthly`, with end repeat `Never` or `On date`
-- asset warranty months and asset sharing added
-- expense time presets added: `Last quarter`, `Last month`, `This month`, `This quarter`, `Custom`
-- learning topics and idea topics now support sharing plus duplicate actions for topic/log entries
-- reports now support time range plus expense filters
-- user management now supports delete and reset password with role restrictions
-- scheduled action section renamed from `Alerts`
-- dashboard logic updated so events and records are not treated as overdue/deadline items
+- project item type added with options `Task`, `Bug`, `Feature`, `Story`, `Epic`
+- project page wording updated from `Task` to `Item` where needed to avoid confusion with standalone tasks
+- analytics page renamed from `Reports` and expanded to cover `Project`, `Task`, `Goal`, `Calendar`, `Asset`, `Housework`, `Expenses`, `Learning`, and `Ideas`
+- analytics filters now support time-aware filtering across all analytics modules, with tab-specific type/category/scope controls
+- scheduled reports now support `Weekly Summary`, `Next Week Tasks`, and `Tomorrow Tasks`
+- report frequency `One Time` now runs as a true one-time job instead of a disabled `None` state
+- reports and notifications now expose explicit enable/disable controls for notification rules and schedules
+- alert rules are evaluated by `GET /api/service/due-notifications`, so n8n can deliver rule-based notifications without extra workflow branching
+- shared ownership display is standardized: owners see `Shared`, non-owners see `Owner: <name>`
+- shared visibility is now applied consistently across standalone tasks, projects, housework, assets, learning topics/histories, and idea topics/logs
+- asset sharing, warranty tracking, and maintenance calendar sync are supported
+- housework sharing is supported
+- new user themes added: `Dark`, `Modern Green`, `Multi Color Block`
 
 ## Project Sharing Rules
 
