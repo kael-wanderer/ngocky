@@ -88,7 +88,7 @@ async function createMaintenanceExpense(tx: Prisma.TransactionClient, payload: a
             type: 'PAY',
             scope: 'PERSONAL',
             date: new Date(payload.serviceDate),
-            category: 'Devices Maintenance',
+            category: 'Maintenance',
             amount,
             note: payload.description || null,
             isShared: false,

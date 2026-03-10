@@ -182,7 +182,7 @@ Target reminder architecture:
 - **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete`, grouped operational states, sharing, and optional reminders
 - **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`, `Quarterly`), shared visibility, participants, and optional pre-start reminders
 - **Appliances & Devices** – Home appliance/device registry with sharing, warranty tracking, maintenance records, linked maintenance calendar events, reminder support, and automatic expense creation when a maintenance log includes cost
-- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, running totals in `VND`, and categories including `Devices Maintenance`, `Insurance`, `Family Support`, and `Gift`
+- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, running totals in `VND`, and categories including `Maintenance`, `Insurance`, `Family Support`, `Gift`, and `Ca Keo`
 - **Learning** – Topic-first learning management with shared topics, shared ownership display on histories, duplicate actions, and progress/deadline tracking
 - **Ideas** – Topic-first idea capture with shared topics, shared ownership display on logs, duplicate actions, and category/status tracking
 - **Analytics** – Charts and summaries for project items, standalone tasks, goals, calendar, housework, expenses, assets, learning, and ideas with time-aware filters
@@ -263,7 +263,7 @@ Operational note:
 ## Expense Type Categories
 
 - `RECEIVE`: `Salary`, `Top-up`, `Sell`
-- `PAY`: `Food`, `Utilities`, `Healthcare`, `Shopping`, `Transport`, `Home Maintenance`, `Devices Maintenance`, `Education`, `AI`, `Entertainment`, `Other`
+- `PAY`: `AI`, `Ca Keo`, `Food`, `Gift`, `Healthcare`, `House`, `Insurance`, `Maintenance`, `Education`, `Entertainment`, `Family Support`, `Shopping`, `Transportation`, `Utilities`, `Other`
 
 ## Recent Changes
 
@@ -283,7 +283,13 @@ Recent product updates include:
 - notification rules and scheduled reports now support double-click edit from the card list
 - settings profile and notification sections now require explicit `Save` instead of auto-saving on blur/change
 - the `Assets` product label is now `Appliances & Devices` in the UI
-- maintenance logs with non-empty cost now automatically create a matching personal expense in category `Devices Maintenance`
+- maintenance logs with non-empty cost now automatically create a matching personal expense in category `Maintenance`
+
+## Auth Session
+
+- Access token and refresh token lifetimes are controlled by environment variables such as `JWT_EXPIRY` and `JWT_REFRESH_EXPIRY`.
+- The frontend keeps the access token in `localStorage` and relies on the refresh-token cookie to renew expired access tokens.
+- If refresh fails, the user is redirected back to login.
 - alert rules now fire once per scheduled Vietnam local day; the visible cooldown control has been removed from the notifications UI
 - shared ownership display is standardized: owners see `Shared`, non-owners see `Owner: <name>`
 - shared visibility is now applied consistently across standalone tasks, projects, housework, assets, learning topics/histories, and idea topics/logs

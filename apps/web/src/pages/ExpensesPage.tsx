@@ -6,8 +6,9 @@ import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
 
-const payCategories = ['Food', 'Utilities', 'Healthcare', 'Shopping', 'Transport', 'Home Maintenance', 'Devices Maintenance', 'Insurance', 'Family Support', 'Gift', 'Education', 'AI', 'Entertainment', 'Other'];
-const receiveCategories = ['Salary', 'Top-up', 'Sell'];
+const DEFAULT_PAY_CATEGORY = 'Food';
+const payCategories = ['AI', 'Ca Keo', 'Food', 'Gift', 'Healthcare', 'House', 'Insurance', 'Maintenance', 'Education', 'Entertainment', 'Family Support', 'Shopping', 'Transportation', 'Utilities', 'Other'];
+const receiveCategories = ['Salary', 'Sell', 'Top-up'];
 const allCategories = [...new Set([...payCategories, ...receiveCategories])];
 const typeOptions = [
     { value: 'PAY', label: 'Pay' },
@@ -58,7 +59,7 @@ const emptyForm = () => ({
     amount: '',
     type: 'PAY',
     isShared: false,
-    category: payCategories[0],
+    category: DEFAULT_PAY_CATEGORY,
     scope: 'PERSONAL',
     date: format(new Date(), 'yyyy-MM-dd'),
     note: '',
@@ -203,7 +204,7 @@ export default function ExpensesPage() {
             amount: String(Math.round(expense.amount)),
             type: expense.type || 'PAY',
             isShared: !!expense.isShared,
-            category: expense.category || ((expense.type || 'PAY') === 'RECEIVE' ? receiveCategories[0] : payCategories[0]),
+            category: expense.category || ((expense.type || 'PAY') === 'RECEIVE' ? receiveCategories[0] : DEFAULT_PAY_CATEGORY),
             scope: expense.scope || 'PERSONAL',
             date: format(new Date(expense.date), 'yyyy-MM-dd'),
             note: expense.note || '',
@@ -221,7 +222,7 @@ export default function ExpensesPage() {
         setForm((current) => ({
             ...current,
             type: nextType,
-            category: nextType === 'RECEIVE' ? receiveCategories[0] : payCategories[0],
+            category: nextType === 'RECEIVE' ? receiveCategories[0] : DEFAULT_PAY_CATEGORY,
         }));
     }
 

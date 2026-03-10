@@ -43,6 +43,12 @@ Initial standalone task capabilities:
 - optional dashboard pinning
 - manual drag reorder with persisted `sortOrder`
 
+Payment-task UI note:
+
+- payment tasks keep internal status for completion/reopen flow
+- the `Status` field is hidden in the task form for `PAYMENT` items
+- payment task cards do not show the status badge in the list
+
 Follow-on workflow automation direction:
 
 - a task may optionally represent a scheduled payment
@@ -71,7 +77,7 @@ Monitors family and personal spending.
 - **Scope**: `PERSONAL`, `FAMILY`, `KEO`, `PROJECT`.
 - **Categories**:
   - `RECEIVE`: Salary, Top-up, Sell
-  - `PAY`: Food, Utilities, Healthcare, Shopping, Transport, Home Maintenance, Devices Maintenance, Insurance, Family Support, Gift, Education, AI, Entertainment, Other
+  - `PAY`: AI, Ca Keo, Food, Gift, Healthcare, House, Insurance, Maintenance, Education, Entertainment, Family Support, Shopping, Transportation, Utilities, Other
 - **UI Behavior**:
   - `PAY` amounts are shown in red.
   - `RECEIVE` amounts are shown in green.
@@ -156,7 +162,7 @@ Implemented / planned patterns:
     - `type = PAY`
     - `scope = PERSONAL`
     - `date = serviceDate`
-    - `category = Devices Maintenance`
+    - `category = Maintenance`
     - `amount = cost`
     - `note = description`
 
@@ -262,6 +268,14 @@ Settings behavior is intentionally mixed based on action type:
 - **Notification** fields (`notificationEnabled`, `notificationChannel`, `notificationEmail`, `telegramChatId`) also require explicit `Save`
 - **Theme** changes still apply immediately
 - **Avatar upload** still updates immediately after upload
+
+### 14. Auth Session Model
+
+- access token expiry is controlled by `JWT_EXPIRY`
+- refresh token lifetime is controlled by `JWT_REFRESH_EXPIRY`
+- the frontend stores the access token in `localStorage`
+- refresh uses an HTTP-only cookie on `/api/auth`
+- if an expired access token cannot be refreshed, the app redirects to login
 
 ---
 

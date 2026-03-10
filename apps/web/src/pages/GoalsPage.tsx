@@ -16,7 +16,8 @@ const unitOptions = [
     { value: 'minutes', label: 'Minute' },
 ] as const;
 
-const expensePayCategories = ['Food', 'Utilities', 'Healthcare', 'Shopping', 'Transport', 'Home Maintenance', 'Devices Maintenance', 'Insurance', 'Family Support', 'Gift', 'Education', 'AI', 'Entertainment', 'Other'];
+const DEFAULT_EXPENSE_PAY_CATEGORY = 'Food';
+const expensePayCategories = ['AI', 'Ca Keo', 'Food', 'Gift', 'Healthcare', 'House', 'Insurance', 'Maintenance', 'Education', 'Entertainment', 'Family Support', 'Shopping', 'Transportation', 'Utilities', 'Other'];
 
 const goalEmptyForm = {
     title: '',
@@ -35,7 +36,7 @@ const taskEmptyForm = {
     description: '',
     taskType: 'TASK',
     amount: '',
-    expenseCategory: expensePayCategories[0],
+    expenseCategory: DEFAULT_EXPENSE_PAY_CATEGORY,
     isShared: false,
     pinToDashboard: false,
     dueDate: '',
@@ -191,7 +192,8 @@ function TaskForm({
                         ...form,
                         taskType: e.target.value,
                         amount: e.target.value === 'PAYMENT' ? form.amount : '',
-                        expenseCategory: e.target.value === 'PAYMENT' ? form.expenseCategory : expensePayCategories[0],
+                        expenseCategory: e.target.value === 'PAYMENT' ? form.expenseCategory : DEFAULT_EXPENSE_PAY_CATEGORY,
+                        status: e.target.value === 'PAYMENT' ? 'PLANNED' : form.status,
                     })}>
                         <option value="TASK">Task</option>
                         <option value="PAYMENT">Payment</option>
@@ -224,7 +226,7 @@ function TaskForm({
                     <input type="time" className="input" value={form.dueTime} disabled={!form.dueDate} onChange={(e) => setForm({ ...form, dueTime: e.target.value })} />
                 </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${form.taskType === 'PAYMENT' ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <div>
                     <label className="label">Priority</label>
                     <select className="input" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
@@ -234,15 +236,17 @@ function TaskForm({
                         <option value="URGENT">Urgent</option>
                     </select>
                 </div>
-                <div>
-                    <label className="label">Status</label>
-                    <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                        <option value="PLANNED">Planned</option>
-                        <option value="IN_PROGRESS">In Progress</option>
-                        <option value="DONE">Done</option>
-                        <option value="ARCHIVED">Archived</option>
-                    </select>
-                </div>
+                {form.taskType !== 'PAYMENT' && (
+                    <div>
+                        <label className="label">Status</label>
+                        <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                            <option value="PLANNED">Planned</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="DONE">Done</option>
+                            <option value="ARCHIVED">Archived</option>
+                        </select>
+                    </div>
+                )}
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -545,7 +549,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             description: task.description || '',
             taskType: task.taskType || 'TASK',
             amount: task.amount != null ? String(task.amount) : '',
-            expenseCategory: task.expenseCategory || expensePayCategories[0],
+            expenseCategory: task.expenseCategory || DEFAULT_EXPENSE_PAY_CATEGORY,
             isShared: !!task.isShared,
             pinToDashboard: !!task.pinToDashboard,
             dueDate: task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : '',
@@ -566,7 +570,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             description: task.description || '',
             taskType: task.taskType || 'TASK',
             amount: task.amount != null ? String(task.amount) : '',
-            expenseCategory: task.expenseCategory || expensePayCategories[0],
+            expenseCategory: task.expenseCategory || DEFAULT_EXPENSE_PAY_CATEGORY,
             isShared: !!task.isShared,
             pinToDashboard: !!task.pinToDashboard,
             dueDate: task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : '',
@@ -857,7 +861,9 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.taskType === 'PAYMENT' ? 'bg-orange-50 text-orange-700' : 'bg-slate-100 text-slate-700'}`}>
                                                         {task.taskType === 'PAYMENT' ? 'Payment' : 'Task'}
                                                     </span>
-                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.status === 'DONE' ? 'bg-emerald-50 text-emerald-700' : task.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700' : task.status === 'ARCHIVED' ? 'bg-gray-100 text-gray-600' : 'bg-blue-50 text-blue-700'}`}>{task.status.replace('_', ' ')}</span>
+                                                    {task.taskType !== 'PAYMENT' && (
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.status === 'DONE' ? 'bg-emerald-50 text-emerald-700' : task.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700' : task.status === 'ARCHIVED' ? 'bg-gray-100 text-gray-600' : 'bg-blue-50 text-blue-700'}`}>{task.status.replace('_', ' ')}</span>
+                                                    )}
                                                     {task.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                                                     {task.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                                                 </div>
