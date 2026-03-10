@@ -6,7 +6,7 @@ import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
 
-const payCategories = ['Food', 'Utilities', 'Healthcare', 'Shopping', 'Transport', 'Home Maintenance', 'Education', 'AI', 'Entertainment', 'Other'];
+const payCategories = ['Food', 'Utilities', 'Healthcare', 'Shopping', 'Transport', 'Home Maintenance', 'Devices Maintenance', 'Education', 'AI', 'Entertainment', 'Other'];
 const receiveCategories = ['Salary', 'Top-up', 'Sell'];
 const allCategories = [...new Set([...payCategories, ...receiveCategories])];
 const typeOptions = [

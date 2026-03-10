@@ -76,6 +76,27 @@ async function syncMaintenanceCalendarEvent(tx: Prisma.TransactionClient, asset:
     return event.id;
 }
 
+async function createMaintenanceExpense(tx: Prisma.TransactionClient, payload: any, userId: string) {
+    if (payload.cost == null) return;
+
+    const amount = Number(payload.cost);
+    if (!Number.isFinite(amount) || amount <= 0) return;
+
+    await tx.expense.create({
+        data: {
+            description: payload.serviceType?.trim() || 'Maintenance',
+            type: 'PAY',
+            scope: 'PERSONAL',
+            date: new Date(payload.serviceDate),
+            category: 'Devices Maintenance',
+            amount,
+            note: payload.description || null,
+            isShared: false,
+            userId,
+        },
+    });
+}
+
 // ─── Assets ─────────────────────────────────────────────────────────────────
 
 router.post('/reorder', async (req: Request, res: Response, next: NextFunction) => {
@@ -201,6 +222,8 @@ router.post('/:id/maintenance', validate(createMaintenanceRecordBodySchema), asy
                     assetId,
                 },
             });
+
+            await createMaintenanceExpense(tx, created, req.user!.userId);
 
             const linkedEventId = await syncMaintenanceCalendarEvent(tx, asset, created, req.user!.userId, null);
             if (!linkedEventId) return created;

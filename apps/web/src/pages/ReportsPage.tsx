@@ -6,7 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const COLORS = ['#4f46e5', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2', '#db2777', '#84cc16'];
 const formatVND = (amount: number) => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(amount) + ' VND';
-const expenseCategories = ['Food', 'Utilities', 'Healthcare', 'Shopping', 'Transport', 'Home Maintenance', 'Education', 'AI', 'Entertainment', 'Other', 'Salary', 'Top-up', 'Sell'];
+const expenseCategories = ['Food', 'Utilities', 'Healthcare', 'Shopping', 'Transport', 'Home Maintenance', 'Devices Maintenance', 'Education', 'AI', 'Entertainment', 'Other', 'Salary', 'Top-up', 'Sell'];
 const scopeOptions = [
     { value: 'PERSONAL', label: 'Personal' },
     { value: 'FAMILY', label: 'Family' },
