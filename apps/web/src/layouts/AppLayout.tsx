@@ -4,23 +4,23 @@ import { useAuthStore } from '../stores/auth';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, LogOut, Menu, X,
-    ChevronRight, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText
+    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText
 } from 'lucide-react';
 
 const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/reports', icon: BarChart3, label: 'Analytics' },
     { to: '/goals', icon: Trophy, label: 'Goals' },
     { to: '/tasks', icon: ClipboardList, label: 'Tasks' },
     { to: '/projects', icon: FolderKanban, label: 'Projects' },
-    { to: '/housework', icon: Home, label: 'Housework' },
-    { to: '/calendar', icon: Calendar, label: 'Calendar' },
     { to: '/expenses', icon: Wallet, label: 'Expenses' },
-    { to: '/assets', icon: Microwave, label: 'Appliances & Devices' },
     { to: '/learning', icon: GraduationCap, label: 'Learning' },
     { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
+    { to: '/housework', icon: Home, label: 'Housework' },
+    { to: '/assets', icon: Microwave, label: 'Appliances & Devices' },
+    { to: '/calendar', icon: Calendar, label: 'Calendar' },
+    { to: '/scheduled-reports', icon: FileText, label: 'Reports' },
     { to: '/notifications', icon: BellRing, label: 'Notifications' },
-    { to: '/scheduled-reports', icon: FileText, label: 'Scheduled Reports' },
-    { to: '/reports', icon: BarChart3, label: 'Analytics' },
     { to: '/settings', icon: Settings, label: 'User Settings' },
 ];
 
@@ -28,12 +28,39 @@ const adminItems = [
     { to: '/users', icon: Users, label: 'User Management' },
 ];
 
+const navGroups = [
+    { id: 'dashboard', label: 'Dashboard', items: ['/', '/reports'] },
+    { id: 'personal', label: 'Personal', items: ['/goals', '/expenses', '/learning', '/ideas', '/tasks', '/projects'] },
+    { id: 'family', label: 'Family', items: ['/housework', '/assets', '/calendar'] },
+    { id: 'settings', label: 'Settings', items: ['/scheduled-reports', '/notifications', '/settings'] },
+    { id: 'admin', label: 'Admin', items: ['/users'] },
+] as const;
+
+const DEFAULT_GROUP_STATE: Record<string, boolean> = {
+    dashboard: true,
+    personal: true,
+    family: true,
+    settings: true,
+    admin: true,
+};
+
+const GROUP_STORAGE_KEY = 'ngocky-sidebar-groups';
+
 export default function AppLayout() {
     const { user, logout } = useAuthStore();
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
+    const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>(() => {
+        if (typeof window === 'undefined') return DEFAULT_GROUP_STATE;
+        try {
+            const saved = window.localStorage.getItem(GROUP_STORAGE_KEY);
+            return saved ? { ...DEFAULT_GROUP_STATE, ...JSON.parse(saved) } : DEFAULT_GROUP_STATE;
+        } catch {
+            return DEFAULT_GROUP_STATE;
+        }
+    });
 
     const isAdmin = user?.role === 'OWNER' || user?.role === 'ADMIN';
 
@@ -48,6 +75,24 @@ export default function AppLayout() {
         );
         return current?.label || 'NgốcKý';
     })();
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        window.localStorage.setItem(GROUP_STORAGE_KEY, JSON.stringify(groupOpen));
+    }, [groupOpen]);
+
+    const toggleGroup = (groupId: string) => {
+        setGroupOpen((current) => ({
+            ...current,
+            [groupId]: !current[groupId],
+        }));
+    };
+
+    const resolveNavItem = (to: string) => [...navItems, ...adminItems].find((item) => item.to === to);
+    const visibleGroups = navGroups.filter((group) => group.id !== 'admin' || isAdmin);
+    const mobileItems = ['/', '/goals', '/tasks', '/calendar', '/settings']
+        .map((to) => resolveNavItem(to))
+        .filter(Boolean) as Array<(typeof navItems)[number]>;
 
     return (
         <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--color-bg)' }}>
@@ -75,59 +120,85 @@ export default function AppLayout() {
 
                 {/* Nav */}
                 <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-                    {navItems.map((item) => (
-                        <NavLink
-                            key={item.to}
-                            to={item.to}
-                            end={item.to === '/'}
-                            onClick={() => setSidebarOpen(false)}
-                            className={({ isActive }) =>
-                                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 group ${isActive
-                                    ? 'text-white shadow-sm'
-                                    : 'hover:bg-gray-50'
-                                }`
-                            }
-                            style={({ isActive }) =>
-                                isActive
-                                    ? { backgroundColor: 'var(--color-primary)' }
-                                    : { color: 'var(--color-text-secondary)' }
-                            }
-                        >
-                            <item.icon className="w-5 h-5 flex-shrink-0" />
-                            {!collapsed && <span>{item.label}</span>}
-                        </NavLink>
-                    ))}
+                    {visibleGroups.map((group) => {
+                        const items = group.items
+                            .map((to) => resolveNavItem(to))
+                            .filter(Boolean) as Array<(typeof navItems)[number]>;
 
-                    {isAdmin && (
-                        <>
-                            <div className="pt-4 pb-2 px-3">
-                                {!collapsed && (
-                                    <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-                                        Admin
-                                    </span>
+                        if (collapsed) {
+                            return (
+                                <div key={group.id} className="space-y-1">
+                                    {items.map((item) => (
+                                        <NavLink
+                                            key={item.to}
+                                            to={item.to}
+                                            end={item.to === '/'}
+                                            onClick={() => setSidebarOpen(false)}
+                                            className={({ isActive }) =>
+                                                `flex items-center justify-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive
+                                                    ? 'text-white shadow-sm'
+                                                    : 'hover:bg-gray-50'
+                                                }`
+                                            }
+                                            style={({ isActive }) =>
+                                                isActive
+                                                    ? { backgroundColor: 'var(--color-primary)' }
+                                                    : { color: 'var(--color-text-secondary)' }
+                                            }
+                                            title={item.label}
+                                        >
+                                            <item.icon className="w-5 h-5 flex-shrink-0" />
+                                        </NavLink>
+                                    ))}
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div key={group.id} className="space-y-1">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleGroup(group.id)}
+                                    className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-gray-50 transition-colors"
+                                    style={{ color: 'var(--color-text)' }}
+                                >
+                                    <span className="flex-1 text-left">{group.label}</span>
+                                    {groupOpen[group.id] ? (
+                                        <ChevronDown className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                                    ) : (
+                                        <ChevronRight className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                                    )}
+                                </button>
+
+                                {groupOpen[group.id] && (
+                                    <div className="space-y-1 pl-2">
+                                        {items.map((item) => (
+                                            <NavLink
+                                                key={item.to}
+                                                to={item.to}
+                                                end={item.to === '/'}
+                                                onClick={() => setSidebarOpen(false)}
+                                                className={({ isActive }) =>
+                                                    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive
+                                                        ? 'text-white shadow-sm'
+                                                        : 'hover:bg-gray-50'
+                                                    }`
+                                                }
+                                                style={({ isActive }) =>
+                                                    isActive
+                                                        ? { backgroundColor: 'var(--color-primary)' }
+                                                        : { color: 'var(--color-text-secondary)' }
+                                                }
+                                            >
+                                                <item.icon className="w-5 h-5 flex-shrink-0" />
+                                                <span>{item.label}</span>
+                                            </NavLink>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
-                            {adminItems.map((item) => (
-                                <NavLink
-                                    key={item.to}
-                                    to={item.to}
-                                    onClick={() => setSidebarOpen(false)}
-                                    className={({ isActive }) =>
-                                        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive ? 'text-white shadow-sm' : 'hover:bg-gray-50'
-                                        }`
-                                    }
-                                    style={({ isActive }) =>
-                                        isActive
-                                            ? { backgroundColor: 'var(--color-primary)' }
-                                            : { color: 'var(--color-text-secondary)' }
-                                    }
-                                >
-                                    <item.icon className="w-5 h-5 flex-shrink-0" />
-                                    {!collapsed && <span>{item.label}</span>}
-                                </NavLink>
-                            ))}
-                        </>
-                    )}
+                        );
+                    })}
                 </nav>
 
                 {/* Footer */}
@@ -197,7 +268,7 @@ export default function AppLayout() {
             {/* Mobile bottom nav */}
             <nav className="fixed bottom-0 left-0 right-0 z-20 lg:hidden border-t flex"
                 style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-                {[navItems[0], navItems[1], navItems[3], navItems[4], navItems[6]].map((item) => (
+                {mobileItems.map((item) => (
                     <NavLink
                         key={item.to}
                         to={item.to}
