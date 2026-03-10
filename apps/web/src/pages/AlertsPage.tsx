@@ -350,6 +350,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                     className={`card p-5 group transition-all cursor-grab active:cursor-grabbing ${dragOverRuleId === rule.id ? 'ring-2 shadow-lg' : ''} ${!rule.active ? 'opacity-60 bg-gray-50' : ''}`}
                                     style={dragOverRuleId === rule.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
                                     draggable
+                                    onDoubleClick={() => openEditRule(rule)}
                                     onDragStart={() => setDraggingRuleId(rule.id)}
                                     onDragOver={(e) => { e.preventDefault(); setDragOverRuleId(rule.id); }}
                                     onDragLeave={() => setDragOverRuleId(null)}
@@ -413,6 +414,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                     className={`card p-5 group flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all cursor-grab active:cursor-grabbing ${dragOverReportId === report.id ? 'ring-2 shadow-lg' : ''} ${!report.active ? 'opacity-60 bg-gray-50' : ''}`}
                                     style={dragOverReportId === report.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
                                     draggable
+                                    onDoubleClick={() => openEditReport(report)}
                                     onDragStart={() => setDraggingReportId(report.id)}
                                     onDragOver={(e) => { e.preventDefault(); setDragOverReportId(report.id); }}
                                     onDragLeave={() => setDragOverReportId(null)}
