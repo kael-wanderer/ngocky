@@ -118,6 +118,10 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
     const [editingReport, setEditingReport] = useState<any>(null);
     const [ruleForm, setRuleForm] = useState(emptyRuleForm());
     const [reportForm, setReportForm] = useState(emptyReportForm());
+    const [draggingRuleId, setDraggingRuleId] = useState<string | null>(null);
+    const [dragOverRuleId, setDragOverRuleId] = useState<string | null>(null);
+    const [draggingReportId, setDraggingReportId] = useState<string | null>(null);
+    const [dragOverReportId, setDragOverReportId] = useState<string | null>(null);
     const showTabSwitcher = !forcedTab;
 
     React.useEffect(() => {
@@ -151,6 +155,11 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
         onSuccess: () => qc.invalidateQueries({ queryKey: ['alert-rules'] }),
     });
 
+    const reorderRuleMut = useMutation({
+        mutationFn: (ids: string[]) => api.post('/alerts/reorder', { ids }),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['alert-rules'] }),
+    });
+
     const { data: reports, isLoading: reportsLoading } = useQuery({
         queryKey: ['scheduled-reports'],
         queryFn: async () => (await api.get('/scheduled-reports')).data.data,
@@ -173,6 +182,11 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
 
     const deleteReportMut = useMutation({
         mutationFn: (id: string) => api.delete(`/scheduled-reports/${id}`),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduled-reports'] }),
+    });
+
+    const reorderReportMut = useMutation({
+        mutationFn: (ids: string[]) => api.post('/scheduled-reports/reorder', { ids }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduled-reports'] }),
     });
 
@@ -257,6 +271,46 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
         setReportForm(emptyReportForm());
     }
 
+    function handleRuleDrop(targetId: string) {
+        if (!draggingRuleId || draggingRuleId === targetId) {
+            setDraggingRuleId(null);
+            setDragOverRuleId(null);
+            return;
+        }
+
+        const ids = (rules || []).map((rule: any) => rule.id);
+        const from = ids.indexOf(draggingRuleId);
+        const to = ids.indexOf(targetId);
+        if (from === -1 || to === -1) return;
+
+        const reordered = [...ids];
+        reordered.splice(from, 1);
+        reordered.splice(to, 0, draggingRuleId);
+        reorderRuleMut.mutate(reordered);
+        setDraggingRuleId(null);
+        setDragOverRuleId(null);
+    }
+
+    function handleReportDrop(targetId: string) {
+        if (!draggingReportId || draggingReportId === targetId) {
+            setDraggingReportId(null);
+            setDragOverReportId(null);
+            return;
+        }
+
+        const ids = (reports || []).map((report: any) => report.id);
+        const from = ids.indexOf(draggingReportId);
+        const to = ids.indexOf(targetId);
+        if (from === -1 || to === -1) return;
+
+        const reordered = [...ids];
+        reordered.splice(from, 1);
+        reordered.splice(to, 0, draggingReportId);
+        reorderReportMut.mutate(reordered);
+        setDraggingReportId(null);
+        setDragOverReportId(null);
+    }
+
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -291,7 +345,17 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                     ) : (
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {(rules || []).map((rule: any) => (
-                                <div key={rule.id} className={`card p-5 group transition-all ${!rule.active ? 'opacity-60 bg-gray-50' : ''}`}>
+                                <div
+                                    key={rule.id}
+                                    className={`card p-5 group transition-all cursor-grab active:cursor-grabbing ${dragOverRuleId === rule.id ? 'ring-2 shadow-lg' : ''} ${!rule.active ? 'opacity-60 bg-gray-50' : ''}`}
+                                    style={dragOverRuleId === rule.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
+                                    draggable
+                                    onDragStart={() => setDraggingRuleId(rule.id)}
+                                    onDragOver={(e) => { e.preventDefault(); setDragOverRuleId(rule.id); }}
+                                    onDragLeave={() => setDragOverRuleId(null)}
+                                    onDrop={() => handleRuleDrop(rule.id)}
+                                    onDragEnd={() => { setDraggingRuleId(null); setDragOverRuleId(null); }}
+                                >
                                     <div className="flex items-start justify-between mb-4">
                                         <div className={`p-2 rounded-lg ${!rule.active ? 'bg-gray-200' : 'bg-primary/10'}`}>
                                             <Bell className={`w-4 h-4 ${!rule.active ? 'text-gray-400' : 'text-primary'}`} style={rule.active ? { color: 'var(--color-primary)' } : {}} />
@@ -344,7 +408,17 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                     ) : (
                         <div className="grid gap-4">
                             {(reports || []).map((report: any) => (
-                                <div key={report.id} className={`card p-5 group flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${!report.active ? 'opacity-60 bg-gray-50' : ''}`}>
+                                <div
+                                    key={report.id}
+                                    className={`card p-5 group flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all cursor-grab active:cursor-grabbing ${dragOverReportId === report.id ? 'ring-2 shadow-lg' : ''} ${!report.active ? 'opacity-60 bg-gray-50' : ''}`}
+                                    style={dragOverReportId === report.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
+                                    draggable
+                                    onDragStart={() => setDraggingReportId(report.id)}
+                                    onDragOver={(e) => { e.preventDefault(); setDragOverReportId(report.id); }}
+                                    onDragLeave={() => setDragOverReportId(null)}
+                                    onDrop={() => handleReportDrop(report.id)}
+                                    onDragEnd={() => { setDraggingReportId(null); setDragOverReportId(null); }}
+                                >
                                     <div className="flex items-center gap-4">
                                         <div className={`p-3 rounded-xl ${!report.active ? 'bg-gray-200' : 'bg-purple-50'}`}>
                                             <FileText className={`w-5 h-5 ${!report.active ? 'text-gray-400' : 'text-purple-600'}`} />

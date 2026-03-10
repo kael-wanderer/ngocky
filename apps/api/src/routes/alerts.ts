@@ -10,11 +10,21 @@ import { createAlertRuleSchema, updateAlertRuleSchema } from '../validators/phas
 const router = Router();
 router.use(authenticate);
 
+async function getNextAlertRuleSortOrder(userId: string) {
+    const aggregate = await prisma.alertRule.aggregate({
+        where: { userId },
+        _max: { sortOrder: true },
+    });
+    return (aggregate._max.sortOrder ?? -1) + 1;
+}
+
 router.post('/', validate(createAlertRuleSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const sortOrder = await getNextAlertRuleSortOrder(req.user!.userId);
         const item = await prisma.alertRule.create({
             data: {
                 ...req.body,
+                sortOrder,
                 userId: req.user!.userId,
             },
         });
@@ -33,12 +43,33 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 where: { userId: req.user!.userId },
                 skip,
                 take: limit,
-                orderBy: { createdAt: 'desc' },
+                orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
             }),
             prisma.alertRule.count({ where: { userId: req.user!.userId } }),
         ]);
 
         sendPaginated(res, items, total, page, limit);
+    } catch (err) { next(err); }
+});
+
+router.post('/reorder', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter((id: unknown): id is string => typeof id === 'string') : [];
+        if (ids.length === 0) return sendSuccess(res, []);
+
+        const owned = await prisma.alertRule.findMany({
+            where: { id: { in: ids }, userId: req.user!.userId },
+            select: { id: true },
+        });
+        const ownedIds = new Set(owned.map((item) => item.id));
+        const orderedIds = ids.filter((id: string) => ownedIds.has(id));
+
+        await Promise.all(orderedIds.map((id: string, index: number) => prisma.alertRule.update({
+            where: { id },
+            data: { sortOrder: index },
+        })));
+
+        sendSuccess(res, orderedIds);
     } catch (err) { next(err); }
 });
 

@@ -10,13 +10,23 @@ import { createScheduledReportSchema, updateScheduledReportSchema } from '../val
 const router = Router();
 router.use(authenticate);
 
+async function getNextScheduledReportSortOrder(userId: string) {
+    const aggregate = await prisma.scheduledReport.aggregate({
+        where: { userId },
+        _max: { sortOrder: true },
+    });
+    return (aggregate._max.sortOrder ?? -1) + 1;
+}
+
 router.post('/', validate(createScheduledReportSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const frequency = req.body.frequency === 'NONE' ? 'ONE_TIME' : req.body.frequency;
+        const sortOrder = await getNextScheduledReportSortOrder(req.user!.userId);
         const item = await prisma.scheduledReport.create({
             data: {
                 ...req.body,
                 frequency,
+                sortOrder,
                 userId: req.user!.userId,
             },
         });
@@ -35,12 +45,33 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 where: { userId: req.user!.userId },
                 skip,
                 take: limit,
-                orderBy: { createdAt: 'desc' },
+                orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
             }),
             prisma.scheduledReport.count({ where: { userId: req.user!.userId } }),
         ]);
 
         sendPaginated(res, items, total, page, limit);
+    } catch (err) { next(err); }
+});
+
+router.post('/reorder', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter((id: unknown): id is string => typeof id === 'string') : [];
+        if (ids.length === 0) return sendSuccess(res, []);
+
+        const owned = await prisma.scheduledReport.findMany({
+            where: { id: { in: ids }, userId: req.user!.userId },
+            select: { id: true },
+        });
+        const ownedIds = new Set(owned.map((item) => item.id));
+        const orderedIds = ids.filter((id: string) => ownedIds.has(id));
+
+        await Promise.all(orderedIds.map((id: string, index: number) => prisma.scheduledReport.update({
+            where: { id },
+            data: { sortOrder: index },
+        })));
+
+        sendSuccess(res, orderedIds);
     } catch (err) { next(err); }
 });
 

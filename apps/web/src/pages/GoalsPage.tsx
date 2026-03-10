@@ -314,6 +314,8 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [draggingGoalId, setDraggingGoalId] = useState<string | null>(null);
     const [dragOverGoalId, setDragOverGoalId] = useState<string | null>(null);
+    const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
+    const [dragOverTaskId, setDragOverTaskId] = useState<string | null>(null);
     const [goalForm, setGoalForm] = useState({ ...goalEmptyForm });
     const [taskForm, setTaskForm] = useState({ ...taskEmptyForm });
     const editIdParam = searchParams.get('editId');
@@ -423,6 +425,11 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
         },
     });
 
+    const reorderTasksMut = useMutation({
+        mutationFn: (ids: string[]) => api.post('/tasks/reorder', { ids }),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+    });
+
     const goals = goalsData || [];
     const tasks = tasksData || [];
     const selectedGoal = goals.find((g: any) => g.id === checkInGoalId);
@@ -457,6 +464,30 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
         reorderMut.mutate(reordered);
         setDraggingGoalId(null);
         setDragOverGoalId(null);
+    };
+
+    const handleTaskDrop = (targetId: string) => {
+        if (!draggingTaskId || draggingTaskId === targetId) {
+            setDraggingTaskId(null);
+            setDragOverTaskId(null);
+            return;
+        }
+
+        const ids = tasks.map((task: any) => task.id);
+        const from = ids.indexOf(draggingTaskId);
+        const to = ids.indexOf(targetId);
+        if (from === -1 || to === -1) {
+            setDraggingTaskId(null);
+            setDragOverTaskId(null);
+            return;
+        }
+
+        const reordered = [...ids];
+        reordered.splice(from, 1);
+        reordered.splice(to, 0, draggingTaskId);
+        reorderTasksMut.mutate(reordered);
+        setDraggingTaskId(null);
+        setDragOverTaskId(null);
     };
 
     const handleDateChange = (val: string) => {
@@ -796,8 +827,26 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                 const isArchived = task.status === 'ARCHIVED';
                                 const dueDate = task.dueDate ? new Date(task.dueDate) : null;
                                 const isOverdue = dueDate ? dueDate < new Date(new Date().setHours(0, 0, 0, 0)) && !isDone && !isArchived : false;
+                                const canReorderTasks = taskFilter === 'ALL' && canManage;
                                 return (
-                                    <div key={task.id} className="card p-5 animate-slide-up transition-shadow hover:shadow-lg">
+                                    <div
+                                        key={task.id}
+                                        className={`card p-5 animate-slide-up transition-shadow ${canReorderTasks ? 'cursor-grab active:cursor-grabbing' : ''} ${dragOverTaskId === task.id ? 'ring-2 shadow-lg' : 'hover:shadow-lg'}`}
+                                        style={dragOverTaskId === task.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
+                                        draggable={canReorderTasks}
+                                        onDragStart={() => canReorderTasks && setDraggingTaskId(task.id)}
+                                        onDragOver={(e) => {
+                                            if (!canReorderTasks || !draggingTaskId) return;
+                                            e.preventDefault();
+                                            setDragOverTaskId(task.id);
+                                        }}
+                                        onDragLeave={() => canReorderTasks && setDragOverTaskId(null)}
+                                        onDrop={() => canReorderTasks && handleTaskDrop(task.id)}
+                                        onDragEnd={() => {
+                                            setDraggingTaskId(null);
+                                            setDragOverTaskId(null);
+                                        }}
+                                    >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">

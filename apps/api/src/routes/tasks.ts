@@ -10,6 +10,14 @@ import { resolveReminderFields } from '../utils/reminders';
 const router = Router();
 router.use(authenticate);
 
+async function getNextTaskSortOrder(userId: string) {
+    const aggregate = await prisma.task.aggregate({
+        where: { userId },
+        _max: { sortOrder: true },
+    });
+    return (aggregate._max.sortOrder ?? -1) + 1;
+}
+
 function addRepeat(date: Date, repeatFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY') {
     const next = new Date(date);
     if (repeatFrequency === 'DAILY') next.setDate(next.getDate() + 1);
@@ -55,8 +63,30 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     } catch (err) { next(err); }
 });
 
+router.post('/reorder', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter((id: unknown): id is string => typeof id === 'string') : [];
+        if (ids.length === 0) return sendSuccess(res, []);
+
+        const owned = await prisma.task.findMany({
+            where: { id: { in: ids }, userId: req.user!.userId },
+            select: { id: true },
+        });
+        const ownedIds = new Set(owned.map((task) => task.id));
+        const orderedIds = ids.filter((id: string) => ownedIds.has(id));
+
+        await Promise.all(orderedIds.map((id: string, index: number) => prisma.task.update({
+            where: { id },
+            data: { sortOrder: index },
+        })));
+
+        sendSuccess(res, orderedIds);
+    } catch (err) { next(err); }
+});
+
 router.post('/', validate(createStandaloneTaskSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const sortOrder = await getNextTaskSortOrder(req.user!.userId);
         const task = await prisma.task.create({
             data: {
                 ...req.body,
@@ -68,6 +98,7 @@ router.post('/', validate(createStandaloneTaskSchema), async (req: Request, res:
                 expenseCategory: req.body.expenseCategory ?? null,
                 dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
                 repeatUntil: req.body.repeatUntil ? new Date(req.body.repeatUntil) : null,
+                sortOrder,
                 userId: req.user!.userId,
             },
             include: { user: { select: { id: true, name: true } } },

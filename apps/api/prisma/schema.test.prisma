@@ -404,6 +404,7 @@ model AlertRule {
   lastSentAt          DateTime?
   notificationChannel NotificationChannel @default(EMAIL)
   active              Boolean             @default(true)
+  sortOrder           Int                 @default(0)
   userId              String
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
@@ -420,11 +421,14 @@ model ScheduledReport {
   reportType          String
   dateRangePreset     String?
   frequency           ReportFrequency     @default(WEEKLY)
+  dayOfMonth          Int?
   dayOfWeek           Int?
   time                String?
+  sections            String[]
   notificationChannel NotificationChannel @default(EMAIL)
-  recipients          String?
+  recipients          String[]
   active              Boolean             @default(true)
+  sortOrder           Int                 @default(0)
   userId              String
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
