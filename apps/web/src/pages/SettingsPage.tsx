@@ -29,6 +29,13 @@ export default function SettingsPage() {
     const [msg, setMsg] = useState('');
     const [mfaEnableCode, setMfaEnableCode] = useState('');
     const [mfaDisableCode, setMfaDisableCode] = useState('');
+    const [profileForm, setProfileForm] = useState({ name: '', email: '', timezone: 'Asia/Ho_Chi_Minh' });
+    const [notificationForm, setNotificationForm] = useState({
+        notificationEnabled: true,
+        notificationChannel: 'EMAIL',
+        notificationEmail: '',
+        telegramChatId: '',
+    });
     const mfaDisableInputRef = useRef<HTMLInputElement>(null);
 
     const { data: profile } = useQuery({
@@ -95,6 +102,21 @@ export default function SettingsPage() {
 
     const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
     const avatarInputRef = useRef<HTMLInputElement>(null);
+
+    React.useEffect(() => {
+        if (!profile) return;
+        setProfileForm({
+            name: profile.name || '',
+            email: profile.email || '',
+            timezone: profile.timezone || 'Asia/Ho_Chi_Minh',
+        });
+        setNotificationForm({
+            notificationEnabled: !!profile.notificationEnabled,
+            notificationChannel: profile.notificationChannel || 'EMAIL',
+            notificationEmail: profile.notificationEmail || '',
+            telegramChatId: profile.telegramChatId || '',
+        });
+    }, [profile]);
 
     const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -208,13 +230,20 @@ export default function SettingsPage() {
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div>
                                     <label className="label">Name</label>
-                                    <input className="input" defaultValue={profile.name}
-                                        onBlur={(e) => e.target.value !== profile.name && updateProfile.mutate({ name: e.target.value })}
+                                    <input
+                                        className="input"
+                                        value={profileForm.name}
+                                        onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
                                     />
                                 </div>
                                 <div>
                                     <label className="label">Email</label>
-                                    <input className="input" value={profile.email} disabled />
+                                    <input
+                                        className="input"
+                                        type="email"
+                                        value={profileForm.email}
+                                        onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                                    />
                                 </div>
                                 <div>
                                     <label className="label">Role</label>
@@ -224,14 +253,23 @@ export default function SettingsPage() {
                                     <label className="label">Timezone</label>
                                     <select
                                         className="input"
-                                        value={profile.timezone || 'Asia/Ho_Chi_Minh'}
-                                        onChange={(e) => updateProfile.mutate({ timezone: e.target.value })}
+                                        value={profileForm.timezone}
+                                        onChange={(e) => setProfileForm({ ...profileForm, timezone: e.target.value })}
                                     >
                                         {TIMEZONES.map((tz) => (
                                             <option key={tz.value} value={tz.value}>{tz.label}</option>
                                         ))}
                                     </select>
                                 </div>
+                            </div>
+                            <div>
+                                <button
+                                    className="btn-primary"
+                                    onClick={() => updateProfile.mutate(profileForm)}
+                                    disabled={updateProfile.isPending}
+                                >
+                                    {updateProfile.isPending ? 'Saving...' : 'Save'}
+                                </button>
                             </div>
                         </div>
                     )}
@@ -241,15 +279,15 @@ export default function SettingsPage() {
                         <div className="space-y-5">
                             <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Notification Preferences</h3>
                             <label className="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" className="rounded" checked={profile.notificationEnabled}
-                                    onChange={(e) => updateProfile.mutate({ notificationEnabled: e.target.checked })}
+                                <input type="checkbox" className="rounded" checked={notificationForm.notificationEnabled}
+                                    onChange={(e) => setNotificationForm({ ...notificationForm, notificationEnabled: e.target.checked })}
                                 />
                                 <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Enable notifications</span>
                             </label>
                             <div>
                                 <label className="label">Notification Channel</label>
-                                <select className="input max-w-xs" value={profile.notificationChannel}
-                                    onChange={(e) => updateProfile.mutate({ notificationChannel: e.target.value })}
+                                <select className="input max-w-xs" value={notificationForm.notificationChannel}
+                                    onChange={(e) => setNotificationForm({ ...notificationForm, notificationChannel: e.target.value })}
                                 >
                                     <option value="EMAIL">Email</option>
                                     <option value="TELEGRAM">Telegram</option>
@@ -258,15 +296,29 @@ export default function SettingsPage() {
                             </div>
                             <div>
                                 <label className="label">Email</label>
-                                <input className="input max-w-sm" defaultValue={profile.notificationEmail || ''}
-                                    onBlur={(e) => updateProfile.mutate({ notificationEmail: e.target.value || null })}
+                                <input className="input max-w-sm" value={notificationForm.notificationEmail}
+                                    onChange={(e) => setNotificationForm({ ...notificationForm, notificationEmail: e.target.value })}
                                 />
                             </div>
                             <div>
                                 <label className="label">Telegram ID</label>
-                                <input className="input max-w-sm" defaultValue={profile.telegramChatId || ''}
-                                    onBlur={(e) => updateProfile.mutate({ telegramChatId: e.target.value || null })}
+                                <input className="input max-w-sm" value={notificationForm.telegramChatId}
+                                    onChange={(e) => setNotificationForm({ ...notificationForm, telegramChatId: e.target.value })}
                                 />
+                            </div>
+                            <div>
+                                <button
+                                    className="btn-primary"
+                                    onClick={() => updateProfile.mutate({
+                                        notificationEnabled: notificationForm.notificationEnabled,
+                                        notificationChannel: notificationForm.notificationChannel,
+                                        notificationEmail: notificationForm.notificationEmail || null,
+                                        telegramChatId: notificationForm.telegramChatId || null,
+                                    })}
+                                    disabled={updateProfile.isPending}
+                                >
+                                    {updateProfile.isPending ? 'Saving...' : 'Save'}
+                                </button>
                             </div>
                         </div>
                     )}

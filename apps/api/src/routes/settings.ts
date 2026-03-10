@@ -38,7 +38,7 @@ router.get('/profile', async (req: Request, res: Response, next: NextFunction) =
 // Update profile
 router.patch('/profile', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const allowedFields = ['name', 'theme', 'notificationEnabled', 'notificationChannel', 'notificationEmail', 'telegramChatId', 'timezone', 'avatarUrl'];
+        const allowedFields = ['name', 'email', 'theme', 'notificationEnabled', 'notificationChannel', 'notificationEmail', 'telegramChatId', 'timezone', 'avatarUrl'];
         const data: any = {};
         allowedFields.forEach((f) => { if (req.body[f] !== undefined) data[f] = req.body[f]; });
 
