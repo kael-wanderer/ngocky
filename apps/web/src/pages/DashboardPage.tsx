@@ -22,7 +22,7 @@ const CATEGORY_OPTIONS = ['goal', 'task', 'project', 'housework', 'calendar', 'e
 type Category = typeof CATEGORY_OPTIONS[number];
 const categoryLabels: Record<Category, string> = {
     goal: 'Goal', task: 'Task', project: 'Project', housework: 'Housework', calendar: 'Calendar',
-    expense: 'Expense', assets: 'Assets', learning: 'Learning', idea: 'Ideas',
+    expense: 'Expense', assets: 'Appliances & Devices', learning: 'Learning', idea: 'Ideas',
 };
 
 const TIME_OPTIONS = [
@@ -415,7 +415,7 @@ export default function DashboardPage() {
                     <div className="card p-5 h-full">
                         <div className="flex items-center gap-2 mb-4 pr-7">
                             <Microwave className="w-5 h-5" style={{ color: '#0ea5e9' }} />
-                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Assets</h3>
+                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Appliances & Devices</h3>
                         </div>
                         <div className="space-y-3">
                             {(data?.dueAssets || []).length === 0 && (

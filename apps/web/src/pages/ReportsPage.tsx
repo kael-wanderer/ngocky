@@ -148,7 +148,7 @@ export default function ReportsPage() {
         { id: 'calendar', label: 'Calendar' },
         { id: 'housework', label: 'Housework' },
         { id: 'expenses', label: 'Expenses' },
-        { id: 'assets', label: 'Asset' },
+        { id: 'assets', label: 'Appliances & Devices' },
         { id: 'learning', label: 'Learning' },
         { id: 'ideas', label: 'Ideas' },
     ];

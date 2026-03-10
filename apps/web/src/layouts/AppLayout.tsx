@@ -4,20 +4,22 @@ import { useAuthStore } from '../stores/auth';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, LogOut, Menu, X,
-    ChevronRight, Bell, Plus, Microwave, GraduationCap, Lightbulb, BellRing
+    ChevronRight, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText
 } from 'lucide-react';
 
 const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/goals', icon: Trophy, label: 'Goals & Tasks' },
+    { to: '/goals', icon: Trophy, label: 'Goals' },
+    { to: '/tasks', icon: ClipboardList, label: 'Tasks' },
     { to: '/projects', icon: FolderKanban, label: 'Projects' },
     { to: '/housework', icon: Home, label: 'Housework' },
     { to: '/calendar', icon: Calendar, label: 'Calendar' },
     { to: '/expenses', icon: Wallet, label: 'Expenses' },
-    { to: '/assets', icon: Microwave, label: 'Assets' },
+    { to: '/assets', icon: Microwave, label: 'Appliances & Devices' },
     { to: '/learning', icon: GraduationCap, label: 'Learning' },
     { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
-    { to: '/alerts', icon: BellRing, label: 'Reports & Notifications' },
+    { to: '/notifications', icon: BellRing, label: 'Notifications' },
+    { to: '/scheduled-reports', icon: FileText, label: 'Scheduled Reports' },
     { to: '/reports', icon: BarChart3, label: 'Analytics' },
     { to: '/settings', icon: Settings, label: 'User Settings' },
 ];
@@ -44,7 +46,6 @@ export default function AppLayout() {
         const current = [...navItems, ...adminItems].find(
             (i) => i.to === location.pathname || (i.to !== '/' && location.pathname.startsWith(i.to))
         );
-        if (location.pathname.startsWith('/goals')) return 'Goals & Tasks';
         return current?.label || 'NgốcKý';
     })();
 

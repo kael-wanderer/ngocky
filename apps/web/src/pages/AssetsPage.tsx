@@ -315,17 +315,17 @@ export default function AssetsPage() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Microwave className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Assets & Maintenance</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Appliances & Devices</h2>
                 </div>
                 <button className="btn-primary" onClick={openCreateAsset}>
-                    <Plus className="w-4 h-4" /> New Asset
+                    <Plus className="w-4 h-4" /> New Device
                 </button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1 space-y-4">
                     <div className="flex items-center justify-between gap-3">
-                        <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>My Assets</h3>
+                        <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>My Appliances & Devices</h3>
                         <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>Drag to arrange</span>
                     </div>
                     {assetsLoading ? (
@@ -395,7 +395,7 @@ export default function AssetsPage() {
                             {assets?.length === 0 && (
                                 <div className="text-center py-8 card border-dashed border-2">
                                     <Microwave className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                                    <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>No assets yet</p>
+                                    <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>No appliances or devices yet</p>
                                 </div>
                             )}
                         </div>
@@ -550,7 +550,7 @@ export default function AssetsPage() {
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center card p-12 text-center border-dashed border-2">
                             <Microwave className="w-12 h-12 mb-4 opacity-10" />
-                            <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text-secondary)' }}>Select an Asset</h3>
+                            <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text-secondary)' }}>Select an Appliance or Device</h3>
                             <p className="text-sm mt-1 max-w-[240px]" style={{ color: 'var(--color-text-secondary)' }}>
                                 Choose an item from the left to view details and maintenance history.
                             </p>
@@ -563,7 +563,7 @@ export default function AssetsPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) closeAssetModal(); }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingAsset ? 'Edit Asset' : 'Add New Asset'}</h3>
+                            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingAsset ? 'Edit Appliance / Device' : 'Add New Appliance / Device'}</h3>
                             <button onClick={closeAssetModal}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={handleAssetSubmit} className="space-y-4">
@@ -609,7 +609,7 @@ export default function AssetsPage() {
                                 Share with all users
                             </label>
                             <button type="submit" className="btn-primary w-full" disabled={createAssetMut.isPending || updateAssetMut.isPending}>
-                                {editingAsset ? 'Save Asset' : 'Create Asset'}
+                                {editingAsset ? 'Save Appliance / Device' : 'Create Appliance / Device'}
                             </button>
                         </form>
                     </div>

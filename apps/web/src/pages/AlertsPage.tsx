@@ -47,7 +47,7 @@ const SECTIONS_BY_TYPE: Record<string, { key: string; label: string }[]> = {
         { key: 'HOUSEWORK', label: 'Housework' },
         { key: 'CALENDAR', label: 'Calendar Events' },
         { key: 'EXPENSES', label: 'Expenses' },
-        { key: 'ASSETS', label: 'Asset' },
+        { key: 'ASSETS', label: 'Appliances & Devices' },
         { key: 'LEARNING', label: 'Learning' },
         { key: 'IDEAS', label: 'Ideas' },
     ],
@@ -105,15 +105,26 @@ const emptyReportForm = (reportType = 'WEEKLY_SUMMARY') => ({
     active: true,
 });
 
-export default function AlertsPage() {
+type AlertsPageProps = {
+    forcedTab?: 'RULES' | 'REPORTS';
+};
+
+export default function AlertsPage({ forcedTab }: AlertsPageProps) {
     const qc = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'RULES' | 'REPORTS'>('RULES');
+    const [activeTab, setActiveTab] = useState<'RULES' | 'REPORTS'>(forcedTab || 'RULES');
     const [showRuleModal, setShowRuleModal] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
     const [editingRule, setEditingRule] = useState<any>(null);
     const [editingReport, setEditingReport] = useState<any>(null);
     const [ruleForm, setRuleForm] = useState(emptyRuleForm());
     const [reportForm, setReportForm] = useState(emptyReportForm());
+    const showTabSwitcher = !forcedTab;
+
+    React.useEffect(() => {
+        if (forcedTab && activeTab !== forcedTab) {
+            setActiveTab(forcedTab);
+        }
+    }, [forcedTab, activeTab]);
 
     const { data: rules, isLoading: rulesLoading } = useQuery({
         queryKey: ['alert-rules'],
@@ -251,12 +262,14 @@ export default function AlertsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     <BellRing className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Reports & Notifications</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTab === 'RULES' ? 'Notifications' : 'Scheduled Reports'}</h2>
                 </div>
-                <div className="flex bg-gray-100 p-1 rounded-lg self-start sm:self-auto">
-                    <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'RULES' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('RULES')} style={activeTab === 'RULES' ? { color: 'var(--color-primary)' } : {}}>Notification Settings</button>
-                    <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'REPORTS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('REPORTS')} style={activeTab === 'REPORTS' ? { color: 'var(--color-primary)' } : {}}>Scheduled Reports</button>
-                </div>
+                {showTabSwitcher && (
+                    <div className="flex bg-gray-100 p-1 rounded-lg self-start sm:self-auto">
+                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'RULES' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('RULES')} style={activeTab === 'RULES' ? { color: 'var(--color-primary)' } : {}}>Notification Settings</button>
+                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'REPORTS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('REPORTS')} style={activeTab === 'REPORTS' ? { color: 'var(--color-primary)' } : {}}>Scheduled Reports</button>
+                    </div>
+                )}
             </div>
 
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
@@ -413,7 +426,7 @@ export default function AlertsPage() {
                                         <option value="HOUSEWORK">Housework</option>
                                         <option value="EXPENSE">Expenses</option>
                                         <option value="CALENDAR">Calendar</option>
-                                        <option value="ASSETS">Assets</option>
+                                        <option value="ASSETS">Appliances & Devices</option>
                                     </select>
                                 </div>
                                 <div>

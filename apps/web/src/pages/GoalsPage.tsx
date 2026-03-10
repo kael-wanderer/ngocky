@@ -287,11 +287,18 @@ function TaskForm({
     );
 }
 
-export default function GoalsPage() {
+type GoalsPageProps = {
+    forcedTab?: 'GOALS' | 'TASKS';
+};
+
+export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const qc = useQueryClient();
     const { user } = useAuthStore();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [activeTab, setActiveTab] = useState<'GOALS' | 'TASKS'>(() => (searchParams.get('tab') || '').toUpperCase() === 'TASKS' ? 'TASKS' : 'GOALS');
+    const [activeTab, setActiveTab] = useState<'GOALS' | 'TASKS'>(() => {
+        if (forcedTab) return forcedTab;
+        return (searchParams.get('tab') || '').toUpperCase() === 'TASKS' ? 'TASKS' : 'GOALS';
+    });
     const [showCreate, setShowCreate] = useState(false);
     const [editGoal, setEditGoal] = useState<any>(null);
     const [showTaskModal, setShowTaskModal] = useState(false);
@@ -311,6 +318,13 @@ export default function GoalsPage() {
     const [taskForm, setTaskForm] = useState({ ...taskEmptyForm });
     const editIdParam = searchParams.get('editId');
     const checkInIdParam = searchParams.get('checkInId');
+    const showTabSwitcher = !forcedTab;
+
+    useEffect(() => {
+        if (forcedTab && activeTab !== forcedTab) {
+            setActiveTab(forcedTab);
+        }
+    }, [forcedTab, activeTab]);
 
     const { data: goalsData, isLoading: goalsLoading } = useQuery({
         queryKey: ['goals'],
@@ -575,6 +589,7 @@ export default function GoalsPage() {
     }, [goals, editIdParam, checkInIdParam, activeTab]);
 
     useEffect(() => {
+        if (forcedTab) return;
         const next = new URLSearchParams(searchParams);
         next.set('tab', activeTab === 'TASKS' ? 'tasks' : 'goals');
         if (activeTab === 'TASKS') {
@@ -582,7 +597,7 @@ export default function GoalsPage() {
             next.delete('checkInId');
         }
         setSearchParams(next, { replace: true });
-    }, [activeTab]);
+    }, [activeTab, forcedTab, searchParams, setSearchParams]);
 
     useEffect(() => {
         if (!editGoal && !checkInGoalId && !showCreate && (editIdParam || checkInIdParam) && activeTab === 'GOALS') {
@@ -600,12 +615,14 @@ export default function GoalsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     <Trophy className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Goals & Tasks</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTab === 'GOALS' ? 'Goals' : 'Tasks'}</h2>
                 </div>
-                <div className="flex bg-gray-100 p-1 rounded-lg self-start sm:self-auto">
-                    <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'GOALS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('GOALS')} style={activeTab === 'GOALS' ? { color: 'var(--color-primary)' } : {}}>Goals</button>
-                    <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'TASKS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('TASKS')} style={activeTab === 'TASKS' ? { color: 'var(--color-primary)' } : {}}>Tasks</button>
-                </div>
+                {showTabSwitcher && (
+                    <div className="flex bg-gray-100 p-1 rounded-lg self-start sm:self-auto">
+                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'GOALS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('GOALS')} style={activeTab === 'GOALS' ? { color: 'var(--color-primary)' } : {}}>Goals</button>
+                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'TASKS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('TASKS')} style={activeTab === 'TASKS' ? { color: 'var(--color-primary)' } : {}}>Tasks</button>
+                    </div>
+                )}
             </div>
 
             {activeTab === 'GOALS' ? (

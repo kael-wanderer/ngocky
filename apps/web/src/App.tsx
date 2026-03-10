@@ -51,7 +51,8 @@ export default function App() {
                     <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
                     <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                         <Route index element={<DashboardPage />} />
-                        <Route path="goals" element={<GoalsPage />} />
+                        <Route path="goals" element={<GoalsPage forcedTab="GOALS" />} />
+                        <Route path="tasks" element={<GoalsPage forcedTab="TASKS" />} />
                         <Route path="projects" element={<ProjectsPage />} />
                         <Route path="housework" element={<HouseworkPage />} />
                         <Route path="calendar" element={<CalendarPage />} />
@@ -60,7 +61,9 @@ export default function App() {
                         <Route path="assets" element={<AssetsPage />} />
                         <Route path="learning" element={<LearningPage />} />
                         <Route path="ideas" element={<IdeasPage />} />
-                        <Route path="alerts" element={<AlertsPage />} />
+                        <Route path="notifications" element={<AlertsPage forcedTab="RULES" />} />
+                        <Route path="scheduled-reports" element={<AlertsPage forcedTab="REPORTS" />} />
+                        <Route path="alerts" element={<Navigate to="/notifications" replace />} />
                         <Route path="settings" element={<SettingsPage />} />
                         <Route path="users" element={<AdminRoute><UsersPage /></AdminRoute>} />
                     </Route>
