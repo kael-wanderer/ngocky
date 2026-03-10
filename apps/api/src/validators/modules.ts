@@ -1,5 +1,33 @@
 import { z } from 'zod';
 
+const checkInDateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseCheckInDate(value: string) {
+    if (checkInDateOnlyPattern.test(value)) {
+        const [year, month, day] = value.split('-').map(Number);
+        return new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return null;
+    }
+
+    return parsed;
+}
+
+function isCheckInDateWithinAllowedWindow(value: string) {
+    const parsed = parseCheckInDate(value);
+    if (!parsed) return false;
+
+    const selectedDayUtc = Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), parsed.getUTCDate());
+    const now = new Date();
+    const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const fortyFiveDaysAgoUtc = todayUtc - (45 * 24 * 60 * 60 * 1000);
+
+    return selectedDayUtc <= todayUtc && selectedDayUtc >= fortyFiveDaysAgoUtc;
+}
+
 const notificationRefinement = (data: any, ctx: z.RefinementCtx) => {
     if (data.notificationEnabled) {
         if (!data.reminderOffsetUnit) {
@@ -107,13 +135,11 @@ export const createCheckInSchema = z.object({
     goalId: z.string().min(1),
     quantity: z.number().int().positive().default(1),
     note: z.string().optional(),
-    date: z.string().datetime().refine((val) => {
-        const d = new Date(val);
-        const now = new Date();
-        const fortyFiveDaysAgo = new Date();
-        fortyFiveDaysAgo.setDate(now.getDate() - 45);
-        return d <= now && d >= fortyFiveDaysAgo;
-    }, { message: "Date must be within the last 45 days and not in the future" }).optional(),
+    date: z.string().refine((val) => parseCheckInDate(val) !== null, {
+        message: 'Invalid date',
+    }).refine((val) => isCheckInDateWithinAllowedWindow(val), {
+        message: 'Date must be within the last 45 days and not in the future',
+    }).optional(),
 });
 
 export const createProjectSchema = z.object({

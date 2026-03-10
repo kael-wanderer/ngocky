@@ -549,11 +549,10 @@ export default function GoalsPage() {
             alert(dateError || `Date must be between ${minDate} and ${today}.`);
             return;
         }
-        const localDate = new Date(`${date}T12:00:00`);
         const payload: any = {
             goalId: checkInGoalId,
             quantity: selectedGoal?.trackingType === 'BY_QUANTITY' ? quantity : 1,
-            date: localDate.toISOString(),
+            date,
         };
         const noteText = [
             selectedGoal?.trackingType === 'BY_FREQUENCY' && duration ? `Duration: ${duration} mins` : '',

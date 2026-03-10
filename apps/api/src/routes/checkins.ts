@@ -9,6 +9,19 @@ import { NotFoundError } from '../utils/errors';
 const router = Router();
 router.use(authenticate);
 
+const checkInDateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
+
+function normalizeCheckInDate(date?: string) {
+    if (!date) return new Date();
+
+    if (checkInDateOnlyPattern.test(date)) {
+        const [year, month, day] = date.split('-').map(Number);
+        return new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
+    }
+
+    return new Date(date);
+}
+
 // List check-ins for a goal
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -46,7 +59,7 @@ router.post('/', validate(createCheckInSchema), async (req: Request, res: Respon
                 userId: req.user!.userId,
                 quantity: quantity || 1,
                 note,
-                date: date ? new Date(date) : new Date(),
+                date: normalizeCheckInDate(date),
             },
         });
 

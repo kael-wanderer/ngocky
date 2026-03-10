@@ -108,6 +108,41 @@ describe('Goals & Check-ins API', () => {
         expect(goalRes.body.data.currentCount).toBe(1);
     });
 
+    it('should allow a same-day check-in even when the submitted timestamp is later than now', async () => {
+        const createRes = await request(app)
+            .post('/api/goals')
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({
+                title: 'Same-day Check-in Goal',
+                periodType: 'WEEKLY',
+                targetCount: 10
+            });
+        const goalId = createRes.body.data.id;
+
+        const now = new Date();
+        const sameDayFutureTimestamp = new Date(Date.UTC(
+            now.getUTCFullYear(),
+            now.getUTCMonth(),
+            now.getUTCDate(),
+            23,
+            59,
+            0,
+            0
+        )).toISOString();
+
+        const checkInRes = await request(app)
+            .post('/api/checkins')
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({
+                goalId,
+                quantity: 1,
+                date: sameDayFutureTimestamp,
+            });
+
+        expect(checkInRes.status).toBe(201);
+        expect(checkInRes.body.data.checkIn.goalId).toBe(goalId);
+    });
+
     it('should decrement progress when a check-in is deleted', async () => {
         // Create goal and check-in first
         const createRes = await request(app)
