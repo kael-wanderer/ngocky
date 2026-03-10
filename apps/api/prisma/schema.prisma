@@ -18,6 +18,7 @@ enum Role {
 enum PeriodType {
   WEEKLY
   MONTHLY
+  QUARTERLY
 }
 
 enum GoalTrackingType {
@@ -98,6 +99,7 @@ enum ReportFrequency {
   DAILY
   WEEKLY
   MONTHLY
+  QUARTERLY
 }
 
 enum BudgetPeriod {
@@ -119,6 +121,7 @@ enum RepeatFrequency {
   DAILY
   WEEKLY
   MONTHLY
+  QUARTERLY
 }
 
 enum RepeatEndType {

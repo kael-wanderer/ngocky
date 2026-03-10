@@ -67,7 +67,8 @@ function expandRecurringEvent(event: any, rangeStart?: Date, rangeEnd?: Date) {
 
         if (event.repeatFrequency === 'DAILY') cursor = addDaysLocal(cursor, 1);
         else if (event.repeatFrequency === 'WEEKLY') cursor = addWeeksLocal(cursor, 1);
-        else cursor = addMonthsLocal(cursor, 1);
+        else if (event.repeatFrequency === 'MONTHLY') cursor = addMonthsLocal(cursor, 1);
+        else cursor = addMonthsLocal(cursor, 3);
 
         if (!until && instances.length > 366) break;
     }

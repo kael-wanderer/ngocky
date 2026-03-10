@@ -442,6 +442,8 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                                     ? `Every ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][report.dayOfWeek ?? 1]} at ${report.time}`
                                                     : normalizeReportFrequency(report.frequency) === 'MONTHLY'
                                                     ? `Monthly on day ${report.dayOfMonth ?? 1} at ${report.time}`
+                                                    : normalizeReportFrequency(report.frequency) === 'QUARTERLY'
+                                                    ? `Quarterly on day ${report.dayOfMonth ?? 1} at ${report.time}`
                                                     : `Daily at ${report.time}`}
                                             </p>
                                         </div>
@@ -640,6 +642,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                                 <option value="DAILY">Daily</option>
                                                 <option value="WEEKLY">Weekly</option>
                                                 <option value="MONTHLY">Monthly</option>
+                                                <option value="QUARTERLY">Quarterly</option>
                                             </>
                                         )}
                                     </select>
@@ -662,7 +665,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                         </select>
                                     </div>
                                 )}
-                                {reportForm.frequency === 'MONTHLY' && (
+                                {(reportForm.frequency === 'MONTHLY' || reportForm.frequency === 'QUARTERLY') && (
                                     <div className="col-span-2">
                                         <label className="label">Day of Month</label>
                                         <select className="input" value={reportForm.dayOfMonth} onChange={(e) => setReportForm({ ...reportForm, dayOfMonth: Number(e.target.value) })}>

@@ -119,6 +119,7 @@ function GoalForm({
                 <select className="input" value={form.periodType} onChange={(e) => setForm({ ...form, periodType: e.target.value })}>
                     <option value="WEEKLY">Weekly</option>
                     <option value="MONTHLY">Monthly</option>
+                    <option value="QUARTERLY">Quarterly</option>
                 </select>
             </div>
             <div className="grid grid-cols-1 gap-2">
@@ -251,6 +252,7 @@ function TaskForm({
                         <option value="DAILY">Daily</option>
                         <option value="WEEKLY">Weekly</option>
                         <option value="MONTHLY">Monthly</option>
+                        <option value="QUARTERLY">Quarterly</option>
                     </select>
                 </div>
                 {form.repeatFrequency && (
@@ -309,7 +311,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const [dateError, setDateError] = useState('');
     const [duration, setDuration] = useState<number | ''>('');
     const [quantity, setQuantity] = useState(1);
-    const [periodFilter, setPeriodFilter] = useState<'ALL' | 'WEEKLY' | 'MONTHLY'>('ALL');
+    const [periodFilter, setPeriodFilter] = useState<'ALL' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY'>('ALL');
     const [taskFilter, setTaskFilter] = useState<'ALL' | 'OPEN' | 'DONE' | 'OVERDUE'>('ALL');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [draggingGoalId, setDraggingGoalId] = useState<string | null>(null);
@@ -664,6 +666,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                 <option value="ALL">All</option>
                                 <option value="WEEKLY">Weekly</option>
                                 <option value="MONTHLY">Monthly</option>
+                                <option value="QUARTERLY">Quarterly</option>
                             </select>
                             <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
                                 <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>

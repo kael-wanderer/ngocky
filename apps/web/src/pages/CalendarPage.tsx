@@ -285,6 +285,7 @@ export default function CalendarPage() {
                                         <option value="DAILY">Daily</option>
                                         <option value="WEEKLY">Weekly</option>
                                         <option value="MONTHLY">Monthly</option>
+                                        <option value="QUARTERLY">Quarterly</option>
                                     </select>
                                 </div>
                                 {form.repeatFrequency && (

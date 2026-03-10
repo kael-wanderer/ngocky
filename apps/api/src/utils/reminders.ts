@@ -35,12 +35,18 @@ export function getGoalPeriodStart(periodType: PeriodType, referenceDate = new D
         return new Date(referenceDate.getFullYear(), referenceDate.getMonth(), diff, 0, 0, 0, 0);
     }
 
+    if (periodType === 'QUARTERLY') {
+        const quarterStartMonth = Math.floor(referenceDate.getMonth() / 3) * 3;
+        return new Date(referenceDate.getFullYear(), quarterStartMonth, 1, 0, 0, 0, 0);
+    }
+
     return new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1, 0, 0, 0, 0);
 }
 
 export function getGoalPeriodEnd(currentPeriodStart: Date, periodType: PeriodType): Date {
     const end = new Date(currentPeriodStart);
     if (periodType === 'MONTHLY') end.setMonth(end.getMonth() + 1);
+    else if (periodType === 'QUARTERLY') end.setMonth(end.getMonth() + 3);
     else end.setDate(end.getDate() + 7);
     return end;
 }

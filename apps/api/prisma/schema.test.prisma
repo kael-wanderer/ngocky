@@ -19,6 +19,7 @@ enum Role {
 enum PeriodType {
   WEEKLY
   MONTHLY
+  QUARTERLY
 }
 
 enum ProjectStatus {
@@ -72,6 +73,7 @@ enum ReportFrequency {
   DAILY
   WEEKLY
   MONTHLY
+  QUARTERLY
 }
 
 enum BudgetPeriod {

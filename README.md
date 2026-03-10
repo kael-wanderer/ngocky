@@ -176,18 +176,18 @@ Target reminder architecture:
 ## Modules
 
 - **Dashboard** – Summary cards, filters (`Today`, `This week`, `Next week`, `This month`, `Next month`, `Status`, `Category`), overdue feed for true due items, pinned items, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Appliances & Devices`, `Learning`, `Ideas`)
-- **Goals** – Recurring goals with check-in tracking, progress bars, sharing, dashboard pinning, drag reorder, and optional reminders
-- **Tasks** – Standalone tasks with repeat rules, payment-task support, sharing, dashboard pinning, drag reorder, and optional reminders
+- **Goals** – Recurring goals with check-in tracking, progress bars, reset periods (`Weekly`, `Monthly`, `Quarterly`), sharing, dashboard pinning, drag reorder, and optional reminders
+- **Tasks** – Standalone tasks with repeat rules (`Daily`, `Weekly`, `Monthly`, `Quarterly`), payment-task support, sharing, dashboard pinning, drag reorder, and optional reminders
 - **Projects** – Shared boards with kanban + list view, project item types (`Task`, `Bug`, `Feature`, `Story`, `Epic`), priorities, deadlines, assignees, drag-and-drop status updates, and per-item sharing
 - **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete`, grouped operational states, sharing, and optional reminders
-- **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`), shared visibility, participants, and optional pre-start reminders
+- **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`, `Quarterly`), shared visibility, participants, and optional pre-start reminders
 - **Appliances & Devices** – Home appliance/device registry with sharing, warranty tracking, maintenance records, linked maintenance calendar events, reminder support, and automatic expense creation when a maintenance log includes cost
-- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, running totals in `VND`, and `Devices Maintenance` category support
+- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, running totals in `VND`, and categories including `Devices Maintenance`, `Insurance`, `Family Support`, and `Gift`
 - **Learning** – Topic-first learning management with shared topics, shared ownership display on histories, duplicate actions, and progress/deadline tracking
 - **Ideas** – Topic-first idea capture with shared topics, shared ownership display on logs, duplicate actions, and category/status tracking
 - **Analytics** – Charts and summaries for project items, standalone tasks, goals, calendar, housework, expenses, assets, learning, and ideas with time-aware filters
 - **Notifications** – Rule-based notification settings with drag reorder, double-click-to-edit, and schedule-time based due logic
-- **Scheduled Reports** – Scheduled report management with drag reorder, double-click-to-edit, and report types `Weekly Summary`, `Next Week Tasks`, `Today Tasks`, and `Tomorrow Tasks`
+- **Scheduled Reports** – Scheduled report management with drag reorder, double-click-to-edit, report types `Weekly Summary`, `Next Week Tasks`, `Today Tasks`, and `Tomorrow Tasks`, and schedule frequencies including `One Time`, `Daily`, `Weekly`, `Monthly`, and `Quarterly`
 - **Settings** – Profile, notifications, password change, TOTP MFA enrollment, and theme picker with immediate apply (`Blue Purple`, `Grey Black`, `Red Accent`, `Dark`, `Modern Green`, `Multi Color Block`); profile/notification fields use explicit Save buttons
 - **User Management** – Admin-only user creation, role assignment, activate/deactivate
 - **Navigation** – Grouped, collapsible sidebar with customizable cross-group drag arrangement for non-admin pages

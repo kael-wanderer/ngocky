@@ -90,6 +90,8 @@ function getGoalPeriodEnd(goal: { currentPeriodStart: Date; periodType: string }
     const end = new Date(goal.currentPeriodStart);
     if (goal.periodType === 'MONTHLY') {
         end.setMonth(end.getMonth() + 1);
+    } else if (goal.periodType === 'QUARTERLY') {
+        end.setMonth(end.getMonth() + 3);
     } else {
         end.setDate(end.getDate() + 7);
     }

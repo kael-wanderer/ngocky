@@ -13,7 +13,7 @@ NgốcKý is a family record management hub designed to manage personal and hous
 Tracks personal habits and achievement targets over specific time intervals.
 
 - **Models**: `Goal`, `GoalCheckIn`.
-- **Period Types**: `WEEKLY` (Monday-Sunday), `MONTHLY` (1st-Last day).
+- **Period Types**: `WEEKLY` (Monday-Sunday), `MONTHLY` (1st-Last day), `QUARTERLY` (Jan-Apr-Jul-Oct boundaries).
 - **Tracking Types**:
   - `BY_FREQUENCY`: Counts each check-in once (e.g., "Gym workout 3 times/week").
   - `BY_QUANTITY`: Sums a 'quantity' value (e.g., "Read 60 mins/day").
@@ -36,6 +36,7 @@ Task intent is:
 Initial standalone task capabilities:
 
 - one-time or recurring task
+- recurring frequencies: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`
 - due date / next due date
 - status such as `PENDING`, `DONE`, `ARCHIVED`
 - reminder support
@@ -70,7 +71,7 @@ Monitors family and personal spending.
 - **Scope**: `PERSONAL`, `FAMILY`, `KEO`, `PROJECT`.
 - **Categories**:
   - `RECEIVE`: Salary, Top-up, Sell
-  - `PAY`: Food, Utilities, Healthcare, Shopping, Transport, Home Maintenance, Devices Maintenance, Education, AI, Entertainment, Other
+  - `PAY`: Food, Utilities, Healthcare, Shopping, Transport, Home Maintenance, Devices Maintenance, Insurance, Family Support, Gift, Education, AI, Entertainment, Other
 - **UI Behavior**:
   - `PAY` amounts are shown in red.
   - `RECEIVE` amounts are shown in green.
@@ -118,7 +119,7 @@ Idea topics can be shared to all users. Idea logs are records, not deadline-mana
 Calendar items are events:
 
 - they have a scheduled date/time
-- they may repeat (`DAILY`, `WEEKLY`, `MONTHLY`)
+- they may repeat (`DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`)
 - they can end `NEVER` or `ON_DATE`
 - they may define an optional reminder before `startDate`
 - they are not treated as `Pending`, `Completed`, or `Overdue`
@@ -228,8 +229,10 @@ Notifications and Scheduled Reports are now separate pages in the sidebar, thoug
   - supports enable/disable, duplicate, drag reorder, and double-click edit
 - **Scheduled Reports**
   - supports `Weekly Summary`, `Next Week Tasks`, `Today Tasks`, and `Tomorrow Tasks`
+  - supports schedule frequencies `ONE_TIME`, `DAILY`, `WEEKLY`, `MONTHLY`, and `QUARTERLY`
   - supports enable/disable, duplicate, drag reorder, and double-click edit
   - `Today Tasks` uses the same data shape as `Tomorrow Tasks` but targets the current local day instead of the next one
+  - `Quarterly` scheduled reports currently use the existing `dayOfMonth` selector and run in Jan/Apr/Jul/Oct
 
 ### 12. Navigation Model
 

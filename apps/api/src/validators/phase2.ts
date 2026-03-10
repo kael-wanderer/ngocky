@@ -110,7 +110,7 @@ export const updateAlertRuleSchema = createAlertRuleSchema.partial();
 export const createScheduledReportSchema = z.object({
     reportType: z.string().min(1),
     dateRangePreset: z.string().optional(),
-    frequency: z.enum(['ONE_TIME', 'DAILY', 'WEEKLY', 'MONTHLY', 'NONE']).optional(),
+    frequency: z.enum(['ONE_TIME', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'NONE']).optional(),
     dayOfWeek: z.number().int().min(0).max(6).optional(),
     dayOfMonth: z.number().int().min(1).max(31).optional(),
     sections: z.array(z.string()).optional(),
