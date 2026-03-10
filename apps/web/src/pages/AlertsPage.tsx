@@ -36,7 +36,6 @@ const emptyRuleForm = () => ({
     time: '08:00',
     conditionType: 'PROGRESS_BELOW',
     conditionValue: '50',
-    cooldownHours: 24,
     active: true,
 });
 
@@ -58,6 +57,12 @@ const SECTIONS_BY_TYPE: Record<string, { key: string; label: string }[]> = {
         { key: 'HOUSEWORK', label: 'Housework' },
         { key: 'CALENDAR', label: 'Calendar Events' },
     ],
+    TODAY_TASKS: [
+        { key: 'PROJECT', label: 'Project' },
+        { key: 'TASKS', label: 'Task' },
+        { key: 'HOUSEWORK', label: 'Housework' },
+        { key: 'CALENDAR', label: 'Calendar Events' },
+    ],
     TOMORROW_TASKS: [
         { key: 'PROJECT', label: 'Project' },
         { key: 'TASKS', label: 'Task' },
@@ -70,6 +75,7 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
     WEEKLY_SUMMARY: 'Weekly Summary',
     SUMMARY: 'Weekly Summary',
     NEXT_WEEK_TASKS: 'Next Week Tasks',
+    TODAY_TASKS: 'Today Tasks',
     TOMORROW_TASKS: 'Tomorrow Tasks',
 };
 
@@ -81,7 +87,7 @@ function getDefaultSections(reportType: string) {
 }
 
 function getDefaultFrequency(reportType: string) {
-    if (reportType === 'TOMORROW_TASKS') return 'ONE_TIME';
+    if (reportType === 'TODAY_TASKS' || reportType === 'TOMORROW_TASKS') return 'ONE_TIME';
     return 'WEEKLY';
 }
 
@@ -177,7 +183,6 @@ export default function AlertsPage() {
             time: rule.time || '08:00',
             conditionType: rule.conditionType || (CONDITIONS_BY_MODULE[mod]?.[0]?.value ?? 'OVERDUE'),
             conditionValue: rule.conditionValue || '',
-            cooldownHours: rule.cooldownHours ?? 24,
             active: rule.active ?? true,
         });
         setShowRuleModal(true);
@@ -193,7 +198,6 @@ export default function AlertsPage() {
             time: rule.time,
             conditionType: rule.conditionType,
             conditionValue: rule.conditionValue || '',
-            cooldownHours: rule.cooldownHours ?? 24,
             active: rule.active,
         });
     }
@@ -296,9 +300,6 @@ export default function AlertsPage() {
                                                 : rule.frequency === 'MONTHLY'
                                                 ? `Monthly day ${rule.dayOfMonth ?? 1} at ${rule.time || '08:00'}`
                                                 : `Daily at ${rule.time || '08:00'}`}
-                                        </span>
-                                        <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-                                            {rule.cooldownHours ?? 24}h cooldown
                                         </span>
                                     </div>
 
@@ -484,21 +485,6 @@ export default function AlertsPage() {
                                 )}
                             </div>
 
-                            {/* Cooldown */}
-                            <div>
-                                <label className="label">Cooldown (hours)</label>
-                                <input
-                                    type="number"
-                                    className="input"
-                                    min={1}
-                                    value={ruleForm.cooldownHours}
-                                    onChange={(e) => setRuleForm({ ...ruleForm, cooldownHours: Number(e.target.value) })}
-                                />
-                                <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                    Minimum hours between notifications if condition persists.
-                                </p>
-                            </div>
-
                             <label className="flex items-center gap-2 text-sm cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -547,13 +533,14 @@ export default function AlertsPage() {
                                     >
                                         <option value="WEEKLY_SUMMARY">Weekly Summary</option>
                                         <option value="NEXT_WEEK_TASKS">Next Week Tasks</option>
+                                        <option value="TODAY_TASKS">Today Tasks</option>
                                         <option value="TOMORROW_TASKS">Tomorrow Tasks</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label className="label">Frequency</label>
                                     <select className="input" value={reportForm.frequency} onChange={(e) => setReportForm({ ...reportForm, frequency: e.target.value })}>
-                                        {reportForm.reportType === 'TOMORROW_TASKS' ? (
+                                        {reportForm.reportType === 'TODAY_TASKS' || reportForm.reportType === 'TOMORROW_TASKS' ? (
                                             <>
                                                 <option value="ONE_TIME">One Time</option>
                                                 <option value="DAILY">Daily</option>

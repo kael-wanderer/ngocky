@@ -76,7 +76,7 @@ router.get('/due-reports', async (_req: Request, res: Response, next: NextFuncti
 /**
  * GET /api/service/report-data/:reportId
  * Returns assembled data for a specific ScheduledReport.
- * Supports WEEKLY_SUMMARY, NEXT_WEEK_TASKS, and TOMORROW_TASKS.
+ * Supports WEEKLY_SUMMARY, NEXT_WEEK_TASKS, TODAY_TASKS, and TOMORROW_TASKS.
  */
 router.get('/report-data/:reportId', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -236,8 +236,12 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
             });
         }
 
-        if (report.reportType === 'NEXT_WEEK_TASKS' || report.reportType === 'TOMORROW_TASKS') {
-            const { start, end } = report.reportType === 'TOMORROW_TASKS' ? getDayRange(1) : getWeekRange(1);
+        if (report.reportType === 'NEXT_WEEK_TASKS' || report.reportType === 'TODAY_TASKS' || report.reportType === 'TOMORROW_TASKS') {
+            const { start, end } = report.reportType === 'TODAY_TASKS'
+                ? getDayRange(0)
+                : report.reportType === 'TOMORROW_TASKS'
+                    ? getDayRange(1)
+                    : getWeekRange(1);
 
             const [project, tasks, housework, calendar] = await Promise.all([
                 prisma.projectTask.findMany({
@@ -430,11 +434,20 @@ router.get('/due-notifications', async (_req: Request, res: Response, next: Next
         const TIME_WINDOW = 15;
         const firedRuleIds = new Set<string>();
 
-        const isAlertRuleDue = (rule: { time: string | null; frequency: string; dayOfWeek: number | null; dayOfMonth: number | null; lastSentAt: Date | null; cooldownHours: number }) => {
+        const isSameVietnamDate = (left: Date, right: Date) => {
+            const leftVn = new Date(left.getTime() + 7 * 60 * 60 * 1000);
+            const rightVn = new Date(right.getTime() + 7 * 60 * 60 * 1000);
+
+            return leftVn.getUTCFullYear() === rightVn.getUTCFullYear()
+                && leftVn.getUTCMonth() === rightVn.getUTCMonth()
+                && leftVn.getUTCDate() === rightVn.getUTCDate();
+        };
+
+        const isAlertRuleDue = (rule: { time: string | null; frequency: string; dayOfWeek: number | null; dayOfMonth: number | null; lastSentAt: Date | null }) => {
             const [h, m] = (rule.time || '08:00').split(':').map(Number);
             const diff = currentTotalMinutes - (h * 60 + m);
             if (diff < 0 || diff >= TIME_WINDOW) return false;
-            if (rule.lastSentAt && (now.getTime() - rule.lastSentAt.getTime()) < rule.cooldownHours * 60 * 60 * 1000) return false;
+            if (rule.lastSentAt && isSameVietnamDate(rule.lastSentAt, now)) return false;
             if (rule.frequency === 'DAILY') return true;
             if (rule.frequency === 'WEEKLY') return currentDay === (rule.dayOfWeek ?? 1);
             if (rule.frequency === 'MONTHLY') return vnNow.getUTCDate() === (rule.dayOfMonth ?? 1);

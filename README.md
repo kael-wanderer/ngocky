@@ -185,7 +185,7 @@ Target reminder architecture:
 - **Learning** – Topic-first learning management with shared topics, shared ownership display on histories, duplicate actions, and progress/deadline tracking
 - **Ideas** – Topic-first idea capture with shared topics, shared ownership display on logs, duplicate actions, and category/status tracking
 - **Analytics** – Charts and summaries for project items, standalone tasks, goals, calendar, housework, expenses, assets, learning, and ideas with time-aware filters
-- **Reports & Notifications** – Alert rules, scheduled reports (`Weekly Summary`, `Next Week Tasks`, `Tomorrow Tasks`), enable/disable controls, one-time schedules, and n8n delivery integration
+- **Reports & Notifications** – Alert rules, scheduled reports (`Weekly Summary`, `Next Week Tasks`, `Today Tasks`, `Tomorrow Tasks`), enable/disable controls, one-time schedules, and n8n delivery integration
 - **Settings** – Profile, notifications, password change, TOTP MFA enrollment, and theme picker with immediate apply (`Blue Purple`, `Grey Black`, `Red Accent`, `Dark`, `Modern Green`, `Multi Color Block`)
 - **User Management** – Admin-only user creation, role assignment, activate/deactivate
 
@@ -270,7 +270,7 @@ Recent product updates include:
 - project page wording updated from `Task` to `Item` where needed to avoid confusion with standalone tasks
 - analytics page renamed from `Reports` and expanded to cover `Project`, `Task`, `Goal`, `Calendar`, `Asset`, `Housework`, `Expenses`, `Learning`, and `Ideas`
 - analytics filters now support time-aware filtering across all analytics modules, with tab-specific type/category/scope controls
-- scheduled reports now support `Weekly Summary`, `Next Week Tasks`, and `Tomorrow Tasks`
+- scheduled reports now support `Weekly Summary`, `Next Week Tasks`, `Today Tasks`, and `Tomorrow Tasks`
 - report frequency `One Time` now runs as a true one-time job instead of a disabled `None` state
 - reports and notifications now expose explicit enable/disable controls for notification rules and schedules
 - alert rules are evaluated by `GET /api/service/due-notifications`, so n8n can deliver rule-based notifications without extra workflow branching
