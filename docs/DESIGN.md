@@ -20,14 +20,12 @@ Tracks personal habits and achievement targets over specific time intervals.
 - **UI**: Visual progress bars showing percentage completion, supporting >100% achievements.
 - **Reminder Model**: Goals can enable reminders using `notificationEnabled` plus a pre-deadline notification policy. Reminders must not be scheduled after the relevant deadline boundary. Overdue handling belongs to `Reports & Notifications`, not item reminders.
 
-### 2. Goal & Tasks Workspace
+### 2. Goals and Standalone Tasks
 
-The current Goals area evolves into a two-tab workspace:
+Goals and standalone Tasks are now exposed as separate pages in navigation, while still serving the same personal-planning domain.
 
-- **Goals**: existing goal tracking experience
+- **Goals**: recurring target tracking and check-ins
 - **Tasks**: standalone personal tasks that do not need to belong to a project board
-
-This keeps personal planning in one place without forcing all work into Project boards or Calendar events.
 
 Task intent is:
 
@@ -42,6 +40,7 @@ Initial standalone task capabilities:
 - status such as `PENDING`, `DONE`, `ARCHIVED`
 - reminder support
 - optional dashboard pinning
+- manual drag reorder with persisted `sortOrder`
 
 Follow-on workflow automation direction:
 
@@ -71,7 +70,7 @@ Monitors family and personal spending.
 - **Scope**: `PERSONAL`, `FAMILY`, `KEO`, `PROJECT`.
 - **Categories**:
   - `RECEIVE`: Salary, Top-up, Sell
-  - `PAY`: Food, Utilities, Healthcare, Shopping, Transport, Home Maintenance, Education, AI, Entertainment, Other
+  - `PAY`: Food, Utilities, Healthcare, Shopping, Transport, Home Maintenance, Devices Maintenance, Education, AI, Entertainment, Other
 - **UI Behavior**:
   - `PAY` amounts are shown in red.
   - `RECEIVE` amounts are shown in green.
@@ -141,7 +140,7 @@ Records are date-based entries. They are shown by time range but not by overdue/
 
 Cross-module automation is allowed when one record is clearly derived from another module's completion or scheduling state.
 
-Planned patterns:
+Implemented / planned patterns:
 
 - `Task -> Expense`
   - Use case: scheduled payment
@@ -149,6 +148,16 @@ Planned patterns:
 - `MaintenanceRecord -> CalendarEvent`
   - Use case: remind the user about the next recommended service date
   - Rule: create or sync a linked calendar event when `nextRecommendedDate` is set
+- `MaintenanceRecord -> Expense`
+  - Use case: record appliance/device servicing costs immediately
+  - Rule: when a maintenance log is created with non-empty `cost`, create an expense with:
+    - `description = serviceType`
+    - `type = PAY`
+    - `scope = PERSONAL`
+    - `date = serviceDate`
+    - `category = Devices Maintenance`
+    - `amount = cost`
+    - `note = description`
 
 Design constraints:
 
@@ -156,6 +165,11 @@ Design constraints:
 - updates should sync the linked record instead of creating a new one
 - source modules remain editable without losing the derived relationship
 - automations should be optional and explicit, not implicit for every record
+
+Current practical note:
+
+- `MaintenanceRecord -> Expense` is currently one-way on create
+- editing or deleting a maintenance record does not yet update/delete the derived expense
 
 ### 10. Notification & Reminder Model
 
@@ -199,6 +213,52 @@ This design intentionally separates two concerns:
 
 - **item reminders**: notify before the deadline/start
 - **overdue alerts**: notify after the deadline, managed by `Reports & Notifications`
+
+Alert-rule scheduling note:
+
+- scheduled alert rules now use their configured `time` plus `lastSentAt` to send only once per Vietnam local day within the poll window
+- the user-facing `cooldown` control was removed from the Notifications UI because it no longer defines the effective schedule
+
+### 11. Notifications and Scheduled Reports
+
+Notifications and Scheduled Reports are now separate pages in the sidebar, though they still share the same backend scheduling domain.
+
+- **Notifications**
+  - rule-based alerts for modules such as Goals, Tasks, Housework, Calendar, Expenses, and Appliances & Devices
+  - supports enable/disable, duplicate, drag reorder, and double-click edit
+- **Scheduled Reports**
+  - supports `Weekly Summary`, `Next Week Tasks`, `Today Tasks`, and `Tomorrow Tasks`
+  - supports enable/disable, duplicate, drag reorder, and double-click edit
+  - `Today Tasks` uses the same data shape as `Tomorrow Tasks` but targets the current local day instead of the next one
+
+### 12. Navigation Model
+
+The application sidebar now supports grouped navigation with persisted user customization.
+
+Fixed groups:
+
+- `Dashboard`: Dashboard, Analytics
+- `Personal`: Goals, Expenses, Learning, Ideas, Tasks, Projects
+- `Family`: Housework, Appliances & Devices, Calendar
+- `Settings`: Reports, Notifications, User Settings
+- `Admin`: User Management
+
+Behavior:
+
+- groups can be expanded/collapsed
+- collapse state is persisted in local browser storage
+- non-admin pages can be drag-reordered within a group
+- non-admin pages can also be dragged across groups
+- admin navigation remains fixed to avoid role/permission ambiguity
+
+### 13. Settings Save Model
+
+Settings behavior is intentionally mixed based on action type:
+
+- **Profile** fields (`name`, `email`, `timezone`) now use local draft state and require explicit `Save`
+- **Notification** fields (`notificationEnabled`, `notificationChannel`, `notificationEmail`, `telegramChatId`) also require explicit `Save`
+- **Theme** changes still apply immediately
+- **Avatar upload** still updates immediately after upload
 
 ---
 

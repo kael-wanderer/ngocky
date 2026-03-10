@@ -16,7 +16,7 @@ const unitOptions = [
     { value: 'minutes', label: 'Minute' },
 ] as const;
 
-const expensePayCategories = ['Food', 'Utilities', 'Healthcare', 'Shopping', 'Transport', 'Home Maintenance', 'Devices Maintenance', 'Education', 'AI', 'Entertainment', 'Other'];
+const expensePayCategories = ['Food', 'Utilities', 'Healthcare', 'Shopping', 'Transport', 'Home Maintenance', 'Devices Maintenance', 'Insurance', 'Family Support', 'Gift', 'Education', 'AI', 'Entertainment', 'Other'];
 
 const goalEmptyForm = {
     title: '',

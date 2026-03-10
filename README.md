@@ -1,6 +1,6 @@
 # NgốcKý – Family Record Management
 
-A private family record management web app for managing goals, standalone tasks, project items, housework, calendars, expenses, assets, learning records, ideas, analytics, and notifications.
+A private family record management web app for managing goals, standalone tasks, project items, housework, calendars, expenses, appliances & devices, learning records, ideas, analytics, and notifications.
 
 ## Tech Stack
 
@@ -175,19 +175,22 @@ Target reminder architecture:
 
 ## Modules
 
-- **Dashboard** – Summary cards, filters (`Today`, `This week`, `Next week`, `This month`, `Next month`, `Status`, `Category`), overdue feed for true due items, pinned items, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Assets`, `Learning`, `Ideas`)
-- **Goals & Tasks** – Combined workspace with recurring goals, check-in tracking, standalone tasks, payment tasks, progress bars, repeat rules, sharing, and optional reminders
+- **Dashboard** – Summary cards, filters (`Today`, `This week`, `Next week`, `This month`, `Next month`, `Status`, `Category`), overdue feed for true due items, pinned items, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Appliances & Devices`, `Learning`, `Ideas`)
+- **Goals** – Recurring goals with check-in tracking, progress bars, sharing, dashboard pinning, drag reorder, and optional reminders
+- **Tasks** – Standalone tasks with repeat rules, payment-task support, sharing, dashboard pinning, drag reorder, and optional reminders
 - **Projects** – Shared boards with kanban + list view, project item types (`Task`, `Bug`, `Feature`, `Story`, `Epic`), priorities, deadlines, assignees, drag-and-drop status updates, and per-item sharing
 - **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete`, grouped operational states, sharing, and optional reminders
 - **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`), shared visibility, participants, and optional pre-start reminders
-- **Assets** – Asset registry with sharing, warranty tracking, maintenance records, linked maintenance calendar events, and reminder support
-- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, and running totals in `VND`
+- **Appliances & Devices** – Home appliance/device registry with sharing, warranty tracking, maintenance records, linked maintenance calendar events, reminder support, and automatic expense creation when a maintenance log includes cost
+- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, running totals in `VND`, and `Devices Maintenance` category support
 - **Learning** – Topic-first learning management with shared topics, shared ownership display on histories, duplicate actions, and progress/deadline tracking
 - **Ideas** – Topic-first idea capture with shared topics, shared ownership display on logs, duplicate actions, and category/status tracking
 - **Analytics** – Charts and summaries for project items, standalone tasks, goals, calendar, housework, expenses, assets, learning, and ideas with time-aware filters
-- **Reports & Notifications** – Alert rules, scheduled reports (`Weekly Summary`, `Next Week Tasks`, `Today Tasks`, `Tomorrow Tasks`), enable/disable controls, one-time schedules, and n8n delivery integration
-- **Settings** – Profile, notifications, password change, TOTP MFA enrollment, and theme picker with immediate apply (`Blue Purple`, `Grey Black`, `Red Accent`, `Dark`, `Modern Green`, `Multi Color Block`)
+- **Notifications** – Rule-based notification settings with drag reorder, double-click-to-edit, and schedule-time based due logic
+- **Scheduled Reports** – Scheduled report management with drag reorder, double-click-to-edit, and report types `Weekly Summary`, `Next Week Tasks`, `Today Tasks`, and `Tomorrow Tasks`
+- **Settings** – Profile, notifications, password change, TOTP MFA enrollment, and theme picker with immediate apply (`Blue Purple`, `Grey Black`, `Red Accent`, `Dark`, `Modern Green`, `Multi Color Block`); profile/notification fields use explicit Save buttons
 - **User Management** – Admin-only user creation, role assignment, activate/deactivate
+- **Navigation** – Grouped, collapsible sidebar with customizable cross-group drag arrangement for non-admin pages
 
 ## Dashboard Filters
 
@@ -196,7 +199,7 @@ Target reminder architecture:
   - `PENDING`: not completed yet in selected range
   - `COMPLETED`: completed items in selected range (where lifecycle supports completion state)
   - `OVERDUE`: items with due/deadline date before today
-- **Category** (multi-select): `goal`, `project`, `housework`, `calendar`, `expense`, `assets`, `learning`
+- **Category** (multi-select): `goal`, `project`, `housework`, `calendar`, `expense`, `assets`, `learning`, `idea`
 
 ## Item Semantics
 
@@ -236,7 +239,7 @@ Current shared modules include:
 - Housework items
 - Calendar events
 - Expenses
-- Assets
+- Appliances & Devices
 - Learning topics
 - Idea topics
 
@@ -260,7 +263,7 @@ Operational note:
 ## Expense Type Categories
 
 - `RECEIVE`: `Salary`, `Top-up`, `Sell`
-- `PAY`: `Food`, `Utilities`, `Healthcare`, `Shopping`, `Transport`, `Home Maintenance`, `Education`, `AI`, `Entertainment`, `Other`
+- `PAY`: `Food`, `Utilities`, `Healthcare`, `Shopping`, `Transport`, `Home Maintenance`, `Devices Maintenance`, `Education`, `AI`, `Entertainment`, `Other`
 
 ## Recent Changes
 
@@ -274,6 +277,14 @@ Recent product updates include:
 - report frequency `One Time` now runs as a true one-time job instead of a disabled `None` state
 - reports and notifications now expose explicit enable/disable controls for notification rules and schedules
 - alert rules are evaluated by `GET /api/service/due-notifications`, so n8n can deliver rule-based notifications without extra workflow branching
+- goals/tasks and notifications/scheduled reports are now split into separate pages instead of shared tab-only navigation
+- sidebar navigation is now grouped into `Dashboard`, `Personal`, `Family`, `Settings`, and `Admin`, with collapsible groups and drag customization
+- tasks, notifications, and scheduled reports now support persisted manual drag reorder
+- notification rules and scheduled reports now support double-click edit from the card list
+- settings profile and notification sections now require explicit `Save` instead of auto-saving on blur/change
+- the `Assets` product label is now `Appliances & Devices` in the UI
+- maintenance logs with non-empty cost now automatically create a matching personal expense in category `Devices Maintenance`
+- alert rules now fire once per scheduled Vietnam local day; the visible cooldown control has been removed from the notifications UI
 - shared ownership display is standardized: owners see `Shared`, non-owners see `Owner: <name>`
 - shared visibility is now applied consistently across standalone tasks, projects, housework, assets, learning topics/histories, and idea topics/logs
 - asset sharing, warranty tracking, and maintenance calendar sync are supported
