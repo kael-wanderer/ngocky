@@ -39,6 +39,15 @@ export const ASSISTANT_INTENTS = [
 
 export type AssistantIntent = (typeof ASSISTANT_INTENTS)[number];
 
+export const WRITE_INTENTS: ReadonlySet<AssistantIntent> = new Set([
+    'create_task',
+    'update_task_status',
+    'update_project_task_status',
+    'create_expense',
+    'goal_checkin',
+    'update_housework_status',
+]);
+
 export const HELP_TEXT = `NgocKy Assistant — available commands:
 
 *Tasks*
@@ -64,6 +73,16 @@ Send /link <code> to connect your NgocKy account\\.`;
 
 export const FALLBACK_TEXT =
     "I didn't understand that\\. Send /help to see what I can do\\.";
+
+export const WELCOME_TEXT =
+    'Welcome to *NgocKy Assistant* 🤖\n\n' +
+    'I can help you manage tasks, calendar events, expenses, and more \\— all from Telegram\\.\n\n' +
+    'To get started:\n' +
+    '1\\. Open NgocKy Settings in the web app\n' +
+    '2\\. Go to the *Assistant* tab\n' +
+    '3\\. Click *Generate Link Code*\n' +
+    '4\\. Send `/link <code>` here to connect your account\n\n' +
+    'Send /help after linking to see all commands\\.';
 
 export const UNLINKED_TEXT =
     'Your Telegram account is not linked to NgocKy\\. ' +

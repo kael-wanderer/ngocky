@@ -34,6 +34,11 @@ export type Goal = $Result.DefaultSelection<Prisma.$GoalPayload>
  */
 export type GoalCheckIn = $Result.DefaultSelection<Prisma.$GoalCheckInPayload>
 /**
+ * Model Task
+ * 
+ */
+export type Task = $Result.DefaultSelection<Prisma.$TaskPayload>
+/**
  * Model Project
  * 
  */
@@ -93,6 +98,26 @@ export type ScheduledReport = $Result.DefaultSelection<Prisma.$ScheduledReportPa
  * 
  */
 export type BudgetSetting = $Result.DefaultSelection<Prisma.$BudgetSettingPayload>
+/**
+ * Model TelegramLink
+ * 
+ */
+export type TelegramLink = $Result.DefaultSelection<Prisma.$TelegramLinkPayload>
+/**
+ * Model AssistantMessage
+ * 
+ */
+export type AssistantMessage = $Result.DefaultSelection<Prisma.$AssistantMessagePayload>
+/**
+ * Model AssistantActionLog
+ * 
+ */
+export type AssistantActionLog = $Result.DefaultSelection<Prisma.$AssistantActionLogPayload>
+/**
+ * Model AssistantPendingAction
+ * 
+ */
+export type AssistantPendingAction = $Result.DefaultSelection<Prisma.$AssistantPendingActionPayload>
 
 /**
  * Enums
@@ -109,7 +134,8 @@ export type Role = (typeof Role)[keyof typeof Role]
 
 export const PeriodType: {
   WEEKLY: 'WEEKLY',
-  MONTHLY: 'MONTHLY'
+  MONTHLY: 'MONTHLY',
+  QUARTERLY: 'QUARTERLY'
 };
 
 export type PeriodType = (typeof PeriodType)[keyof typeof PeriodType]
@@ -176,7 +202,8 @@ export type NotificationChannel = (typeof NotificationChannel)[keyof typeof Noti
 
 export const AlertFrequency: {
   DAILY: 'DAILY',
-  WEEKLY: 'WEEKLY'
+  WEEKLY: 'WEEKLY',
+  MONTHLY: 'MONTHLY'
 };
 
 export type AlertFrequency = (typeof AlertFrequency)[keyof typeof AlertFrequency]
@@ -185,7 +212,8 @@ export type AlertFrequency = (typeof AlertFrequency)[keyof typeof AlertFrequency
 export const ReportFrequency: {
   DAILY: 'DAILY',
   WEEKLY: 'WEEKLY',
-  MONTHLY: 'MONTHLY'
+  MONTHLY: 'MONTHLY',
+  QUARTERLY: 'QUARTERLY'
 };
 
 export type ReportFrequency = (typeof ReportFrequency)[keyof typeof ReportFrequency]
@@ -207,6 +235,31 @@ export const Theme: {
 };
 
 export type Theme = (typeof Theme)[keyof typeof Theme]
+
+
+export const AssistantChannel: {
+  TELEGRAM: 'TELEGRAM'
+};
+
+export type AssistantChannel = (typeof AssistantChannel)[keyof typeof AssistantChannel]
+
+
+export const MessageDirection: {
+  INBOUND: 'INBOUND',
+  OUTBOUND: 'OUTBOUND'
+};
+
+export type MessageDirection = (typeof MessageDirection)[keyof typeof MessageDirection]
+
+
+export const ExecutionStatus: {
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED',
+  PENDING_CONFIRMATION: 'PENDING_CONFIRMATION',
+  CANCELLED: 'CANCELLED'
+};
+
+export type ExecutionStatus = (typeof ExecutionStatus)[keyof typeof ExecutionStatus]
 
 }
 
@@ -257,6 +310,18 @@ export const BudgetPeriod: typeof $Enums.BudgetPeriod
 export type Theme = $Enums.Theme
 
 export const Theme: typeof $Enums.Theme
+
+export type AssistantChannel = $Enums.AssistantChannel
+
+export const AssistantChannel: typeof $Enums.AssistantChannel
+
+export type MessageDirection = $Enums.MessageDirection
+
+export const MessageDirection: typeof $Enums.MessageDirection
+
+export type ExecutionStatus = $Enums.ExecutionStatus
+
+export const ExecutionStatus: typeof $Enums.ExecutionStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -417,6 +482,16 @@ export class PrismaClient<
   get goalCheckIn(): Prisma.GoalCheckInDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.task`: Exposes CRUD operations for the **Task** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Tasks
+    * const tasks = await prisma.task.findMany()
+    * ```
+    */
+  get task(): Prisma.TaskDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.project`: Exposes CRUD operations for the **Project** model.
     * Example usage:
     * ```ts
@@ -535,6 +610,46 @@ export class PrismaClient<
     * ```
     */
   get budgetSetting(): Prisma.BudgetSettingDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.telegramLink`: Exposes CRUD operations for the **TelegramLink** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TelegramLinks
+    * const telegramLinks = await prisma.telegramLink.findMany()
+    * ```
+    */
+  get telegramLink(): Prisma.TelegramLinkDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.assistantMessage`: Exposes CRUD operations for the **AssistantMessage** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AssistantMessages
+    * const assistantMessages = await prisma.assistantMessage.findMany()
+    * ```
+    */
+  get assistantMessage(): Prisma.AssistantMessageDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.assistantActionLog`: Exposes CRUD operations for the **AssistantActionLog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AssistantActionLogs
+    * const assistantActionLogs = await prisma.assistantActionLog.findMany()
+    * ```
+    */
+  get assistantActionLog(): Prisma.AssistantActionLogDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.assistantPendingAction`: Exposes CRUD operations for the **AssistantPendingAction** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AssistantPendingActions
+    * const assistantPendingActions = await prisma.assistantPendingAction.findMany()
+    * ```
+    */
+  get assistantPendingAction(): Prisma.AssistantPendingActionDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -980,6 +1095,7 @@ export namespace Prisma {
     RefreshToken: 'RefreshToken',
     Goal: 'Goal',
     GoalCheckIn: 'GoalCheckIn',
+    Task: 'Task',
     Project: 'Project',
     LearningItem: 'LearningItem',
     Idea: 'Idea',
@@ -991,7 +1107,11 @@ export namespace Prisma {
     Expense: 'Expense',
     AlertRule: 'AlertRule',
     ScheduledReport: 'ScheduledReport',
-    BudgetSetting: 'BudgetSetting'
+    BudgetSetting: 'BudgetSetting',
+    TelegramLink: 'TelegramLink',
+    AssistantMessage: 'AssistantMessage',
+    AssistantActionLog: 'AssistantActionLog',
+    AssistantPendingAction: 'AssistantPendingAction'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1010,7 +1130,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "refreshToken" | "goal" | "goalCheckIn" | "project" | "learningItem" | "idea" | "houseworkItem" | "asset" | "maintenanceRecord" | "calendarEvent" | "eventParticipant" | "expense" | "alertRule" | "scheduledReport" | "budgetSetting"
+      modelProps: "user" | "refreshToken" | "goal" | "goalCheckIn" | "task" | "project" | "learningItem" | "idea" | "houseworkItem" | "asset" | "maintenanceRecord" | "calendarEvent" | "eventParticipant" | "expense" | "alertRule" | "scheduledReport" | "budgetSetting" | "telegramLink" | "assistantMessage" | "assistantActionLog" | "assistantPendingAction"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1307,6 +1427,80 @@ export namespace Prisma {
           count: {
             args: Prisma.GoalCheckInCountArgs<ExtArgs>
             result: $Utils.Optional<GoalCheckInCountAggregateOutputType> | number
+          }
+        }
+      }
+      Task: {
+        payload: Prisma.$TaskPayload<ExtArgs>
+        fields: Prisma.TaskFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TaskFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TaskPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TaskFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TaskPayload>
+          }
+          findFirst: {
+            args: Prisma.TaskFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TaskPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TaskFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TaskPayload>
+          }
+          findMany: {
+            args: Prisma.TaskFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TaskPayload>[]
+          }
+          create: {
+            args: Prisma.TaskCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TaskPayload>
+          }
+          createMany: {
+            args: Prisma.TaskCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TaskCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TaskPayload>[]
+          }
+          delete: {
+            args: Prisma.TaskDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TaskPayload>
+          }
+          update: {
+            args: Prisma.TaskUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TaskPayload>
+          }
+          deleteMany: {
+            args: Prisma.TaskDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TaskUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TaskUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TaskPayload>[]
+          }
+          upsert: {
+            args: Prisma.TaskUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TaskPayload>
+          }
+          aggregate: {
+            args: Prisma.TaskAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTask>
+          }
+          groupBy: {
+            args: Prisma.TaskGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TaskGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TaskCountArgs<ExtArgs>
+            result: $Utils.Optional<TaskCountAggregateOutputType> | number
           }
         }
       }
@@ -2198,6 +2392,302 @@ export namespace Prisma {
           }
         }
       }
+      TelegramLink: {
+        payload: Prisma.$TelegramLinkPayload<ExtArgs>
+        fields: Prisma.TelegramLinkFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TelegramLinkFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TelegramLinkPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TelegramLinkFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TelegramLinkPayload>
+          }
+          findFirst: {
+            args: Prisma.TelegramLinkFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TelegramLinkPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TelegramLinkFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TelegramLinkPayload>
+          }
+          findMany: {
+            args: Prisma.TelegramLinkFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TelegramLinkPayload>[]
+          }
+          create: {
+            args: Prisma.TelegramLinkCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TelegramLinkPayload>
+          }
+          createMany: {
+            args: Prisma.TelegramLinkCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TelegramLinkCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TelegramLinkPayload>[]
+          }
+          delete: {
+            args: Prisma.TelegramLinkDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TelegramLinkPayload>
+          }
+          update: {
+            args: Prisma.TelegramLinkUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TelegramLinkPayload>
+          }
+          deleteMany: {
+            args: Prisma.TelegramLinkDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TelegramLinkUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TelegramLinkUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TelegramLinkPayload>[]
+          }
+          upsert: {
+            args: Prisma.TelegramLinkUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TelegramLinkPayload>
+          }
+          aggregate: {
+            args: Prisma.TelegramLinkAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTelegramLink>
+          }
+          groupBy: {
+            args: Prisma.TelegramLinkGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TelegramLinkGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TelegramLinkCountArgs<ExtArgs>
+            result: $Utils.Optional<TelegramLinkCountAggregateOutputType> | number
+          }
+        }
+      }
+      AssistantMessage: {
+        payload: Prisma.$AssistantMessagePayload<ExtArgs>
+        fields: Prisma.AssistantMessageFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AssistantMessageFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantMessagePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AssistantMessageFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantMessagePayload>
+          }
+          findFirst: {
+            args: Prisma.AssistantMessageFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantMessagePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AssistantMessageFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantMessagePayload>
+          }
+          findMany: {
+            args: Prisma.AssistantMessageFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantMessagePayload>[]
+          }
+          create: {
+            args: Prisma.AssistantMessageCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantMessagePayload>
+          }
+          createMany: {
+            args: Prisma.AssistantMessageCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AssistantMessageCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantMessagePayload>[]
+          }
+          delete: {
+            args: Prisma.AssistantMessageDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantMessagePayload>
+          }
+          update: {
+            args: Prisma.AssistantMessageUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantMessagePayload>
+          }
+          deleteMany: {
+            args: Prisma.AssistantMessageDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AssistantMessageUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AssistantMessageUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantMessagePayload>[]
+          }
+          upsert: {
+            args: Prisma.AssistantMessageUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantMessagePayload>
+          }
+          aggregate: {
+            args: Prisma.AssistantMessageAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAssistantMessage>
+          }
+          groupBy: {
+            args: Prisma.AssistantMessageGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AssistantMessageGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AssistantMessageCountArgs<ExtArgs>
+            result: $Utils.Optional<AssistantMessageCountAggregateOutputType> | number
+          }
+        }
+      }
+      AssistantActionLog: {
+        payload: Prisma.$AssistantActionLogPayload<ExtArgs>
+        fields: Prisma.AssistantActionLogFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AssistantActionLogFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantActionLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AssistantActionLogFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantActionLogPayload>
+          }
+          findFirst: {
+            args: Prisma.AssistantActionLogFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantActionLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AssistantActionLogFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantActionLogPayload>
+          }
+          findMany: {
+            args: Prisma.AssistantActionLogFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantActionLogPayload>[]
+          }
+          create: {
+            args: Prisma.AssistantActionLogCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantActionLogPayload>
+          }
+          createMany: {
+            args: Prisma.AssistantActionLogCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AssistantActionLogCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantActionLogPayload>[]
+          }
+          delete: {
+            args: Prisma.AssistantActionLogDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantActionLogPayload>
+          }
+          update: {
+            args: Prisma.AssistantActionLogUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantActionLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.AssistantActionLogDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AssistantActionLogUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AssistantActionLogUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantActionLogPayload>[]
+          }
+          upsert: {
+            args: Prisma.AssistantActionLogUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantActionLogPayload>
+          }
+          aggregate: {
+            args: Prisma.AssistantActionLogAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAssistantActionLog>
+          }
+          groupBy: {
+            args: Prisma.AssistantActionLogGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AssistantActionLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AssistantActionLogCountArgs<ExtArgs>
+            result: $Utils.Optional<AssistantActionLogCountAggregateOutputType> | number
+          }
+        }
+      }
+      AssistantPendingAction: {
+        payload: Prisma.$AssistantPendingActionPayload<ExtArgs>
+        fields: Prisma.AssistantPendingActionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AssistantPendingActionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantPendingActionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AssistantPendingActionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantPendingActionPayload>
+          }
+          findFirst: {
+            args: Prisma.AssistantPendingActionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantPendingActionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AssistantPendingActionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantPendingActionPayload>
+          }
+          findMany: {
+            args: Prisma.AssistantPendingActionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantPendingActionPayload>[]
+          }
+          create: {
+            args: Prisma.AssistantPendingActionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantPendingActionPayload>
+          }
+          createMany: {
+            args: Prisma.AssistantPendingActionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AssistantPendingActionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantPendingActionPayload>[]
+          }
+          delete: {
+            args: Prisma.AssistantPendingActionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantPendingActionPayload>
+          }
+          update: {
+            args: Prisma.AssistantPendingActionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantPendingActionPayload>
+          }
+          deleteMany: {
+            args: Prisma.AssistantPendingActionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AssistantPendingActionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AssistantPendingActionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantPendingActionPayload>[]
+          }
+          upsert: {
+            args: Prisma.AssistantPendingActionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AssistantPendingActionPayload>
+          }
+          aggregate: {
+            args: Prisma.AssistantPendingActionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAssistantPendingAction>
+          }
+          groupBy: {
+            args: Prisma.AssistantPendingActionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AssistantPendingActionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AssistantPendingActionCountArgs<ExtArgs>
+            result: $Utils.Optional<AssistantPendingActionCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2298,6 +2788,7 @@ export namespace Prisma {
     refreshToken?: RefreshTokenOmit
     goal?: GoalOmit
     goalCheckIn?: GoalCheckInOmit
+    task?: TaskOmit
     project?: ProjectOmit
     learningItem?: LearningItemOmit
     idea?: IdeaOmit
@@ -2310,6 +2801,10 @@ export namespace Prisma {
     alertRule?: AlertRuleOmit
     scheduledReport?: ScheduledReportOmit
     budgetSetting?: BudgetSettingOmit
+    telegramLink?: TelegramLinkOmit
+    assistantMessage?: AssistantMessageOmit
+    assistantActionLog?: AssistantActionLogOmit
+    assistantPendingAction?: AssistantPendingActionOmit
   }
 
   /* Types for Logging */
@@ -2392,6 +2887,7 @@ export namespace Prisma {
   export type UserCountOutputType = {
     goals: number
     goalCheckIns: number
+    tasks: number
     projects: number
     createdProjects: number
     learningItems: number
@@ -2407,11 +2903,15 @@ export namespace Prisma {
     scheduledReports: number
     budgetSettings: number
     refreshTokens: number
+    assistantMessages: number
+    assistantActionLogs: number
+    assistantPendingActions: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     goals?: boolean | UserCountOutputTypeCountGoalsArgs
     goalCheckIns?: boolean | UserCountOutputTypeCountGoalCheckInsArgs
+    tasks?: boolean | UserCountOutputTypeCountTasksArgs
     projects?: boolean | UserCountOutputTypeCountProjectsArgs
     createdProjects?: boolean | UserCountOutputTypeCountCreatedProjectsArgs
     learningItems?: boolean | UserCountOutputTypeCountLearningItemsArgs
@@ -2427,6 +2927,9 @@ export namespace Prisma {
     scheduledReports?: boolean | UserCountOutputTypeCountScheduledReportsArgs
     budgetSettings?: boolean | UserCountOutputTypeCountBudgetSettingsArgs
     refreshTokens?: boolean | UserCountOutputTypeCountRefreshTokensArgs
+    assistantMessages?: boolean | UserCountOutputTypeCountAssistantMessagesArgs
+    assistantActionLogs?: boolean | UserCountOutputTypeCountAssistantActionLogsArgs
+    assistantPendingActions?: boolean | UserCountOutputTypeCountAssistantPendingActionsArgs
   }
 
   // Custom InputTypes
@@ -2452,6 +2955,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountGoalCheckInsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: GoalCheckInWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountTasksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TaskWhereInput
   }
 
   /**
@@ -2557,6 +3067,27 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountRefreshTokensArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: RefreshTokenWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountAssistantMessagesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AssistantMessageWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountAssistantActionLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AssistantActionLogWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountAssistantPendingActionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AssistantPendingActionWhereInput
   }
 
 
@@ -2678,6 +3209,7 @@ export namespace Prisma {
     notificationEnabled: boolean | null
     notificationChannel: $Enums.NotificationChannel | null
     notificationEmail: string | null
+    timezone: string | null
     telegramChatId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -2694,6 +3226,7 @@ export namespace Prisma {
     notificationEnabled: boolean | null
     notificationChannel: $Enums.NotificationChannel | null
     notificationEmail: string | null
+    timezone: string | null
     telegramChatId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -2710,6 +3243,7 @@ export namespace Prisma {
     notificationEnabled: number
     notificationChannel: number
     notificationEmail: number
+    timezone: number
     telegramChatId: number
     createdAt: number
     updatedAt: number
@@ -2728,6 +3262,7 @@ export namespace Prisma {
     notificationEnabled?: true
     notificationChannel?: true
     notificationEmail?: true
+    timezone?: true
     telegramChatId?: true
     createdAt?: true
     updatedAt?: true
@@ -2744,6 +3279,7 @@ export namespace Prisma {
     notificationEnabled?: true
     notificationChannel?: true
     notificationEmail?: true
+    timezone?: true
     telegramChatId?: true
     createdAt?: true
     updatedAt?: true
@@ -2760,6 +3296,7 @@ export namespace Prisma {
     notificationEnabled?: true
     notificationChannel?: true
     notificationEmail?: true
+    timezone?: true
     telegramChatId?: true
     createdAt?: true
     updatedAt?: true
@@ -2849,6 +3386,7 @@ export namespace Prisma {
     notificationEnabled: boolean
     notificationChannel: $Enums.NotificationChannel
     notificationEmail: string | null
+    timezone: string | null
     telegramChatId: string | null
     createdAt: Date
     updatedAt: Date
@@ -2882,11 +3420,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: boolean
     notificationEmail?: boolean
+    timezone?: boolean
     telegramChatId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     goals?: boolean | User$goalsArgs<ExtArgs>
     goalCheckIns?: boolean | User$goalCheckInsArgs<ExtArgs>
+    tasks?: boolean | User$tasksArgs<ExtArgs>
     projects?: boolean | User$projectsArgs<ExtArgs>
     createdProjects?: boolean | User$createdProjectsArgs<ExtArgs>
     learningItems?: boolean | User$learningItemsArgs<ExtArgs>
@@ -2902,6 +3442,10 @@ export namespace Prisma {
     scheduledReports?: boolean | User$scheduledReportsArgs<ExtArgs>
     budgetSettings?: boolean | User$budgetSettingsArgs<ExtArgs>
     refreshTokens?: boolean | User$refreshTokensArgs<ExtArgs>
+    telegramLink?: boolean | User$telegramLinkArgs<ExtArgs>
+    assistantMessages?: boolean | User$assistantMessagesArgs<ExtArgs>
+    assistantActionLogs?: boolean | User$assistantActionLogsArgs<ExtArgs>
+    assistantPendingActions?: boolean | User$assistantPendingActionsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -2916,6 +3460,7 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: boolean
     notificationEmail?: boolean
+    timezone?: boolean
     telegramChatId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2932,6 +3477,7 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: boolean
     notificationEmail?: boolean
+    timezone?: boolean
     telegramChatId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2948,15 +3494,17 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: boolean
     notificationEmail?: boolean
+    timezone?: boolean
     telegramChatId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "name" | "password" | "role" | "active" | "theme" | "notificationEnabled" | "notificationChannel" | "notificationEmail" | "telegramChatId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "name" | "password" | "role" | "active" | "theme" | "notificationEnabled" | "notificationChannel" | "notificationEmail" | "timezone" | "telegramChatId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     goals?: boolean | User$goalsArgs<ExtArgs>
     goalCheckIns?: boolean | User$goalCheckInsArgs<ExtArgs>
+    tasks?: boolean | User$tasksArgs<ExtArgs>
     projects?: boolean | User$projectsArgs<ExtArgs>
     createdProjects?: boolean | User$createdProjectsArgs<ExtArgs>
     learningItems?: boolean | User$learningItemsArgs<ExtArgs>
@@ -2972,6 +3520,10 @@ export namespace Prisma {
     scheduledReports?: boolean | User$scheduledReportsArgs<ExtArgs>
     budgetSettings?: boolean | User$budgetSettingsArgs<ExtArgs>
     refreshTokens?: boolean | User$refreshTokensArgs<ExtArgs>
+    telegramLink?: boolean | User$telegramLinkArgs<ExtArgs>
+    assistantMessages?: boolean | User$assistantMessagesArgs<ExtArgs>
+    assistantActionLogs?: boolean | User$assistantActionLogsArgs<ExtArgs>
+    assistantPendingActions?: boolean | User$assistantPendingActionsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -2982,6 +3534,7 @@ export namespace Prisma {
     objects: {
       goals: Prisma.$GoalPayload<ExtArgs>[]
       goalCheckIns: Prisma.$GoalCheckInPayload<ExtArgs>[]
+      tasks: Prisma.$TaskPayload<ExtArgs>[]
       projects: Prisma.$ProjectPayload<ExtArgs>[]
       createdProjects: Prisma.$ProjectPayload<ExtArgs>[]
       learningItems: Prisma.$LearningItemPayload<ExtArgs>[]
@@ -2997,6 +3550,10 @@ export namespace Prisma {
       scheduledReports: Prisma.$ScheduledReportPayload<ExtArgs>[]
       budgetSettings: Prisma.$BudgetSettingPayload<ExtArgs>[]
       refreshTokens: Prisma.$RefreshTokenPayload<ExtArgs>[]
+      telegramLink: Prisma.$TelegramLinkPayload<ExtArgs> | null
+      assistantMessages: Prisma.$AssistantMessagePayload<ExtArgs>[]
+      assistantActionLogs: Prisma.$AssistantActionLogPayload<ExtArgs>[]
+      assistantPendingActions: Prisma.$AssistantPendingActionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -3009,6 +3566,7 @@ export namespace Prisma {
       notificationEnabled: boolean
       notificationChannel: $Enums.NotificationChannel
       notificationEmail: string | null
+      timezone: string | null
       telegramChatId: string | null
       createdAt: Date
       updatedAt: Date
@@ -3408,6 +3966,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     goals<T extends User$goalsArgs<ExtArgs> = {}>(args?: Subset<T, User$goalsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GoalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     goalCheckIns<T extends User$goalCheckInsArgs<ExtArgs> = {}>(args?: Subset<T, User$goalCheckInsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GoalCheckInPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    tasks<T extends User$tasksArgs<ExtArgs> = {}>(args?: Subset<T, User$tasksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     projects<T extends User$projectsArgs<ExtArgs> = {}>(args?: Subset<T, User$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     createdProjects<T extends User$createdProjectsArgs<ExtArgs> = {}>(args?: Subset<T, User$createdProjectsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     learningItems<T extends User$learningItemsArgs<ExtArgs> = {}>(args?: Subset<T, User$learningItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LearningItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3423,6 +3982,10 @@ export namespace Prisma {
     scheduledReports<T extends User$scheduledReportsArgs<ExtArgs> = {}>(args?: Subset<T, User$scheduledReportsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ScheduledReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     budgetSettings<T extends User$budgetSettingsArgs<ExtArgs> = {}>(args?: Subset<T, User$budgetSettingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BudgetSettingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     refreshTokens<T extends User$refreshTokensArgs<ExtArgs> = {}>(args?: Subset<T, User$refreshTokensArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RefreshTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    telegramLink<T extends User$telegramLinkArgs<ExtArgs> = {}>(args?: Subset<T, User$telegramLinkArgs<ExtArgs>>): Prisma__TelegramLinkClient<$Result.GetResult<Prisma.$TelegramLinkPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    assistantMessages<T extends User$assistantMessagesArgs<ExtArgs> = {}>(args?: Subset<T, User$assistantMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssistantMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    assistantActionLogs<T extends User$assistantActionLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$assistantActionLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssistantActionLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    assistantPendingActions<T extends User$assistantPendingActionsArgs<ExtArgs> = {}>(args?: Subset<T, User$assistantPendingActionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssistantPendingActionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3462,6 +4025,7 @@ export namespace Prisma {
     readonly notificationEnabled: FieldRef<"User", 'Boolean'>
     readonly notificationChannel: FieldRef<"User", 'NotificationChannel'>
     readonly notificationEmail: FieldRef<"User", 'String'>
+    readonly timezone: FieldRef<"User", 'String'>
     readonly telegramChatId: FieldRef<"User", 'String'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
@@ -3899,6 +4463,30 @@ export namespace Prisma {
   }
 
   /**
+   * User.tasks
+   */
+  export type User$tasksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskInclude<ExtArgs> | null
+    where?: TaskWhereInput
+    orderBy?: TaskOrderByWithRelationInput | TaskOrderByWithRelationInput[]
+    cursor?: TaskWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TaskScalarFieldEnum | TaskScalarFieldEnum[]
+  }
+
+  /**
    * User.projects
    */
   export type User$projectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4256,6 +4844,97 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: RefreshTokenScalarFieldEnum | RefreshTokenScalarFieldEnum[]
+  }
+
+  /**
+   * User.telegramLink
+   */
+  export type User$telegramLinkArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkInclude<ExtArgs> | null
+    where?: TelegramLinkWhereInput
+  }
+
+  /**
+   * User.assistantMessages
+   */
+  export type User$assistantMessagesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageInclude<ExtArgs> | null
+    where?: AssistantMessageWhereInput
+    orderBy?: AssistantMessageOrderByWithRelationInput | AssistantMessageOrderByWithRelationInput[]
+    cursor?: AssistantMessageWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AssistantMessageScalarFieldEnum | AssistantMessageScalarFieldEnum[]
+  }
+
+  /**
+   * User.assistantActionLogs
+   */
+  export type User$assistantActionLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogInclude<ExtArgs> | null
+    where?: AssistantActionLogWhereInput
+    orderBy?: AssistantActionLogOrderByWithRelationInput | AssistantActionLogOrderByWithRelationInput[]
+    cursor?: AssistantActionLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AssistantActionLogScalarFieldEnum | AssistantActionLogScalarFieldEnum[]
+  }
+
+  /**
+   * User.assistantPendingActions
+   */
+  export type User$assistantPendingActionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionInclude<ExtArgs> | null
+    where?: AssistantPendingActionWhereInput
+    orderBy?: AssistantPendingActionOrderByWithRelationInput | AssistantPendingActionOrderByWithRelationInput[]
+    cursor?: AssistantPendingActionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AssistantPendingActionScalarFieldEnum | AssistantPendingActionScalarFieldEnum[]
   }
 
   /**
@@ -7699,6 +8378,1213 @@ export namespace Prisma {
 
 
   /**
+   * Model Task
+   */
+
+  export type AggregateTask = {
+    _count: TaskCountAggregateOutputType | null
+    _avg: TaskAvgAggregateOutputType | null
+    _sum: TaskSumAggregateOutputType | null
+    _min: TaskMinAggregateOutputType | null
+    _max: TaskMaxAggregateOutputType | null
+  }
+
+  export type TaskAvgAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type TaskSumAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type TaskMinAggregateOutputType = {
+    id: string | null
+    title: string | null
+    description: string | null
+    userId: string | null
+    isShared: boolean | null
+    dueDate: Date | null
+    priority: $Enums.Priority | null
+    status: $Enums.ProjectStatus | null
+    notificationEnabled: boolean | null
+    pinToDashboard: boolean | null
+    sortOrder: number | null
+    completedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TaskMaxAggregateOutputType = {
+    id: string | null
+    title: string | null
+    description: string | null
+    userId: string | null
+    isShared: boolean | null
+    dueDate: Date | null
+    priority: $Enums.Priority | null
+    status: $Enums.ProjectStatus | null
+    notificationEnabled: boolean | null
+    pinToDashboard: boolean | null
+    sortOrder: number | null
+    completedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TaskCountAggregateOutputType = {
+    id: number
+    title: number
+    description: number
+    userId: number
+    isShared: number
+    dueDate: number
+    priority: number
+    status: number
+    notificationEnabled: number
+    pinToDashboard: number
+    sortOrder: number
+    completedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TaskAvgAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type TaskSumAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type TaskMinAggregateInputType = {
+    id?: true
+    title?: true
+    description?: true
+    userId?: true
+    isShared?: true
+    dueDate?: true
+    priority?: true
+    status?: true
+    notificationEnabled?: true
+    pinToDashboard?: true
+    sortOrder?: true
+    completedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TaskMaxAggregateInputType = {
+    id?: true
+    title?: true
+    description?: true
+    userId?: true
+    isShared?: true
+    dueDate?: true
+    priority?: true
+    status?: true
+    notificationEnabled?: true
+    pinToDashboard?: true
+    sortOrder?: true
+    completedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TaskCountAggregateInputType = {
+    id?: true
+    title?: true
+    description?: true
+    userId?: true
+    isShared?: true
+    dueDate?: true
+    priority?: true
+    status?: true
+    notificationEnabled?: true
+    pinToDashboard?: true
+    sortOrder?: true
+    completedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TaskAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Task to aggregate.
+     */
+    where?: TaskWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Tasks to fetch.
+     */
+    orderBy?: TaskOrderByWithRelationInput | TaskOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TaskWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Tasks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Tasks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Tasks
+    **/
+    _count?: true | TaskCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TaskAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TaskSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TaskMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TaskMaxAggregateInputType
+  }
+
+  export type GetTaskAggregateType<T extends TaskAggregateArgs> = {
+        [P in keyof T & keyof AggregateTask]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTask[P]>
+      : GetScalarType<T[P], AggregateTask[P]>
+  }
+
+
+
+
+  export type TaskGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TaskWhereInput
+    orderBy?: TaskOrderByWithAggregationInput | TaskOrderByWithAggregationInput[]
+    by: TaskScalarFieldEnum[] | TaskScalarFieldEnum
+    having?: TaskScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TaskCountAggregateInputType | true
+    _avg?: TaskAvgAggregateInputType
+    _sum?: TaskSumAggregateInputType
+    _min?: TaskMinAggregateInputType
+    _max?: TaskMaxAggregateInputType
+  }
+
+  export type TaskGroupByOutputType = {
+    id: string
+    title: string
+    description: string | null
+    userId: string
+    isShared: boolean
+    dueDate: Date | null
+    priority: $Enums.Priority
+    status: $Enums.ProjectStatus
+    notificationEnabled: boolean
+    pinToDashboard: boolean
+    sortOrder: number
+    completedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: TaskCountAggregateOutputType | null
+    _avg: TaskAvgAggregateOutputType | null
+    _sum: TaskSumAggregateOutputType | null
+    _min: TaskMinAggregateOutputType | null
+    _max: TaskMaxAggregateOutputType | null
+  }
+
+  type GetTaskGroupByPayload<T extends TaskGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TaskGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TaskGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TaskGroupByOutputType[P]>
+            : GetScalarType<T[P], TaskGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TaskSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    title?: boolean
+    description?: boolean
+    userId?: boolean
+    isShared?: boolean
+    dueDate?: boolean
+    priority?: boolean
+    status?: boolean
+    notificationEnabled?: boolean
+    pinToDashboard?: boolean
+    sortOrder?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["task"]>
+
+  export type TaskSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    title?: boolean
+    description?: boolean
+    userId?: boolean
+    isShared?: boolean
+    dueDate?: boolean
+    priority?: boolean
+    status?: boolean
+    notificationEnabled?: boolean
+    pinToDashboard?: boolean
+    sortOrder?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["task"]>
+
+  export type TaskSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    title?: boolean
+    description?: boolean
+    userId?: boolean
+    isShared?: boolean
+    dueDate?: boolean
+    priority?: boolean
+    status?: boolean
+    notificationEnabled?: boolean
+    pinToDashboard?: boolean
+    sortOrder?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["task"]>
+
+  export type TaskSelectScalar = {
+    id?: boolean
+    title?: boolean
+    description?: boolean
+    userId?: boolean
+    isShared?: boolean
+    dueDate?: boolean
+    priority?: boolean
+    status?: boolean
+    notificationEnabled?: boolean
+    pinToDashboard?: boolean
+    sortOrder?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TaskOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "userId" | "isShared" | "dueDate" | "priority" | "status" | "notificationEnabled" | "pinToDashboard" | "sortOrder" | "completedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["task"]>
+  export type TaskInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type TaskIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type TaskIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $TaskPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Task"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      title: string
+      description: string | null
+      userId: string
+      isShared: boolean
+      dueDate: Date | null
+      priority: $Enums.Priority
+      status: $Enums.ProjectStatus
+      notificationEnabled: boolean
+      pinToDashboard: boolean
+      sortOrder: number
+      completedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["task"]>
+    composites: {}
+  }
+
+  type TaskGetPayload<S extends boolean | null | undefined | TaskDefaultArgs> = $Result.GetResult<Prisma.$TaskPayload, S>
+
+  type TaskCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TaskFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TaskCountAggregateInputType | true
+    }
+
+  export interface TaskDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Task'], meta: { name: 'Task' } }
+    /**
+     * Find zero or one Task that matches the filter.
+     * @param {TaskFindUniqueArgs} args - Arguments to find a Task
+     * @example
+     * // Get one Task
+     * const task = await prisma.task.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TaskFindUniqueArgs>(args: SelectSubset<T, TaskFindUniqueArgs<ExtArgs>>): Prisma__TaskClient<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Task that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TaskFindUniqueOrThrowArgs} args - Arguments to find a Task
+     * @example
+     * // Get one Task
+     * const task = await prisma.task.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TaskFindUniqueOrThrowArgs>(args: SelectSubset<T, TaskFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TaskClient<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Task that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TaskFindFirstArgs} args - Arguments to find a Task
+     * @example
+     * // Get one Task
+     * const task = await prisma.task.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TaskFindFirstArgs>(args?: SelectSubset<T, TaskFindFirstArgs<ExtArgs>>): Prisma__TaskClient<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Task that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TaskFindFirstOrThrowArgs} args - Arguments to find a Task
+     * @example
+     * // Get one Task
+     * const task = await prisma.task.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TaskFindFirstOrThrowArgs>(args?: SelectSubset<T, TaskFindFirstOrThrowArgs<ExtArgs>>): Prisma__TaskClient<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Tasks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TaskFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Tasks
+     * const tasks = await prisma.task.findMany()
+     * 
+     * // Get first 10 Tasks
+     * const tasks = await prisma.task.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const taskWithIdOnly = await prisma.task.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TaskFindManyArgs>(args?: SelectSubset<T, TaskFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Task.
+     * @param {TaskCreateArgs} args - Arguments to create a Task.
+     * @example
+     * // Create one Task
+     * const Task = await prisma.task.create({
+     *   data: {
+     *     // ... data to create a Task
+     *   }
+     * })
+     * 
+     */
+    create<T extends TaskCreateArgs>(args: SelectSubset<T, TaskCreateArgs<ExtArgs>>): Prisma__TaskClient<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Tasks.
+     * @param {TaskCreateManyArgs} args - Arguments to create many Tasks.
+     * @example
+     * // Create many Tasks
+     * const task = await prisma.task.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TaskCreateManyArgs>(args?: SelectSubset<T, TaskCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Tasks and returns the data saved in the database.
+     * @param {TaskCreateManyAndReturnArgs} args - Arguments to create many Tasks.
+     * @example
+     * // Create many Tasks
+     * const task = await prisma.task.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Tasks and only return the `id`
+     * const taskWithIdOnly = await prisma.task.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TaskCreateManyAndReturnArgs>(args?: SelectSubset<T, TaskCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Task.
+     * @param {TaskDeleteArgs} args - Arguments to delete one Task.
+     * @example
+     * // Delete one Task
+     * const Task = await prisma.task.delete({
+     *   where: {
+     *     // ... filter to delete one Task
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TaskDeleteArgs>(args: SelectSubset<T, TaskDeleteArgs<ExtArgs>>): Prisma__TaskClient<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Task.
+     * @param {TaskUpdateArgs} args - Arguments to update one Task.
+     * @example
+     * // Update one Task
+     * const task = await prisma.task.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TaskUpdateArgs>(args: SelectSubset<T, TaskUpdateArgs<ExtArgs>>): Prisma__TaskClient<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Tasks.
+     * @param {TaskDeleteManyArgs} args - Arguments to filter Tasks to delete.
+     * @example
+     * // Delete a few Tasks
+     * const { count } = await prisma.task.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TaskDeleteManyArgs>(args?: SelectSubset<T, TaskDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Tasks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TaskUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Tasks
+     * const task = await prisma.task.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TaskUpdateManyArgs>(args: SelectSubset<T, TaskUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Tasks and returns the data updated in the database.
+     * @param {TaskUpdateManyAndReturnArgs} args - Arguments to update many Tasks.
+     * @example
+     * // Update many Tasks
+     * const task = await prisma.task.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Tasks and only return the `id`
+     * const taskWithIdOnly = await prisma.task.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TaskUpdateManyAndReturnArgs>(args: SelectSubset<T, TaskUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Task.
+     * @param {TaskUpsertArgs} args - Arguments to update or create a Task.
+     * @example
+     * // Update or create a Task
+     * const task = await prisma.task.upsert({
+     *   create: {
+     *     // ... data to create a Task
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Task we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TaskUpsertArgs>(args: SelectSubset<T, TaskUpsertArgs<ExtArgs>>): Prisma__TaskClient<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Tasks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TaskCountArgs} args - Arguments to filter Tasks to count.
+     * @example
+     * // Count the number of Tasks
+     * const count = await prisma.task.count({
+     *   where: {
+     *     // ... the filter for the Tasks we want to count
+     *   }
+     * })
+    **/
+    count<T extends TaskCountArgs>(
+      args?: Subset<T, TaskCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TaskCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Task.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TaskAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TaskAggregateArgs>(args: Subset<T, TaskAggregateArgs>): Prisma.PrismaPromise<GetTaskAggregateType<T>>
+
+    /**
+     * Group by Task.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TaskGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TaskGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TaskGroupByArgs['orderBy'] }
+        : { orderBy?: TaskGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TaskGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTaskGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Task model
+   */
+  readonly fields: TaskFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Task.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TaskClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Task model
+   */
+  interface TaskFieldRefs {
+    readonly id: FieldRef<"Task", 'String'>
+    readonly title: FieldRef<"Task", 'String'>
+    readonly description: FieldRef<"Task", 'String'>
+    readonly userId: FieldRef<"Task", 'String'>
+    readonly isShared: FieldRef<"Task", 'Boolean'>
+    readonly dueDate: FieldRef<"Task", 'DateTime'>
+    readonly priority: FieldRef<"Task", 'Priority'>
+    readonly status: FieldRef<"Task", 'ProjectStatus'>
+    readonly notificationEnabled: FieldRef<"Task", 'Boolean'>
+    readonly pinToDashboard: FieldRef<"Task", 'Boolean'>
+    readonly sortOrder: FieldRef<"Task", 'Int'>
+    readonly completedAt: FieldRef<"Task", 'DateTime'>
+    readonly createdAt: FieldRef<"Task", 'DateTime'>
+    readonly updatedAt: FieldRef<"Task", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Task findUnique
+   */
+  export type TaskFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskInclude<ExtArgs> | null
+    /**
+     * Filter, which Task to fetch.
+     */
+    where: TaskWhereUniqueInput
+  }
+
+  /**
+   * Task findUniqueOrThrow
+   */
+  export type TaskFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskInclude<ExtArgs> | null
+    /**
+     * Filter, which Task to fetch.
+     */
+    where: TaskWhereUniqueInput
+  }
+
+  /**
+   * Task findFirst
+   */
+  export type TaskFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskInclude<ExtArgs> | null
+    /**
+     * Filter, which Task to fetch.
+     */
+    where?: TaskWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Tasks to fetch.
+     */
+    orderBy?: TaskOrderByWithRelationInput | TaskOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Tasks.
+     */
+    cursor?: TaskWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Tasks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Tasks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Tasks.
+     */
+    distinct?: TaskScalarFieldEnum | TaskScalarFieldEnum[]
+  }
+
+  /**
+   * Task findFirstOrThrow
+   */
+  export type TaskFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskInclude<ExtArgs> | null
+    /**
+     * Filter, which Task to fetch.
+     */
+    where?: TaskWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Tasks to fetch.
+     */
+    orderBy?: TaskOrderByWithRelationInput | TaskOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Tasks.
+     */
+    cursor?: TaskWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Tasks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Tasks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Tasks.
+     */
+    distinct?: TaskScalarFieldEnum | TaskScalarFieldEnum[]
+  }
+
+  /**
+   * Task findMany
+   */
+  export type TaskFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskInclude<ExtArgs> | null
+    /**
+     * Filter, which Tasks to fetch.
+     */
+    where?: TaskWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Tasks to fetch.
+     */
+    orderBy?: TaskOrderByWithRelationInput | TaskOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Tasks.
+     */
+    cursor?: TaskWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Tasks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Tasks.
+     */
+    skip?: number
+    distinct?: TaskScalarFieldEnum | TaskScalarFieldEnum[]
+  }
+
+  /**
+   * Task create
+   */
+  export type TaskCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Task.
+     */
+    data: XOR<TaskCreateInput, TaskUncheckedCreateInput>
+  }
+
+  /**
+   * Task createMany
+   */
+  export type TaskCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Tasks.
+     */
+    data: TaskCreateManyInput | TaskCreateManyInput[]
+  }
+
+  /**
+   * Task createManyAndReturn
+   */
+  export type TaskCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * The data used to create many Tasks.
+     */
+    data: TaskCreateManyInput | TaskCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Task update
+   */
+  export type TaskUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Task.
+     */
+    data: XOR<TaskUpdateInput, TaskUncheckedUpdateInput>
+    /**
+     * Choose, which Task to update.
+     */
+    where: TaskWhereUniqueInput
+  }
+
+  /**
+   * Task updateMany
+   */
+  export type TaskUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Tasks.
+     */
+    data: XOR<TaskUpdateManyMutationInput, TaskUncheckedUpdateManyInput>
+    /**
+     * Filter which Tasks to update
+     */
+    where?: TaskWhereInput
+    /**
+     * Limit how many Tasks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Task updateManyAndReturn
+   */
+  export type TaskUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * The data used to update Tasks.
+     */
+    data: XOR<TaskUpdateManyMutationInput, TaskUncheckedUpdateManyInput>
+    /**
+     * Filter which Tasks to update
+     */
+    where?: TaskWhereInput
+    /**
+     * Limit how many Tasks to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Task upsert
+   */
+  export type TaskUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Task to update in case it exists.
+     */
+    where: TaskWhereUniqueInput
+    /**
+     * In case the Task found by the `where` argument doesn't exist, create a new Task with this data.
+     */
+    create: XOR<TaskCreateInput, TaskUncheckedCreateInput>
+    /**
+     * In case the Task was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TaskUpdateInput, TaskUncheckedUpdateInput>
+  }
+
+  /**
+   * Task delete
+   */
+  export type TaskDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskInclude<ExtArgs> | null
+    /**
+     * Filter which Task to delete.
+     */
+    where: TaskWhereUniqueInput
+  }
+
+  /**
+   * Task deleteMany
+   */
+  export type TaskDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Tasks to delete
+     */
+    where?: TaskWhereInput
+    /**
+     * Limit how many Tasks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Task without action
+   */
+  export type TaskDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Task
+     */
+    select?: TaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Task
+     */
+    omit?: TaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TaskInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model Project
    */
 
@@ -8963,6 +10849,7 @@ export namespace Prisma {
     status: $Enums.ProjectStatus | null
     userId: string | null
     notificationEnabled: boolean | null
+    pinToDashboard: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -8978,6 +10865,7 @@ export namespace Prisma {
     status: $Enums.ProjectStatus | null
     userId: string | null
     notificationEnabled: boolean | null
+    pinToDashboard: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -8993,6 +10881,7 @@ export namespace Prisma {
     status: number
     userId: number
     notificationEnabled: number
+    pinToDashboard: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -9018,6 +10907,7 @@ export namespace Prisma {
     status?: true
     userId?: true
     notificationEnabled?: true
+    pinToDashboard?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -9033,6 +10923,7 @@ export namespace Prisma {
     status?: true
     userId?: true
     notificationEnabled?: true
+    pinToDashboard?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -9048,6 +10939,7 @@ export namespace Prisma {
     status?: true
     userId?: true
     notificationEnabled?: true
+    pinToDashboard?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -9150,6 +11042,7 @@ export namespace Prisma {
     status: $Enums.ProjectStatus
     userId: string
     notificationEnabled: boolean
+    pinToDashboard: boolean
     createdAt: Date
     updatedAt: Date
     _count: LearningItemCountAggregateOutputType | null
@@ -9184,6 +11077,7 @@ export namespace Prisma {
     status?: boolean
     userId?: boolean
     notificationEnabled?: boolean
+    pinToDashboard?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -9200,6 +11094,7 @@ export namespace Prisma {
     status?: boolean
     userId?: boolean
     notificationEnabled?: boolean
+    pinToDashboard?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -9216,6 +11111,7 @@ export namespace Prisma {
     status?: boolean
     userId?: boolean
     notificationEnabled?: boolean
+    pinToDashboard?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -9232,11 +11128,12 @@ export namespace Prisma {
     status?: boolean
     userId?: boolean
     notificationEnabled?: boolean
+    pinToDashboard?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type LearningItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "subject" | "target" | "progress" | "deadline" | "status" | "userId" | "notificationEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["learningItem"]>
+  export type LearningItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "subject" | "target" | "progress" | "deadline" | "status" | "userId" | "notificationEnabled" | "pinToDashboard" | "createdAt" | "updatedAt", ExtArgs["result"]["learningItem"]>
   export type LearningItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -9263,6 +11160,7 @@ export namespace Prisma {
       status: $Enums.ProjectStatus
       userId: string
       notificationEnabled: boolean
+      pinToDashboard: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["learningItem"]>
@@ -9699,6 +11597,7 @@ export namespace Prisma {
     readonly status: FieldRef<"LearningItem", 'ProjectStatus'>
     readonly userId: FieldRef<"LearningItem", 'String'>
     readonly notificationEnabled: FieldRef<"LearningItem", 'Boolean'>
+    readonly pinToDashboard: FieldRef<"LearningItem", 'Boolean'>
     readonly createdAt: FieldRef<"LearningItem", 'DateTime'>
     readonly updatedAt: FieldRef<"LearningItem", 'DateTime'>
   }
@@ -10131,6 +12030,7 @@ export namespace Prisma {
     tags: string | null
     status: $Enums.IdeaStatus | null
     userId: string | null
+    pinToDashboard: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -10143,6 +12043,7 @@ export namespace Prisma {
     tags: string | null
     status: $Enums.IdeaStatus | null
     userId: string | null
+    pinToDashboard: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -10155,6 +12056,7 @@ export namespace Prisma {
     tags: number
     status: number
     userId: number
+    pinToDashboard: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -10169,6 +12071,7 @@ export namespace Prisma {
     tags?: true
     status?: true
     userId?: true
+    pinToDashboard?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -10181,6 +12084,7 @@ export namespace Prisma {
     tags?: true
     status?: true
     userId?: true
+    pinToDashboard?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -10193,6 +12097,7 @@ export namespace Prisma {
     tags?: true
     status?: true
     userId?: true
+    pinToDashboard?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -10278,6 +12183,7 @@ export namespace Prisma {
     tags: string | null
     status: $Enums.IdeaStatus
     userId: string
+    pinToDashboard: boolean
     createdAt: Date
     updatedAt: Date
     _count: IdeaCountAggregateOutputType | null
@@ -10307,6 +12213,7 @@ export namespace Prisma {
     tags?: boolean
     status?: boolean
     userId?: boolean
+    pinToDashboard?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -10320,6 +12227,7 @@ export namespace Prisma {
     tags?: boolean
     status?: boolean
     userId?: boolean
+    pinToDashboard?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -10333,6 +12241,7 @@ export namespace Prisma {
     tags?: boolean
     status?: boolean
     userId?: boolean
+    pinToDashboard?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -10346,11 +12255,12 @@ export namespace Prisma {
     tags?: boolean
     status?: boolean
     userId?: boolean
+    pinToDashboard?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type IdeaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "content" | "category" | "tags" | "status" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["idea"]>
+  export type IdeaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "content" | "category" | "tags" | "status" | "userId" | "pinToDashboard" | "createdAt" | "updatedAt", ExtArgs["result"]["idea"]>
   export type IdeaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -10374,6 +12284,7 @@ export namespace Prisma {
       tags: string | null
       status: $Enums.IdeaStatus
       userId: string
+      pinToDashboard: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["idea"]>
@@ -10807,6 +12718,7 @@ export namespace Prisma {
     readonly tags: FieldRef<"Idea", 'String'>
     readonly status: FieldRef<"Idea", 'IdeaStatus'>
     readonly userId: FieldRef<"Idea", 'String'>
+    readonly pinToDashboard: FieldRef<"Idea", 'Boolean'>
     readonly createdAt: FieldRef<"Idea", 'DateTime'>
     readonly updatedAt: FieldRef<"Idea", 'DateTime'>
   }
@@ -18214,8 +20126,24 @@ export namespace Prisma {
 
   export type AggregateAlertRule = {
     _count: AlertRuleCountAggregateOutputType | null
+    _avg: AlertRuleAvgAggregateOutputType | null
+    _sum: AlertRuleSumAggregateOutputType | null
     _min: AlertRuleMinAggregateOutputType | null
     _max: AlertRuleMaxAggregateOutputType | null
+  }
+
+  export type AlertRuleAvgAggregateOutputType = {
+    dayOfWeek: number | null
+    dayOfMonth: number | null
+    cooldownHours: number | null
+    sortOrder: number | null
+  }
+
+  export type AlertRuleSumAggregateOutputType = {
+    dayOfWeek: number | null
+    dayOfMonth: number | null
+    cooldownHours: number | null
+    sortOrder: number | null
   }
 
   export type AlertRuleMinAggregateOutputType = {
@@ -18223,10 +20151,16 @@ export namespace Prisma {
     name: string | null
     moduleType: string | null
     frequency: $Enums.AlertFrequency | null
+    dayOfWeek: number | null
+    dayOfMonth: number | null
+    time: string | null
     conditionType: string | null
     conditionValue: string | null
+    cooldownHours: number | null
+    lastSentAt: Date | null
     notificationChannel: $Enums.NotificationChannel | null
     active: boolean | null
+    sortOrder: number | null
     userId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -18237,10 +20171,16 @@ export namespace Prisma {
     name: string | null
     moduleType: string | null
     frequency: $Enums.AlertFrequency | null
+    dayOfWeek: number | null
+    dayOfMonth: number | null
+    time: string | null
     conditionType: string | null
     conditionValue: string | null
+    cooldownHours: number | null
+    lastSentAt: Date | null
     notificationChannel: $Enums.NotificationChannel | null
     active: boolean | null
+    sortOrder: number | null
     userId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -18251,10 +20191,16 @@ export namespace Prisma {
     name: number
     moduleType: number
     frequency: number
+    dayOfWeek: number
+    dayOfMonth: number
+    time: number
     conditionType: number
     conditionValue: number
+    cooldownHours: number
+    lastSentAt: number
     notificationChannel: number
     active: number
+    sortOrder: number
     userId: number
     createdAt: number
     updatedAt: number
@@ -18262,15 +20208,35 @@ export namespace Prisma {
   }
 
 
+  export type AlertRuleAvgAggregateInputType = {
+    dayOfWeek?: true
+    dayOfMonth?: true
+    cooldownHours?: true
+    sortOrder?: true
+  }
+
+  export type AlertRuleSumAggregateInputType = {
+    dayOfWeek?: true
+    dayOfMonth?: true
+    cooldownHours?: true
+    sortOrder?: true
+  }
+
   export type AlertRuleMinAggregateInputType = {
     id?: true
     name?: true
     moduleType?: true
     frequency?: true
+    dayOfWeek?: true
+    dayOfMonth?: true
+    time?: true
     conditionType?: true
     conditionValue?: true
+    cooldownHours?: true
+    lastSentAt?: true
     notificationChannel?: true
     active?: true
+    sortOrder?: true
     userId?: true
     createdAt?: true
     updatedAt?: true
@@ -18281,10 +20247,16 @@ export namespace Prisma {
     name?: true
     moduleType?: true
     frequency?: true
+    dayOfWeek?: true
+    dayOfMonth?: true
+    time?: true
     conditionType?: true
     conditionValue?: true
+    cooldownHours?: true
+    lastSentAt?: true
     notificationChannel?: true
     active?: true
+    sortOrder?: true
     userId?: true
     createdAt?: true
     updatedAt?: true
@@ -18295,10 +20267,16 @@ export namespace Prisma {
     name?: true
     moduleType?: true
     frequency?: true
+    dayOfWeek?: true
+    dayOfMonth?: true
+    time?: true
     conditionType?: true
     conditionValue?: true
+    cooldownHours?: true
+    lastSentAt?: true
     notificationChannel?: true
     active?: true
+    sortOrder?: true
     userId?: true
     createdAt?: true
     updatedAt?: true
@@ -18343,6 +20321,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: AlertRuleAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AlertRuleSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: AlertRuleMinAggregateInputType
@@ -18373,6 +20363,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: AlertRuleCountAggregateInputType | true
+    _avg?: AlertRuleAvgAggregateInputType
+    _sum?: AlertRuleSumAggregateInputType
     _min?: AlertRuleMinAggregateInputType
     _max?: AlertRuleMaxAggregateInputType
   }
@@ -18382,14 +20374,22 @@ export namespace Prisma {
     name: string
     moduleType: string
     frequency: $Enums.AlertFrequency
+    dayOfWeek: number | null
+    dayOfMonth: number | null
+    time: string | null
     conditionType: string
     conditionValue: string | null
+    cooldownHours: number
+    lastSentAt: Date | null
     notificationChannel: $Enums.NotificationChannel
     active: boolean
+    sortOrder: number
     userId: string
     createdAt: Date
     updatedAt: Date
     _count: AlertRuleCountAggregateOutputType | null
+    _avg: AlertRuleAvgAggregateOutputType | null
+    _sum: AlertRuleSumAggregateOutputType | null
     _min: AlertRuleMinAggregateOutputType | null
     _max: AlertRuleMaxAggregateOutputType | null
   }
@@ -18413,10 +20413,16 @@ export namespace Prisma {
     name?: boolean
     moduleType?: boolean
     frequency?: boolean
+    dayOfWeek?: boolean
+    dayOfMonth?: boolean
+    time?: boolean
     conditionType?: boolean
     conditionValue?: boolean
+    cooldownHours?: boolean
+    lastSentAt?: boolean
     notificationChannel?: boolean
     active?: boolean
+    sortOrder?: boolean
     userId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -18428,10 +20434,16 @@ export namespace Prisma {
     name?: boolean
     moduleType?: boolean
     frequency?: boolean
+    dayOfWeek?: boolean
+    dayOfMonth?: boolean
+    time?: boolean
     conditionType?: boolean
     conditionValue?: boolean
+    cooldownHours?: boolean
+    lastSentAt?: boolean
     notificationChannel?: boolean
     active?: boolean
+    sortOrder?: boolean
     userId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -18443,10 +20455,16 @@ export namespace Prisma {
     name?: boolean
     moduleType?: boolean
     frequency?: boolean
+    dayOfWeek?: boolean
+    dayOfMonth?: boolean
+    time?: boolean
     conditionType?: boolean
     conditionValue?: boolean
+    cooldownHours?: boolean
+    lastSentAt?: boolean
     notificationChannel?: boolean
     active?: boolean
+    sortOrder?: boolean
     userId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -18458,16 +20476,22 @@ export namespace Prisma {
     name?: boolean
     moduleType?: boolean
     frequency?: boolean
+    dayOfWeek?: boolean
+    dayOfMonth?: boolean
+    time?: boolean
     conditionType?: boolean
     conditionValue?: boolean
+    cooldownHours?: boolean
+    lastSentAt?: boolean
     notificationChannel?: boolean
     active?: boolean
+    sortOrder?: boolean
     userId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type AlertRuleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "moduleType" | "frequency" | "conditionType" | "conditionValue" | "notificationChannel" | "active" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["alertRule"]>
+  export type AlertRuleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "moduleType" | "frequency" | "dayOfWeek" | "dayOfMonth" | "time" | "conditionType" | "conditionValue" | "cooldownHours" | "lastSentAt" | "notificationChannel" | "active" | "sortOrder" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["alertRule"]>
   export type AlertRuleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -18488,10 +20512,16 @@ export namespace Prisma {
       name: string
       moduleType: string
       frequency: $Enums.AlertFrequency
+      dayOfWeek: number | null
+      dayOfMonth: number | null
+      time: string | null
       conditionType: string
       conditionValue: string | null
+      cooldownHours: number
+      lastSentAt: Date | null
       notificationChannel: $Enums.NotificationChannel
       active: boolean
+      sortOrder: number
       userId: string
       createdAt: Date
       updatedAt: Date
@@ -18923,10 +20953,16 @@ export namespace Prisma {
     readonly name: FieldRef<"AlertRule", 'String'>
     readonly moduleType: FieldRef<"AlertRule", 'String'>
     readonly frequency: FieldRef<"AlertRule", 'AlertFrequency'>
+    readonly dayOfWeek: FieldRef<"AlertRule", 'Int'>
+    readonly dayOfMonth: FieldRef<"AlertRule", 'Int'>
+    readonly time: FieldRef<"AlertRule", 'String'>
     readonly conditionType: FieldRef<"AlertRule", 'String'>
     readonly conditionValue: FieldRef<"AlertRule", 'String'>
+    readonly cooldownHours: FieldRef<"AlertRule", 'Int'>
+    readonly lastSentAt: FieldRef<"AlertRule", 'DateTime'>
     readonly notificationChannel: FieldRef<"AlertRule", 'NotificationChannel'>
     readonly active: FieldRef<"AlertRule", 'Boolean'>
+    readonly sortOrder: FieldRef<"AlertRule", 'Int'>
     readonly userId: FieldRef<"AlertRule", 'String'>
     readonly createdAt: FieldRef<"AlertRule", 'DateTime'>
     readonly updatedAt: FieldRef<"AlertRule", 'DateTime'>
@@ -19355,23 +21391,29 @@ export namespace Prisma {
   }
 
   export type ScheduledReportAvgAggregateOutputType = {
+    dayOfMonth: number | null
     dayOfWeek: number | null
+    sortOrder: number | null
   }
 
   export type ScheduledReportSumAggregateOutputType = {
+    dayOfMonth: number | null
     dayOfWeek: number | null
+    sortOrder: number | null
   }
 
   export type ScheduledReportMinAggregateOutputType = {
     id: string | null
+    name: string | null
     reportType: string | null
     dateRangePreset: string | null
     frequency: $Enums.ReportFrequency | null
+    dayOfMonth: number | null
     dayOfWeek: number | null
     time: string | null
     notificationChannel: $Enums.NotificationChannel | null
-    recipients: string | null
     active: boolean | null
+    sortOrder: number | null
     userId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -19379,14 +21421,16 @@ export namespace Prisma {
 
   export type ScheduledReportMaxAggregateOutputType = {
     id: string | null
+    name: string | null
     reportType: string | null
     dateRangePreset: string | null
     frequency: $Enums.ReportFrequency | null
+    dayOfMonth: number | null
     dayOfWeek: number | null
     time: string | null
     notificationChannel: $Enums.NotificationChannel | null
-    recipients: string | null
     active: boolean | null
+    sortOrder: number | null
     userId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -19394,14 +21438,18 @@ export namespace Prisma {
 
   export type ScheduledReportCountAggregateOutputType = {
     id: number
+    name: number
     reportType: number
     dateRangePreset: number
     frequency: number
+    dayOfMonth: number
     dayOfWeek: number
     time: number
+    sections: number
     notificationChannel: number
     recipients: number
     active: number
+    sortOrder: number
     userId: number
     createdAt: number
     updatedAt: number
@@ -19410,23 +21458,29 @@ export namespace Prisma {
 
 
   export type ScheduledReportAvgAggregateInputType = {
+    dayOfMonth?: true
     dayOfWeek?: true
+    sortOrder?: true
   }
 
   export type ScheduledReportSumAggregateInputType = {
+    dayOfMonth?: true
     dayOfWeek?: true
+    sortOrder?: true
   }
 
   export type ScheduledReportMinAggregateInputType = {
     id?: true
+    name?: true
     reportType?: true
     dateRangePreset?: true
     frequency?: true
+    dayOfMonth?: true
     dayOfWeek?: true
     time?: true
     notificationChannel?: true
-    recipients?: true
     active?: true
+    sortOrder?: true
     userId?: true
     createdAt?: true
     updatedAt?: true
@@ -19434,14 +21488,16 @@ export namespace Prisma {
 
   export type ScheduledReportMaxAggregateInputType = {
     id?: true
+    name?: true
     reportType?: true
     dateRangePreset?: true
     frequency?: true
+    dayOfMonth?: true
     dayOfWeek?: true
     time?: true
     notificationChannel?: true
-    recipients?: true
     active?: true
+    sortOrder?: true
     userId?: true
     createdAt?: true
     updatedAt?: true
@@ -19449,14 +21505,18 @@ export namespace Prisma {
 
   export type ScheduledReportCountAggregateInputType = {
     id?: true
+    name?: true
     reportType?: true
     dateRangePreset?: true
     frequency?: true
+    dayOfMonth?: true
     dayOfWeek?: true
     time?: true
+    sections?: true
     notificationChannel?: true
     recipients?: true
     active?: true
+    sortOrder?: true
     userId?: true
     createdAt?: true
     updatedAt?: true
@@ -19551,14 +21611,18 @@ export namespace Prisma {
 
   export type ScheduledReportGroupByOutputType = {
     id: string
+    name: string
     reportType: string
     dateRangePreset: string | null
     frequency: $Enums.ReportFrequency
+    dayOfMonth: number | null
     dayOfWeek: number | null
     time: string | null
+    sections: JsonValue | null
     notificationChannel: $Enums.NotificationChannel
-    recipients: string | null
+    recipients: JsonValue | null
     active: boolean
+    sortOrder: number
     userId: string
     createdAt: Date
     updatedAt: Date
@@ -19585,14 +21649,18 @@ export namespace Prisma {
 
   export type ScheduledReportSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    name?: boolean
     reportType?: boolean
     dateRangePreset?: boolean
     frequency?: boolean
+    dayOfMonth?: boolean
     dayOfWeek?: boolean
     time?: boolean
+    sections?: boolean
     notificationChannel?: boolean
     recipients?: boolean
     active?: boolean
+    sortOrder?: boolean
     userId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -19601,14 +21669,18 @@ export namespace Prisma {
 
   export type ScheduledReportSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    name?: boolean
     reportType?: boolean
     dateRangePreset?: boolean
     frequency?: boolean
+    dayOfMonth?: boolean
     dayOfWeek?: boolean
     time?: boolean
+    sections?: boolean
     notificationChannel?: boolean
     recipients?: boolean
     active?: boolean
+    sortOrder?: boolean
     userId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -19617,14 +21689,18 @@ export namespace Prisma {
 
   export type ScheduledReportSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    name?: boolean
     reportType?: boolean
     dateRangePreset?: boolean
     frequency?: boolean
+    dayOfMonth?: boolean
     dayOfWeek?: boolean
     time?: boolean
+    sections?: boolean
     notificationChannel?: boolean
     recipients?: boolean
     active?: boolean
+    sortOrder?: boolean
     userId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -19633,20 +21709,24 @@ export namespace Prisma {
 
   export type ScheduledReportSelectScalar = {
     id?: boolean
+    name?: boolean
     reportType?: boolean
     dateRangePreset?: boolean
     frequency?: boolean
+    dayOfMonth?: boolean
     dayOfWeek?: boolean
     time?: boolean
+    sections?: boolean
     notificationChannel?: boolean
     recipients?: boolean
     active?: boolean
+    sortOrder?: boolean
     userId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ScheduledReportOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "reportType" | "dateRangePreset" | "frequency" | "dayOfWeek" | "time" | "notificationChannel" | "recipients" | "active" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["scheduledReport"]>
+  export type ScheduledReportOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "reportType" | "dateRangePreset" | "frequency" | "dayOfMonth" | "dayOfWeek" | "time" | "sections" | "notificationChannel" | "recipients" | "active" | "sortOrder" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["scheduledReport"]>
   export type ScheduledReportInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -19664,14 +21744,18 @@ export namespace Prisma {
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
+      name: string
       reportType: string
       dateRangePreset: string | null
       frequency: $Enums.ReportFrequency
+      dayOfMonth: number | null
       dayOfWeek: number | null
       time: string | null
+      sections: Prisma.JsonValue | null
       notificationChannel: $Enums.NotificationChannel
-      recipients: string | null
+      recipients: Prisma.JsonValue | null
       active: boolean
+      sortOrder: number
       userId: string
       createdAt: Date
       updatedAt: Date
@@ -20100,14 +22184,18 @@ export namespace Prisma {
    */
   interface ScheduledReportFieldRefs {
     readonly id: FieldRef<"ScheduledReport", 'String'>
+    readonly name: FieldRef<"ScheduledReport", 'String'>
     readonly reportType: FieldRef<"ScheduledReport", 'String'>
     readonly dateRangePreset: FieldRef<"ScheduledReport", 'String'>
     readonly frequency: FieldRef<"ScheduledReport", 'ReportFrequency'>
+    readonly dayOfMonth: FieldRef<"ScheduledReport", 'Int'>
     readonly dayOfWeek: FieldRef<"ScheduledReport", 'Int'>
     readonly time: FieldRef<"ScheduledReport", 'String'>
+    readonly sections: FieldRef<"ScheduledReport", 'Json'>
     readonly notificationChannel: FieldRef<"ScheduledReport", 'NotificationChannel'>
-    readonly recipients: FieldRef<"ScheduledReport", 'String'>
+    readonly recipients: FieldRef<"ScheduledReport", 'Json'>
     readonly active: FieldRef<"ScheduledReport", 'Boolean'>
+    readonly sortOrder: FieldRef<"ScheduledReport", 'Int'>
     readonly userId: FieldRef<"ScheduledReport", 'String'>
     readonly createdAt: FieldRef<"ScheduledReport", 'DateTime'>
     readonly updatedAt: FieldRef<"ScheduledReport", 'DateTime'>
@@ -21653,6 +23741,4520 @@ export namespace Prisma {
 
 
   /**
+   * Model TelegramLink
+   */
+
+  export type AggregateTelegramLink = {
+    _count: TelegramLinkCountAggregateOutputType | null
+    _min: TelegramLinkMinAggregateOutputType | null
+    _max: TelegramLinkMaxAggregateOutputType | null
+  }
+
+  export type TelegramLinkMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    telegramChatId: string | null
+    telegramUserId: string | null
+    telegramUsername: string | null
+    linkCode: string | null
+    linkCodeExpiresAt: Date | null
+    verifiedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TelegramLinkMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    telegramChatId: string | null
+    telegramUserId: string | null
+    telegramUsername: string | null
+    linkCode: string | null
+    linkCodeExpiresAt: Date | null
+    verifiedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TelegramLinkCountAggregateOutputType = {
+    id: number
+    userId: number
+    telegramChatId: number
+    telegramUserId: number
+    telegramUsername: number
+    linkCode: number
+    linkCodeExpiresAt: number
+    verifiedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TelegramLinkMinAggregateInputType = {
+    id?: true
+    userId?: true
+    telegramChatId?: true
+    telegramUserId?: true
+    telegramUsername?: true
+    linkCode?: true
+    linkCodeExpiresAt?: true
+    verifiedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TelegramLinkMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    telegramChatId?: true
+    telegramUserId?: true
+    telegramUsername?: true
+    linkCode?: true
+    linkCodeExpiresAt?: true
+    verifiedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TelegramLinkCountAggregateInputType = {
+    id?: true
+    userId?: true
+    telegramChatId?: true
+    telegramUserId?: true
+    telegramUsername?: true
+    linkCode?: true
+    linkCodeExpiresAt?: true
+    verifiedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TelegramLinkAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TelegramLink to aggregate.
+     */
+    where?: TelegramLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TelegramLinks to fetch.
+     */
+    orderBy?: TelegramLinkOrderByWithRelationInput | TelegramLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TelegramLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TelegramLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TelegramLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TelegramLinks
+    **/
+    _count?: true | TelegramLinkCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TelegramLinkMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TelegramLinkMaxAggregateInputType
+  }
+
+  export type GetTelegramLinkAggregateType<T extends TelegramLinkAggregateArgs> = {
+        [P in keyof T & keyof AggregateTelegramLink]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTelegramLink[P]>
+      : GetScalarType<T[P], AggregateTelegramLink[P]>
+  }
+
+
+
+
+  export type TelegramLinkGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TelegramLinkWhereInput
+    orderBy?: TelegramLinkOrderByWithAggregationInput | TelegramLinkOrderByWithAggregationInput[]
+    by: TelegramLinkScalarFieldEnum[] | TelegramLinkScalarFieldEnum
+    having?: TelegramLinkScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TelegramLinkCountAggregateInputType | true
+    _min?: TelegramLinkMinAggregateInputType
+    _max?: TelegramLinkMaxAggregateInputType
+  }
+
+  export type TelegramLinkGroupByOutputType = {
+    id: string
+    userId: string
+    telegramChatId: string
+    telegramUserId: string
+    telegramUsername: string | null
+    linkCode: string | null
+    linkCodeExpiresAt: Date | null
+    verifiedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: TelegramLinkCountAggregateOutputType | null
+    _min: TelegramLinkMinAggregateOutputType | null
+    _max: TelegramLinkMaxAggregateOutputType | null
+  }
+
+  type GetTelegramLinkGroupByPayload<T extends TelegramLinkGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TelegramLinkGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TelegramLinkGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TelegramLinkGroupByOutputType[P]>
+            : GetScalarType<T[P], TelegramLinkGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TelegramLinkSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    telegramChatId?: boolean
+    telegramUserId?: boolean
+    telegramUsername?: boolean
+    linkCode?: boolean
+    linkCodeExpiresAt?: boolean
+    verifiedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["telegramLink"]>
+
+  export type TelegramLinkSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    telegramChatId?: boolean
+    telegramUserId?: boolean
+    telegramUsername?: boolean
+    linkCode?: boolean
+    linkCodeExpiresAt?: boolean
+    verifiedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["telegramLink"]>
+
+  export type TelegramLinkSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    telegramChatId?: boolean
+    telegramUserId?: boolean
+    telegramUsername?: boolean
+    linkCode?: boolean
+    linkCodeExpiresAt?: boolean
+    verifiedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["telegramLink"]>
+
+  export type TelegramLinkSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    telegramChatId?: boolean
+    telegramUserId?: boolean
+    telegramUsername?: boolean
+    linkCode?: boolean
+    linkCodeExpiresAt?: boolean
+    verifiedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TelegramLinkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "telegramChatId" | "telegramUserId" | "telegramUsername" | "linkCode" | "linkCodeExpiresAt" | "verifiedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["telegramLink"]>
+  export type TelegramLinkInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type TelegramLinkIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type TelegramLinkIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $TelegramLinkPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TelegramLink"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      telegramChatId: string
+      telegramUserId: string
+      telegramUsername: string | null
+      linkCode: string | null
+      linkCodeExpiresAt: Date | null
+      verifiedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["telegramLink"]>
+    composites: {}
+  }
+
+  type TelegramLinkGetPayload<S extends boolean | null | undefined | TelegramLinkDefaultArgs> = $Result.GetResult<Prisma.$TelegramLinkPayload, S>
+
+  type TelegramLinkCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TelegramLinkFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TelegramLinkCountAggregateInputType | true
+    }
+
+  export interface TelegramLinkDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TelegramLink'], meta: { name: 'TelegramLink' } }
+    /**
+     * Find zero or one TelegramLink that matches the filter.
+     * @param {TelegramLinkFindUniqueArgs} args - Arguments to find a TelegramLink
+     * @example
+     * // Get one TelegramLink
+     * const telegramLink = await prisma.telegramLink.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TelegramLinkFindUniqueArgs>(args: SelectSubset<T, TelegramLinkFindUniqueArgs<ExtArgs>>): Prisma__TelegramLinkClient<$Result.GetResult<Prisma.$TelegramLinkPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TelegramLink that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TelegramLinkFindUniqueOrThrowArgs} args - Arguments to find a TelegramLink
+     * @example
+     * // Get one TelegramLink
+     * const telegramLink = await prisma.telegramLink.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TelegramLinkFindUniqueOrThrowArgs>(args: SelectSubset<T, TelegramLinkFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TelegramLinkClient<$Result.GetResult<Prisma.$TelegramLinkPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TelegramLink that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TelegramLinkFindFirstArgs} args - Arguments to find a TelegramLink
+     * @example
+     * // Get one TelegramLink
+     * const telegramLink = await prisma.telegramLink.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TelegramLinkFindFirstArgs>(args?: SelectSubset<T, TelegramLinkFindFirstArgs<ExtArgs>>): Prisma__TelegramLinkClient<$Result.GetResult<Prisma.$TelegramLinkPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TelegramLink that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TelegramLinkFindFirstOrThrowArgs} args - Arguments to find a TelegramLink
+     * @example
+     * // Get one TelegramLink
+     * const telegramLink = await prisma.telegramLink.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TelegramLinkFindFirstOrThrowArgs>(args?: SelectSubset<T, TelegramLinkFindFirstOrThrowArgs<ExtArgs>>): Prisma__TelegramLinkClient<$Result.GetResult<Prisma.$TelegramLinkPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TelegramLinks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TelegramLinkFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TelegramLinks
+     * const telegramLinks = await prisma.telegramLink.findMany()
+     * 
+     * // Get first 10 TelegramLinks
+     * const telegramLinks = await prisma.telegramLink.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const telegramLinkWithIdOnly = await prisma.telegramLink.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TelegramLinkFindManyArgs>(args?: SelectSubset<T, TelegramLinkFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TelegramLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TelegramLink.
+     * @param {TelegramLinkCreateArgs} args - Arguments to create a TelegramLink.
+     * @example
+     * // Create one TelegramLink
+     * const TelegramLink = await prisma.telegramLink.create({
+     *   data: {
+     *     // ... data to create a TelegramLink
+     *   }
+     * })
+     * 
+     */
+    create<T extends TelegramLinkCreateArgs>(args: SelectSubset<T, TelegramLinkCreateArgs<ExtArgs>>): Prisma__TelegramLinkClient<$Result.GetResult<Prisma.$TelegramLinkPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TelegramLinks.
+     * @param {TelegramLinkCreateManyArgs} args - Arguments to create many TelegramLinks.
+     * @example
+     * // Create many TelegramLinks
+     * const telegramLink = await prisma.telegramLink.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TelegramLinkCreateManyArgs>(args?: SelectSubset<T, TelegramLinkCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TelegramLinks and returns the data saved in the database.
+     * @param {TelegramLinkCreateManyAndReturnArgs} args - Arguments to create many TelegramLinks.
+     * @example
+     * // Create many TelegramLinks
+     * const telegramLink = await prisma.telegramLink.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TelegramLinks and only return the `id`
+     * const telegramLinkWithIdOnly = await prisma.telegramLink.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TelegramLinkCreateManyAndReturnArgs>(args?: SelectSubset<T, TelegramLinkCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TelegramLinkPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TelegramLink.
+     * @param {TelegramLinkDeleteArgs} args - Arguments to delete one TelegramLink.
+     * @example
+     * // Delete one TelegramLink
+     * const TelegramLink = await prisma.telegramLink.delete({
+     *   where: {
+     *     // ... filter to delete one TelegramLink
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TelegramLinkDeleteArgs>(args: SelectSubset<T, TelegramLinkDeleteArgs<ExtArgs>>): Prisma__TelegramLinkClient<$Result.GetResult<Prisma.$TelegramLinkPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TelegramLink.
+     * @param {TelegramLinkUpdateArgs} args - Arguments to update one TelegramLink.
+     * @example
+     * // Update one TelegramLink
+     * const telegramLink = await prisma.telegramLink.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TelegramLinkUpdateArgs>(args: SelectSubset<T, TelegramLinkUpdateArgs<ExtArgs>>): Prisma__TelegramLinkClient<$Result.GetResult<Prisma.$TelegramLinkPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TelegramLinks.
+     * @param {TelegramLinkDeleteManyArgs} args - Arguments to filter TelegramLinks to delete.
+     * @example
+     * // Delete a few TelegramLinks
+     * const { count } = await prisma.telegramLink.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TelegramLinkDeleteManyArgs>(args?: SelectSubset<T, TelegramLinkDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TelegramLinks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TelegramLinkUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TelegramLinks
+     * const telegramLink = await prisma.telegramLink.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TelegramLinkUpdateManyArgs>(args: SelectSubset<T, TelegramLinkUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TelegramLinks and returns the data updated in the database.
+     * @param {TelegramLinkUpdateManyAndReturnArgs} args - Arguments to update many TelegramLinks.
+     * @example
+     * // Update many TelegramLinks
+     * const telegramLink = await prisma.telegramLink.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TelegramLinks and only return the `id`
+     * const telegramLinkWithIdOnly = await prisma.telegramLink.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TelegramLinkUpdateManyAndReturnArgs>(args: SelectSubset<T, TelegramLinkUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TelegramLinkPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TelegramLink.
+     * @param {TelegramLinkUpsertArgs} args - Arguments to update or create a TelegramLink.
+     * @example
+     * // Update or create a TelegramLink
+     * const telegramLink = await prisma.telegramLink.upsert({
+     *   create: {
+     *     // ... data to create a TelegramLink
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TelegramLink we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TelegramLinkUpsertArgs>(args: SelectSubset<T, TelegramLinkUpsertArgs<ExtArgs>>): Prisma__TelegramLinkClient<$Result.GetResult<Prisma.$TelegramLinkPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TelegramLinks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TelegramLinkCountArgs} args - Arguments to filter TelegramLinks to count.
+     * @example
+     * // Count the number of TelegramLinks
+     * const count = await prisma.telegramLink.count({
+     *   where: {
+     *     // ... the filter for the TelegramLinks we want to count
+     *   }
+     * })
+    **/
+    count<T extends TelegramLinkCountArgs>(
+      args?: Subset<T, TelegramLinkCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TelegramLinkCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TelegramLink.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TelegramLinkAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TelegramLinkAggregateArgs>(args: Subset<T, TelegramLinkAggregateArgs>): Prisma.PrismaPromise<GetTelegramLinkAggregateType<T>>
+
+    /**
+     * Group by TelegramLink.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TelegramLinkGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TelegramLinkGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TelegramLinkGroupByArgs['orderBy'] }
+        : { orderBy?: TelegramLinkGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TelegramLinkGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTelegramLinkGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TelegramLink model
+   */
+  readonly fields: TelegramLinkFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TelegramLink.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TelegramLinkClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TelegramLink model
+   */
+  interface TelegramLinkFieldRefs {
+    readonly id: FieldRef<"TelegramLink", 'String'>
+    readonly userId: FieldRef<"TelegramLink", 'String'>
+    readonly telegramChatId: FieldRef<"TelegramLink", 'String'>
+    readonly telegramUserId: FieldRef<"TelegramLink", 'String'>
+    readonly telegramUsername: FieldRef<"TelegramLink", 'String'>
+    readonly linkCode: FieldRef<"TelegramLink", 'String'>
+    readonly linkCodeExpiresAt: FieldRef<"TelegramLink", 'DateTime'>
+    readonly verifiedAt: FieldRef<"TelegramLink", 'DateTime'>
+    readonly createdAt: FieldRef<"TelegramLink", 'DateTime'>
+    readonly updatedAt: FieldRef<"TelegramLink", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TelegramLink findUnique
+   */
+  export type TelegramLinkFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which TelegramLink to fetch.
+     */
+    where: TelegramLinkWhereUniqueInput
+  }
+
+  /**
+   * TelegramLink findUniqueOrThrow
+   */
+  export type TelegramLinkFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which TelegramLink to fetch.
+     */
+    where: TelegramLinkWhereUniqueInput
+  }
+
+  /**
+   * TelegramLink findFirst
+   */
+  export type TelegramLinkFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which TelegramLink to fetch.
+     */
+    where?: TelegramLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TelegramLinks to fetch.
+     */
+    orderBy?: TelegramLinkOrderByWithRelationInput | TelegramLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TelegramLinks.
+     */
+    cursor?: TelegramLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TelegramLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TelegramLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TelegramLinks.
+     */
+    distinct?: TelegramLinkScalarFieldEnum | TelegramLinkScalarFieldEnum[]
+  }
+
+  /**
+   * TelegramLink findFirstOrThrow
+   */
+  export type TelegramLinkFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which TelegramLink to fetch.
+     */
+    where?: TelegramLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TelegramLinks to fetch.
+     */
+    orderBy?: TelegramLinkOrderByWithRelationInput | TelegramLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TelegramLinks.
+     */
+    cursor?: TelegramLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TelegramLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TelegramLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TelegramLinks.
+     */
+    distinct?: TelegramLinkScalarFieldEnum | TelegramLinkScalarFieldEnum[]
+  }
+
+  /**
+   * TelegramLink findMany
+   */
+  export type TelegramLinkFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which TelegramLinks to fetch.
+     */
+    where?: TelegramLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TelegramLinks to fetch.
+     */
+    orderBy?: TelegramLinkOrderByWithRelationInput | TelegramLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TelegramLinks.
+     */
+    cursor?: TelegramLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TelegramLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TelegramLinks.
+     */
+    skip?: number
+    distinct?: TelegramLinkScalarFieldEnum | TelegramLinkScalarFieldEnum[]
+  }
+
+  /**
+   * TelegramLink create
+   */
+  export type TelegramLinkCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TelegramLink.
+     */
+    data: XOR<TelegramLinkCreateInput, TelegramLinkUncheckedCreateInput>
+  }
+
+  /**
+   * TelegramLink createMany
+   */
+  export type TelegramLinkCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TelegramLinks.
+     */
+    data: TelegramLinkCreateManyInput | TelegramLinkCreateManyInput[]
+  }
+
+  /**
+   * TelegramLink createManyAndReturn
+   */
+  export type TelegramLinkCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * The data used to create many TelegramLinks.
+     */
+    data: TelegramLinkCreateManyInput | TelegramLinkCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TelegramLink update
+   */
+  export type TelegramLinkUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TelegramLink.
+     */
+    data: XOR<TelegramLinkUpdateInput, TelegramLinkUncheckedUpdateInput>
+    /**
+     * Choose, which TelegramLink to update.
+     */
+    where: TelegramLinkWhereUniqueInput
+  }
+
+  /**
+   * TelegramLink updateMany
+   */
+  export type TelegramLinkUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TelegramLinks.
+     */
+    data: XOR<TelegramLinkUpdateManyMutationInput, TelegramLinkUncheckedUpdateManyInput>
+    /**
+     * Filter which TelegramLinks to update
+     */
+    where?: TelegramLinkWhereInput
+    /**
+     * Limit how many TelegramLinks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TelegramLink updateManyAndReturn
+   */
+  export type TelegramLinkUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * The data used to update TelegramLinks.
+     */
+    data: XOR<TelegramLinkUpdateManyMutationInput, TelegramLinkUncheckedUpdateManyInput>
+    /**
+     * Filter which TelegramLinks to update
+     */
+    where?: TelegramLinkWhereInput
+    /**
+     * Limit how many TelegramLinks to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TelegramLink upsert
+   */
+  export type TelegramLinkUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TelegramLink to update in case it exists.
+     */
+    where: TelegramLinkWhereUniqueInput
+    /**
+     * In case the TelegramLink found by the `where` argument doesn't exist, create a new TelegramLink with this data.
+     */
+    create: XOR<TelegramLinkCreateInput, TelegramLinkUncheckedCreateInput>
+    /**
+     * In case the TelegramLink was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TelegramLinkUpdateInput, TelegramLinkUncheckedUpdateInput>
+  }
+
+  /**
+   * TelegramLink delete
+   */
+  export type TelegramLinkDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkInclude<ExtArgs> | null
+    /**
+     * Filter which TelegramLink to delete.
+     */
+    where: TelegramLinkWhereUniqueInput
+  }
+
+  /**
+   * TelegramLink deleteMany
+   */
+  export type TelegramLinkDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TelegramLinks to delete
+     */
+    where?: TelegramLinkWhereInput
+    /**
+     * Limit how many TelegramLinks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TelegramLink without action
+   */
+  export type TelegramLinkDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TelegramLink
+     */
+    select?: TelegramLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TelegramLink
+     */
+    omit?: TelegramLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TelegramLinkInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AssistantMessage
+   */
+
+  export type AggregateAssistantMessage = {
+    _count: AssistantMessageCountAggregateOutputType | null
+    _avg: AssistantMessageAvgAggregateOutputType | null
+    _sum: AssistantMessageSumAggregateOutputType | null
+    _min: AssistantMessageMinAggregateOutputType | null
+    _max: AssistantMessageMaxAggregateOutputType | null
+  }
+
+  export type AssistantMessageAvgAggregateOutputType = {
+    confidence: number | null
+  }
+
+  export type AssistantMessageSumAggregateOutputType = {
+    confidence: number | null
+  }
+
+  export type AssistantMessageMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    channel: $Enums.AssistantChannel | null
+    externalMessageId: string | null
+    direction: $Enums.MessageDirection | null
+    rawText: string | null
+    normalizedText: string | null
+    intent: string | null
+    confidence: number | null
+    createdAt: Date | null
+  }
+
+  export type AssistantMessageMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    channel: $Enums.AssistantChannel | null
+    externalMessageId: string | null
+    direction: $Enums.MessageDirection | null
+    rawText: string | null
+    normalizedText: string | null
+    intent: string | null
+    confidence: number | null
+    createdAt: Date | null
+  }
+
+  export type AssistantMessageCountAggregateOutputType = {
+    id: number
+    userId: number
+    channel: number
+    externalMessageId: number
+    direction: number
+    rawText: number
+    normalizedText: number
+    intent: number
+    confidence: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type AssistantMessageAvgAggregateInputType = {
+    confidence?: true
+  }
+
+  export type AssistantMessageSumAggregateInputType = {
+    confidence?: true
+  }
+
+  export type AssistantMessageMinAggregateInputType = {
+    id?: true
+    userId?: true
+    channel?: true
+    externalMessageId?: true
+    direction?: true
+    rawText?: true
+    normalizedText?: true
+    intent?: true
+    confidence?: true
+    createdAt?: true
+  }
+
+  export type AssistantMessageMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    channel?: true
+    externalMessageId?: true
+    direction?: true
+    rawText?: true
+    normalizedText?: true
+    intent?: true
+    confidence?: true
+    createdAt?: true
+  }
+
+  export type AssistantMessageCountAggregateInputType = {
+    id?: true
+    userId?: true
+    channel?: true
+    externalMessageId?: true
+    direction?: true
+    rawText?: true
+    normalizedText?: true
+    intent?: true
+    confidence?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type AssistantMessageAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AssistantMessage to aggregate.
+     */
+    where?: AssistantMessageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssistantMessages to fetch.
+     */
+    orderBy?: AssistantMessageOrderByWithRelationInput | AssistantMessageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AssistantMessageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssistantMessages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssistantMessages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AssistantMessages
+    **/
+    _count?: true | AssistantMessageCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AssistantMessageAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AssistantMessageSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AssistantMessageMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AssistantMessageMaxAggregateInputType
+  }
+
+  export type GetAssistantMessageAggregateType<T extends AssistantMessageAggregateArgs> = {
+        [P in keyof T & keyof AggregateAssistantMessage]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAssistantMessage[P]>
+      : GetScalarType<T[P], AggregateAssistantMessage[P]>
+  }
+
+
+
+
+  export type AssistantMessageGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AssistantMessageWhereInput
+    orderBy?: AssistantMessageOrderByWithAggregationInput | AssistantMessageOrderByWithAggregationInput[]
+    by: AssistantMessageScalarFieldEnum[] | AssistantMessageScalarFieldEnum
+    having?: AssistantMessageScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AssistantMessageCountAggregateInputType | true
+    _avg?: AssistantMessageAvgAggregateInputType
+    _sum?: AssistantMessageSumAggregateInputType
+    _min?: AssistantMessageMinAggregateInputType
+    _max?: AssistantMessageMaxAggregateInputType
+  }
+
+  export type AssistantMessageGroupByOutputType = {
+    id: string
+    userId: string
+    channel: $Enums.AssistantChannel
+    externalMessageId: string | null
+    direction: $Enums.MessageDirection
+    rawText: string
+    normalizedText: string | null
+    intent: string | null
+    confidence: number | null
+    createdAt: Date
+    _count: AssistantMessageCountAggregateOutputType | null
+    _avg: AssistantMessageAvgAggregateOutputType | null
+    _sum: AssistantMessageSumAggregateOutputType | null
+    _min: AssistantMessageMinAggregateOutputType | null
+    _max: AssistantMessageMaxAggregateOutputType | null
+  }
+
+  type GetAssistantMessageGroupByPayload<T extends AssistantMessageGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AssistantMessageGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AssistantMessageGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AssistantMessageGroupByOutputType[P]>
+            : GetScalarType<T[P], AssistantMessageGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AssistantMessageSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    channel?: boolean
+    externalMessageId?: boolean
+    direction?: boolean
+    rawText?: boolean
+    normalizedText?: boolean
+    intent?: boolean
+    confidence?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["assistantMessage"]>
+
+  export type AssistantMessageSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    channel?: boolean
+    externalMessageId?: boolean
+    direction?: boolean
+    rawText?: boolean
+    normalizedText?: boolean
+    intent?: boolean
+    confidence?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["assistantMessage"]>
+
+  export type AssistantMessageSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    channel?: boolean
+    externalMessageId?: boolean
+    direction?: boolean
+    rawText?: boolean
+    normalizedText?: boolean
+    intent?: boolean
+    confidence?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["assistantMessage"]>
+
+  export type AssistantMessageSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    channel?: boolean
+    externalMessageId?: boolean
+    direction?: boolean
+    rawText?: boolean
+    normalizedText?: boolean
+    intent?: boolean
+    confidence?: boolean
+    createdAt?: boolean
+  }
+
+  export type AssistantMessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "channel" | "externalMessageId" | "direction" | "rawText" | "normalizedText" | "intent" | "confidence" | "createdAt", ExtArgs["result"]["assistantMessage"]>
+  export type AssistantMessageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type AssistantMessageIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type AssistantMessageIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $AssistantMessagePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AssistantMessage"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      channel: $Enums.AssistantChannel
+      externalMessageId: string | null
+      direction: $Enums.MessageDirection
+      rawText: string
+      normalizedText: string | null
+      intent: string | null
+      confidence: number | null
+      createdAt: Date
+    }, ExtArgs["result"]["assistantMessage"]>
+    composites: {}
+  }
+
+  type AssistantMessageGetPayload<S extends boolean | null | undefined | AssistantMessageDefaultArgs> = $Result.GetResult<Prisma.$AssistantMessagePayload, S>
+
+  type AssistantMessageCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AssistantMessageFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AssistantMessageCountAggregateInputType | true
+    }
+
+  export interface AssistantMessageDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AssistantMessage'], meta: { name: 'AssistantMessage' } }
+    /**
+     * Find zero or one AssistantMessage that matches the filter.
+     * @param {AssistantMessageFindUniqueArgs} args - Arguments to find a AssistantMessage
+     * @example
+     * // Get one AssistantMessage
+     * const assistantMessage = await prisma.assistantMessage.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AssistantMessageFindUniqueArgs>(args: SelectSubset<T, AssistantMessageFindUniqueArgs<ExtArgs>>): Prisma__AssistantMessageClient<$Result.GetResult<Prisma.$AssistantMessagePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AssistantMessage that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AssistantMessageFindUniqueOrThrowArgs} args - Arguments to find a AssistantMessage
+     * @example
+     * // Get one AssistantMessage
+     * const assistantMessage = await prisma.assistantMessage.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AssistantMessageFindUniqueOrThrowArgs>(args: SelectSubset<T, AssistantMessageFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AssistantMessageClient<$Result.GetResult<Prisma.$AssistantMessagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AssistantMessage that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantMessageFindFirstArgs} args - Arguments to find a AssistantMessage
+     * @example
+     * // Get one AssistantMessage
+     * const assistantMessage = await prisma.assistantMessage.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AssistantMessageFindFirstArgs>(args?: SelectSubset<T, AssistantMessageFindFirstArgs<ExtArgs>>): Prisma__AssistantMessageClient<$Result.GetResult<Prisma.$AssistantMessagePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AssistantMessage that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantMessageFindFirstOrThrowArgs} args - Arguments to find a AssistantMessage
+     * @example
+     * // Get one AssistantMessage
+     * const assistantMessage = await prisma.assistantMessage.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AssistantMessageFindFirstOrThrowArgs>(args?: SelectSubset<T, AssistantMessageFindFirstOrThrowArgs<ExtArgs>>): Prisma__AssistantMessageClient<$Result.GetResult<Prisma.$AssistantMessagePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AssistantMessages that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantMessageFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AssistantMessages
+     * const assistantMessages = await prisma.assistantMessage.findMany()
+     * 
+     * // Get first 10 AssistantMessages
+     * const assistantMessages = await prisma.assistantMessage.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const assistantMessageWithIdOnly = await prisma.assistantMessage.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AssistantMessageFindManyArgs>(args?: SelectSubset<T, AssistantMessageFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssistantMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AssistantMessage.
+     * @param {AssistantMessageCreateArgs} args - Arguments to create a AssistantMessage.
+     * @example
+     * // Create one AssistantMessage
+     * const AssistantMessage = await prisma.assistantMessage.create({
+     *   data: {
+     *     // ... data to create a AssistantMessage
+     *   }
+     * })
+     * 
+     */
+    create<T extends AssistantMessageCreateArgs>(args: SelectSubset<T, AssistantMessageCreateArgs<ExtArgs>>): Prisma__AssistantMessageClient<$Result.GetResult<Prisma.$AssistantMessagePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AssistantMessages.
+     * @param {AssistantMessageCreateManyArgs} args - Arguments to create many AssistantMessages.
+     * @example
+     * // Create many AssistantMessages
+     * const assistantMessage = await prisma.assistantMessage.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AssistantMessageCreateManyArgs>(args?: SelectSubset<T, AssistantMessageCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AssistantMessages and returns the data saved in the database.
+     * @param {AssistantMessageCreateManyAndReturnArgs} args - Arguments to create many AssistantMessages.
+     * @example
+     * // Create many AssistantMessages
+     * const assistantMessage = await prisma.assistantMessage.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AssistantMessages and only return the `id`
+     * const assistantMessageWithIdOnly = await prisma.assistantMessage.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AssistantMessageCreateManyAndReturnArgs>(args?: SelectSubset<T, AssistantMessageCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssistantMessagePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AssistantMessage.
+     * @param {AssistantMessageDeleteArgs} args - Arguments to delete one AssistantMessage.
+     * @example
+     * // Delete one AssistantMessage
+     * const AssistantMessage = await prisma.assistantMessage.delete({
+     *   where: {
+     *     // ... filter to delete one AssistantMessage
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AssistantMessageDeleteArgs>(args: SelectSubset<T, AssistantMessageDeleteArgs<ExtArgs>>): Prisma__AssistantMessageClient<$Result.GetResult<Prisma.$AssistantMessagePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AssistantMessage.
+     * @param {AssistantMessageUpdateArgs} args - Arguments to update one AssistantMessage.
+     * @example
+     * // Update one AssistantMessage
+     * const assistantMessage = await prisma.assistantMessage.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AssistantMessageUpdateArgs>(args: SelectSubset<T, AssistantMessageUpdateArgs<ExtArgs>>): Prisma__AssistantMessageClient<$Result.GetResult<Prisma.$AssistantMessagePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AssistantMessages.
+     * @param {AssistantMessageDeleteManyArgs} args - Arguments to filter AssistantMessages to delete.
+     * @example
+     * // Delete a few AssistantMessages
+     * const { count } = await prisma.assistantMessage.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AssistantMessageDeleteManyArgs>(args?: SelectSubset<T, AssistantMessageDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AssistantMessages.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantMessageUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AssistantMessages
+     * const assistantMessage = await prisma.assistantMessage.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AssistantMessageUpdateManyArgs>(args: SelectSubset<T, AssistantMessageUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AssistantMessages and returns the data updated in the database.
+     * @param {AssistantMessageUpdateManyAndReturnArgs} args - Arguments to update many AssistantMessages.
+     * @example
+     * // Update many AssistantMessages
+     * const assistantMessage = await prisma.assistantMessage.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AssistantMessages and only return the `id`
+     * const assistantMessageWithIdOnly = await prisma.assistantMessage.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AssistantMessageUpdateManyAndReturnArgs>(args: SelectSubset<T, AssistantMessageUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssistantMessagePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AssistantMessage.
+     * @param {AssistantMessageUpsertArgs} args - Arguments to update or create a AssistantMessage.
+     * @example
+     * // Update or create a AssistantMessage
+     * const assistantMessage = await prisma.assistantMessage.upsert({
+     *   create: {
+     *     // ... data to create a AssistantMessage
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AssistantMessage we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AssistantMessageUpsertArgs>(args: SelectSubset<T, AssistantMessageUpsertArgs<ExtArgs>>): Prisma__AssistantMessageClient<$Result.GetResult<Prisma.$AssistantMessagePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AssistantMessages.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantMessageCountArgs} args - Arguments to filter AssistantMessages to count.
+     * @example
+     * // Count the number of AssistantMessages
+     * const count = await prisma.assistantMessage.count({
+     *   where: {
+     *     // ... the filter for the AssistantMessages we want to count
+     *   }
+     * })
+    **/
+    count<T extends AssistantMessageCountArgs>(
+      args?: Subset<T, AssistantMessageCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AssistantMessageCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AssistantMessage.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantMessageAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AssistantMessageAggregateArgs>(args: Subset<T, AssistantMessageAggregateArgs>): Prisma.PrismaPromise<GetAssistantMessageAggregateType<T>>
+
+    /**
+     * Group by AssistantMessage.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantMessageGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AssistantMessageGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AssistantMessageGroupByArgs['orderBy'] }
+        : { orderBy?: AssistantMessageGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AssistantMessageGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAssistantMessageGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AssistantMessage model
+   */
+  readonly fields: AssistantMessageFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AssistantMessage.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AssistantMessageClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AssistantMessage model
+   */
+  interface AssistantMessageFieldRefs {
+    readonly id: FieldRef<"AssistantMessage", 'String'>
+    readonly userId: FieldRef<"AssistantMessage", 'String'>
+    readonly channel: FieldRef<"AssistantMessage", 'AssistantChannel'>
+    readonly externalMessageId: FieldRef<"AssistantMessage", 'String'>
+    readonly direction: FieldRef<"AssistantMessage", 'MessageDirection'>
+    readonly rawText: FieldRef<"AssistantMessage", 'String'>
+    readonly normalizedText: FieldRef<"AssistantMessage", 'String'>
+    readonly intent: FieldRef<"AssistantMessage", 'String'>
+    readonly confidence: FieldRef<"AssistantMessage", 'Float'>
+    readonly createdAt: FieldRef<"AssistantMessage", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AssistantMessage findUnique
+   */
+  export type AssistantMessageFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantMessage to fetch.
+     */
+    where: AssistantMessageWhereUniqueInput
+  }
+
+  /**
+   * AssistantMessage findUniqueOrThrow
+   */
+  export type AssistantMessageFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantMessage to fetch.
+     */
+    where: AssistantMessageWhereUniqueInput
+  }
+
+  /**
+   * AssistantMessage findFirst
+   */
+  export type AssistantMessageFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantMessage to fetch.
+     */
+    where?: AssistantMessageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssistantMessages to fetch.
+     */
+    orderBy?: AssistantMessageOrderByWithRelationInput | AssistantMessageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AssistantMessages.
+     */
+    cursor?: AssistantMessageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssistantMessages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssistantMessages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AssistantMessages.
+     */
+    distinct?: AssistantMessageScalarFieldEnum | AssistantMessageScalarFieldEnum[]
+  }
+
+  /**
+   * AssistantMessage findFirstOrThrow
+   */
+  export type AssistantMessageFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantMessage to fetch.
+     */
+    where?: AssistantMessageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssistantMessages to fetch.
+     */
+    orderBy?: AssistantMessageOrderByWithRelationInput | AssistantMessageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AssistantMessages.
+     */
+    cursor?: AssistantMessageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssistantMessages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssistantMessages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AssistantMessages.
+     */
+    distinct?: AssistantMessageScalarFieldEnum | AssistantMessageScalarFieldEnum[]
+  }
+
+  /**
+   * AssistantMessage findMany
+   */
+  export type AssistantMessageFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantMessages to fetch.
+     */
+    where?: AssistantMessageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssistantMessages to fetch.
+     */
+    orderBy?: AssistantMessageOrderByWithRelationInput | AssistantMessageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AssistantMessages.
+     */
+    cursor?: AssistantMessageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssistantMessages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssistantMessages.
+     */
+    skip?: number
+    distinct?: AssistantMessageScalarFieldEnum | AssistantMessageScalarFieldEnum[]
+  }
+
+  /**
+   * AssistantMessage create
+   */
+  export type AssistantMessageCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AssistantMessage.
+     */
+    data: XOR<AssistantMessageCreateInput, AssistantMessageUncheckedCreateInput>
+  }
+
+  /**
+   * AssistantMessage createMany
+   */
+  export type AssistantMessageCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AssistantMessages.
+     */
+    data: AssistantMessageCreateManyInput | AssistantMessageCreateManyInput[]
+  }
+
+  /**
+   * AssistantMessage createManyAndReturn
+   */
+  export type AssistantMessageCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * The data used to create many AssistantMessages.
+     */
+    data: AssistantMessageCreateManyInput | AssistantMessageCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AssistantMessage update
+   */
+  export type AssistantMessageUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AssistantMessage.
+     */
+    data: XOR<AssistantMessageUpdateInput, AssistantMessageUncheckedUpdateInput>
+    /**
+     * Choose, which AssistantMessage to update.
+     */
+    where: AssistantMessageWhereUniqueInput
+  }
+
+  /**
+   * AssistantMessage updateMany
+   */
+  export type AssistantMessageUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AssistantMessages.
+     */
+    data: XOR<AssistantMessageUpdateManyMutationInput, AssistantMessageUncheckedUpdateManyInput>
+    /**
+     * Filter which AssistantMessages to update
+     */
+    where?: AssistantMessageWhereInput
+    /**
+     * Limit how many AssistantMessages to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AssistantMessage updateManyAndReturn
+   */
+  export type AssistantMessageUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * The data used to update AssistantMessages.
+     */
+    data: XOR<AssistantMessageUpdateManyMutationInput, AssistantMessageUncheckedUpdateManyInput>
+    /**
+     * Filter which AssistantMessages to update
+     */
+    where?: AssistantMessageWhereInput
+    /**
+     * Limit how many AssistantMessages to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AssistantMessage upsert
+   */
+  export type AssistantMessageUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AssistantMessage to update in case it exists.
+     */
+    where: AssistantMessageWhereUniqueInput
+    /**
+     * In case the AssistantMessage found by the `where` argument doesn't exist, create a new AssistantMessage with this data.
+     */
+    create: XOR<AssistantMessageCreateInput, AssistantMessageUncheckedCreateInput>
+    /**
+     * In case the AssistantMessage was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AssistantMessageUpdateInput, AssistantMessageUncheckedUpdateInput>
+  }
+
+  /**
+   * AssistantMessage delete
+   */
+  export type AssistantMessageDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageInclude<ExtArgs> | null
+    /**
+     * Filter which AssistantMessage to delete.
+     */
+    where: AssistantMessageWhereUniqueInput
+  }
+
+  /**
+   * AssistantMessage deleteMany
+   */
+  export type AssistantMessageDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AssistantMessages to delete
+     */
+    where?: AssistantMessageWhereInput
+    /**
+     * Limit how many AssistantMessages to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AssistantMessage without action
+   */
+  export type AssistantMessageDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantMessage
+     */
+    select?: AssistantMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantMessage
+     */
+    omit?: AssistantMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantMessageInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AssistantActionLog
+   */
+
+  export type AggregateAssistantActionLog = {
+    _count: AssistantActionLogCountAggregateOutputType | null
+    _avg: AssistantActionLogAvgAggregateOutputType | null
+    _sum: AssistantActionLogSumAggregateOutputType | null
+    _min: AssistantActionLogMinAggregateOutputType | null
+    _max: AssistantActionLogMaxAggregateOutputType | null
+  }
+
+  export type AssistantActionLogAvgAggregateOutputType = {
+    confidence: number | null
+  }
+
+  export type AssistantActionLogSumAggregateOutputType = {
+    confidence: number | null
+  }
+
+  export type AssistantActionLogMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    channel: $Enums.AssistantChannel | null
+    intent: string | null
+    confidence: number | null
+    executionStatus: $Enums.ExecutionStatus | null
+    resultSummary: string | null
+    errorMessage: string | null
+    createdAt: Date | null
+  }
+
+  export type AssistantActionLogMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    channel: $Enums.AssistantChannel | null
+    intent: string | null
+    confidence: number | null
+    executionStatus: $Enums.ExecutionStatus | null
+    resultSummary: string | null
+    errorMessage: string | null
+    createdAt: Date | null
+  }
+
+  export type AssistantActionLogCountAggregateOutputType = {
+    id: number
+    userId: number
+    channel: number
+    intent: number
+    confidence: number
+    requestPayload: number
+    resolvedEntities: number
+    executionStatus: number
+    resultSummary: number
+    errorMessage: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type AssistantActionLogAvgAggregateInputType = {
+    confidence?: true
+  }
+
+  export type AssistantActionLogSumAggregateInputType = {
+    confidence?: true
+  }
+
+  export type AssistantActionLogMinAggregateInputType = {
+    id?: true
+    userId?: true
+    channel?: true
+    intent?: true
+    confidence?: true
+    executionStatus?: true
+    resultSummary?: true
+    errorMessage?: true
+    createdAt?: true
+  }
+
+  export type AssistantActionLogMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    channel?: true
+    intent?: true
+    confidence?: true
+    executionStatus?: true
+    resultSummary?: true
+    errorMessage?: true
+    createdAt?: true
+  }
+
+  export type AssistantActionLogCountAggregateInputType = {
+    id?: true
+    userId?: true
+    channel?: true
+    intent?: true
+    confidence?: true
+    requestPayload?: true
+    resolvedEntities?: true
+    executionStatus?: true
+    resultSummary?: true
+    errorMessage?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type AssistantActionLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AssistantActionLog to aggregate.
+     */
+    where?: AssistantActionLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssistantActionLogs to fetch.
+     */
+    orderBy?: AssistantActionLogOrderByWithRelationInput | AssistantActionLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AssistantActionLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssistantActionLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssistantActionLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AssistantActionLogs
+    **/
+    _count?: true | AssistantActionLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AssistantActionLogAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AssistantActionLogSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AssistantActionLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AssistantActionLogMaxAggregateInputType
+  }
+
+  export type GetAssistantActionLogAggregateType<T extends AssistantActionLogAggregateArgs> = {
+        [P in keyof T & keyof AggregateAssistantActionLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAssistantActionLog[P]>
+      : GetScalarType<T[P], AggregateAssistantActionLog[P]>
+  }
+
+
+
+
+  export type AssistantActionLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AssistantActionLogWhereInput
+    orderBy?: AssistantActionLogOrderByWithAggregationInput | AssistantActionLogOrderByWithAggregationInput[]
+    by: AssistantActionLogScalarFieldEnum[] | AssistantActionLogScalarFieldEnum
+    having?: AssistantActionLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AssistantActionLogCountAggregateInputType | true
+    _avg?: AssistantActionLogAvgAggregateInputType
+    _sum?: AssistantActionLogSumAggregateInputType
+    _min?: AssistantActionLogMinAggregateInputType
+    _max?: AssistantActionLogMaxAggregateInputType
+  }
+
+  export type AssistantActionLogGroupByOutputType = {
+    id: string
+    userId: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    confidence: number | null
+    requestPayload: JsonValue | null
+    resolvedEntities: JsonValue | null
+    executionStatus: $Enums.ExecutionStatus
+    resultSummary: string | null
+    errorMessage: string | null
+    createdAt: Date
+    _count: AssistantActionLogCountAggregateOutputType | null
+    _avg: AssistantActionLogAvgAggregateOutputType | null
+    _sum: AssistantActionLogSumAggregateOutputType | null
+    _min: AssistantActionLogMinAggregateOutputType | null
+    _max: AssistantActionLogMaxAggregateOutputType | null
+  }
+
+  type GetAssistantActionLogGroupByPayload<T extends AssistantActionLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AssistantActionLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AssistantActionLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AssistantActionLogGroupByOutputType[P]>
+            : GetScalarType<T[P], AssistantActionLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AssistantActionLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    channel?: boolean
+    intent?: boolean
+    confidence?: boolean
+    requestPayload?: boolean
+    resolvedEntities?: boolean
+    executionStatus?: boolean
+    resultSummary?: boolean
+    errorMessage?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["assistantActionLog"]>
+
+  export type AssistantActionLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    channel?: boolean
+    intent?: boolean
+    confidence?: boolean
+    requestPayload?: boolean
+    resolvedEntities?: boolean
+    executionStatus?: boolean
+    resultSummary?: boolean
+    errorMessage?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["assistantActionLog"]>
+
+  export type AssistantActionLogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    channel?: boolean
+    intent?: boolean
+    confidence?: boolean
+    requestPayload?: boolean
+    resolvedEntities?: boolean
+    executionStatus?: boolean
+    resultSummary?: boolean
+    errorMessage?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["assistantActionLog"]>
+
+  export type AssistantActionLogSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    channel?: boolean
+    intent?: boolean
+    confidence?: boolean
+    requestPayload?: boolean
+    resolvedEntities?: boolean
+    executionStatus?: boolean
+    resultSummary?: boolean
+    errorMessage?: boolean
+    createdAt?: boolean
+  }
+
+  export type AssistantActionLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "channel" | "intent" | "confidence" | "requestPayload" | "resolvedEntities" | "executionStatus" | "resultSummary" | "errorMessage" | "createdAt", ExtArgs["result"]["assistantActionLog"]>
+  export type AssistantActionLogInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type AssistantActionLogIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type AssistantActionLogIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $AssistantActionLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AssistantActionLog"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      channel: $Enums.AssistantChannel
+      intent: string
+      confidence: number | null
+      requestPayload: Prisma.JsonValue | null
+      resolvedEntities: Prisma.JsonValue | null
+      executionStatus: $Enums.ExecutionStatus
+      resultSummary: string | null
+      errorMessage: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["assistantActionLog"]>
+    composites: {}
+  }
+
+  type AssistantActionLogGetPayload<S extends boolean | null | undefined | AssistantActionLogDefaultArgs> = $Result.GetResult<Prisma.$AssistantActionLogPayload, S>
+
+  type AssistantActionLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AssistantActionLogFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AssistantActionLogCountAggregateInputType | true
+    }
+
+  export interface AssistantActionLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AssistantActionLog'], meta: { name: 'AssistantActionLog' } }
+    /**
+     * Find zero or one AssistantActionLog that matches the filter.
+     * @param {AssistantActionLogFindUniqueArgs} args - Arguments to find a AssistantActionLog
+     * @example
+     * // Get one AssistantActionLog
+     * const assistantActionLog = await prisma.assistantActionLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AssistantActionLogFindUniqueArgs>(args: SelectSubset<T, AssistantActionLogFindUniqueArgs<ExtArgs>>): Prisma__AssistantActionLogClient<$Result.GetResult<Prisma.$AssistantActionLogPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AssistantActionLog that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AssistantActionLogFindUniqueOrThrowArgs} args - Arguments to find a AssistantActionLog
+     * @example
+     * // Get one AssistantActionLog
+     * const assistantActionLog = await prisma.assistantActionLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AssistantActionLogFindUniqueOrThrowArgs>(args: SelectSubset<T, AssistantActionLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AssistantActionLogClient<$Result.GetResult<Prisma.$AssistantActionLogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AssistantActionLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantActionLogFindFirstArgs} args - Arguments to find a AssistantActionLog
+     * @example
+     * // Get one AssistantActionLog
+     * const assistantActionLog = await prisma.assistantActionLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AssistantActionLogFindFirstArgs>(args?: SelectSubset<T, AssistantActionLogFindFirstArgs<ExtArgs>>): Prisma__AssistantActionLogClient<$Result.GetResult<Prisma.$AssistantActionLogPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AssistantActionLog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantActionLogFindFirstOrThrowArgs} args - Arguments to find a AssistantActionLog
+     * @example
+     * // Get one AssistantActionLog
+     * const assistantActionLog = await prisma.assistantActionLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AssistantActionLogFindFirstOrThrowArgs>(args?: SelectSubset<T, AssistantActionLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__AssistantActionLogClient<$Result.GetResult<Prisma.$AssistantActionLogPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AssistantActionLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantActionLogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AssistantActionLogs
+     * const assistantActionLogs = await prisma.assistantActionLog.findMany()
+     * 
+     * // Get first 10 AssistantActionLogs
+     * const assistantActionLogs = await prisma.assistantActionLog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const assistantActionLogWithIdOnly = await prisma.assistantActionLog.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AssistantActionLogFindManyArgs>(args?: SelectSubset<T, AssistantActionLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssistantActionLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AssistantActionLog.
+     * @param {AssistantActionLogCreateArgs} args - Arguments to create a AssistantActionLog.
+     * @example
+     * // Create one AssistantActionLog
+     * const AssistantActionLog = await prisma.assistantActionLog.create({
+     *   data: {
+     *     // ... data to create a AssistantActionLog
+     *   }
+     * })
+     * 
+     */
+    create<T extends AssistantActionLogCreateArgs>(args: SelectSubset<T, AssistantActionLogCreateArgs<ExtArgs>>): Prisma__AssistantActionLogClient<$Result.GetResult<Prisma.$AssistantActionLogPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AssistantActionLogs.
+     * @param {AssistantActionLogCreateManyArgs} args - Arguments to create many AssistantActionLogs.
+     * @example
+     * // Create many AssistantActionLogs
+     * const assistantActionLog = await prisma.assistantActionLog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AssistantActionLogCreateManyArgs>(args?: SelectSubset<T, AssistantActionLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AssistantActionLogs and returns the data saved in the database.
+     * @param {AssistantActionLogCreateManyAndReturnArgs} args - Arguments to create many AssistantActionLogs.
+     * @example
+     * // Create many AssistantActionLogs
+     * const assistantActionLog = await prisma.assistantActionLog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AssistantActionLogs and only return the `id`
+     * const assistantActionLogWithIdOnly = await prisma.assistantActionLog.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AssistantActionLogCreateManyAndReturnArgs>(args?: SelectSubset<T, AssistantActionLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssistantActionLogPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AssistantActionLog.
+     * @param {AssistantActionLogDeleteArgs} args - Arguments to delete one AssistantActionLog.
+     * @example
+     * // Delete one AssistantActionLog
+     * const AssistantActionLog = await prisma.assistantActionLog.delete({
+     *   where: {
+     *     // ... filter to delete one AssistantActionLog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AssistantActionLogDeleteArgs>(args: SelectSubset<T, AssistantActionLogDeleteArgs<ExtArgs>>): Prisma__AssistantActionLogClient<$Result.GetResult<Prisma.$AssistantActionLogPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AssistantActionLog.
+     * @param {AssistantActionLogUpdateArgs} args - Arguments to update one AssistantActionLog.
+     * @example
+     * // Update one AssistantActionLog
+     * const assistantActionLog = await prisma.assistantActionLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AssistantActionLogUpdateArgs>(args: SelectSubset<T, AssistantActionLogUpdateArgs<ExtArgs>>): Prisma__AssistantActionLogClient<$Result.GetResult<Prisma.$AssistantActionLogPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AssistantActionLogs.
+     * @param {AssistantActionLogDeleteManyArgs} args - Arguments to filter AssistantActionLogs to delete.
+     * @example
+     * // Delete a few AssistantActionLogs
+     * const { count } = await prisma.assistantActionLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AssistantActionLogDeleteManyArgs>(args?: SelectSubset<T, AssistantActionLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AssistantActionLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantActionLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AssistantActionLogs
+     * const assistantActionLog = await prisma.assistantActionLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AssistantActionLogUpdateManyArgs>(args: SelectSubset<T, AssistantActionLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AssistantActionLogs and returns the data updated in the database.
+     * @param {AssistantActionLogUpdateManyAndReturnArgs} args - Arguments to update many AssistantActionLogs.
+     * @example
+     * // Update many AssistantActionLogs
+     * const assistantActionLog = await prisma.assistantActionLog.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AssistantActionLogs and only return the `id`
+     * const assistantActionLogWithIdOnly = await prisma.assistantActionLog.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AssistantActionLogUpdateManyAndReturnArgs>(args: SelectSubset<T, AssistantActionLogUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssistantActionLogPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AssistantActionLog.
+     * @param {AssistantActionLogUpsertArgs} args - Arguments to update or create a AssistantActionLog.
+     * @example
+     * // Update or create a AssistantActionLog
+     * const assistantActionLog = await prisma.assistantActionLog.upsert({
+     *   create: {
+     *     // ... data to create a AssistantActionLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AssistantActionLog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AssistantActionLogUpsertArgs>(args: SelectSubset<T, AssistantActionLogUpsertArgs<ExtArgs>>): Prisma__AssistantActionLogClient<$Result.GetResult<Prisma.$AssistantActionLogPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AssistantActionLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantActionLogCountArgs} args - Arguments to filter AssistantActionLogs to count.
+     * @example
+     * // Count the number of AssistantActionLogs
+     * const count = await prisma.assistantActionLog.count({
+     *   where: {
+     *     // ... the filter for the AssistantActionLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends AssistantActionLogCountArgs>(
+      args?: Subset<T, AssistantActionLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AssistantActionLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AssistantActionLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantActionLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AssistantActionLogAggregateArgs>(args: Subset<T, AssistantActionLogAggregateArgs>): Prisma.PrismaPromise<GetAssistantActionLogAggregateType<T>>
+
+    /**
+     * Group by AssistantActionLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantActionLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AssistantActionLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AssistantActionLogGroupByArgs['orderBy'] }
+        : { orderBy?: AssistantActionLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AssistantActionLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAssistantActionLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AssistantActionLog model
+   */
+  readonly fields: AssistantActionLogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AssistantActionLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AssistantActionLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AssistantActionLog model
+   */
+  interface AssistantActionLogFieldRefs {
+    readonly id: FieldRef<"AssistantActionLog", 'String'>
+    readonly userId: FieldRef<"AssistantActionLog", 'String'>
+    readonly channel: FieldRef<"AssistantActionLog", 'AssistantChannel'>
+    readonly intent: FieldRef<"AssistantActionLog", 'String'>
+    readonly confidence: FieldRef<"AssistantActionLog", 'Float'>
+    readonly requestPayload: FieldRef<"AssistantActionLog", 'Json'>
+    readonly resolvedEntities: FieldRef<"AssistantActionLog", 'Json'>
+    readonly executionStatus: FieldRef<"AssistantActionLog", 'ExecutionStatus'>
+    readonly resultSummary: FieldRef<"AssistantActionLog", 'String'>
+    readonly errorMessage: FieldRef<"AssistantActionLog", 'String'>
+    readonly createdAt: FieldRef<"AssistantActionLog", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AssistantActionLog findUnique
+   */
+  export type AssistantActionLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantActionLog to fetch.
+     */
+    where: AssistantActionLogWhereUniqueInput
+  }
+
+  /**
+   * AssistantActionLog findUniqueOrThrow
+   */
+  export type AssistantActionLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantActionLog to fetch.
+     */
+    where: AssistantActionLogWhereUniqueInput
+  }
+
+  /**
+   * AssistantActionLog findFirst
+   */
+  export type AssistantActionLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantActionLog to fetch.
+     */
+    where?: AssistantActionLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssistantActionLogs to fetch.
+     */
+    orderBy?: AssistantActionLogOrderByWithRelationInput | AssistantActionLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AssistantActionLogs.
+     */
+    cursor?: AssistantActionLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssistantActionLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssistantActionLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AssistantActionLogs.
+     */
+    distinct?: AssistantActionLogScalarFieldEnum | AssistantActionLogScalarFieldEnum[]
+  }
+
+  /**
+   * AssistantActionLog findFirstOrThrow
+   */
+  export type AssistantActionLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantActionLog to fetch.
+     */
+    where?: AssistantActionLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssistantActionLogs to fetch.
+     */
+    orderBy?: AssistantActionLogOrderByWithRelationInput | AssistantActionLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AssistantActionLogs.
+     */
+    cursor?: AssistantActionLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssistantActionLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssistantActionLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AssistantActionLogs.
+     */
+    distinct?: AssistantActionLogScalarFieldEnum | AssistantActionLogScalarFieldEnum[]
+  }
+
+  /**
+   * AssistantActionLog findMany
+   */
+  export type AssistantActionLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantActionLogs to fetch.
+     */
+    where?: AssistantActionLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssistantActionLogs to fetch.
+     */
+    orderBy?: AssistantActionLogOrderByWithRelationInput | AssistantActionLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AssistantActionLogs.
+     */
+    cursor?: AssistantActionLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssistantActionLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssistantActionLogs.
+     */
+    skip?: number
+    distinct?: AssistantActionLogScalarFieldEnum | AssistantActionLogScalarFieldEnum[]
+  }
+
+  /**
+   * AssistantActionLog create
+   */
+  export type AssistantActionLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AssistantActionLog.
+     */
+    data: XOR<AssistantActionLogCreateInput, AssistantActionLogUncheckedCreateInput>
+  }
+
+  /**
+   * AssistantActionLog createMany
+   */
+  export type AssistantActionLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AssistantActionLogs.
+     */
+    data: AssistantActionLogCreateManyInput | AssistantActionLogCreateManyInput[]
+  }
+
+  /**
+   * AssistantActionLog createManyAndReturn
+   */
+  export type AssistantActionLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * The data used to create many AssistantActionLogs.
+     */
+    data: AssistantActionLogCreateManyInput | AssistantActionLogCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AssistantActionLog update
+   */
+  export type AssistantActionLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AssistantActionLog.
+     */
+    data: XOR<AssistantActionLogUpdateInput, AssistantActionLogUncheckedUpdateInput>
+    /**
+     * Choose, which AssistantActionLog to update.
+     */
+    where: AssistantActionLogWhereUniqueInput
+  }
+
+  /**
+   * AssistantActionLog updateMany
+   */
+  export type AssistantActionLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AssistantActionLogs.
+     */
+    data: XOR<AssistantActionLogUpdateManyMutationInput, AssistantActionLogUncheckedUpdateManyInput>
+    /**
+     * Filter which AssistantActionLogs to update
+     */
+    where?: AssistantActionLogWhereInput
+    /**
+     * Limit how many AssistantActionLogs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AssistantActionLog updateManyAndReturn
+   */
+  export type AssistantActionLogUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * The data used to update AssistantActionLogs.
+     */
+    data: XOR<AssistantActionLogUpdateManyMutationInput, AssistantActionLogUncheckedUpdateManyInput>
+    /**
+     * Filter which AssistantActionLogs to update
+     */
+    where?: AssistantActionLogWhereInput
+    /**
+     * Limit how many AssistantActionLogs to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AssistantActionLog upsert
+   */
+  export type AssistantActionLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AssistantActionLog to update in case it exists.
+     */
+    where: AssistantActionLogWhereUniqueInput
+    /**
+     * In case the AssistantActionLog found by the `where` argument doesn't exist, create a new AssistantActionLog with this data.
+     */
+    create: XOR<AssistantActionLogCreateInput, AssistantActionLogUncheckedCreateInput>
+    /**
+     * In case the AssistantActionLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AssistantActionLogUpdateInput, AssistantActionLogUncheckedUpdateInput>
+  }
+
+  /**
+   * AssistantActionLog delete
+   */
+  export type AssistantActionLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogInclude<ExtArgs> | null
+    /**
+     * Filter which AssistantActionLog to delete.
+     */
+    where: AssistantActionLogWhereUniqueInput
+  }
+
+  /**
+   * AssistantActionLog deleteMany
+   */
+  export type AssistantActionLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AssistantActionLogs to delete
+     */
+    where?: AssistantActionLogWhereInput
+    /**
+     * Limit how many AssistantActionLogs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AssistantActionLog without action
+   */
+  export type AssistantActionLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantActionLog
+     */
+    select?: AssistantActionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantActionLog
+     */
+    omit?: AssistantActionLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantActionLogInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AssistantPendingAction
+   */
+
+  export type AggregateAssistantPendingAction = {
+    _count: AssistantPendingActionCountAggregateOutputType | null
+    _min: AssistantPendingActionMinAggregateOutputType | null
+    _max: AssistantPendingActionMaxAggregateOutputType | null
+  }
+
+  export type AssistantPendingActionMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    channel: $Enums.AssistantChannel | null
+    intent: string | null
+    expiresAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type AssistantPendingActionMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    channel: $Enums.AssistantChannel | null
+    intent: string | null
+    expiresAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type AssistantPendingActionCountAggregateOutputType = {
+    id: number
+    userId: number
+    channel: number
+    intent: number
+    payload: number
+    expiresAt: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type AssistantPendingActionMinAggregateInputType = {
+    id?: true
+    userId?: true
+    channel?: true
+    intent?: true
+    expiresAt?: true
+    createdAt?: true
+  }
+
+  export type AssistantPendingActionMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    channel?: true
+    intent?: true
+    expiresAt?: true
+    createdAt?: true
+  }
+
+  export type AssistantPendingActionCountAggregateInputType = {
+    id?: true
+    userId?: true
+    channel?: true
+    intent?: true
+    payload?: true
+    expiresAt?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type AssistantPendingActionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AssistantPendingAction to aggregate.
+     */
+    where?: AssistantPendingActionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssistantPendingActions to fetch.
+     */
+    orderBy?: AssistantPendingActionOrderByWithRelationInput | AssistantPendingActionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AssistantPendingActionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssistantPendingActions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssistantPendingActions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AssistantPendingActions
+    **/
+    _count?: true | AssistantPendingActionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AssistantPendingActionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AssistantPendingActionMaxAggregateInputType
+  }
+
+  export type GetAssistantPendingActionAggregateType<T extends AssistantPendingActionAggregateArgs> = {
+        [P in keyof T & keyof AggregateAssistantPendingAction]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAssistantPendingAction[P]>
+      : GetScalarType<T[P], AggregateAssistantPendingAction[P]>
+  }
+
+
+
+
+  export type AssistantPendingActionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AssistantPendingActionWhereInput
+    orderBy?: AssistantPendingActionOrderByWithAggregationInput | AssistantPendingActionOrderByWithAggregationInput[]
+    by: AssistantPendingActionScalarFieldEnum[] | AssistantPendingActionScalarFieldEnum
+    having?: AssistantPendingActionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AssistantPendingActionCountAggregateInputType | true
+    _min?: AssistantPendingActionMinAggregateInputType
+    _max?: AssistantPendingActionMaxAggregateInputType
+  }
+
+  export type AssistantPendingActionGroupByOutputType = {
+    id: string
+    userId: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    payload: JsonValue
+    expiresAt: Date
+    createdAt: Date
+    _count: AssistantPendingActionCountAggregateOutputType | null
+    _min: AssistantPendingActionMinAggregateOutputType | null
+    _max: AssistantPendingActionMaxAggregateOutputType | null
+  }
+
+  type GetAssistantPendingActionGroupByPayload<T extends AssistantPendingActionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AssistantPendingActionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AssistantPendingActionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AssistantPendingActionGroupByOutputType[P]>
+            : GetScalarType<T[P], AssistantPendingActionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AssistantPendingActionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    channel?: boolean
+    intent?: boolean
+    payload?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["assistantPendingAction"]>
+
+  export type AssistantPendingActionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    channel?: boolean
+    intent?: boolean
+    payload?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["assistantPendingAction"]>
+
+  export type AssistantPendingActionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    channel?: boolean
+    intent?: boolean
+    payload?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["assistantPendingAction"]>
+
+  export type AssistantPendingActionSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    channel?: boolean
+    intent?: boolean
+    payload?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+  }
+
+  export type AssistantPendingActionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "channel" | "intent" | "payload" | "expiresAt" | "createdAt", ExtArgs["result"]["assistantPendingAction"]>
+  export type AssistantPendingActionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type AssistantPendingActionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type AssistantPendingActionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $AssistantPendingActionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AssistantPendingAction"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      channel: $Enums.AssistantChannel
+      intent: string
+      payload: Prisma.JsonValue
+      expiresAt: Date
+      createdAt: Date
+    }, ExtArgs["result"]["assistantPendingAction"]>
+    composites: {}
+  }
+
+  type AssistantPendingActionGetPayload<S extends boolean | null | undefined | AssistantPendingActionDefaultArgs> = $Result.GetResult<Prisma.$AssistantPendingActionPayload, S>
+
+  type AssistantPendingActionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AssistantPendingActionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AssistantPendingActionCountAggregateInputType | true
+    }
+
+  export interface AssistantPendingActionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AssistantPendingAction'], meta: { name: 'AssistantPendingAction' } }
+    /**
+     * Find zero or one AssistantPendingAction that matches the filter.
+     * @param {AssistantPendingActionFindUniqueArgs} args - Arguments to find a AssistantPendingAction
+     * @example
+     * // Get one AssistantPendingAction
+     * const assistantPendingAction = await prisma.assistantPendingAction.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AssistantPendingActionFindUniqueArgs>(args: SelectSubset<T, AssistantPendingActionFindUniqueArgs<ExtArgs>>): Prisma__AssistantPendingActionClient<$Result.GetResult<Prisma.$AssistantPendingActionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AssistantPendingAction that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AssistantPendingActionFindUniqueOrThrowArgs} args - Arguments to find a AssistantPendingAction
+     * @example
+     * // Get one AssistantPendingAction
+     * const assistantPendingAction = await prisma.assistantPendingAction.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AssistantPendingActionFindUniqueOrThrowArgs>(args: SelectSubset<T, AssistantPendingActionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AssistantPendingActionClient<$Result.GetResult<Prisma.$AssistantPendingActionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AssistantPendingAction that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantPendingActionFindFirstArgs} args - Arguments to find a AssistantPendingAction
+     * @example
+     * // Get one AssistantPendingAction
+     * const assistantPendingAction = await prisma.assistantPendingAction.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AssistantPendingActionFindFirstArgs>(args?: SelectSubset<T, AssistantPendingActionFindFirstArgs<ExtArgs>>): Prisma__AssistantPendingActionClient<$Result.GetResult<Prisma.$AssistantPendingActionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AssistantPendingAction that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantPendingActionFindFirstOrThrowArgs} args - Arguments to find a AssistantPendingAction
+     * @example
+     * // Get one AssistantPendingAction
+     * const assistantPendingAction = await prisma.assistantPendingAction.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AssistantPendingActionFindFirstOrThrowArgs>(args?: SelectSubset<T, AssistantPendingActionFindFirstOrThrowArgs<ExtArgs>>): Prisma__AssistantPendingActionClient<$Result.GetResult<Prisma.$AssistantPendingActionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AssistantPendingActions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantPendingActionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AssistantPendingActions
+     * const assistantPendingActions = await prisma.assistantPendingAction.findMany()
+     * 
+     * // Get first 10 AssistantPendingActions
+     * const assistantPendingActions = await prisma.assistantPendingAction.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const assistantPendingActionWithIdOnly = await prisma.assistantPendingAction.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AssistantPendingActionFindManyArgs>(args?: SelectSubset<T, AssistantPendingActionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssistantPendingActionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AssistantPendingAction.
+     * @param {AssistantPendingActionCreateArgs} args - Arguments to create a AssistantPendingAction.
+     * @example
+     * // Create one AssistantPendingAction
+     * const AssistantPendingAction = await prisma.assistantPendingAction.create({
+     *   data: {
+     *     // ... data to create a AssistantPendingAction
+     *   }
+     * })
+     * 
+     */
+    create<T extends AssistantPendingActionCreateArgs>(args: SelectSubset<T, AssistantPendingActionCreateArgs<ExtArgs>>): Prisma__AssistantPendingActionClient<$Result.GetResult<Prisma.$AssistantPendingActionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AssistantPendingActions.
+     * @param {AssistantPendingActionCreateManyArgs} args - Arguments to create many AssistantPendingActions.
+     * @example
+     * // Create many AssistantPendingActions
+     * const assistantPendingAction = await prisma.assistantPendingAction.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AssistantPendingActionCreateManyArgs>(args?: SelectSubset<T, AssistantPendingActionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AssistantPendingActions and returns the data saved in the database.
+     * @param {AssistantPendingActionCreateManyAndReturnArgs} args - Arguments to create many AssistantPendingActions.
+     * @example
+     * // Create many AssistantPendingActions
+     * const assistantPendingAction = await prisma.assistantPendingAction.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AssistantPendingActions and only return the `id`
+     * const assistantPendingActionWithIdOnly = await prisma.assistantPendingAction.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AssistantPendingActionCreateManyAndReturnArgs>(args?: SelectSubset<T, AssistantPendingActionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssistantPendingActionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AssistantPendingAction.
+     * @param {AssistantPendingActionDeleteArgs} args - Arguments to delete one AssistantPendingAction.
+     * @example
+     * // Delete one AssistantPendingAction
+     * const AssistantPendingAction = await prisma.assistantPendingAction.delete({
+     *   where: {
+     *     // ... filter to delete one AssistantPendingAction
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AssistantPendingActionDeleteArgs>(args: SelectSubset<T, AssistantPendingActionDeleteArgs<ExtArgs>>): Prisma__AssistantPendingActionClient<$Result.GetResult<Prisma.$AssistantPendingActionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AssistantPendingAction.
+     * @param {AssistantPendingActionUpdateArgs} args - Arguments to update one AssistantPendingAction.
+     * @example
+     * // Update one AssistantPendingAction
+     * const assistantPendingAction = await prisma.assistantPendingAction.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AssistantPendingActionUpdateArgs>(args: SelectSubset<T, AssistantPendingActionUpdateArgs<ExtArgs>>): Prisma__AssistantPendingActionClient<$Result.GetResult<Prisma.$AssistantPendingActionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AssistantPendingActions.
+     * @param {AssistantPendingActionDeleteManyArgs} args - Arguments to filter AssistantPendingActions to delete.
+     * @example
+     * // Delete a few AssistantPendingActions
+     * const { count } = await prisma.assistantPendingAction.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AssistantPendingActionDeleteManyArgs>(args?: SelectSubset<T, AssistantPendingActionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AssistantPendingActions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantPendingActionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AssistantPendingActions
+     * const assistantPendingAction = await prisma.assistantPendingAction.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AssistantPendingActionUpdateManyArgs>(args: SelectSubset<T, AssistantPendingActionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AssistantPendingActions and returns the data updated in the database.
+     * @param {AssistantPendingActionUpdateManyAndReturnArgs} args - Arguments to update many AssistantPendingActions.
+     * @example
+     * // Update many AssistantPendingActions
+     * const assistantPendingAction = await prisma.assistantPendingAction.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AssistantPendingActions and only return the `id`
+     * const assistantPendingActionWithIdOnly = await prisma.assistantPendingAction.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AssistantPendingActionUpdateManyAndReturnArgs>(args: SelectSubset<T, AssistantPendingActionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssistantPendingActionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AssistantPendingAction.
+     * @param {AssistantPendingActionUpsertArgs} args - Arguments to update or create a AssistantPendingAction.
+     * @example
+     * // Update or create a AssistantPendingAction
+     * const assistantPendingAction = await prisma.assistantPendingAction.upsert({
+     *   create: {
+     *     // ... data to create a AssistantPendingAction
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AssistantPendingAction we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AssistantPendingActionUpsertArgs>(args: SelectSubset<T, AssistantPendingActionUpsertArgs<ExtArgs>>): Prisma__AssistantPendingActionClient<$Result.GetResult<Prisma.$AssistantPendingActionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AssistantPendingActions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantPendingActionCountArgs} args - Arguments to filter AssistantPendingActions to count.
+     * @example
+     * // Count the number of AssistantPendingActions
+     * const count = await prisma.assistantPendingAction.count({
+     *   where: {
+     *     // ... the filter for the AssistantPendingActions we want to count
+     *   }
+     * })
+    **/
+    count<T extends AssistantPendingActionCountArgs>(
+      args?: Subset<T, AssistantPendingActionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AssistantPendingActionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AssistantPendingAction.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantPendingActionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AssistantPendingActionAggregateArgs>(args: Subset<T, AssistantPendingActionAggregateArgs>): Prisma.PrismaPromise<GetAssistantPendingActionAggregateType<T>>
+
+    /**
+     * Group by AssistantPendingAction.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssistantPendingActionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AssistantPendingActionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AssistantPendingActionGroupByArgs['orderBy'] }
+        : { orderBy?: AssistantPendingActionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AssistantPendingActionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAssistantPendingActionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AssistantPendingAction model
+   */
+  readonly fields: AssistantPendingActionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AssistantPendingAction.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AssistantPendingActionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AssistantPendingAction model
+   */
+  interface AssistantPendingActionFieldRefs {
+    readonly id: FieldRef<"AssistantPendingAction", 'String'>
+    readonly userId: FieldRef<"AssistantPendingAction", 'String'>
+    readonly channel: FieldRef<"AssistantPendingAction", 'AssistantChannel'>
+    readonly intent: FieldRef<"AssistantPendingAction", 'String'>
+    readonly payload: FieldRef<"AssistantPendingAction", 'Json'>
+    readonly expiresAt: FieldRef<"AssistantPendingAction", 'DateTime'>
+    readonly createdAt: FieldRef<"AssistantPendingAction", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AssistantPendingAction findUnique
+   */
+  export type AssistantPendingActionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantPendingAction to fetch.
+     */
+    where: AssistantPendingActionWhereUniqueInput
+  }
+
+  /**
+   * AssistantPendingAction findUniqueOrThrow
+   */
+  export type AssistantPendingActionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantPendingAction to fetch.
+     */
+    where: AssistantPendingActionWhereUniqueInput
+  }
+
+  /**
+   * AssistantPendingAction findFirst
+   */
+  export type AssistantPendingActionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantPendingAction to fetch.
+     */
+    where?: AssistantPendingActionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssistantPendingActions to fetch.
+     */
+    orderBy?: AssistantPendingActionOrderByWithRelationInput | AssistantPendingActionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AssistantPendingActions.
+     */
+    cursor?: AssistantPendingActionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssistantPendingActions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssistantPendingActions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AssistantPendingActions.
+     */
+    distinct?: AssistantPendingActionScalarFieldEnum | AssistantPendingActionScalarFieldEnum[]
+  }
+
+  /**
+   * AssistantPendingAction findFirstOrThrow
+   */
+  export type AssistantPendingActionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantPendingAction to fetch.
+     */
+    where?: AssistantPendingActionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssistantPendingActions to fetch.
+     */
+    orderBy?: AssistantPendingActionOrderByWithRelationInput | AssistantPendingActionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AssistantPendingActions.
+     */
+    cursor?: AssistantPendingActionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssistantPendingActions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssistantPendingActions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AssistantPendingActions.
+     */
+    distinct?: AssistantPendingActionScalarFieldEnum | AssistantPendingActionScalarFieldEnum[]
+  }
+
+  /**
+   * AssistantPendingAction findMany
+   */
+  export type AssistantPendingActionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionInclude<ExtArgs> | null
+    /**
+     * Filter, which AssistantPendingActions to fetch.
+     */
+    where?: AssistantPendingActionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssistantPendingActions to fetch.
+     */
+    orderBy?: AssistantPendingActionOrderByWithRelationInput | AssistantPendingActionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AssistantPendingActions.
+     */
+    cursor?: AssistantPendingActionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssistantPendingActions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssistantPendingActions.
+     */
+    skip?: number
+    distinct?: AssistantPendingActionScalarFieldEnum | AssistantPendingActionScalarFieldEnum[]
+  }
+
+  /**
+   * AssistantPendingAction create
+   */
+  export type AssistantPendingActionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AssistantPendingAction.
+     */
+    data: XOR<AssistantPendingActionCreateInput, AssistantPendingActionUncheckedCreateInput>
+  }
+
+  /**
+   * AssistantPendingAction createMany
+   */
+  export type AssistantPendingActionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AssistantPendingActions.
+     */
+    data: AssistantPendingActionCreateManyInput | AssistantPendingActionCreateManyInput[]
+  }
+
+  /**
+   * AssistantPendingAction createManyAndReturn
+   */
+  export type AssistantPendingActionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * The data used to create many AssistantPendingActions.
+     */
+    data: AssistantPendingActionCreateManyInput | AssistantPendingActionCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AssistantPendingAction update
+   */
+  export type AssistantPendingActionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AssistantPendingAction.
+     */
+    data: XOR<AssistantPendingActionUpdateInput, AssistantPendingActionUncheckedUpdateInput>
+    /**
+     * Choose, which AssistantPendingAction to update.
+     */
+    where: AssistantPendingActionWhereUniqueInput
+  }
+
+  /**
+   * AssistantPendingAction updateMany
+   */
+  export type AssistantPendingActionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AssistantPendingActions.
+     */
+    data: XOR<AssistantPendingActionUpdateManyMutationInput, AssistantPendingActionUncheckedUpdateManyInput>
+    /**
+     * Filter which AssistantPendingActions to update
+     */
+    where?: AssistantPendingActionWhereInput
+    /**
+     * Limit how many AssistantPendingActions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AssistantPendingAction updateManyAndReturn
+   */
+  export type AssistantPendingActionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * The data used to update AssistantPendingActions.
+     */
+    data: XOR<AssistantPendingActionUpdateManyMutationInput, AssistantPendingActionUncheckedUpdateManyInput>
+    /**
+     * Filter which AssistantPendingActions to update
+     */
+    where?: AssistantPendingActionWhereInput
+    /**
+     * Limit how many AssistantPendingActions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AssistantPendingAction upsert
+   */
+  export type AssistantPendingActionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AssistantPendingAction to update in case it exists.
+     */
+    where: AssistantPendingActionWhereUniqueInput
+    /**
+     * In case the AssistantPendingAction found by the `where` argument doesn't exist, create a new AssistantPendingAction with this data.
+     */
+    create: XOR<AssistantPendingActionCreateInput, AssistantPendingActionUncheckedCreateInput>
+    /**
+     * In case the AssistantPendingAction was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AssistantPendingActionUpdateInput, AssistantPendingActionUncheckedUpdateInput>
+  }
+
+  /**
+   * AssistantPendingAction delete
+   */
+  export type AssistantPendingActionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionInclude<ExtArgs> | null
+    /**
+     * Filter which AssistantPendingAction to delete.
+     */
+    where: AssistantPendingActionWhereUniqueInput
+  }
+
+  /**
+   * AssistantPendingAction deleteMany
+   */
+  export type AssistantPendingActionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AssistantPendingActions to delete
+     */
+    where?: AssistantPendingActionWhereInput
+    /**
+     * Limit how many AssistantPendingActions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AssistantPendingAction without action
+   */
+  export type AssistantPendingActionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssistantPendingAction
+     */
+    select?: AssistantPendingActionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AssistantPendingAction
+     */
+    omit?: AssistantPendingActionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AssistantPendingActionInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -21674,6 +28276,7 @@ export namespace Prisma {
     notificationEnabled: 'notificationEnabled',
     notificationChannel: 'notificationChannel',
     notificationEmail: 'notificationEmail',
+    timezone: 'timezone',
     telegramChatId: 'telegramChatId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -21726,6 +28329,26 @@ export namespace Prisma {
   export type GoalCheckInScalarFieldEnum = (typeof GoalCheckInScalarFieldEnum)[keyof typeof GoalCheckInScalarFieldEnum]
 
 
+  export const TaskScalarFieldEnum: {
+    id: 'id',
+    title: 'title',
+    description: 'description',
+    userId: 'userId',
+    isShared: 'isShared',
+    dueDate: 'dueDate',
+    priority: 'priority',
+    status: 'status',
+    notificationEnabled: 'notificationEnabled',
+    pinToDashboard: 'pinToDashboard',
+    sortOrder: 'sortOrder',
+    completedAt: 'completedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TaskScalarFieldEnum = (typeof TaskScalarFieldEnum)[keyof typeof TaskScalarFieldEnum]
+
+
   export const ProjectScalarFieldEnum: {
     id: 'id',
     title: 'title',
@@ -21757,6 +28380,7 @@ export namespace Prisma {
     status: 'status',
     userId: 'userId',
     notificationEnabled: 'notificationEnabled',
+    pinToDashboard: 'pinToDashboard',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -21772,6 +28396,7 @@ export namespace Prisma {
     tags: 'tags',
     status: 'status',
     userId: 'userId',
+    pinToDashboard: 'pinToDashboard',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -21884,10 +28509,16 @@ export namespace Prisma {
     name: 'name',
     moduleType: 'moduleType',
     frequency: 'frequency',
+    dayOfWeek: 'dayOfWeek',
+    dayOfMonth: 'dayOfMonth',
+    time: 'time',
     conditionType: 'conditionType',
     conditionValue: 'conditionValue',
+    cooldownHours: 'cooldownHours',
+    lastSentAt: 'lastSentAt',
     notificationChannel: 'notificationChannel',
     active: 'active',
+    sortOrder: 'sortOrder',
     userId: 'userId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -21898,14 +28529,18 @@ export namespace Prisma {
 
   export const ScheduledReportScalarFieldEnum: {
     id: 'id',
+    name: 'name',
     reportType: 'reportType',
     dateRangePreset: 'dateRangePreset',
     frequency: 'frequency',
+    dayOfMonth: 'dayOfMonth',
     dayOfWeek: 'dayOfWeek',
     time: 'time',
+    sections: 'sections',
     notificationChannel: 'notificationChannel',
     recipients: 'recipients',
     active: 'active',
+    sortOrder: 'sortOrder',
     userId: 'userId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -21928,6 +28563,68 @@ export namespace Prisma {
   export type BudgetSettingScalarFieldEnum = (typeof BudgetSettingScalarFieldEnum)[keyof typeof BudgetSettingScalarFieldEnum]
 
 
+  export const TelegramLinkScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    telegramChatId: 'telegramChatId',
+    telegramUserId: 'telegramUserId',
+    telegramUsername: 'telegramUsername',
+    linkCode: 'linkCode',
+    linkCodeExpiresAt: 'linkCodeExpiresAt',
+    verifiedAt: 'verifiedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TelegramLinkScalarFieldEnum = (typeof TelegramLinkScalarFieldEnum)[keyof typeof TelegramLinkScalarFieldEnum]
+
+
+  export const AssistantMessageScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    channel: 'channel',
+    externalMessageId: 'externalMessageId',
+    direction: 'direction',
+    rawText: 'rawText',
+    normalizedText: 'normalizedText',
+    intent: 'intent',
+    confidence: 'confidence',
+    createdAt: 'createdAt'
+  };
+
+  export type AssistantMessageScalarFieldEnum = (typeof AssistantMessageScalarFieldEnum)[keyof typeof AssistantMessageScalarFieldEnum]
+
+
+  export const AssistantActionLogScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    channel: 'channel',
+    intent: 'intent',
+    confidence: 'confidence',
+    requestPayload: 'requestPayload',
+    resolvedEntities: 'resolvedEntities',
+    executionStatus: 'executionStatus',
+    resultSummary: 'resultSummary',
+    errorMessage: 'errorMessage',
+    createdAt: 'createdAt'
+  };
+
+  export type AssistantActionLogScalarFieldEnum = (typeof AssistantActionLogScalarFieldEnum)[keyof typeof AssistantActionLogScalarFieldEnum]
+
+
+  export const AssistantPendingActionScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    channel: 'channel',
+    intent: 'intent',
+    payload: 'payload',
+    expiresAt: 'expiresAt',
+    createdAt: 'createdAt'
+  };
+
+  export type AssistantPendingActionScalarFieldEnum = (typeof AssistantPendingActionScalarFieldEnum)[keyof typeof AssistantPendingActionScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -21936,12 +28633,44 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
   export const NullsOrder: {
     first: 'first',
     last: 'last'
   };
 
   export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+  export const QueryMode: {
+    default: 'default',
+    insensitive: 'insensitive'
+  };
+
+  export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
 
 
   /**
@@ -22062,9 +28791,44 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'QueryMode'
+   */
+  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+  /**
    * Reference to a field of type 'BudgetPeriod'
    */
   export type EnumBudgetPeriodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BudgetPeriod'>
+    
+
+
+  /**
+   * Reference to a field of type 'AssistantChannel'
+   */
+  export type EnumAssistantChannelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AssistantChannel'>
+    
+
+
+  /**
+   * Reference to a field of type 'MessageDirection'
+   */
+  export type EnumMessageDirectionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MessageDirection'>
+    
+
+
+  /**
+   * Reference to a field of type 'ExecutionStatus'
+   */
+  export type EnumExecutionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ExecutionStatus'>
     
   /**
    * Deep Input Types
@@ -22085,11 +28849,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFilter<"User"> | boolean
     notificationChannel?: EnumNotificationChannelFilter<"User"> | $Enums.NotificationChannel
     notificationEmail?: StringNullableFilter<"User"> | string | null
+    timezone?: StringNullableFilter<"User"> | string | null
     telegramChatId?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     goals?: GoalListRelationFilter
     goalCheckIns?: GoalCheckInListRelationFilter
+    tasks?: TaskListRelationFilter
     projects?: ProjectListRelationFilter
     createdProjects?: ProjectListRelationFilter
     learningItems?: LearningItemListRelationFilter
@@ -22105,6 +28871,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportListRelationFilter
     budgetSettings?: BudgetSettingListRelationFilter
     refreshTokens?: RefreshTokenListRelationFilter
+    telegramLink?: XOR<TelegramLinkNullableScalarRelationFilter, TelegramLinkWhereInput> | null
+    assistantMessages?: AssistantMessageListRelationFilter
+    assistantActionLogs?: AssistantActionLogListRelationFilter
+    assistantPendingActions?: AssistantPendingActionListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -22118,11 +28888,13 @@ export namespace Prisma {
     notificationEnabled?: SortOrder
     notificationChannel?: SortOrder
     notificationEmail?: SortOrderInput | SortOrder
+    timezone?: SortOrderInput | SortOrder
     telegramChatId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     goals?: GoalOrderByRelationAggregateInput
     goalCheckIns?: GoalCheckInOrderByRelationAggregateInput
+    tasks?: TaskOrderByRelationAggregateInput
     projects?: ProjectOrderByRelationAggregateInput
     createdProjects?: ProjectOrderByRelationAggregateInput
     learningItems?: LearningItemOrderByRelationAggregateInput
@@ -22138,6 +28910,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportOrderByRelationAggregateInput
     budgetSettings?: BudgetSettingOrderByRelationAggregateInput
     refreshTokens?: RefreshTokenOrderByRelationAggregateInput
+    telegramLink?: TelegramLinkOrderByWithRelationInput
+    assistantMessages?: AssistantMessageOrderByRelationAggregateInput
+    assistantActionLogs?: AssistantActionLogOrderByRelationAggregateInput
+    assistantPendingActions?: AssistantPendingActionOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -22154,11 +28930,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFilter<"User"> | boolean
     notificationChannel?: EnumNotificationChannelFilter<"User"> | $Enums.NotificationChannel
     notificationEmail?: StringNullableFilter<"User"> | string | null
+    timezone?: StringNullableFilter<"User"> | string | null
     telegramChatId?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     goals?: GoalListRelationFilter
     goalCheckIns?: GoalCheckInListRelationFilter
+    tasks?: TaskListRelationFilter
     projects?: ProjectListRelationFilter
     createdProjects?: ProjectListRelationFilter
     learningItems?: LearningItemListRelationFilter
@@ -22174,6 +28952,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportListRelationFilter
     budgetSettings?: BudgetSettingListRelationFilter
     refreshTokens?: RefreshTokenListRelationFilter
+    telegramLink?: XOR<TelegramLinkNullableScalarRelationFilter, TelegramLinkWhereInput> | null
+    assistantMessages?: AssistantMessageListRelationFilter
+    assistantActionLogs?: AssistantActionLogListRelationFilter
+    assistantPendingActions?: AssistantPendingActionListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -22187,6 +28969,7 @@ export namespace Prisma {
     notificationEnabled?: SortOrder
     notificationChannel?: SortOrder
     notificationEmail?: SortOrderInput | SortOrder
+    timezone?: SortOrderInput | SortOrder
     telegramChatId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -22209,6 +28992,7 @@ export namespace Prisma {
     notificationEnabled?: BoolWithAggregatesFilter<"User"> | boolean
     notificationChannel?: EnumNotificationChannelWithAggregatesFilter<"User"> | $Enums.NotificationChannel
     notificationEmail?: StringNullableWithAggregatesFilter<"User"> | string | null
+    timezone?: StringNullableWithAggregatesFilter<"User"> | string | null
     telegramChatId?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -22444,6 +29228,108 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"GoalCheckIn"> | Date | string
   }
 
+  export type TaskWhereInput = {
+    AND?: TaskWhereInput | TaskWhereInput[]
+    OR?: TaskWhereInput[]
+    NOT?: TaskWhereInput | TaskWhereInput[]
+    id?: StringFilter<"Task"> | string
+    title?: StringFilter<"Task"> | string
+    description?: StringNullableFilter<"Task"> | string | null
+    userId?: StringFilter<"Task"> | string
+    isShared?: BoolFilter<"Task"> | boolean
+    dueDate?: DateTimeNullableFilter<"Task"> | Date | string | null
+    priority?: EnumPriorityFilter<"Task"> | $Enums.Priority
+    status?: EnumProjectStatusFilter<"Task"> | $Enums.ProjectStatus
+    notificationEnabled?: BoolFilter<"Task"> | boolean
+    pinToDashboard?: BoolFilter<"Task"> | boolean
+    sortOrder?: IntFilter<"Task"> | number
+    completedAt?: DateTimeNullableFilter<"Task"> | Date | string | null
+    createdAt?: DateTimeFilter<"Task"> | Date | string
+    updatedAt?: DateTimeFilter<"Task"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type TaskOrderByWithRelationInput = {
+    id?: SortOrder
+    title?: SortOrder
+    description?: SortOrderInput | SortOrder
+    userId?: SortOrder
+    isShared?: SortOrder
+    dueDate?: SortOrderInput | SortOrder
+    priority?: SortOrder
+    status?: SortOrder
+    notificationEnabled?: SortOrder
+    pinToDashboard?: SortOrder
+    sortOrder?: SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type TaskWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TaskWhereInput | TaskWhereInput[]
+    OR?: TaskWhereInput[]
+    NOT?: TaskWhereInput | TaskWhereInput[]
+    title?: StringFilter<"Task"> | string
+    description?: StringNullableFilter<"Task"> | string | null
+    userId?: StringFilter<"Task"> | string
+    isShared?: BoolFilter<"Task"> | boolean
+    dueDate?: DateTimeNullableFilter<"Task"> | Date | string | null
+    priority?: EnumPriorityFilter<"Task"> | $Enums.Priority
+    status?: EnumProjectStatusFilter<"Task"> | $Enums.ProjectStatus
+    notificationEnabled?: BoolFilter<"Task"> | boolean
+    pinToDashboard?: BoolFilter<"Task"> | boolean
+    sortOrder?: IntFilter<"Task"> | number
+    completedAt?: DateTimeNullableFilter<"Task"> | Date | string | null
+    createdAt?: DateTimeFilter<"Task"> | Date | string
+    updatedAt?: DateTimeFilter<"Task"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type TaskOrderByWithAggregationInput = {
+    id?: SortOrder
+    title?: SortOrder
+    description?: SortOrderInput | SortOrder
+    userId?: SortOrder
+    isShared?: SortOrder
+    dueDate?: SortOrderInput | SortOrder
+    priority?: SortOrder
+    status?: SortOrder
+    notificationEnabled?: SortOrder
+    pinToDashboard?: SortOrder
+    sortOrder?: SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TaskCountOrderByAggregateInput
+    _avg?: TaskAvgOrderByAggregateInput
+    _max?: TaskMaxOrderByAggregateInput
+    _min?: TaskMinOrderByAggregateInput
+    _sum?: TaskSumOrderByAggregateInput
+  }
+
+  export type TaskScalarWhereWithAggregatesInput = {
+    AND?: TaskScalarWhereWithAggregatesInput | TaskScalarWhereWithAggregatesInput[]
+    OR?: TaskScalarWhereWithAggregatesInput[]
+    NOT?: TaskScalarWhereWithAggregatesInput | TaskScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Task"> | string
+    title?: StringWithAggregatesFilter<"Task"> | string
+    description?: StringNullableWithAggregatesFilter<"Task"> | string | null
+    userId?: StringWithAggregatesFilter<"Task"> | string
+    isShared?: BoolWithAggregatesFilter<"Task"> | boolean
+    dueDate?: DateTimeNullableWithAggregatesFilter<"Task"> | Date | string | null
+    priority?: EnumPriorityWithAggregatesFilter<"Task"> | $Enums.Priority
+    status?: EnumProjectStatusWithAggregatesFilter<"Task"> | $Enums.ProjectStatus
+    notificationEnabled?: BoolWithAggregatesFilter<"Task"> | boolean
+    pinToDashboard?: BoolWithAggregatesFilter<"Task"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"Task"> | number
+    completedAt?: DateTimeNullableWithAggregatesFilter<"Task"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Task"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Task"> | Date | string
+  }
+
   export type ProjectWhereInput = {
     AND?: ProjectWhereInput | ProjectWhereInput[]
     OR?: ProjectWhereInput[]
@@ -22563,6 +29449,7 @@ export namespace Prisma {
     status?: EnumProjectStatusFilter<"LearningItem"> | $Enums.ProjectStatus
     userId?: StringFilter<"LearningItem"> | string
     notificationEnabled?: BoolFilter<"LearningItem"> | boolean
+    pinToDashboard?: BoolFilter<"LearningItem"> | boolean
     createdAt?: DateTimeFilter<"LearningItem"> | Date | string
     updatedAt?: DateTimeFilter<"LearningItem"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -22579,6 +29466,7 @@ export namespace Prisma {
     status?: SortOrder
     userId?: SortOrder
     notificationEnabled?: SortOrder
+    pinToDashboard?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
@@ -22598,6 +29486,7 @@ export namespace Prisma {
     status?: EnumProjectStatusFilter<"LearningItem"> | $Enums.ProjectStatus
     userId?: StringFilter<"LearningItem"> | string
     notificationEnabled?: BoolFilter<"LearningItem"> | boolean
+    pinToDashboard?: BoolFilter<"LearningItem"> | boolean
     createdAt?: DateTimeFilter<"LearningItem"> | Date | string
     updatedAt?: DateTimeFilter<"LearningItem"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -22614,6 +29503,7 @@ export namespace Prisma {
     status?: SortOrder
     userId?: SortOrder
     notificationEnabled?: SortOrder
+    pinToDashboard?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: LearningItemCountOrderByAggregateInput
@@ -22637,6 +29527,7 @@ export namespace Prisma {
     status?: EnumProjectStatusWithAggregatesFilter<"LearningItem"> | $Enums.ProjectStatus
     userId?: StringWithAggregatesFilter<"LearningItem"> | string
     notificationEnabled?: BoolWithAggregatesFilter<"LearningItem"> | boolean
+    pinToDashboard?: BoolWithAggregatesFilter<"LearningItem"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"LearningItem"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"LearningItem"> | Date | string
   }
@@ -22652,6 +29543,7 @@ export namespace Prisma {
     tags?: StringNullableFilter<"Idea"> | string | null
     status?: EnumIdeaStatusFilter<"Idea"> | $Enums.IdeaStatus
     userId?: StringFilter<"Idea"> | string
+    pinToDashboard?: BoolFilter<"Idea"> | boolean
     createdAt?: DateTimeFilter<"Idea"> | Date | string
     updatedAt?: DateTimeFilter<"Idea"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -22665,6 +29557,7 @@ export namespace Prisma {
     tags?: SortOrderInput | SortOrder
     status?: SortOrder
     userId?: SortOrder
+    pinToDashboard?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
@@ -22681,6 +29574,7 @@ export namespace Prisma {
     tags?: StringNullableFilter<"Idea"> | string | null
     status?: EnumIdeaStatusFilter<"Idea"> | $Enums.IdeaStatus
     userId?: StringFilter<"Idea"> | string
+    pinToDashboard?: BoolFilter<"Idea"> | boolean
     createdAt?: DateTimeFilter<"Idea"> | Date | string
     updatedAt?: DateTimeFilter<"Idea"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -22694,6 +29588,7 @@ export namespace Prisma {
     tags?: SortOrderInput | SortOrder
     status?: SortOrder
     userId?: SortOrder
+    pinToDashboard?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: IdeaCountOrderByAggregateInput
@@ -22712,6 +29607,7 @@ export namespace Prisma {
     tags?: StringNullableWithAggregatesFilter<"Idea"> | string | null
     status?: EnumIdeaStatusWithAggregatesFilter<"Idea"> | $Enums.IdeaStatus
     userId?: StringWithAggregatesFilter<"Idea"> | string
+    pinToDashboard?: BoolWithAggregatesFilter<"Idea"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"Idea"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Idea"> | Date | string
   }
@@ -23246,10 +30142,16 @@ export namespace Prisma {
     name?: StringFilter<"AlertRule"> | string
     moduleType?: StringFilter<"AlertRule"> | string
     frequency?: EnumAlertFrequencyFilter<"AlertRule"> | $Enums.AlertFrequency
+    dayOfWeek?: IntNullableFilter<"AlertRule"> | number | null
+    dayOfMonth?: IntNullableFilter<"AlertRule"> | number | null
+    time?: StringNullableFilter<"AlertRule"> | string | null
     conditionType?: StringFilter<"AlertRule"> | string
     conditionValue?: StringNullableFilter<"AlertRule"> | string | null
+    cooldownHours?: IntFilter<"AlertRule"> | number
+    lastSentAt?: DateTimeNullableFilter<"AlertRule"> | Date | string | null
     notificationChannel?: EnumNotificationChannelFilter<"AlertRule"> | $Enums.NotificationChannel
     active?: BoolFilter<"AlertRule"> | boolean
+    sortOrder?: IntFilter<"AlertRule"> | number
     userId?: StringFilter<"AlertRule"> | string
     createdAt?: DateTimeFilter<"AlertRule"> | Date | string
     updatedAt?: DateTimeFilter<"AlertRule"> | Date | string
@@ -23261,10 +30163,16 @@ export namespace Prisma {
     name?: SortOrder
     moduleType?: SortOrder
     frequency?: SortOrder
+    dayOfWeek?: SortOrderInput | SortOrder
+    dayOfMonth?: SortOrderInput | SortOrder
+    time?: SortOrderInput | SortOrder
     conditionType?: SortOrder
     conditionValue?: SortOrderInput | SortOrder
+    cooldownHours?: SortOrder
+    lastSentAt?: SortOrderInput | SortOrder
     notificationChannel?: SortOrder
     active?: SortOrder
+    sortOrder?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -23279,10 +30187,16 @@ export namespace Prisma {
     name?: StringFilter<"AlertRule"> | string
     moduleType?: StringFilter<"AlertRule"> | string
     frequency?: EnumAlertFrequencyFilter<"AlertRule"> | $Enums.AlertFrequency
+    dayOfWeek?: IntNullableFilter<"AlertRule"> | number | null
+    dayOfMonth?: IntNullableFilter<"AlertRule"> | number | null
+    time?: StringNullableFilter<"AlertRule"> | string | null
     conditionType?: StringFilter<"AlertRule"> | string
     conditionValue?: StringNullableFilter<"AlertRule"> | string | null
+    cooldownHours?: IntFilter<"AlertRule"> | number
+    lastSentAt?: DateTimeNullableFilter<"AlertRule"> | Date | string | null
     notificationChannel?: EnumNotificationChannelFilter<"AlertRule"> | $Enums.NotificationChannel
     active?: BoolFilter<"AlertRule"> | boolean
+    sortOrder?: IntFilter<"AlertRule"> | number
     userId?: StringFilter<"AlertRule"> | string
     createdAt?: DateTimeFilter<"AlertRule"> | Date | string
     updatedAt?: DateTimeFilter<"AlertRule"> | Date | string
@@ -23294,16 +30208,24 @@ export namespace Prisma {
     name?: SortOrder
     moduleType?: SortOrder
     frequency?: SortOrder
+    dayOfWeek?: SortOrderInput | SortOrder
+    dayOfMonth?: SortOrderInput | SortOrder
+    time?: SortOrderInput | SortOrder
     conditionType?: SortOrder
     conditionValue?: SortOrderInput | SortOrder
+    cooldownHours?: SortOrder
+    lastSentAt?: SortOrderInput | SortOrder
     notificationChannel?: SortOrder
     active?: SortOrder
+    sortOrder?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: AlertRuleCountOrderByAggregateInput
+    _avg?: AlertRuleAvgOrderByAggregateInput
     _max?: AlertRuleMaxOrderByAggregateInput
     _min?: AlertRuleMinOrderByAggregateInput
+    _sum?: AlertRuleSumOrderByAggregateInput
   }
 
   export type AlertRuleScalarWhereWithAggregatesInput = {
@@ -23314,10 +30236,16 @@ export namespace Prisma {
     name?: StringWithAggregatesFilter<"AlertRule"> | string
     moduleType?: StringWithAggregatesFilter<"AlertRule"> | string
     frequency?: EnumAlertFrequencyWithAggregatesFilter<"AlertRule"> | $Enums.AlertFrequency
+    dayOfWeek?: IntNullableWithAggregatesFilter<"AlertRule"> | number | null
+    dayOfMonth?: IntNullableWithAggregatesFilter<"AlertRule"> | number | null
+    time?: StringNullableWithAggregatesFilter<"AlertRule"> | string | null
     conditionType?: StringWithAggregatesFilter<"AlertRule"> | string
     conditionValue?: StringNullableWithAggregatesFilter<"AlertRule"> | string | null
+    cooldownHours?: IntWithAggregatesFilter<"AlertRule"> | number
+    lastSentAt?: DateTimeNullableWithAggregatesFilter<"AlertRule"> | Date | string | null
     notificationChannel?: EnumNotificationChannelWithAggregatesFilter<"AlertRule"> | $Enums.NotificationChannel
     active?: BoolWithAggregatesFilter<"AlertRule"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"AlertRule"> | number
     userId?: StringWithAggregatesFilter<"AlertRule"> | string
     createdAt?: DateTimeWithAggregatesFilter<"AlertRule"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"AlertRule"> | Date | string
@@ -23328,14 +30256,18 @@ export namespace Prisma {
     OR?: ScheduledReportWhereInput[]
     NOT?: ScheduledReportWhereInput | ScheduledReportWhereInput[]
     id?: StringFilter<"ScheduledReport"> | string
+    name?: StringFilter<"ScheduledReport"> | string
     reportType?: StringFilter<"ScheduledReport"> | string
     dateRangePreset?: StringNullableFilter<"ScheduledReport"> | string | null
     frequency?: EnumReportFrequencyFilter<"ScheduledReport"> | $Enums.ReportFrequency
+    dayOfMonth?: IntNullableFilter<"ScheduledReport"> | number | null
     dayOfWeek?: IntNullableFilter<"ScheduledReport"> | number | null
     time?: StringNullableFilter<"ScheduledReport"> | string | null
+    sections?: JsonNullableFilter<"ScheduledReport">
     notificationChannel?: EnumNotificationChannelFilter<"ScheduledReport"> | $Enums.NotificationChannel
-    recipients?: StringNullableFilter<"ScheduledReport"> | string | null
+    recipients?: JsonNullableFilter<"ScheduledReport">
     active?: BoolFilter<"ScheduledReport"> | boolean
+    sortOrder?: IntFilter<"ScheduledReport"> | number
     userId?: StringFilter<"ScheduledReport"> | string
     createdAt?: DateTimeFilter<"ScheduledReport"> | Date | string
     updatedAt?: DateTimeFilter<"ScheduledReport"> | Date | string
@@ -23344,14 +30276,18 @@ export namespace Prisma {
 
   export type ScheduledReportOrderByWithRelationInput = {
     id?: SortOrder
+    name?: SortOrder
     reportType?: SortOrder
     dateRangePreset?: SortOrderInput | SortOrder
     frequency?: SortOrder
+    dayOfMonth?: SortOrderInput | SortOrder
     dayOfWeek?: SortOrderInput | SortOrder
     time?: SortOrderInput | SortOrder
+    sections?: SortOrderInput | SortOrder
     notificationChannel?: SortOrder
     recipients?: SortOrderInput | SortOrder
     active?: SortOrder
+    sortOrder?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -23363,14 +30299,18 @@ export namespace Prisma {
     AND?: ScheduledReportWhereInput | ScheduledReportWhereInput[]
     OR?: ScheduledReportWhereInput[]
     NOT?: ScheduledReportWhereInput | ScheduledReportWhereInput[]
+    name?: StringFilter<"ScheduledReport"> | string
     reportType?: StringFilter<"ScheduledReport"> | string
     dateRangePreset?: StringNullableFilter<"ScheduledReport"> | string | null
     frequency?: EnumReportFrequencyFilter<"ScheduledReport"> | $Enums.ReportFrequency
+    dayOfMonth?: IntNullableFilter<"ScheduledReport"> | number | null
     dayOfWeek?: IntNullableFilter<"ScheduledReport"> | number | null
     time?: StringNullableFilter<"ScheduledReport"> | string | null
+    sections?: JsonNullableFilter<"ScheduledReport">
     notificationChannel?: EnumNotificationChannelFilter<"ScheduledReport"> | $Enums.NotificationChannel
-    recipients?: StringNullableFilter<"ScheduledReport"> | string | null
+    recipients?: JsonNullableFilter<"ScheduledReport">
     active?: BoolFilter<"ScheduledReport"> | boolean
+    sortOrder?: IntFilter<"ScheduledReport"> | number
     userId?: StringFilter<"ScheduledReport"> | string
     createdAt?: DateTimeFilter<"ScheduledReport"> | Date | string
     updatedAt?: DateTimeFilter<"ScheduledReport"> | Date | string
@@ -23379,14 +30319,18 @@ export namespace Prisma {
 
   export type ScheduledReportOrderByWithAggregationInput = {
     id?: SortOrder
+    name?: SortOrder
     reportType?: SortOrder
     dateRangePreset?: SortOrderInput | SortOrder
     frequency?: SortOrder
+    dayOfMonth?: SortOrderInput | SortOrder
     dayOfWeek?: SortOrderInput | SortOrder
     time?: SortOrderInput | SortOrder
+    sections?: SortOrderInput | SortOrder
     notificationChannel?: SortOrder
     recipients?: SortOrderInput | SortOrder
     active?: SortOrder
+    sortOrder?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -23402,14 +30346,18 @@ export namespace Prisma {
     OR?: ScheduledReportScalarWhereWithAggregatesInput[]
     NOT?: ScheduledReportScalarWhereWithAggregatesInput | ScheduledReportScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"ScheduledReport"> | string
+    name?: StringWithAggregatesFilter<"ScheduledReport"> | string
     reportType?: StringWithAggregatesFilter<"ScheduledReport"> | string
     dateRangePreset?: StringNullableWithAggregatesFilter<"ScheduledReport"> | string | null
     frequency?: EnumReportFrequencyWithAggregatesFilter<"ScheduledReport"> | $Enums.ReportFrequency
+    dayOfMonth?: IntNullableWithAggregatesFilter<"ScheduledReport"> | number | null
     dayOfWeek?: IntNullableWithAggregatesFilter<"ScheduledReport"> | number | null
     time?: StringNullableWithAggregatesFilter<"ScheduledReport"> | string | null
+    sections?: JsonNullableWithAggregatesFilter<"ScheduledReport">
     notificationChannel?: EnumNotificationChannelWithAggregatesFilter<"ScheduledReport"> | $Enums.NotificationChannel
-    recipients?: StringNullableWithAggregatesFilter<"ScheduledReport"> | string | null
+    recipients?: JsonNullableWithAggregatesFilter<"ScheduledReport">
     active?: BoolWithAggregatesFilter<"ScheduledReport"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"ScheduledReport"> | number
     userId?: StringWithAggregatesFilter<"ScheduledReport"> | string
     createdAt?: DateTimeWithAggregatesFilter<"ScheduledReport"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ScheduledReport"> | Date | string
@@ -23487,6 +30435,320 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"BudgetSetting"> | Date | string
   }
 
+  export type TelegramLinkWhereInput = {
+    AND?: TelegramLinkWhereInput | TelegramLinkWhereInput[]
+    OR?: TelegramLinkWhereInput[]
+    NOT?: TelegramLinkWhereInput | TelegramLinkWhereInput[]
+    id?: StringFilter<"TelegramLink"> | string
+    userId?: StringFilter<"TelegramLink"> | string
+    telegramChatId?: StringFilter<"TelegramLink"> | string
+    telegramUserId?: StringFilter<"TelegramLink"> | string
+    telegramUsername?: StringNullableFilter<"TelegramLink"> | string | null
+    linkCode?: StringNullableFilter<"TelegramLink"> | string | null
+    linkCodeExpiresAt?: DateTimeNullableFilter<"TelegramLink"> | Date | string | null
+    verifiedAt?: DateTimeNullableFilter<"TelegramLink"> | Date | string | null
+    createdAt?: DateTimeFilter<"TelegramLink"> | Date | string
+    updatedAt?: DateTimeFilter<"TelegramLink"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type TelegramLinkOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    telegramChatId?: SortOrder
+    telegramUserId?: SortOrder
+    telegramUsername?: SortOrderInput | SortOrder
+    linkCode?: SortOrderInput | SortOrder
+    linkCodeExpiresAt?: SortOrderInput | SortOrder
+    verifiedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type TelegramLinkWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    userId?: string
+    telegramChatId?: string
+    AND?: TelegramLinkWhereInput | TelegramLinkWhereInput[]
+    OR?: TelegramLinkWhereInput[]
+    NOT?: TelegramLinkWhereInput | TelegramLinkWhereInput[]
+    telegramUserId?: StringFilter<"TelegramLink"> | string
+    telegramUsername?: StringNullableFilter<"TelegramLink"> | string | null
+    linkCode?: StringNullableFilter<"TelegramLink"> | string | null
+    linkCodeExpiresAt?: DateTimeNullableFilter<"TelegramLink"> | Date | string | null
+    verifiedAt?: DateTimeNullableFilter<"TelegramLink"> | Date | string | null
+    createdAt?: DateTimeFilter<"TelegramLink"> | Date | string
+    updatedAt?: DateTimeFilter<"TelegramLink"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "userId" | "telegramChatId">
+
+  export type TelegramLinkOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    telegramChatId?: SortOrder
+    telegramUserId?: SortOrder
+    telegramUsername?: SortOrderInput | SortOrder
+    linkCode?: SortOrderInput | SortOrder
+    linkCodeExpiresAt?: SortOrderInput | SortOrder
+    verifiedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TelegramLinkCountOrderByAggregateInput
+    _max?: TelegramLinkMaxOrderByAggregateInput
+    _min?: TelegramLinkMinOrderByAggregateInput
+  }
+
+  export type TelegramLinkScalarWhereWithAggregatesInput = {
+    AND?: TelegramLinkScalarWhereWithAggregatesInput | TelegramLinkScalarWhereWithAggregatesInput[]
+    OR?: TelegramLinkScalarWhereWithAggregatesInput[]
+    NOT?: TelegramLinkScalarWhereWithAggregatesInput | TelegramLinkScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TelegramLink"> | string
+    userId?: StringWithAggregatesFilter<"TelegramLink"> | string
+    telegramChatId?: StringWithAggregatesFilter<"TelegramLink"> | string
+    telegramUserId?: StringWithAggregatesFilter<"TelegramLink"> | string
+    telegramUsername?: StringNullableWithAggregatesFilter<"TelegramLink"> | string | null
+    linkCode?: StringNullableWithAggregatesFilter<"TelegramLink"> | string | null
+    linkCodeExpiresAt?: DateTimeNullableWithAggregatesFilter<"TelegramLink"> | Date | string | null
+    verifiedAt?: DateTimeNullableWithAggregatesFilter<"TelegramLink"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"TelegramLink"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TelegramLink"> | Date | string
+  }
+
+  export type AssistantMessageWhereInput = {
+    AND?: AssistantMessageWhereInput | AssistantMessageWhereInput[]
+    OR?: AssistantMessageWhereInput[]
+    NOT?: AssistantMessageWhereInput | AssistantMessageWhereInput[]
+    id?: StringFilter<"AssistantMessage"> | string
+    userId?: StringFilter<"AssistantMessage"> | string
+    channel?: EnumAssistantChannelFilter<"AssistantMessage"> | $Enums.AssistantChannel
+    externalMessageId?: StringNullableFilter<"AssistantMessage"> | string | null
+    direction?: EnumMessageDirectionFilter<"AssistantMessage"> | $Enums.MessageDirection
+    rawText?: StringFilter<"AssistantMessage"> | string
+    normalizedText?: StringNullableFilter<"AssistantMessage"> | string | null
+    intent?: StringNullableFilter<"AssistantMessage"> | string | null
+    confidence?: FloatNullableFilter<"AssistantMessage"> | number | null
+    createdAt?: DateTimeFilter<"AssistantMessage"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type AssistantMessageOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    externalMessageId?: SortOrderInput | SortOrder
+    direction?: SortOrder
+    rawText?: SortOrder
+    normalizedText?: SortOrderInput | SortOrder
+    intent?: SortOrderInput | SortOrder
+    confidence?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type AssistantMessageWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: AssistantMessageWhereInput | AssistantMessageWhereInput[]
+    OR?: AssistantMessageWhereInput[]
+    NOT?: AssistantMessageWhereInput | AssistantMessageWhereInput[]
+    userId?: StringFilter<"AssistantMessage"> | string
+    channel?: EnumAssistantChannelFilter<"AssistantMessage"> | $Enums.AssistantChannel
+    externalMessageId?: StringNullableFilter<"AssistantMessage"> | string | null
+    direction?: EnumMessageDirectionFilter<"AssistantMessage"> | $Enums.MessageDirection
+    rawText?: StringFilter<"AssistantMessage"> | string
+    normalizedText?: StringNullableFilter<"AssistantMessage"> | string | null
+    intent?: StringNullableFilter<"AssistantMessage"> | string | null
+    confidence?: FloatNullableFilter<"AssistantMessage"> | number | null
+    createdAt?: DateTimeFilter<"AssistantMessage"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type AssistantMessageOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    externalMessageId?: SortOrderInput | SortOrder
+    direction?: SortOrder
+    rawText?: SortOrder
+    normalizedText?: SortOrderInput | SortOrder
+    intent?: SortOrderInput | SortOrder
+    confidence?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: AssistantMessageCountOrderByAggregateInput
+    _avg?: AssistantMessageAvgOrderByAggregateInput
+    _max?: AssistantMessageMaxOrderByAggregateInput
+    _min?: AssistantMessageMinOrderByAggregateInput
+    _sum?: AssistantMessageSumOrderByAggregateInput
+  }
+
+  export type AssistantMessageScalarWhereWithAggregatesInput = {
+    AND?: AssistantMessageScalarWhereWithAggregatesInput | AssistantMessageScalarWhereWithAggregatesInput[]
+    OR?: AssistantMessageScalarWhereWithAggregatesInput[]
+    NOT?: AssistantMessageScalarWhereWithAggregatesInput | AssistantMessageScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AssistantMessage"> | string
+    userId?: StringWithAggregatesFilter<"AssistantMessage"> | string
+    channel?: EnumAssistantChannelWithAggregatesFilter<"AssistantMessage"> | $Enums.AssistantChannel
+    externalMessageId?: StringNullableWithAggregatesFilter<"AssistantMessage"> | string | null
+    direction?: EnumMessageDirectionWithAggregatesFilter<"AssistantMessage"> | $Enums.MessageDirection
+    rawText?: StringWithAggregatesFilter<"AssistantMessage"> | string
+    normalizedText?: StringNullableWithAggregatesFilter<"AssistantMessage"> | string | null
+    intent?: StringNullableWithAggregatesFilter<"AssistantMessage"> | string | null
+    confidence?: FloatNullableWithAggregatesFilter<"AssistantMessage"> | number | null
+    createdAt?: DateTimeWithAggregatesFilter<"AssistantMessage"> | Date | string
+  }
+
+  export type AssistantActionLogWhereInput = {
+    AND?: AssistantActionLogWhereInput | AssistantActionLogWhereInput[]
+    OR?: AssistantActionLogWhereInput[]
+    NOT?: AssistantActionLogWhereInput | AssistantActionLogWhereInput[]
+    id?: StringFilter<"AssistantActionLog"> | string
+    userId?: StringFilter<"AssistantActionLog"> | string
+    channel?: EnumAssistantChannelFilter<"AssistantActionLog"> | $Enums.AssistantChannel
+    intent?: StringFilter<"AssistantActionLog"> | string
+    confidence?: FloatNullableFilter<"AssistantActionLog"> | number | null
+    requestPayload?: JsonNullableFilter<"AssistantActionLog">
+    resolvedEntities?: JsonNullableFilter<"AssistantActionLog">
+    executionStatus?: EnumExecutionStatusFilter<"AssistantActionLog"> | $Enums.ExecutionStatus
+    resultSummary?: StringNullableFilter<"AssistantActionLog"> | string | null
+    errorMessage?: StringNullableFilter<"AssistantActionLog"> | string | null
+    createdAt?: DateTimeFilter<"AssistantActionLog"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type AssistantActionLogOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    intent?: SortOrder
+    confidence?: SortOrderInput | SortOrder
+    requestPayload?: SortOrderInput | SortOrder
+    resolvedEntities?: SortOrderInput | SortOrder
+    executionStatus?: SortOrder
+    resultSummary?: SortOrderInput | SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type AssistantActionLogWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: AssistantActionLogWhereInput | AssistantActionLogWhereInput[]
+    OR?: AssistantActionLogWhereInput[]
+    NOT?: AssistantActionLogWhereInput | AssistantActionLogWhereInput[]
+    userId?: StringFilter<"AssistantActionLog"> | string
+    channel?: EnumAssistantChannelFilter<"AssistantActionLog"> | $Enums.AssistantChannel
+    intent?: StringFilter<"AssistantActionLog"> | string
+    confidence?: FloatNullableFilter<"AssistantActionLog"> | number | null
+    requestPayload?: JsonNullableFilter<"AssistantActionLog">
+    resolvedEntities?: JsonNullableFilter<"AssistantActionLog">
+    executionStatus?: EnumExecutionStatusFilter<"AssistantActionLog"> | $Enums.ExecutionStatus
+    resultSummary?: StringNullableFilter<"AssistantActionLog"> | string | null
+    errorMessage?: StringNullableFilter<"AssistantActionLog"> | string | null
+    createdAt?: DateTimeFilter<"AssistantActionLog"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type AssistantActionLogOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    intent?: SortOrder
+    confidence?: SortOrderInput | SortOrder
+    requestPayload?: SortOrderInput | SortOrder
+    resolvedEntities?: SortOrderInput | SortOrder
+    executionStatus?: SortOrder
+    resultSummary?: SortOrderInput | SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: AssistantActionLogCountOrderByAggregateInput
+    _avg?: AssistantActionLogAvgOrderByAggregateInput
+    _max?: AssistantActionLogMaxOrderByAggregateInput
+    _min?: AssistantActionLogMinOrderByAggregateInput
+    _sum?: AssistantActionLogSumOrderByAggregateInput
+  }
+
+  export type AssistantActionLogScalarWhereWithAggregatesInput = {
+    AND?: AssistantActionLogScalarWhereWithAggregatesInput | AssistantActionLogScalarWhereWithAggregatesInput[]
+    OR?: AssistantActionLogScalarWhereWithAggregatesInput[]
+    NOT?: AssistantActionLogScalarWhereWithAggregatesInput | AssistantActionLogScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AssistantActionLog"> | string
+    userId?: StringWithAggregatesFilter<"AssistantActionLog"> | string
+    channel?: EnumAssistantChannelWithAggregatesFilter<"AssistantActionLog"> | $Enums.AssistantChannel
+    intent?: StringWithAggregatesFilter<"AssistantActionLog"> | string
+    confidence?: FloatNullableWithAggregatesFilter<"AssistantActionLog"> | number | null
+    requestPayload?: JsonNullableWithAggregatesFilter<"AssistantActionLog">
+    resolvedEntities?: JsonNullableWithAggregatesFilter<"AssistantActionLog">
+    executionStatus?: EnumExecutionStatusWithAggregatesFilter<"AssistantActionLog"> | $Enums.ExecutionStatus
+    resultSummary?: StringNullableWithAggregatesFilter<"AssistantActionLog"> | string | null
+    errorMessage?: StringNullableWithAggregatesFilter<"AssistantActionLog"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"AssistantActionLog"> | Date | string
+  }
+
+  export type AssistantPendingActionWhereInput = {
+    AND?: AssistantPendingActionWhereInput | AssistantPendingActionWhereInput[]
+    OR?: AssistantPendingActionWhereInput[]
+    NOT?: AssistantPendingActionWhereInput | AssistantPendingActionWhereInput[]
+    id?: StringFilter<"AssistantPendingAction"> | string
+    userId?: StringFilter<"AssistantPendingAction"> | string
+    channel?: EnumAssistantChannelFilter<"AssistantPendingAction"> | $Enums.AssistantChannel
+    intent?: StringFilter<"AssistantPendingAction"> | string
+    payload?: JsonFilter<"AssistantPendingAction">
+    expiresAt?: DateTimeFilter<"AssistantPendingAction"> | Date | string
+    createdAt?: DateTimeFilter<"AssistantPendingAction"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type AssistantPendingActionOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    intent?: SortOrder
+    payload?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type AssistantPendingActionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: AssistantPendingActionWhereInput | AssistantPendingActionWhereInput[]
+    OR?: AssistantPendingActionWhereInput[]
+    NOT?: AssistantPendingActionWhereInput | AssistantPendingActionWhereInput[]
+    userId?: StringFilter<"AssistantPendingAction"> | string
+    channel?: EnumAssistantChannelFilter<"AssistantPendingAction"> | $Enums.AssistantChannel
+    intent?: StringFilter<"AssistantPendingAction"> | string
+    payload?: JsonFilter<"AssistantPendingAction">
+    expiresAt?: DateTimeFilter<"AssistantPendingAction"> | Date | string
+    createdAt?: DateTimeFilter<"AssistantPendingAction"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type AssistantPendingActionOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    intent?: SortOrder
+    payload?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    _count?: AssistantPendingActionCountOrderByAggregateInput
+    _max?: AssistantPendingActionMaxOrderByAggregateInput
+    _min?: AssistantPendingActionMinOrderByAggregateInput
+  }
+
+  export type AssistantPendingActionScalarWhereWithAggregatesInput = {
+    AND?: AssistantPendingActionScalarWhereWithAggregatesInput | AssistantPendingActionScalarWhereWithAggregatesInput[]
+    OR?: AssistantPendingActionScalarWhereWithAggregatesInput[]
+    NOT?: AssistantPendingActionScalarWhereWithAggregatesInput | AssistantPendingActionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AssistantPendingAction"> | string
+    userId?: StringWithAggregatesFilter<"AssistantPendingAction"> | string
+    channel?: EnumAssistantChannelWithAggregatesFilter<"AssistantPendingAction"> | $Enums.AssistantChannel
+    intent?: StringWithAggregatesFilter<"AssistantPendingAction"> | string
+    payload?: JsonWithAggregatesFilter<"AssistantPendingAction">
+    expiresAt?: DateTimeWithAggregatesFilter<"AssistantPendingAction"> | Date | string
+    createdAt?: DateTimeWithAggregatesFilter<"AssistantPendingAction"> | Date | string
+  }
+
   export type UserCreateInput = {
     id?: string
     email: string
@@ -23498,11 +30760,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -23518,6 +30782,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -23531,11 +30799,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -23551,6 +30821,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -23564,11 +30838,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -23584,6 +30860,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -23597,11 +30877,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -23617,6 +30899,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -23630,6 +30916,7 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -23646,6 +30933,7 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23662,6 +30950,7 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23912,6 +31201,124 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type TaskCreateInput = {
+    id?: string
+    title: string
+    description?: string | null
+    isShared?: boolean
+    dueDate?: Date | string | null
+    priority?: $Enums.Priority
+    status?: $Enums.ProjectStatus
+    notificationEnabled?: boolean
+    pinToDashboard?: boolean
+    sortOrder?: number
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutTasksInput
+  }
+
+  export type TaskUncheckedCreateInput = {
+    id?: string
+    title: string
+    description?: string | null
+    userId: string
+    isShared?: boolean
+    dueDate?: Date | string | null
+    priority?: $Enums.Priority
+    status?: $Enums.ProjectStatus
+    notificationEnabled?: boolean
+    pinToDashboard?: boolean
+    sortOrder?: number
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TaskUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isShared?: BoolFieldUpdateOperationsInput | boolean
+    dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    priority?: EnumPriorityFieldUpdateOperationsInput | $Enums.Priority
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutTasksNestedInput
+  }
+
+  export type TaskUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: StringFieldUpdateOperationsInput | string
+    isShared?: BoolFieldUpdateOperationsInput | boolean
+    dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    priority?: EnumPriorityFieldUpdateOperationsInput | $Enums.Priority
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TaskCreateManyInput = {
+    id?: string
+    title: string
+    description?: string | null
+    userId: string
+    isShared?: boolean
+    dueDate?: Date | string | null
+    priority?: $Enums.Priority
+    status?: $Enums.ProjectStatus
+    notificationEnabled?: boolean
+    pinToDashboard?: boolean
+    sortOrder?: number
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TaskUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isShared?: BoolFieldUpdateOperationsInput | boolean
+    dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    priority?: EnumPriorityFieldUpdateOperationsInput | $Enums.Priority
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TaskUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: StringFieldUpdateOperationsInput | string
+    isShared?: BoolFieldUpdateOperationsInput | boolean
+    dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    priority?: EnumPriorityFieldUpdateOperationsInput | $Enums.Priority
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ProjectCreateInput = {
     id?: string
     title: string
@@ -24039,6 +31446,7 @@ export namespace Prisma {
     deadline?: Date | string | null
     status?: $Enums.ProjectStatus
     notificationEnabled?: boolean
+    pinToDashboard?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutLearningItemsInput
@@ -24055,6 +31463,7 @@ export namespace Prisma {
     status?: $Enums.ProjectStatus
     userId: string
     notificationEnabled?: boolean
+    pinToDashboard?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -24069,6 +31478,7 @@ export namespace Prisma {
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutLearningItemsNestedInput
@@ -24085,6 +31495,7 @@ export namespace Prisma {
     status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
     userId?: StringFieldUpdateOperationsInput | string
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24100,6 +31511,7 @@ export namespace Prisma {
     status?: $Enums.ProjectStatus
     userId: string
     notificationEnabled?: boolean
+    pinToDashboard?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -24114,6 +31526,7 @@ export namespace Prisma {
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24129,6 +31542,7 @@ export namespace Prisma {
     status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
     userId?: StringFieldUpdateOperationsInput | string
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24140,6 +31554,7 @@ export namespace Prisma {
     category?: string | null
     tags?: string | null
     status?: $Enums.IdeaStatus
+    pinToDashboard?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutIdeasInput
@@ -24153,6 +31568,7 @@ export namespace Prisma {
     tags?: string | null
     status?: $Enums.IdeaStatus
     userId: string
+    pinToDashboard?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -24164,6 +31580,7 @@ export namespace Prisma {
     category?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutIdeasNestedInput
@@ -24177,6 +31594,7 @@ export namespace Prisma {
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
     userId?: StringFieldUpdateOperationsInput | string
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24189,6 +31607,7 @@ export namespace Prisma {
     tags?: string | null
     status?: $Enums.IdeaStatus
     userId: string
+    pinToDashboard?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -24200,6 +31619,7 @@ export namespace Prisma {
     category?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24212,6 +31632,7 @@ export namespace Prisma {
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
     userId?: StringFieldUpdateOperationsInput | string
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24794,10 +32215,16 @@ export namespace Prisma {
     name: string
     moduleType: string
     frequency?: $Enums.AlertFrequency
+    dayOfWeek?: number | null
+    dayOfMonth?: number | null
+    time?: string | null
     conditionType: string
     conditionValue?: string | null
+    cooldownHours?: number
+    lastSentAt?: Date | string | null
     notificationChannel?: $Enums.NotificationChannel
     active?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutAlertRulesInput
@@ -24808,10 +32235,16 @@ export namespace Prisma {
     name: string
     moduleType: string
     frequency?: $Enums.AlertFrequency
+    dayOfWeek?: number | null
+    dayOfMonth?: number | null
+    time?: string | null
     conditionType: string
     conditionValue?: string | null
+    cooldownHours?: number
+    lastSentAt?: Date | string | null
     notificationChannel?: $Enums.NotificationChannel
     active?: boolean
+    sortOrder?: number
     userId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24822,10 +32255,16 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     moduleType?: StringFieldUpdateOperationsInput | string
     frequency?: EnumAlertFrequencyFieldUpdateOperationsInput | $Enums.AlertFrequency
+    dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
     conditionType?: StringFieldUpdateOperationsInput | string
     conditionValue?: NullableStringFieldUpdateOperationsInput | string | null
+    cooldownHours?: IntFieldUpdateOperationsInput | number
+    lastSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutAlertRulesNestedInput
@@ -24836,10 +32275,16 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     moduleType?: StringFieldUpdateOperationsInput | string
     frequency?: EnumAlertFrequencyFieldUpdateOperationsInput | $Enums.AlertFrequency
+    dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
     conditionType?: StringFieldUpdateOperationsInput | string
     conditionValue?: NullableStringFieldUpdateOperationsInput | string | null
+    cooldownHours?: IntFieldUpdateOperationsInput | number
+    lastSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     userId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24850,10 +32295,16 @@ export namespace Prisma {
     name: string
     moduleType: string
     frequency?: $Enums.AlertFrequency
+    dayOfWeek?: number | null
+    dayOfMonth?: number | null
+    time?: string | null
     conditionType: string
     conditionValue?: string | null
+    cooldownHours?: number
+    lastSentAt?: Date | string | null
     notificationChannel?: $Enums.NotificationChannel
     active?: boolean
+    sortOrder?: number
     userId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24864,10 +32315,16 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     moduleType?: StringFieldUpdateOperationsInput | string
     frequency?: EnumAlertFrequencyFieldUpdateOperationsInput | $Enums.AlertFrequency
+    dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
     conditionType?: StringFieldUpdateOperationsInput | string
     conditionValue?: NullableStringFieldUpdateOperationsInput | string | null
+    cooldownHours?: IntFieldUpdateOperationsInput | number
+    lastSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24877,10 +32334,16 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     moduleType?: StringFieldUpdateOperationsInput | string
     frequency?: EnumAlertFrequencyFieldUpdateOperationsInput | $Enums.AlertFrequency
+    dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
     conditionType?: StringFieldUpdateOperationsInput | string
     conditionValue?: NullableStringFieldUpdateOperationsInput | string | null
+    cooldownHours?: IntFieldUpdateOperationsInput | number
+    lastSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     userId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24888,14 +32351,18 @@ export namespace Prisma {
 
   export type ScheduledReportCreateInput = {
     id?: string
+    name: string
     reportType: string
     dateRangePreset?: string | null
     frequency?: $Enums.ReportFrequency
+    dayOfMonth?: number | null
     dayOfWeek?: number | null
     time?: string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: $Enums.NotificationChannel
-    recipients?: string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutScheduledReportsInput
@@ -24903,14 +32370,18 @@ export namespace Prisma {
 
   export type ScheduledReportUncheckedCreateInput = {
     id?: string
+    name: string
     reportType: string
     dateRangePreset?: string | null
     frequency?: $Enums.ReportFrequency
+    dayOfMonth?: number | null
     dayOfWeek?: number | null
     time?: string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: $Enums.NotificationChannel
-    recipients?: string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: boolean
+    sortOrder?: number
     userId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24918,14 +32389,18 @@ export namespace Prisma {
 
   export type ScheduledReportUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
     reportType?: StringFieldUpdateOperationsInput | string
     dateRangePreset?: NullableStringFieldUpdateOperationsInput | string | null
     frequency?: EnumReportFrequencyFieldUpdateOperationsInput | $Enums.ReportFrequency
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
     dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
-    recipients?: NullableStringFieldUpdateOperationsInput | string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutScheduledReportsNestedInput
@@ -24933,14 +32408,18 @@ export namespace Prisma {
 
   export type ScheduledReportUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
     reportType?: StringFieldUpdateOperationsInput | string
     dateRangePreset?: NullableStringFieldUpdateOperationsInput | string | null
     frequency?: EnumReportFrequencyFieldUpdateOperationsInput | $Enums.ReportFrequency
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
     dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
-    recipients?: NullableStringFieldUpdateOperationsInput | string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     userId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24948,14 +32427,18 @@ export namespace Prisma {
 
   export type ScheduledReportCreateManyInput = {
     id?: string
+    name: string
     reportType: string
     dateRangePreset?: string | null
     frequency?: $Enums.ReportFrequency
+    dayOfMonth?: number | null
     dayOfWeek?: number | null
     time?: string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: $Enums.NotificationChannel
-    recipients?: string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: boolean
+    sortOrder?: number
     userId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24963,28 +32446,36 @@ export namespace Prisma {
 
   export type ScheduledReportUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
     reportType?: StringFieldUpdateOperationsInput | string
     dateRangePreset?: NullableStringFieldUpdateOperationsInput | string | null
     frequency?: EnumReportFrequencyFieldUpdateOperationsInput | $Enums.ReportFrequency
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
     dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
-    recipients?: NullableStringFieldUpdateOperationsInput | string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ScheduledReportUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
     reportType?: StringFieldUpdateOperationsInput | string
     dateRangePreset?: NullableStringFieldUpdateOperationsInput | string | null
     frequency?: EnumReportFrequencyFieldUpdateOperationsInput | $Enums.ReportFrequency
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
     dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
-    recipients?: NullableStringFieldUpdateOperationsInput | string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     userId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25066,6 +32557,352 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type TelegramLinkCreateInput = {
+    id?: string
+    telegramChatId: string
+    telegramUserId: string
+    telegramUsername?: string | null
+    linkCode?: string | null
+    linkCodeExpiresAt?: Date | string | null
+    verifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutTelegramLinkInput
+  }
+
+  export type TelegramLinkUncheckedCreateInput = {
+    id?: string
+    userId: string
+    telegramChatId: string
+    telegramUserId: string
+    telegramUsername?: string | null
+    linkCode?: string | null
+    linkCodeExpiresAt?: Date | string | null
+    verifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TelegramLinkUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    telegramChatId?: StringFieldUpdateOperationsInput | string
+    telegramUserId?: StringFieldUpdateOperationsInput | string
+    telegramUsername?: NullableStringFieldUpdateOperationsInput | string | null
+    linkCode?: NullableStringFieldUpdateOperationsInput | string | null
+    linkCodeExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutTelegramLinkNestedInput
+  }
+
+  export type TelegramLinkUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    telegramChatId?: StringFieldUpdateOperationsInput | string
+    telegramUserId?: StringFieldUpdateOperationsInput | string
+    telegramUsername?: NullableStringFieldUpdateOperationsInput | string | null
+    linkCode?: NullableStringFieldUpdateOperationsInput | string | null
+    linkCodeExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TelegramLinkCreateManyInput = {
+    id?: string
+    userId: string
+    telegramChatId: string
+    telegramUserId: string
+    telegramUsername?: string | null
+    linkCode?: string | null
+    linkCodeExpiresAt?: Date | string | null
+    verifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TelegramLinkUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    telegramChatId?: StringFieldUpdateOperationsInput | string
+    telegramUserId?: StringFieldUpdateOperationsInput | string
+    telegramUsername?: NullableStringFieldUpdateOperationsInput | string | null
+    linkCode?: NullableStringFieldUpdateOperationsInput | string | null
+    linkCodeExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TelegramLinkUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    telegramChatId?: StringFieldUpdateOperationsInput | string
+    telegramUserId?: StringFieldUpdateOperationsInput | string
+    telegramUsername?: NullableStringFieldUpdateOperationsInput | string | null
+    linkCode?: NullableStringFieldUpdateOperationsInput | string | null
+    linkCodeExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantMessageCreateInput = {
+    id?: string
+    channel: $Enums.AssistantChannel
+    externalMessageId?: string | null
+    direction: $Enums.MessageDirection
+    rawText: string
+    normalizedText?: string | null
+    intent?: string | null
+    confidence?: number | null
+    createdAt?: Date | string
+    user: UserCreateNestedOneWithoutAssistantMessagesInput
+  }
+
+  export type AssistantMessageUncheckedCreateInput = {
+    id?: string
+    userId: string
+    channel: $Enums.AssistantChannel
+    externalMessageId?: string | null
+    direction: $Enums.MessageDirection
+    rawText: string
+    normalizedText?: string | null
+    intent?: string | null
+    confidence?: number | null
+    createdAt?: Date | string
+  }
+
+  export type AssistantMessageUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    externalMessageId?: NullableStringFieldUpdateOperationsInput | string | null
+    direction?: EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
+    rawText?: StringFieldUpdateOperationsInput | string
+    normalizedText?: NullableStringFieldUpdateOperationsInput | string | null
+    intent?: NullableStringFieldUpdateOperationsInput | string | null
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutAssistantMessagesNestedInput
+  }
+
+  export type AssistantMessageUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    externalMessageId?: NullableStringFieldUpdateOperationsInput | string | null
+    direction?: EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
+    rawText?: StringFieldUpdateOperationsInput | string
+    normalizedText?: NullableStringFieldUpdateOperationsInput | string | null
+    intent?: NullableStringFieldUpdateOperationsInput | string | null
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantMessageCreateManyInput = {
+    id?: string
+    userId: string
+    channel: $Enums.AssistantChannel
+    externalMessageId?: string | null
+    direction: $Enums.MessageDirection
+    rawText: string
+    normalizedText?: string | null
+    intent?: string | null
+    confidence?: number | null
+    createdAt?: Date | string
+  }
+
+  export type AssistantMessageUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    externalMessageId?: NullableStringFieldUpdateOperationsInput | string | null
+    direction?: EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
+    rawText?: StringFieldUpdateOperationsInput | string
+    normalizedText?: NullableStringFieldUpdateOperationsInput | string | null
+    intent?: NullableStringFieldUpdateOperationsInput | string | null
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantMessageUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    externalMessageId?: NullableStringFieldUpdateOperationsInput | string | null
+    direction?: EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
+    rawText?: StringFieldUpdateOperationsInput | string
+    normalizedText?: NullableStringFieldUpdateOperationsInput | string | null
+    intent?: NullableStringFieldUpdateOperationsInput | string | null
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantActionLogCreateInput = {
+    id?: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    confidence?: number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus: $Enums.ExecutionStatus
+    resultSummary?: string | null
+    errorMessage?: string | null
+    createdAt?: Date | string
+    user: UserCreateNestedOneWithoutAssistantActionLogsInput
+  }
+
+  export type AssistantActionLogUncheckedCreateInput = {
+    id?: string
+    userId: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    confidence?: number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus: $Enums.ExecutionStatus
+    resultSummary?: string | null
+    errorMessage?: string | null
+    createdAt?: Date | string
+  }
+
+  export type AssistantActionLogUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus?: EnumExecutionStatusFieldUpdateOperationsInput | $Enums.ExecutionStatus
+    resultSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutAssistantActionLogsNestedInput
+  }
+
+  export type AssistantActionLogUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus?: EnumExecutionStatusFieldUpdateOperationsInput | $Enums.ExecutionStatus
+    resultSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantActionLogCreateManyInput = {
+    id?: string
+    userId: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    confidence?: number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus: $Enums.ExecutionStatus
+    resultSummary?: string | null
+    errorMessage?: string | null
+    createdAt?: Date | string
+  }
+
+  export type AssistantActionLogUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus?: EnumExecutionStatusFieldUpdateOperationsInput | $Enums.ExecutionStatus
+    resultSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantActionLogUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus?: EnumExecutionStatusFieldUpdateOperationsInput | $Enums.ExecutionStatus
+    resultSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantPendingActionCreateInput = {
+    id?: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    payload: JsonNullValueInput | InputJsonValue
+    expiresAt: Date | string
+    createdAt?: Date | string
+    user: UserCreateNestedOneWithoutAssistantPendingActionsInput
+  }
+
+  export type AssistantPendingActionUncheckedCreateInput = {
+    id?: string
+    userId: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    payload: JsonNullValueInput | InputJsonValue
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type AssistantPendingActionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutAssistantPendingActionsNestedInput
+  }
+
+  export type AssistantPendingActionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantPendingActionCreateManyInput = {
+    id?: string
+    userId: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    payload: JsonNullValueInput | InputJsonValue
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type AssistantPendingActionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantPendingActionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -25141,6 +32978,12 @@ export namespace Prisma {
     every?: GoalCheckInWhereInput
     some?: GoalCheckInWhereInput
     none?: GoalCheckInWhereInput
+  }
+
+  export type TaskListRelationFilter = {
+    every?: TaskWhereInput
+    some?: TaskWhereInput
+    none?: TaskWhereInput
   }
 
   export type ProjectListRelationFilter = {
@@ -25221,6 +33064,29 @@ export namespace Prisma {
     none?: RefreshTokenWhereInput
   }
 
+  export type TelegramLinkNullableScalarRelationFilter = {
+    is?: TelegramLinkWhereInput | null
+    isNot?: TelegramLinkWhereInput | null
+  }
+
+  export type AssistantMessageListRelationFilter = {
+    every?: AssistantMessageWhereInput
+    some?: AssistantMessageWhereInput
+    none?: AssistantMessageWhereInput
+  }
+
+  export type AssistantActionLogListRelationFilter = {
+    every?: AssistantActionLogWhereInput
+    some?: AssistantActionLogWhereInput
+    none?: AssistantActionLogWhereInput
+  }
+
+  export type AssistantPendingActionListRelationFilter = {
+    every?: AssistantPendingActionWhereInput
+    some?: AssistantPendingActionWhereInput
+    none?: AssistantPendingActionWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -25231,6 +33097,10 @@ export namespace Prisma {
   }
 
   export type GoalCheckInOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TaskOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -25286,6 +33156,18 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type AssistantMessageOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AssistantActionLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AssistantPendingActionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type UserCountOrderByAggregateInput = {
     id?: SortOrder
     email?: SortOrder
@@ -25297,6 +33179,7 @@ export namespace Prisma {
     notificationEnabled?: SortOrder
     notificationChannel?: SortOrder
     notificationEmail?: SortOrder
+    timezone?: SortOrder
     telegramChatId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -25313,6 +33196,7 @@ export namespace Prisma {
     notificationEnabled?: SortOrder
     notificationChannel?: SortOrder
     notificationEmail?: SortOrder
+    timezone?: SortOrder
     telegramChatId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -25329,6 +33213,7 @@ export namespace Prisma {
     notificationEnabled?: SortOrder
     notificationChannel?: SortOrder
     notificationEmail?: SortOrder
+    timezone?: SortOrder
     telegramChatId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -25622,6 +33507,99 @@ export namespace Prisma {
     not?: NestedEnumProjectStatusFilter<$PrismaModel> | $Enums.ProjectStatus
   }
 
+  export type TaskCountOrderByAggregateInput = {
+    id?: SortOrder
+    title?: SortOrder
+    description?: SortOrder
+    userId?: SortOrder
+    isShared?: SortOrder
+    dueDate?: SortOrder
+    priority?: SortOrder
+    status?: SortOrder
+    notificationEnabled?: SortOrder
+    pinToDashboard?: SortOrder
+    sortOrder?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TaskAvgOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type TaskMaxOrderByAggregateInput = {
+    id?: SortOrder
+    title?: SortOrder
+    description?: SortOrder
+    userId?: SortOrder
+    isShared?: SortOrder
+    dueDate?: SortOrder
+    priority?: SortOrder
+    status?: SortOrder
+    notificationEnabled?: SortOrder
+    pinToDashboard?: SortOrder
+    sortOrder?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TaskMinOrderByAggregateInput = {
+    id?: SortOrder
+    title?: SortOrder
+    description?: SortOrder
+    userId?: SortOrder
+    isShared?: SortOrder
+    dueDate?: SortOrder
+    priority?: SortOrder
+    status?: SortOrder
+    notificationEnabled?: SortOrder
+    pinToDashboard?: SortOrder
+    sortOrder?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TaskSumOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type EnumPriorityWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.Priority | EnumPriorityFieldRefInput<$PrismaModel>
+    in?: $Enums.Priority[]
+    notIn?: $Enums.Priority[]
+    not?: NestedEnumPriorityWithAggregatesFilter<$PrismaModel> | $Enums.Priority
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPriorityFilter<$PrismaModel>
+    _max?: NestedEnumPriorityFilter<$PrismaModel>
+  }
+
+  export type EnumProjectStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ProjectStatus | EnumProjectStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ProjectStatus[]
+    notIn?: $Enums.ProjectStatus[]
+    not?: NestedEnumProjectStatusWithAggregatesFilter<$PrismaModel> | $Enums.ProjectStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumProjectStatusFilter<$PrismaModel>
+    _max?: NestedEnumProjectStatusFilter<$PrismaModel>
+  }
+
   export type UserNullableScalarRelationFilter = {
     is?: UserWhereInput | null
     isNot?: UserWhereInput | null
@@ -25686,40 +33664,6 @@ export namespace Prisma {
     kanbanOrder?: SortOrder
   }
 
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | null
-    notIn?: Date[] | string[] | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
-
-  export type EnumPriorityWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.Priority | EnumPriorityFieldRefInput<$PrismaModel>
-    in?: $Enums.Priority[]
-    notIn?: $Enums.Priority[]
-    not?: NestedEnumPriorityWithAggregatesFilter<$PrismaModel> | $Enums.Priority
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumPriorityFilter<$PrismaModel>
-    _max?: NestedEnumPriorityFilter<$PrismaModel>
-  }
-
-  export type EnumProjectStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.ProjectStatus | EnumProjectStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.ProjectStatus[]
-    notIn?: $Enums.ProjectStatus[]
-    not?: NestedEnumProjectStatusWithAggregatesFilter<$PrismaModel> | $Enums.ProjectStatus
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumProjectStatusFilter<$PrismaModel>
-    _max?: NestedEnumProjectStatusFilter<$PrismaModel>
-  }
-
   export type LearningItemCountOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
@@ -25731,6 +33675,7 @@ export namespace Prisma {
     status?: SortOrder
     userId?: SortOrder
     notificationEnabled?: SortOrder
+    pinToDashboard?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -25750,6 +33695,7 @@ export namespace Prisma {
     status?: SortOrder
     userId?: SortOrder
     notificationEnabled?: SortOrder
+    pinToDashboard?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -25765,6 +33711,7 @@ export namespace Prisma {
     status?: SortOrder
     userId?: SortOrder
     notificationEnabled?: SortOrder
+    pinToDashboard?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -25788,6 +33735,7 @@ export namespace Prisma {
     tags?: SortOrder
     status?: SortOrder
     userId?: SortOrder
+    pinToDashboard?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -25800,6 +33748,7 @@ export namespace Prisma {
     tags?: SortOrder
     status?: SortOrder
     userId?: SortOrder
+    pinToDashboard?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -25812,6 +33761,7 @@ export namespace Prisma {
     tags?: SortOrder
     status?: SortOrder
     userId?: SortOrder
+    pinToDashboard?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -26240,13 +34190,26 @@ export namespace Prisma {
     name?: SortOrder
     moduleType?: SortOrder
     frequency?: SortOrder
+    dayOfWeek?: SortOrder
+    dayOfMonth?: SortOrder
+    time?: SortOrder
     conditionType?: SortOrder
     conditionValue?: SortOrder
+    cooldownHours?: SortOrder
+    lastSentAt?: SortOrder
     notificationChannel?: SortOrder
     active?: SortOrder
+    sortOrder?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type AlertRuleAvgOrderByAggregateInput = {
+    dayOfWeek?: SortOrder
+    dayOfMonth?: SortOrder
+    cooldownHours?: SortOrder
+    sortOrder?: SortOrder
   }
 
   export type AlertRuleMaxOrderByAggregateInput = {
@@ -26254,10 +34217,16 @@ export namespace Prisma {
     name?: SortOrder
     moduleType?: SortOrder
     frequency?: SortOrder
+    dayOfWeek?: SortOrder
+    dayOfMonth?: SortOrder
+    time?: SortOrder
     conditionType?: SortOrder
     conditionValue?: SortOrder
+    cooldownHours?: SortOrder
+    lastSentAt?: SortOrder
     notificationChannel?: SortOrder
     active?: SortOrder
+    sortOrder?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -26268,13 +34237,26 @@ export namespace Prisma {
     name?: SortOrder
     moduleType?: SortOrder
     frequency?: SortOrder
+    dayOfWeek?: SortOrder
+    dayOfMonth?: SortOrder
+    time?: SortOrder
     conditionType?: SortOrder
     conditionValue?: SortOrder
+    cooldownHours?: SortOrder
+    lastSentAt?: SortOrder
     notificationChannel?: SortOrder
     active?: SortOrder
+    sortOrder?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type AlertRuleSumOrderByAggregateInput = {
+    dayOfWeek?: SortOrder
+    dayOfMonth?: SortOrder
+    cooldownHours?: SortOrder
+    sortOrder?: SortOrder
   }
 
   export type EnumAlertFrequencyWithAggregatesFilter<$PrismaModel = never> = {
@@ -26293,36 +34275,62 @@ export namespace Prisma {
     notIn?: $Enums.ReportFrequency[]
     not?: NestedEnumReportFrequencyFilter<$PrismaModel> | $Enums.ReportFrequency
   }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type ScheduledReportCountOrderByAggregateInput = {
     id?: SortOrder
+    name?: SortOrder
     reportType?: SortOrder
     dateRangePreset?: SortOrder
     frequency?: SortOrder
+    dayOfMonth?: SortOrder
     dayOfWeek?: SortOrder
     time?: SortOrder
+    sections?: SortOrder
     notificationChannel?: SortOrder
     recipients?: SortOrder
     active?: SortOrder
+    sortOrder?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type ScheduledReportAvgOrderByAggregateInput = {
+    dayOfMonth?: SortOrder
     dayOfWeek?: SortOrder
+    sortOrder?: SortOrder
   }
 
   export type ScheduledReportMaxOrderByAggregateInput = {
     id?: SortOrder
+    name?: SortOrder
     reportType?: SortOrder
     dateRangePreset?: SortOrder
     frequency?: SortOrder
+    dayOfMonth?: SortOrder
     dayOfWeek?: SortOrder
     time?: SortOrder
     notificationChannel?: SortOrder
-    recipients?: SortOrder
     active?: SortOrder
+    sortOrder?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -26330,21 +34338,25 @@ export namespace Prisma {
 
   export type ScheduledReportMinOrderByAggregateInput = {
     id?: SortOrder
+    name?: SortOrder
     reportType?: SortOrder
     dateRangePreset?: SortOrder
     frequency?: SortOrder
+    dayOfMonth?: SortOrder
     dayOfWeek?: SortOrder
     time?: SortOrder
     notificationChannel?: SortOrder
-    recipients?: SortOrder
     active?: SortOrder
+    sortOrder?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type ScheduledReportSumOrderByAggregateInput = {
+    dayOfMonth?: SortOrder
     dayOfWeek?: SortOrder
+    sortOrder?: SortOrder
   }
 
   export type EnumReportFrequencyWithAggregatesFilter<$PrismaModel = never> = {
@@ -26355,6 +34367,27 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumReportFrequencyFilter<$PrismaModel>
     _max?: NestedEnumReportFrequencyFilter<$PrismaModel>
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type EnumBudgetPeriodFilter<$PrismaModel = never> = {
@@ -26415,6 +34448,256 @@ export namespace Prisma {
     _max?: NestedEnumBudgetPeriodFilter<$PrismaModel>
   }
 
+  export type TelegramLinkCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    telegramChatId?: SortOrder
+    telegramUserId?: SortOrder
+    telegramUsername?: SortOrder
+    linkCode?: SortOrder
+    linkCodeExpiresAt?: SortOrder
+    verifiedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TelegramLinkMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    telegramChatId?: SortOrder
+    telegramUserId?: SortOrder
+    telegramUsername?: SortOrder
+    linkCode?: SortOrder
+    linkCodeExpiresAt?: SortOrder
+    verifiedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TelegramLinkMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    telegramChatId?: SortOrder
+    telegramUserId?: SortOrder
+    telegramUsername?: SortOrder
+    linkCode?: SortOrder
+    linkCodeExpiresAt?: SortOrder
+    verifiedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumAssistantChannelFilter<$PrismaModel = never> = {
+    equals?: $Enums.AssistantChannel | EnumAssistantChannelFieldRefInput<$PrismaModel>
+    in?: $Enums.AssistantChannel[]
+    notIn?: $Enums.AssistantChannel[]
+    not?: NestedEnumAssistantChannelFilter<$PrismaModel> | $Enums.AssistantChannel
+  }
+
+  export type EnumMessageDirectionFilter<$PrismaModel = never> = {
+    equals?: $Enums.MessageDirection | EnumMessageDirectionFieldRefInput<$PrismaModel>
+    in?: $Enums.MessageDirection[]
+    notIn?: $Enums.MessageDirection[]
+    not?: NestedEnumMessageDirectionFilter<$PrismaModel> | $Enums.MessageDirection
+  }
+
+  export type AssistantMessageCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    externalMessageId?: SortOrder
+    direction?: SortOrder
+    rawText?: SortOrder
+    normalizedText?: SortOrder
+    intent?: SortOrder
+    confidence?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AssistantMessageAvgOrderByAggregateInput = {
+    confidence?: SortOrder
+  }
+
+  export type AssistantMessageMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    externalMessageId?: SortOrder
+    direction?: SortOrder
+    rawText?: SortOrder
+    normalizedText?: SortOrder
+    intent?: SortOrder
+    confidence?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AssistantMessageMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    externalMessageId?: SortOrder
+    direction?: SortOrder
+    rawText?: SortOrder
+    normalizedText?: SortOrder
+    intent?: SortOrder
+    confidence?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AssistantMessageSumOrderByAggregateInput = {
+    confidence?: SortOrder
+  }
+
+  export type EnumAssistantChannelWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AssistantChannel | EnumAssistantChannelFieldRefInput<$PrismaModel>
+    in?: $Enums.AssistantChannel[]
+    notIn?: $Enums.AssistantChannel[]
+    not?: NestedEnumAssistantChannelWithAggregatesFilter<$PrismaModel> | $Enums.AssistantChannel
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAssistantChannelFilter<$PrismaModel>
+    _max?: NestedEnumAssistantChannelFilter<$PrismaModel>
+  }
+
+  export type EnumMessageDirectionWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.MessageDirection | EnumMessageDirectionFieldRefInput<$PrismaModel>
+    in?: $Enums.MessageDirection[]
+    notIn?: $Enums.MessageDirection[]
+    not?: NestedEnumMessageDirectionWithAggregatesFilter<$PrismaModel> | $Enums.MessageDirection
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumMessageDirectionFilter<$PrismaModel>
+    _max?: NestedEnumMessageDirectionFilter<$PrismaModel>
+  }
+
+  export type EnumExecutionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExecutionStatus | EnumExecutionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ExecutionStatus[]
+    notIn?: $Enums.ExecutionStatus[]
+    not?: NestedEnumExecutionStatusFilter<$PrismaModel> | $Enums.ExecutionStatus
+  }
+
+  export type AssistantActionLogCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    intent?: SortOrder
+    confidence?: SortOrder
+    requestPayload?: SortOrder
+    resolvedEntities?: SortOrder
+    executionStatus?: SortOrder
+    resultSummary?: SortOrder
+    errorMessage?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AssistantActionLogAvgOrderByAggregateInput = {
+    confidence?: SortOrder
+  }
+
+  export type AssistantActionLogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    intent?: SortOrder
+    confidence?: SortOrder
+    executionStatus?: SortOrder
+    resultSummary?: SortOrder
+    errorMessage?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AssistantActionLogMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    intent?: SortOrder
+    confidence?: SortOrder
+    executionStatus?: SortOrder
+    resultSummary?: SortOrder
+    errorMessage?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AssistantActionLogSumOrderByAggregateInput = {
+    confidence?: SortOrder
+  }
+
+  export type EnumExecutionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExecutionStatus | EnumExecutionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ExecutionStatus[]
+    notIn?: $Enums.ExecutionStatus[]
+    not?: NestedEnumExecutionStatusWithAggregatesFilter<$PrismaModel> | $Enums.ExecutionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumExecutionStatusFilter<$PrismaModel>
+    _max?: NestedEnumExecutionStatusFilter<$PrismaModel>
+  }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type AssistantPendingActionCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    intent?: SortOrder
+    payload?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AssistantPendingActionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    intent?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AssistantPendingActionMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    channel?: SortOrder
+    intent?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
+  }
+
   export type GoalCreateNestedManyWithoutUserInput = {
     create?: XOR<GoalCreateWithoutUserInput, GoalUncheckedCreateWithoutUserInput> | GoalCreateWithoutUserInput[] | GoalUncheckedCreateWithoutUserInput[]
     connectOrCreate?: GoalCreateOrConnectWithoutUserInput | GoalCreateOrConnectWithoutUserInput[]
@@ -26427,6 +34710,13 @@ export namespace Prisma {
     connectOrCreate?: GoalCheckInCreateOrConnectWithoutUserInput | GoalCheckInCreateOrConnectWithoutUserInput[]
     createMany?: GoalCheckInCreateManyUserInputEnvelope
     connect?: GoalCheckInWhereUniqueInput | GoalCheckInWhereUniqueInput[]
+  }
+
+  export type TaskCreateNestedManyWithoutUserInput = {
+    create?: XOR<TaskCreateWithoutUserInput, TaskUncheckedCreateWithoutUserInput> | TaskCreateWithoutUserInput[] | TaskUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TaskCreateOrConnectWithoutUserInput | TaskCreateOrConnectWithoutUserInput[]
+    createMany?: TaskCreateManyUserInputEnvelope
+    connect?: TaskWhereUniqueInput | TaskWhereUniqueInput[]
   }
 
   export type ProjectCreateNestedManyWithoutAssigneeInput = {
@@ -26534,6 +34824,33 @@ export namespace Prisma {
     connect?: RefreshTokenWhereUniqueInput | RefreshTokenWhereUniqueInput[]
   }
 
+  export type TelegramLinkCreateNestedOneWithoutUserInput = {
+    create?: XOR<TelegramLinkCreateWithoutUserInput, TelegramLinkUncheckedCreateWithoutUserInput>
+    connectOrCreate?: TelegramLinkCreateOrConnectWithoutUserInput
+    connect?: TelegramLinkWhereUniqueInput
+  }
+
+  export type AssistantMessageCreateNestedManyWithoutUserInput = {
+    create?: XOR<AssistantMessageCreateWithoutUserInput, AssistantMessageUncheckedCreateWithoutUserInput> | AssistantMessageCreateWithoutUserInput[] | AssistantMessageUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AssistantMessageCreateOrConnectWithoutUserInput | AssistantMessageCreateOrConnectWithoutUserInput[]
+    createMany?: AssistantMessageCreateManyUserInputEnvelope
+    connect?: AssistantMessageWhereUniqueInput | AssistantMessageWhereUniqueInput[]
+  }
+
+  export type AssistantActionLogCreateNestedManyWithoutUserInput = {
+    create?: XOR<AssistantActionLogCreateWithoutUserInput, AssistantActionLogUncheckedCreateWithoutUserInput> | AssistantActionLogCreateWithoutUserInput[] | AssistantActionLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AssistantActionLogCreateOrConnectWithoutUserInput | AssistantActionLogCreateOrConnectWithoutUserInput[]
+    createMany?: AssistantActionLogCreateManyUserInputEnvelope
+    connect?: AssistantActionLogWhereUniqueInput | AssistantActionLogWhereUniqueInput[]
+  }
+
+  export type AssistantPendingActionCreateNestedManyWithoutUserInput = {
+    create?: XOR<AssistantPendingActionCreateWithoutUserInput, AssistantPendingActionUncheckedCreateWithoutUserInput> | AssistantPendingActionCreateWithoutUserInput[] | AssistantPendingActionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AssistantPendingActionCreateOrConnectWithoutUserInput | AssistantPendingActionCreateOrConnectWithoutUserInput[]
+    createMany?: AssistantPendingActionCreateManyUserInputEnvelope
+    connect?: AssistantPendingActionWhereUniqueInput | AssistantPendingActionWhereUniqueInput[]
+  }
+
   export type GoalUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<GoalCreateWithoutUserInput, GoalUncheckedCreateWithoutUserInput> | GoalCreateWithoutUserInput[] | GoalUncheckedCreateWithoutUserInput[]
     connectOrCreate?: GoalCreateOrConnectWithoutUserInput | GoalCreateOrConnectWithoutUserInput[]
@@ -26546,6 +34863,13 @@ export namespace Prisma {
     connectOrCreate?: GoalCheckInCreateOrConnectWithoutUserInput | GoalCheckInCreateOrConnectWithoutUserInput[]
     createMany?: GoalCheckInCreateManyUserInputEnvelope
     connect?: GoalCheckInWhereUniqueInput | GoalCheckInWhereUniqueInput[]
+  }
+
+  export type TaskUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<TaskCreateWithoutUserInput, TaskUncheckedCreateWithoutUserInput> | TaskCreateWithoutUserInput[] | TaskUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TaskCreateOrConnectWithoutUserInput | TaskCreateOrConnectWithoutUserInput[]
+    createMany?: TaskCreateManyUserInputEnvelope
+    connect?: TaskWhereUniqueInput | TaskWhereUniqueInput[]
   }
 
   export type ProjectUncheckedCreateNestedManyWithoutAssigneeInput = {
@@ -26653,6 +34977,33 @@ export namespace Prisma {
     connect?: RefreshTokenWhereUniqueInput | RefreshTokenWhereUniqueInput[]
   }
 
+  export type TelegramLinkUncheckedCreateNestedOneWithoutUserInput = {
+    create?: XOR<TelegramLinkCreateWithoutUserInput, TelegramLinkUncheckedCreateWithoutUserInput>
+    connectOrCreate?: TelegramLinkCreateOrConnectWithoutUserInput
+    connect?: TelegramLinkWhereUniqueInput
+  }
+
+  export type AssistantMessageUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<AssistantMessageCreateWithoutUserInput, AssistantMessageUncheckedCreateWithoutUserInput> | AssistantMessageCreateWithoutUserInput[] | AssistantMessageUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AssistantMessageCreateOrConnectWithoutUserInput | AssistantMessageCreateOrConnectWithoutUserInput[]
+    createMany?: AssistantMessageCreateManyUserInputEnvelope
+    connect?: AssistantMessageWhereUniqueInput | AssistantMessageWhereUniqueInput[]
+  }
+
+  export type AssistantActionLogUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<AssistantActionLogCreateWithoutUserInput, AssistantActionLogUncheckedCreateWithoutUserInput> | AssistantActionLogCreateWithoutUserInput[] | AssistantActionLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AssistantActionLogCreateOrConnectWithoutUserInput | AssistantActionLogCreateOrConnectWithoutUserInput[]
+    createMany?: AssistantActionLogCreateManyUserInputEnvelope
+    connect?: AssistantActionLogWhereUniqueInput | AssistantActionLogWhereUniqueInput[]
+  }
+
+  export type AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<AssistantPendingActionCreateWithoutUserInput, AssistantPendingActionUncheckedCreateWithoutUserInput> | AssistantPendingActionCreateWithoutUserInput[] | AssistantPendingActionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AssistantPendingActionCreateOrConnectWithoutUserInput | AssistantPendingActionCreateOrConnectWithoutUserInput[]
+    createMany?: AssistantPendingActionCreateManyUserInputEnvelope
+    connect?: AssistantPendingActionWhereUniqueInput | AssistantPendingActionWhereUniqueInput[]
+  }
+
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
@@ -26707,6 +35058,20 @@ export namespace Prisma {
     update?: GoalCheckInUpdateWithWhereUniqueWithoutUserInput | GoalCheckInUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: GoalCheckInUpdateManyWithWhereWithoutUserInput | GoalCheckInUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: GoalCheckInScalarWhereInput | GoalCheckInScalarWhereInput[]
+  }
+
+  export type TaskUpdateManyWithoutUserNestedInput = {
+    create?: XOR<TaskCreateWithoutUserInput, TaskUncheckedCreateWithoutUserInput> | TaskCreateWithoutUserInput[] | TaskUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TaskCreateOrConnectWithoutUserInput | TaskCreateOrConnectWithoutUserInput[]
+    upsert?: TaskUpsertWithWhereUniqueWithoutUserInput | TaskUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: TaskCreateManyUserInputEnvelope
+    set?: TaskWhereUniqueInput | TaskWhereUniqueInput[]
+    disconnect?: TaskWhereUniqueInput | TaskWhereUniqueInput[]
+    delete?: TaskWhereUniqueInput | TaskWhereUniqueInput[]
+    connect?: TaskWhereUniqueInput | TaskWhereUniqueInput[]
+    update?: TaskUpdateWithWhereUniqueWithoutUserInput | TaskUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: TaskUpdateManyWithWhereWithoutUserInput | TaskUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: TaskScalarWhereInput | TaskScalarWhereInput[]
   }
 
   export type ProjectUpdateManyWithoutAssigneeNestedInput = {
@@ -26919,6 +35284,58 @@ export namespace Prisma {
     deleteMany?: RefreshTokenScalarWhereInput | RefreshTokenScalarWhereInput[]
   }
 
+  export type TelegramLinkUpdateOneWithoutUserNestedInput = {
+    create?: XOR<TelegramLinkCreateWithoutUserInput, TelegramLinkUncheckedCreateWithoutUserInput>
+    connectOrCreate?: TelegramLinkCreateOrConnectWithoutUserInput
+    upsert?: TelegramLinkUpsertWithoutUserInput
+    disconnect?: TelegramLinkWhereInput | boolean
+    delete?: TelegramLinkWhereInput | boolean
+    connect?: TelegramLinkWhereUniqueInput
+    update?: XOR<XOR<TelegramLinkUpdateToOneWithWhereWithoutUserInput, TelegramLinkUpdateWithoutUserInput>, TelegramLinkUncheckedUpdateWithoutUserInput>
+  }
+
+  export type AssistantMessageUpdateManyWithoutUserNestedInput = {
+    create?: XOR<AssistantMessageCreateWithoutUserInput, AssistantMessageUncheckedCreateWithoutUserInput> | AssistantMessageCreateWithoutUserInput[] | AssistantMessageUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AssistantMessageCreateOrConnectWithoutUserInput | AssistantMessageCreateOrConnectWithoutUserInput[]
+    upsert?: AssistantMessageUpsertWithWhereUniqueWithoutUserInput | AssistantMessageUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: AssistantMessageCreateManyUserInputEnvelope
+    set?: AssistantMessageWhereUniqueInput | AssistantMessageWhereUniqueInput[]
+    disconnect?: AssistantMessageWhereUniqueInput | AssistantMessageWhereUniqueInput[]
+    delete?: AssistantMessageWhereUniqueInput | AssistantMessageWhereUniqueInput[]
+    connect?: AssistantMessageWhereUniqueInput | AssistantMessageWhereUniqueInput[]
+    update?: AssistantMessageUpdateWithWhereUniqueWithoutUserInput | AssistantMessageUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AssistantMessageUpdateManyWithWhereWithoutUserInput | AssistantMessageUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AssistantMessageScalarWhereInput | AssistantMessageScalarWhereInput[]
+  }
+
+  export type AssistantActionLogUpdateManyWithoutUserNestedInput = {
+    create?: XOR<AssistantActionLogCreateWithoutUserInput, AssistantActionLogUncheckedCreateWithoutUserInput> | AssistantActionLogCreateWithoutUserInput[] | AssistantActionLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AssistantActionLogCreateOrConnectWithoutUserInput | AssistantActionLogCreateOrConnectWithoutUserInput[]
+    upsert?: AssistantActionLogUpsertWithWhereUniqueWithoutUserInput | AssistantActionLogUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: AssistantActionLogCreateManyUserInputEnvelope
+    set?: AssistantActionLogWhereUniqueInput | AssistantActionLogWhereUniqueInput[]
+    disconnect?: AssistantActionLogWhereUniqueInput | AssistantActionLogWhereUniqueInput[]
+    delete?: AssistantActionLogWhereUniqueInput | AssistantActionLogWhereUniqueInput[]
+    connect?: AssistantActionLogWhereUniqueInput | AssistantActionLogWhereUniqueInput[]
+    update?: AssistantActionLogUpdateWithWhereUniqueWithoutUserInput | AssistantActionLogUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AssistantActionLogUpdateManyWithWhereWithoutUserInput | AssistantActionLogUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AssistantActionLogScalarWhereInput | AssistantActionLogScalarWhereInput[]
+  }
+
+  export type AssistantPendingActionUpdateManyWithoutUserNestedInput = {
+    create?: XOR<AssistantPendingActionCreateWithoutUserInput, AssistantPendingActionUncheckedCreateWithoutUserInput> | AssistantPendingActionCreateWithoutUserInput[] | AssistantPendingActionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AssistantPendingActionCreateOrConnectWithoutUserInput | AssistantPendingActionCreateOrConnectWithoutUserInput[]
+    upsert?: AssistantPendingActionUpsertWithWhereUniqueWithoutUserInput | AssistantPendingActionUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: AssistantPendingActionCreateManyUserInputEnvelope
+    set?: AssistantPendingActionWhereUniqueInput | AssistantPendingActionWhereUniqueInput[]
+    disconnect?: AssistantPendingActionWhereUniqueInput | AssistantPendingActionWhereUniqueInput[]
+    delete?: AssistantPendingActionWhereUniqueInput | AssistantPendingActionWhereUniqueInput[]
+    connect?: AssistantPendingActionWhereUniqueInput | AssistantPendingActionWhereUniqueInput[]
+    update?: AssistantPendingActionUpdateWithWhereUniqueWithoutUserInput | AssistantPendingActionUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AssistantPendingActionUpdateManyWithWhereWithoutUserInput | AssistantPendingActionUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AssistantPendingActionScalarWhereInput | AssistantPendingActionScalarWhereInput[]
+  }
+
   export type GoalUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<GoalCreateWithoutUserInput, GoalUncheckedCreateWithoutUserInput> | GoalCreateWithoutUserInput[] | GoalUncheckedCreateWithoutUserInput[]
     connectOrCreate?: GoalCreateOrConnectWithoutUserInput | GoalCreateOrConnectWithoutUserInput[]
@@ -26945,6 +35362,20 @@ export namespace Prisma {
     update?: GoalCheckInUpdateWithWhereUniqueWithoutUserInput | GoalCheckInUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: GoalCheckInUpdateManyWithWhereWithoutUserInput | GoalCheckInUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: GoalCheckInScalarWhereInput | GoalCheckInScalarWhereInput[]
+  }
+
+  export type TaskUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<TaskCreateWithoutUserInput, TaskUncheckedCreateWithoutUserInput> | TaskCreateWithoutUserInput[] | TaskUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TaskCreateOrConnectWithoutUserInput | TaskCreateOrConnectWithoutUserInput[]
+    upsert?: TaskUpsertWithWhereUniqueWithoutUserInput | TaskUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: TaskCreateManyUserInputEnvelope
+    set?: TaskWhereUniqueInput | TaskWhereUniqueInput[]
+    disconnect?: TaskWhereUniqueInput | TaskWhereUniqueInput[]
+    delete?: TaskWhereUniqueInput | TaskWhereUniqueInput[]
+    connect?: TaskWhereUniqueInput | TaskWhereUniqueInput[]
+    update?: TaskUpdateWithWhereUniqueWithoutUserInput | TaskUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: TaskUpdateManyWithWhereWithoutUserInput | TaskUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: TaskScalarWhereInput | TaskScalarWhereInput[]
   }
 
   export type ProjectUncheckedUpdateManyWithoutAssigneeNestedInput = {
@@ -27157,6 +35588,58 @@ export namespace Prisma {
     deleteMany?: RefreshTokenScalarWhereInput | RefreshTokenScalarWhereInput[]
   }
 
+  export type TelegramLinkUncheckedUpdateOneWithoutUserNestedInput = {
+    create?: XOR<TelegramLinkCreateWithoutUserInput, TelegramLinkUncheckedCreateWithoutUserInput>
+    connectOrCreate?: TelegramLinkCreateOrConnectWithoutUserInput
+    upsert?: TelegramLinkUpsertWithoutUserInput
+    disconnect?: TelegramLinkWhereInput | boolean
+    delete?: TelegramLinkWhereInput | boolean
+    connect?: TelegramLinkWhereUniqueInput
+    update?: XOR<XOR<TelegramLinkUpdateToOneWithWhereWithoutUserInput, TelegramLinkUpdateWithoutUserInput>, TelegramLinkUncheckedUpdateWithoutUserInput>
+  }
+
+  export type AssistantMessageUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<AssistantMessageCreateWithoutUserInput, AssistantMessageUncheckedCreateWithoutUserInput> | AssistantMessageCreateWithoutUserInput[] | AssistantMessageUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AssistantMessageCreateOrConnectWithoutUserInput | AssistantMessageCreateOrConnectWithoutUserInput[]
+    upsert?: AssistantMessageUpsertWithWhereUniqueWithoutUserInput | AssistantMessageUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: AssistantMessageCreateManyUserInputEnvelope
+    set?: AssistantMessageWhereUniqueInput | AssistantMessageWhereUniqueInput[]
+    disconnect?: AssistantMessageWhereUniqueInput | AssistantMessageWhereUniqueInput[]
+    delete?: AssistantMessageWhereUniqueInput | AssistantMessageWhereUniqueInput[]
+    connect?: AssistantMessageWhereUniqueInput | AssistantMessageWhereUniqueInput[]
+    update?: AssistantMessageUpdateWithWhereUniqueWithoutUserInput | AssistantMessageUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AssistantMessageUpdateManyWithWhereWithoutUserInput | AssistantMessageUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AssistantMessageScalarWhereInput | AssistantMessageScalarWhereInput[]
+  }
+
+  export type AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<AssistantActionLogCreateWithoutUserInput, AssistantActionLogUncheckedCreateWithoutUserInput> | AssistantActionLogCreateWithoutUserInput[] | AssistantActionLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AssistantActionLogCreateOrConnectWithoutUserInput | AssistantActionLogCreateOrConnectWithoutUserInput[]
+    upsert?: AssistantActionLogUpsertWithWhereUniqueWithoutUserInput | AssistantActionLogUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: AssistantActionLogCreateManyUserInputEnvelope
+    set?: AssistantActionLogWhereUniqueInput | AssistantActionLogWhereUniqueInput[]
+    disconnect?: AssistantActionLogWhereUniqueInput | AssistantActionLogWhereUniqueInput[]
+    delete?: AssistantActionLogWhereUniqueInput | AssistantActionLogWhereUniqueInput[]
+    connect?: AssistantActionLogWhereUniqueInput | AssistantActionLogWhereUniqueInput[]
+    update?: AssistantActionLogUpdateWithWhereUniqueWithoutUserInput | AssistantActionLogUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AssistantActionLogUpdateManyWithWhereWithoutUserInput | AssistantActionLogUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AssistantActionLogScalarWhereInput | AssistantActionLogScalarWhereInput[]
+  }
+
+  export type AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<AssistantPendingActionCreateWithoutUserInput, AssistantPendingActionUncheckedCreateWithoutUserInput> | AssistantPendingActionCreateWithoutUserInput[] | AssistantPendingActionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AssistantPendingActionCreateOrConnectWithoutUserInput | AssistantPendingActionCreateOrConnectWithoutUserInput[]
+    upsert?: AssistantPendingActionUpsertWithWhereUniqueWithoutUserInput | AssistantPendingActionUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: AssistantPendingActionCreateManyUserInputEnvelope
+    set?: AssistantPendingActionWhereUniqueInput | AssistantPendingActionWhereUniqueInput[]
+    disconnect?: AssistantPendingActionWhereUniqueInput | AssistantPendingActionWhereUniqueInput[]
+    delete?: AssistantPendingActionWhereUniqueInput | AssistantPendingActionWhereUniqueInput[]
+    connect?: AssistantPendingActionWhereUniqueInput | AssistantPendingActionWhereUniqueInput[]
+    update?: AssistantPendingActionUpdateWithWhereUniqueWithoutUserInput | AssistantPendingActionUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AssistantPendingActionUpdateManyWithWhereWithoutUserInput | AssistantPendingActionUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AssistantPendingActionScalarWhereInput | AssistantPendingActionScalarWhereInput[]
+  }
+
   export type UserCreateNestedOneWithoutRefreshTokensInput = {
     create?: XOR<UserCreateWithoutRefreshTokensInput, UserUncheckedCreateWithoutRefreshTokensInput>
     connectOrCreate?: UserCreateOrConnectWithoutRefreshTokensInput
@@ -27267,15 +35750,9 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutGoalCheckInsInput, UserUpdateWithoutGoalCheckInsInput>, UserUncheckedUpdateWithoutGoalCheckInsInput>
   }
 
-  export type UserCreateNestedOneWithoutProjectsInput = {
-    create?: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
-    connectOrCreate?: UserCreateOrConnectWithoutProjectsInput
-    connect?: UserWhereUniqueInput
-  }
-
-  export type UserCreateNestedOneWithoutCreatedProjectsInput = {
-    create?: XOR<UserCreateWithoutCreatedProjectsInput, UserUncheckedCreateWithoutCreatedProjectsInput>
-    connectOrCreate?: UserCreateOrConnectWithoutCreatedProjectsInput
+  export type UserCreateNestedOneWithoutTasksInput = {
+    create?: XOR<UserCreateWithoutTasksInput, UserUncheckedCreateWithoutTasksInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTasksInput
     connect?: UserWhereUniqueInput
   }
 
@@ -27289,6 +35766,26 @@ export namespace Prisma {
 
   export type EnumProjectStatusFieldUpdateOperationsInput = {
     set?: $Enums.ProjectStatus
+  }
+
+  export type UserUpdateOneRequiredWithoutTasksNestedInput = {
+    create?: XOR<UserCreateWithoutTasksInput, UserUncheckedCreateWithoutTasksInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTasksInput
+    upsert?: UserUpsertWithoutTasksInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTasksInput, UserUpdateWithoutTasksInput>, UserUncheckedUpdateWithoutTasksInput>
+  }
+
+  export type UserCreateNestedOneWithoutProjectsInput = {
+    create?: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutProjectsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutCreatedProjectsInput = {
+    create?: XOR<UserCreateWithoutCreatedProjectsInput, UserUncheckedCreateWithoutCreatedProjectsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCreatedProjectsInput
+    connect?: UserWhereUniqueInput
   }
 
   export type UserUpdateOneWithoutProjectsNestedInput = {
@@ -27637,6 +36134,74 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutBudgetSettingsInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutBudgetSettingsInput, UserUpdateWithoutBudgetSettingsInput>, UserUncheckedUpdateWithoutBudgetSettingsInput>
+  }
+
+  export type UserCreateNestedOneWithoutTelegramLinkInput = {
+    create?: XOR<UserCreateWithoutTelegramLinkInput, UserUncheckedCreateWithoutTelegramLinkInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTelegramLinkInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutTelegramLinkNestedInput = {
+    create?: XOR<UserCreateWithoutTelegramLinkInput, UserUncheckedCreateWithoutTelegramLinkInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTelegramLinkInput
+    upsert?: UserUpsertWithoutTelegramLinkInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTelegramLinkInput, UserUpdateWithoutTelegramLinkInput>, UserUncheckedUpdateWithoutTelegramLinkInput>
+  }
+
+  export type UserCreateNestedOneWithoutAssistantMessagesInput = {
+    create?: XOR<UserCreateWithoutAssistantMessagesInput, UserUncheckedCreateWithoutAssistantMessagesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAssistantMessagesInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type EnumAssistantChannelFieldUpdateOperationsInput = {
+    set?: $Enums.AssistantChannel
+  }
+
+  export type EnumMessageDirectionFieldUpdateOperationsInput = {
+    set?: $Enums.MessageDirection
+  }
+
+  export type UserUpdateOneRequiredWithoutAssistantMessagesNestedInput = {
+    create?: XOR<UserCreateWithoutAssistantMessagesInput, UserUncheckedCreateWithoutAssistantMessagesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAssistantMessagesInput
+    upsert?: UserUpsertWithoutAssistantMessagesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAssistantMessagesInput, UserUpdateWithoutAssistantMessagesInput>, UserUncheckedUpdateWithoutAssistantMessagesInput>
+  }
+
+  export type UserCreateNestedOneWithoutAssistantActionLogsInput = {
+    create?: XOR<UserCreateWithoutAssistantActionLogsInput, UserUncheckedCreateWithoutAssistantActionLogsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAssistantActionLogsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type EnumExecutionStatusFieldUpdateOperationsInput = {
+    set?: $Enums.ExecutionStatus
+  }
+
+  export type UserUpdateOneRequiredWithoutAssistantActionLogsNestedInput = {
+    create?: XOR<UserCreateWithoutAssistantActionLogsInput, UserUncheckedCreateWithoutAssistantActionLogsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAssistantActionLogsInput
+    upsert?: UserUpsertWithoutAssistantActionLogsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAssistantActionLogsInput, UserUpdateWithoutAssistantActionLogsInput>, UserUncheckedUpdateWithoutAssistantActionLogsInput>
+  }
+
+  export type UserCreateNestedOneWithoutAssistantPendingActionsInput = {
+    create?: XOR<UserCreateWithoutAssistantPendingActionsInput, UserUncheckedCreateWithoutAssistantPendingActionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAssistantPendingActionsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutAssistantPendingActionsNestedInput = {
+    create?: XOR<UserCreateWithoutAssistantPendingActionsInput, UserUncheckedCreateWithoutAssistantPendingActionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAssistantPendingActionsInput
+    upsert?: UserUpsertWithoutAssistantPendingActionsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAssistantPendingActionsInput, UserUpdateWithoutAssistantPendingActionsInput>, UserUncheckedUpdateWithoutAssistantPendingActionsInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -28058,6 +36623,24 @@ export namespace Prisma {
     _min?: NestedEnumReportFrequencyFilter<$PrismaModel>
     _max?: NestedEnumReportFrequencyFilter<$PrismaModel>
   }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type NestedEnumBudgetPeriodFilter<$PrismaModel = never> = {
     equals?: $Enums.BudgetPeriod | EnumBudgetPeriodFieldRefInput<$PrismaModel>
@@ -28074,6 +36657,75 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumBudgetPeriodFilter<$PrismaModel>
     _max?: NestedEnumBudgetPeriodFilter<$PrismaModel>
+  }
+
+  export type NestedEnumAssistantChannelFilter<$PrismaModel = never> = {
+    equals?: $Enums.AssistantChannel | EnumAssistantChannelFieldRefInput<$PrismaModel>
+    in?: $Enums.AssistantChannel[]
+    notIn?: $Enums.AssistantChannel[]
+    not?: NestedEnumAssistantChannelFilter<$PrismaModel> | $Enums.AssistantChannel
+  }
+
+  export type NestedEnumMessageDirectionFilter<$PrismaModel = never> = {
+    equals?: $Enums.MessageDirection | EnumMessageDirectionFieldRefInput<$PrismaModel>
+    in?: $Enums.MessageDirection[]
+    notIn?: $Enums.MessageDirection[]
+    not?: NestedEnumMessageDirectionFilter<$PrismaModel> | $Enums.MessageDirection
+  }
+
+  export type NestedEnumAssistantChannelWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AssistantChannel | EnumAssistantChannelFieldRefInput<$PrismaModel>
+    in?: $Enums.AssistantChannel[]
+    notIn?: $Enums.AssistantChannel[]
+    not?: NestedEnumAssistantChannelWithAggregatesFilter<$PrismaModel> | $Enums.AssistantChannel
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAssistantChannelFilter<$PrismaModel>
+    _max?: NestedEnumAssistantChannelFilter<$PrismaModel>
+  }
+
+  export type NestedEnumMessageDirectionWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.MessageDirection | EnumMessageDirectionFieldRefInput<$PrismaModel>
+    in?: $Enums.MessageDirection[]
+    notIn?: $Enums.MessageDirection[]
+    not?: NestedEnumMessageDirectionWithAggregatesFilter<$PrismaModel> | $Enums.MessageDirection
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumMessageDirectionFilter<$PrismaModel>
+    _max?: NestedEnumMessageDirectionFilter<$PrismaModel>
+  }
+
+  export type NestedEnumExecutionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExecutionStatus | EnumExecutionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ExecutionStatus[]
+    notIn?: $Enums.ExecutionStatus[]
+    not?: NestedEnumExecutionStatusFilter<$PrismaModel> | $Enums.ExecutionStatus
+  }
+
+  export type NestedEnumExecutionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExecutionStatus | EnumExecutionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ExecutionStatus[]
+    notIn?: $Enums.ExecutionStatus[]
+    not?: NestedEnumExecutionStatusWithAggregatesFilter<$PrismaModel> | $Enums.ExecutionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumExecutionStatusFilter<$PrismaModel>
+    _max?: NestedEnumExecutionStatusFilter<$PrismaModel>
+  }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type GoalCreateWithoutUserInput = {
@@ -28144,6 +36796,47 @@ export namespace Prisma {
 
   export type GoalCheckInCreateManyUserInputEnvelope = {
     data: GoalCheckInCreateManyUserInput | GoalCheckInCreateManyUserInput[]
+  }
+
+  export type TaskCreateWithoutUserInput = {
+    id?: string
+    title: string
+    description?: string | null
+    isShared?: boolean
+    dueDate?: Date | string | null
+    priority?: $Enums.Priority
+    status?: $Enums.ProjectStatus
+    notificationEnabled?: boolean
+    pinToDashboard?: boolean
+    sortOrder?: number
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TaskUncheckedCreateWithoutUserInput = {
+    id?: string
+    title: string
+    description?: string | null
+    isShared?: boolean
+    dueDate?: Date | string | null
+    priority?: $Enums.Priority
+    status?: $Enums.ProjectStatus
+    notificationEnabled?: boolean
+    pinToDashboard?: boolean
+    sortOrder?: number
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TaskCreateOrConnectWithoutUserInput = {
+    where: TaskWhereUniqueInput
+    create: XOR<TaskCreateWithoutUserInput, TaskUncheckedCreateWithoutUserInput>
+  }
+
+  export type TaskCreateManyUserInputEnvelope = {
+    data: TaskCreateManyUserInput | TaskCreateManyUserInput[]
   }
 
   export type ProjectCreateWithoutAssigneeInput = {
@@ -28238,6 +36931,7 @@ export namespace Prisma {
     deadline?: Date | string | null
     status?: $Enums.ProjectStatus
     notificationEnabled?: boolean
+    pinToDashboard?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -28252,6 +36946,7 @@ export namespace Prisma {
     deadline?: Date | string | null
     status?: $Enums.ProjectStatus
     notificationEnabled?: boolean
+    pinToDashboard?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -28272,6 +36967,7 @@ export namespace Prisma {
     category?: string | null
     tags?: string | null
     status?: $Enums.IdeaStatus
+    pinToDashboard?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -28283,6 +36979,7 @@ export namespace Prisma {
     category?: string | null
     tags?: string | null
     status?: $Enums.IdeaStatus
+    pinToDashboard?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -28554,10 +37251,16 @@ export namespace Prisma {
     name: string
     moduleType: string
     frequency?: $Enums.AlertFrequency
+    dayOfWeek?: number | null
+    dayOfMonth?: number | null
+    time?: string | null
     conditionType: string
     conditionValue?: string | null
+    cooldownHours?: number
+    lastSentAt?: Date | string | null
     notificationChannel?: $Enums.NotificationChannel
     active?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -28567,10 +37270,16 @@ export namespace Prisma {
     name: string
     moduleType: string
     frequency?: $Enums.AlertFrequency
+    dayOfWeek?: number | null
+    dayOfMonth?: number | null
+    time?: string | null
     conditionType: string
     conditionValue?: string | null
+    cooldownHours?: number
+    lastSentAt?: Date | string | null
     notificationChannel?: $Enums.NotificationChannel
     active?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -28586,28 +37295,36 @@ export namespace Prisma {
 
   export type ScheduledReportCreateWithoutUserInput = {
     id?: string
+    name: string
     reportType: string
     dateRangePreset?: string | null
     frequency?: $Enums.ReportFrequency
+    dayOfMonth?: number | null
     dayOfWeek?: number | null
     time?: string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: $Enums.NotificationChannel
-    recipients?: string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type ScheduledReportUncheckedCreateWithoutUserInput = {
     id?: string
+    name: string
     reportType: string
     dateRangePreset?: string | null
     frequency?: $Enums.ReportFrequency
+    dayOfMonth?: number | null
     dayOfWeek?: number | null
     time?: string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: $Enums.NotificationChannel
-    recipients?: string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -28673,6 +37390,130 @@ export namespace Prisma {
     data: RefreshTokenCreateManyUserInput | RefreshTokenCreateManyUserInput[]
   }
 
+  export type TelegramLinkCreateWithoutUserInput = {
+    id?: string
+    telegramChatId: string
+    telegramUserId: string
+    telegramUsername?: string | null
+    linkCode?: string | null
+    linkCodeExpiresAt?: Date | string | null
+    verifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TelegramLinkUncheckedCreateWithoutUserInput = {
+    id?: string
+    telegramChatId: string
+    telegramUserId: string
+    telegramUsername?: string | null
+    linkCode?: string | null
+    linkCodeExpiresAt?: Date | string | null
+    verifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TelegramLinkCreateOrConnectWithoutUserInput = {
+    where: TelegramLinkWhereUniqueInput
+    create: XOR<TelegramLinkCreateWithoutUserInput, TelegramLinkUncheckedCreateWithoutUserInput>
+  }
+
+  export type AssistantMessageCreateWithoutUserInput = {
+    id?: string
+    channel: $Enums.AssistantChannel
+    externalMessageId?: string | null
+    direction: $Enums.MessageDirection
+    rawText: string
+    normalizedText?: string | null
+    intent?: string | null
+    confidence?: number | null
+    createdAt?: Date | string
+  }
+
+  export type AssistantMessageUncheckedCreateWithoutUserInput = {
+    id?: string
+    channel: $Enums.AssistantChannel
+    externalMessageId?: string | null
+    direction: $Enums.MessageDirection
+    rawText: string
+    normalizedText?: string | null
+    intent?: string | null
+    confidence?: number | null
+    createdAt?: Date | string
+  }
+
+  export type AssistantMessageCreateOrConnectWithoutUserInput = {
+    where: AssistantMessageWhereUniqueInput
+    create: XOR<AssistantMessageCreateWithoutUserInput, AssistantMessageUncheckedCreateWithoutUserInput>
+  }
+
+  export type AssistantMessageCreateManyUserInputEnvelope = {
+    data: AssistantMessageCreateManyUserInput | AssistantMessageCreateManyUserInput[]
+  }
+
+  export type AssistantActionLogCreateWithoutUserInput = {
+    id?: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    confidence?: number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus: $Enums.ExecutionStatus
+    resultSummary?: string | null
+    errorMessage?: string | null
+    createdAt?: Date | string
+  }
+
+  export type AssistantActionLogUncheckedCreateWithoutUserInput = {
+    id?: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    confidence?: number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus: $Enums.ExecutionStatus
+    resultSummary?: string | null
+    errorMessage?: string | null
+    createdAt?: Date | string
+  }
+
+  export type AssistantActionLogCreateOrConnectWithoutUserInput = {
+    where: AssistantActionLogWhereUniqueInput
+    create: XOR<AssistantActionLogCreateWithoutUserInput, AssistantActionLogUncheckedCreateWithoutUserInput>
+  }
+
+  export type AssistantActionLogCreateManyUserInputEnvelope = {
+    data: AssistantActionLogCreateManyUserInput | AssistantActionLogCreateManyUserInput[]
+  }
+
+  export type AssistantPendingActionCreateWithoutUserInput = {
+    id?: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    payload: JsonNullValueInput | InputJsonValue
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type AssistantPendingActionUncheckedCreateWithoutUserInput = {
+    id?: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    payload: JsonNullValueInput | InputJsonValue
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type AssistantPendingActionCreateOrConnectWithoutUserInput = {
+    where: AssistantPendingActionWhereUniqueInput
+    create: XOR<AssistantPendingActionCreateWithoutUserInput, AssistantPendingActionUncheckedCreateWithoutUserInput>
+  }
+
+  export type AssistantPendingActionCreateManyUserInputEnvelope = {
+    data: AssistantPendingActionCreateManyUserInput | AssistantPendingActionCreateManyUserInput[]
+  }
+
   export type GoalUpsertWithWhereUniqueWithoutUserInput = {
     where: GoalWhereUniqueInput
     update: XOR<GoalUpdateWithoutUserInput, GoalUncheckedUpdateWithoutUserInput>
@@ -28736,6 +37577,42 @@ export namespace Prisma {
     note?: StringNullableFilter<"GoalCheckIn"> | string | null
     date?: DateTimeFilter<"GoalCheckIn"> | Date | string
     createdAt?: DateTimeFilter<"GoalCheckIn"> | Date | string
+  }
+
+  export type TaskUpsertWithWhereUniqueWithoutUserInput = {
+    where: TaskWhereUniqueInput
+    update: XOR<TaskUpdateWithoutUserInput, TaskUncheckedUpdateWithoutUserInput>
+    create: XOR<TaskCreateWithoutUserInput, TaskUncheckedCreateWithoutUserInput>
+  }
+
+  export type TaskUpdateWithWhereUniqueWithoutUserInput = {
+    where: TaskWhereUniqueInput
+    data: XOR<TaskUpdateWithoutUserInput, TaskUncheckedUpdateWithoutUserInput>
+  }
+
+  export type TaskUpdateManyWithWhereWithoutUserInput = {
+    where: TaskScalarWhereInput
+    data: XOR<TaskUpdateManyMutationInput, TaskUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type TaskScalarWhereInput = {
+    AND?: TaskScalarWhereInput | TaskScalarWhereInput[]
+    OR?: TaskScalarWhereInput[]
+    NOT?: TaskScalarWhereInput | TaskScalarWhereInput[]
+    id?: StringFilter<"Task"> | string
+    title?: StringFilter<"Task"> | string
+    description?: StringNullableFilter<"Task"> | string | null
+    userId?: StringFilter<"Task"> | string
+    isShared?: BoolFilter<"Task"> | boolean
+    dueDate?: DateTimeNullableFilter<"Task"> | Date | string | null
+    priority?: EnumPriorityFilter<"Task"> | $Enums.Priority
+    status?: EnumProjectStatusFilter<"Task"> | $Enums.ProjectStatus
+    notificationEnabled?: BoolFilter<"Task"> | boolean
+    pinToDashboard?: BoolFilter<"Task"> | boolean
+    sortOrder?: IntFilter<"Task"> | number
+    completedAt?: DateTimeNullableFilter<"Task"> | Date | string | null
+    createdAt?: DateTimeFilter<"Task"> | Date | string
+    updatedAt?: DateTimeFilter<"Task"> | Date | string
   }
 
   export type ProjectUpsertWithWhereUniqueWithoutAssigneeInput = {
@@ -28820,6 +37697,7 @@ export namespace Prisma {
     status?: EnumProjectStatusFilter<"LearningItem"> | $Enums.ProjectStatus
     userId?: StringFilter<"LearningItem"> | string
     notificationEnabled?: BoolFilter<"LearningItem"> | boolean
+    pinToDashboard?: BoolFilter<"LearningItem"> | boolean
     createdAt?: DateTimeFilter<"LearningItem"> | Date | string
     updatedAt?: DateTimeFilter<"LearningItem"> | Date | string
   }
@@ -28851,6 +37729,7 @@ export namespace Prisma {
     tags?: StringNullableFilter<"Idea"> | string | null
     status?: EnumIdeaStatusFilter<"Idea"> | $Enums.IdeaStatus
     userId?: StringFilter<"Idea"> | string
+    pinToDashboard?: BoolFilter<"Idea"> | boolean
     createdAt?: DateTimeFilter<"Idea"> | Date | string
     updatedAt?: DateTimeFilter<"Idea"> | Date | string
   }
@@ -29091,10 +37970,16 @@ export namespace Prisma {
     name?: StringFilter<"AlertRule"> | string
     moduleType?: StringFilter<"AlertRule"> | string
     frequency?: EnumAlertFrequencyFilter<"AlertRule"> | $Enums.AlertFrequency
+    dayOfWeek?: IntNullableFilter<"AlertRule"> | number | null
+    dayOfMonth?: IntNullableFilter<"AlertRule"> | number | null
+    time?: StringNullableFilter<"AlertRule"> | string | null
     conditionType?: StringFilter<"AlertRule"> | string
     conditionValue?: StringNullableFilter<"AlertRule"> | string | null
+    cooldownHours?: IntFilter<"AlertRule"> | number
+    lastSentAt?: DateTimeNullableFilter<"AlertRule"> | Date | string | null
     notificationChannel?: EnumNotificationChannelFilter<"AlertRule"> | $Enums.NotificationChannel
     active?: BoolFilter<"AlertRule"> | boolean
+    sortOrder?: IntFilter<"AlertRule"> | number
     userId?: StringFilter<"AlertRule"> | string
     createdAt?: DateTimeFilter<"AlertRule"> | Date | string
     updatedAt?: DateTimeFilter<"AlertRule"> | Date | string
@@ -29121,14 +38006,18 @@ export namespace Prisma {
     OR?: ScheduledReportScalarWhereInput[]
     NOT?: ScheduledReportScalarWhereInput | ScheduledReportScalarWhereInput[]
     id?: StringFilter<"ScheduledReport"> | string
+    name?: StringFilter<"ScheduledReport"> | string
     reportType?: StringFilter<"ScheduledReport"> | string
     dateRangePreset?: StringNullableFilter<"ScheduledReport"> | string | null
     frequency?: EnumReportFrequencyFilter<"ScheduledReport"> | $Enums.ReportFrequency
+    dayOfMonth?: IntNullableFilter<"ScheduledReport"> | number | null
     dayOfWeek?: IntNullableFilter<"ScheduledReport"> | number | null
     time?: StringNullableFilter<"ScheduledReport"> | string | null
+    sections?: JsonNullableFilter<"ScheduledReport">
     notificationChannel?: EnumNotificationChannelFilter<"ScheduledReport"> | $Enums.NotificationChannel
-    recipients?: StringNullableFilter<"ScheduledReport"> | string | null
+    recipients?: JsonNullableFilter<"ScheduledReport">
     active?: BoolFilter<"ScheduledReport"> | boolean
+    sortOrder?: IntFilter<"ScheduledReport"> | number
     userId?: StringFilter<"ScheduledReport"> | string
     createdAt?: DateTimeFilter<"ScheduledReport"> | Date | string
     updatedAt?: DateTimeFilter<"ScheduledReport"> | Date | string
@@ -29191,6 +38080,135 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"RefreshToken"> | Date | string
   }
 
+  export type TelegramLinkUpsertWithoutUserInput = {
+    update: XOR<TelegramLinkUpdateWithoutUserInput, TelegramLinkUncheckedUpdateWithoutUserInput>
+    create: XOR<TelegramLinkCreateWithoutUserInput, TelegramLinkUncheckedCreateWithoutUserInput>
+    where?: TelegramLinkWhereInput
+  }
+
+  export type TelegramLinkUpdateToOneWithWhereWithoutUserInput = {
+    where?: TelegramLinkWhereInput
+    data: XOR<TelegramLinkUpdateWithoutUserInput, TelegramLinkUncheckedUpdateWithoutUserInput>
+  }
+
+  export type TelegramLinkUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    telegramChatId?: StringFieldUpdateOperationsInput | string
+    telegramUserId?: StringFieldUpdateOperationsInput | string
+    telegramUsername?: NullableStringFieldUpdateOperationsInput | string | null
+    linkCode?: NullableStringFieldUpdateOperationsInput | string | null
+    linkCodeExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TelegramLinkUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    telegramChatId?: StringFieldUpdateOperationsInput | string
+    telegramUserId?: StringFieldUpdateOperationsInput | string
+    telegramUsername?: NullableStringFieldUpdateOperationsInput | string | null
+    linkCode?: NullableStringFieldUpdateOperationsInput | string | null
+    linkCodeExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantMessageUpsertWithWhereUniqueWithoutUserInput = {
+    where: AssistantMessageWhereUniqueInput
+    update: XOR<AssistantMessageUpdateWithoutUserInput, AssistantMessageUncheckedUpdateWithoutUserInput>
+    create: XOR<AssistantMessageCreateWithoutUserInput, AssistantMessageUncheckedCreateWithoutUserInput>
+  }
+
+  export type AssistantMessageUpdateWithWhereUniqueWithoutUserInput = {
+    where: AssistantMessageWhereUniqueInput
+    data: XOR<AssistantMessageUpdateWithoutUserInput, AssistantMessageUncheckedUpdateWithoutUserInput>
+  }
+
+  export type AssistantMessageUpdateManyWithWhereWithoutUserInput = {
+    where: AssistantMessageScalarWhereInput
+    data: XOR<AssistantMessageUpdateManyMutationInput, AssistantMessageUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type AssistantMessageScalarWhereInput = {
+    AND?: AssistantMessageScalarWhereInput | AssistantMessageScalarWhereInput[]
+    OR?: AssistantMessageScalarWhereInput[]
+    NOT?: AssistantMessageScalarWhereInput | AssistantMessageScalarWhereInput[]
+    id?: StringFilter<"AssistantMessage"> | string
+    userId?: StringFilter<"AssistantMessage"> | string
+    channel?: EnumAssistantChannelFilter<"AssistantMessage"> | $Enums.AssistantChannel
+    externalMessageId?: StringNullableFilter<"AssistantMessage"> | string | null
+    direction?: EnumMessageDirectionFilter<"AssistantMessage"> | $Enums.MessageDirection
+    rawText?: StringFilter<"AssistantMessage"> | string
+    normalizedText?: StringNullableFilter<"AssistantMessage"> | string | null
+    intent?: StringNullableFilter<"AssistantMessage"> | string | null
+    confidence?: FloatNullableFilter<"AssistantMessage"> | number | null
+    createdAt?: DateTimeFilter<"AssistantMessage"> | Date | string
+  }
+
+  export type AssistantActionLogUpsertWithWhereUniqueWithoutUserInput = {
+    where: AssistantActionLogWhereUniqueInput
+    update: XOR<AssistantActionLogUpdateWithoutUserInput, AssistantActionLogUncheckedUpdateWithoutUserInput>
+    create: XOR<AssistantActionLogCreateWithoutUserInput, AssistantActionLogUncheckedCreateWithoutUserInput>
+  }
+
+  export type AssistantActionLogUpdateWithWhereUniqueWithoutUserInput = {
+    where: AssistantActionLogWhereUniqueInput
+    data: XOR<AssistantActionLogUpdateWithoutUserInput, AssistantActionLogUncheckedUpdateWithoutUserInput>
+  }
+
+  export type AssistantActionLogUpdateManyWithWhereWithoutUserInput = {
+    where: AssistantActionLogScalarWhereInput
+    data: XOR<AssistantActionLogUpdateManyMutationInput, AssistantActionLogUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type AssistantActionLogScalarWhereInput = {
+    AND?: AssistantActionLogScalarWhereInput | AssistantActionLogScalarWhereInput[]
+    OR?: AssistantActionLogScalarWhereInput[]
+    NOT?: AssistantActionLogScalarWhereInput | AssistantActionLogScalarWhereInput[]
+    id?: StringFilter<"AssistantActionLog"> | string
+    userId?: StringFilter<"AssistantActionLog"> | string
+    channel?: EnumAssistantChannelFilter<"AssistantActionLog"> | $Enums.AssistantChannel
+    intent?: StringFilter<"AssistantActionLog"> | string
+    confidence?: FloatNullableFilter<"AssistantActionLog"> | number | null
+    requestPayload?: JsonNullableFilter<"AssistantActionLog">
+    resolvedEntities?: JsonNullableFilter<"AssistantActionLog">
+    executionStatus?: EnumExecutionStatusFilter<"AssistantActionLog"> | $Enums.ExecutionStatus
+    resultSummary?: StringNullableFilter<"AssistantActionLog"> | string | null
+    errorMessage?: StringNullableFilter<"AssistantActionLog"> | string | null
+    createdAt?: DateTimeFilter<"AssistantActionLog"> | Date | string
+  }
+
+  export type AssistantPendingActionUpsertWithWhereUniqueWithoutUserInput = {
+    where: AssistantPendingActionWhereUniqueInput
+    update: XOR<AssistantPendingActionUpdateWithoutUserInput, AssistantPendingActionUncheckedUpdateWithoutUserInput>
+    create: XOR<AssistantPendingActionCreateWithoutUserInput, AssistantPendingActionUncheckedCreateWithoutUserInput>
+  }
+
+  export type AssistantPendingActionUpdateWithWhereUniqueWithoutUserInput = {
+    where: AssistantPendingActionWhereUniqueInput
+    data: XOR<AssistantPendingActionUpdateWithoutUserInput, AssistantPendingActionUncheckedUpdateWithoutUserInput>
+  }
+
+  export type AssistantPendingActionUpdateManyWithWhereWithoutUserInput = {
+    where: AssistantPendingActionScalarWhereInput
+    data: XOR<AssistantPendingActionUpdateManyMutationInput, AssistantPendingActionUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type AssistantPendingActionScalarWhereInput = {
+    AND?: AssistantPendingActionScalarWhereInput | AssistantPendingActionScalarWhereInput[]
+    OR?: AssistantPendingActionScalarWhereInput[]
+    NOT?: AssistantPendingActionScalarWhereInput | AssistantPendingActionScalarWhereInput[]
+    id?: StringFilter<"AssistantPendingAction"> | string
+    userId?: StringFilter<"AssistantPendingAction"> | string
+    channel?: EnumAssistantChannelFilter<"AssistantPendingAction"> | $Enums.AssistantChannel
+    intent?: StringFilter<"AssistantPendingAction"> | string
+    payload?: JsonFilter<"AssistantPendingAction">
+    expiresAt?: DateTimeFilter<"AssistantPendingAction"> | Date | string
+    createdAt?: DateTimeFilter<"AssistantPendingAction"> | Date | string
+  }
+
   export type UserCreateWithoutRefreshTokensInput = {
     id?: string
     email: string
@@ -29202,11 +38220,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -29221,6 +38241,10 @@ export namespace Prisma {
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutRefreshTokensInput = {
@@ -29234,11 +38258,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -29253,6 +38279,10 @@ export namespace Prisma {
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutRefreshTokensInput = {
@@ -29282,11 +38312,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -29301,6 +38333,10 @@ export namespace Prisma {
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutRefreshTokensInput = {
@@ -29314,11 +38350,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -29333,6 +38371,10 @@ export namespace Prisma {
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutGoalsInput = {
@@ -29346,10 +38388,12 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -29365,6 +38409,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutGoalsInput = {
@@ -29378,10 +38426,12 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -29397,6 +38447,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutGoalsInput = {
@@ -29453,10 +38507,12 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -29472,6 +38528,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutGoalsInput = {
@@ -29485,10 +38545,12 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -29504,6 +38566,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type GoalCheckInUpsertWithWhereUniqueWithoutGoalInput = {
@@ -29572,10 +38638,12 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -29591,6 +38659,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutGoalCheckInsInput = {
@@ -29604,10 +38676,12 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -29623,6 +38697,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutGoalCheckInsInput = {
@@ -29697,10 +38775,12 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -29716,6 +38796,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutGoalCheckInsInput = {
@@ -29729,10 +38813,12 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -29748,9 +38834,13 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
-  export type UserCreateWithoutProjectsInput = {
+  export type UserCreateWithoutTasksInput = {
     id?: string
     email: string
     name: string
@@ -29761,11 +38851,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
     ideas?: IdeaCreateNestedManyWithoutUserInput
@@ -29780,9 +38872,13 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
-  export type UserUncheckedCreateWithoutProjectsInput = {
+  export type UserUncheckedCreateWithoutTasksInput = {
     id?: string
     email: string
     name: string
@@ -29793,11 +38889,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
     ideas?: IdeaUncheckedCreateNestedManyWithoutUserInput
@@ -29812,6 +38910,178 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutTasksInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutTasksInput, UserUncheckedCreateWithoutTasksInput>
+  }
+
+  export type UserUpsertWithoutTasksInput = {
+    update: XOR<UserUpdateWithoutTasksInput, UserUncheckedUpdateWithoutTasksInput>
+    create: XOR<UserCreateWithoutTasksInput, UserUncheckedCreateWithoutTasksInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutTasksInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutTasksInput, UserUncheckedUpdateWithoutTasksInput>
+  }
+
+  export type UserUpdateWithoutTasksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    active?: BoolFieldUpdateOperationsInput | boolean
+    theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    goals?: GoalUpdateManyWithoutUserNestedInput
+    goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    projects?: ProjectUpdateManyWithoutAssigneeNestedInput
+    createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
+    learningItems?: LearningItemUpdateManyWithoutUserNestedInput
+    ideas?: IdeaUpdateManyWithoutUserNestedInput
+    houseworkItems?: HouseworkItemUpdateManyWithoutAssigneeNestedInput
+    createdHousework?: HouseworkItemUpdateManyWithoutCreatedByNestedInput
+    assets?: AssetUpdateManyWithoutUserNestedInput
+    maintenanceRecords?: MaintenanceRecordUpdateManyWithoutUserNestedInput
+    calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
+    eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
+    expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
+    scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
+    budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
+    refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutTasksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    active?: BoolFieldUpdateOperationsInput | boolean
+    theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
+    goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
+    createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
+    learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
+    ideas?: IdeaUncheckedUpdateManyWithoutUserNestedInput
+    houseworkItems?: HouseworkItemUncheckedUpdateManyWithoutAssigneeNestedInput
+    createdHousework?: HouseworkItemUncheckedUpdateManyWithoutCreatedByNestedInput
+    assets?: AssetUncheckedUpdateManyWithoutUserNestedInput
+    maintenanceRecords?: MaintenanceRecordUncheckedUpdateManyWithoutUserNestedInput
+    calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
+    eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+    expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
+    scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
+    budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
+    refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutProjectsInput = {
+    id?: string
+    email: string
+    name: string
+    password: string
+    role?: $Enums.Role
+    active?: boolean
+    theme?: $Enums.Theme
+    notificationEnabled?: boolean
+    notificationChannel?: $Enums.NotificationChannel
+    notificationEmail?: string | null
+    timezone?: string | null
+    telegramChatId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    goals?: GoalCreateNestedManyWithoutUserInput
+    goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
+    createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
+    learningItems?: LearningItemCreateNestedManyWithoutUserInput
+    ideas?: IdeaCreateNestedManyWithoutUserInput
+    houseworkItems?: HouseworkItemCreateNestedManyWithoutAssigneeInput
+    createdHousework?: HouseworkItemCreateNestedManyWithoutCreatedByInput
+    assets?: AssetCreateNestedManyWithoutUserInput
+    maintenanceRecords?: MaintenanceRecordCreateNestedManyWithoutUserInput
+    calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
+    eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
+    expenses?: ExpenseCreateNestedManyWithoutUserInput
+    alertRules?: AlertRuleCreateNestedManyWithoutUserInput
+    scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
+    budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
+    refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutProjectsInput = {
+    id?: string
+    email: string
+    name: string
+    password: string
+    role?: $Enums.Role
+    active?: boolean
+    theme?: $Enums.Theme
+    notificationEnabled?: boolean
+    notificationChannel?: $Enums.NotificationChannel
+    notificationEmail?: string | null
+    timezone?: string | null
+    telegramChatId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    goals?: GoalUncheckedCreateNestedManyWithoutUserInput
+    goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
+    createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
+    learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
+    ideas?: IdeaUncheckedCreateNestedManyWithoutUserInput
+    houseworkItems?: HouseworkItemUncheckedCreateNestedManyWithoutAssigneeInput
+    createdHousework?: HouseworkItemUncheckedCreateNestedManyWithoutCreatedByInput
+    assets?: AssetUncheckedCreateNestedManyWithoutUserInput
+    maintenanceRecords?: MaintenanceRecordUncheckedCreateNestedManyWithoutUserInput
+    calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
+    eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
+    expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
+    scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
+    budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
+    refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutProjectsInput = {
@@ -29830,11 +39100,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
     ideas?: IdeaCreateNestedManyWithoutUserInput
@@ -29849,6 +39121,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCreatedProjectsInput = {
@@ -29862,11 +39138,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
     ideas?: IdeaUncheckedCreateNestedManyWithoutUserInput
@@ -29881,6 +39159,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCreatedProjectsInput = {
@@ -29910,11 +39192,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
     ideas?: IdeaUpdateManyWithoutUserNestedInput
@@ -29929,6 +39213,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutProjectsInput = {
@@ -29942,11 +39230,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
     ideas?: IdeaUncheckedUpdateManyWithoutUserNestedInput
@@ -29961,6 +39251,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutCreatedProjectsInput = {
@@ -29985,11 +39279,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
     ideas?: IdeaUpdateManyWithoutUserNestedInput
@@ -30004,6 +39300,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCreatedProjectsInput = {
@@ -30017,11 +39317,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
     ideas?: IdeaUncheckedUpdateManyWithoutUserNestedInput
@@ -30036,6 +39338,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutLearningItemsInput = {
@@ -30049,11 +39355,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     ideas?: IdeaCreateNestedManyWithoutUserInput
@@ -30068,6 +39376,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutLearningItemsInput = {
@@ -30081,11 +39393,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     ideas?: IdeaUncheckedCreateNestedManyWithoutUserInput
@@ -30100,6 +39414,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutLearningItemsInput = {
@@ -30129,11 +39447,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     ideas?: IdeaUpdateManyWithoutUserNestedInput
@@ -30148,6 +39468,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutLearningItemsInput = {
@@ -30161,11 +39485,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     ideas?: IdeaUncheckedUpdateManyWithoutUserNestedInput
@@ -30180,6 +39506,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutIdeasInput = {
@@ -30193,11 +39523,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -30212,6 +39544,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutIdeasInput = {
@@ -30225,11 +39561,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -30244,6 +39582,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutIdeasInput = {
@@ -30273,11 +39615,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -30292,6 +39636,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutIdeasInput = {
@@ -30305,11 +39653,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -30324,6 +39674,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutHouseworkItemsInput = {
@@ -30337,11 +39691,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -30356,6 +39712,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutHouseworkItemsInput = {
@@ -30369,11 +39729,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -30388,6 +39750,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutHouseworkItemsInput = {
@@ -30406,11 +39772,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -30425,6 +39793,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCreatedHouseworkInput = {
@@ -30438,11 +39810,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -30457,6 +39831,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCreatedHouseworkInput = {
@@ -30486,11 +39864,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -30505,6 +39885,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutHouseworkItemsInput = {
@@ -30518,11 +39902,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -30537,6 +39923,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutCreatedHouseworkInput = {
@@ -30561,11 +39951,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -30580,6 +39972,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCreatedHouseworkInput = {
@@ -30593,11 +39989,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -30612,6 +40010,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutAssetsInput = {
@@ -30625,11 +40027,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -30644,6 +40048,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAssetsInput = {
@@ -30657,11 +40065,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -30676,6 +40086,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAssetsInput = {
@@ -30740,11 +40154,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -30759,6 +40175,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAssetsInput = {
@@ -30772,11 +40192,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -30791,6 +40213,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type MaintenanceRecordUpsertWithWhereUniqueWithoutAssetInput = {
@@ -30853,11 +40279,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -30872,6 +40300,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutMaintenanceRecordsInput = {
@@ -30885,11 +40317,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -30904,6 +40338,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutMaintenanceRecordsInput = {
@@ -30972,11 +40410,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -30991,6 +40431,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutMaintenanceRecordsInput = {
@@ -31004,11 +40448,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -31023,6 +40469,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutCalendarEventsInput = {
@@ -31036,11 +40486,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -31055,6 +40507,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCalendarEventsInput = {
@@ -31068,11 +40524,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -31087,6 +40545,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCalendarEventsInput = {
@@ -31135,11 +40597,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -31154,6 +40618,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCalendarEventsInput = {
@@ -31167,11 +40635,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -31186,6 +40656,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type EventParticipantUpsertWithWhereUniqueWithoutEventInput = {
@@ -31252,11 +40726,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -31271,6 +40747,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutEventParticipantsInput = {
@@ -31284,11 +40764,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -31303,6 +40785,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutEventParticipantsInput = {
@@ -31375,11 +40861,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -31394,6 +40882,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutEventParticipantsInput = {
@@ -31407,11 +40899,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -31426,6 +40920,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutExpensesInput = {
@@ -31439,11 +40937,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -31458,6 +40958,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutExpensesInput = {
@@ -31471,11 +40975,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -31490,6 +40996,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutExpensesInput = {
@@ -31519,11 +41029,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -31538,6 +41050,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutExpensesInput = {
@@ -31551,11 +41067,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -31570,6 +41088,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutAlertRulesInput = {
@@ -31583,11 +41105,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -31602,6 +41126,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAlertRulesInput = {
@@ -31615,11 +41143,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -31634,6 +41164,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAlertRulesInput = {
@@ -31663,11 +41197,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -31682,6 +41218,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAlertRulesInput = {
@@ -31695,11 +41235,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -31714,6 +41256,10 @@ export namespace Prisma {
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutScheduledReportsInput = {
@@ -31727,11 +41273,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -31746,6 +41294,10 @@ export namespace Prisma {
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutScheduledReportsInput = {
@@ -31759,11 +41311,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -31778,6 +41332,10 @@ export namespace Prisma {
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutScheduledReportsInput = {
@@ -31807,11 +41365,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -31826,6 +41386,10 @@ export namespace Prisma {
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutScheduledReportsInput = {
@@ -31839,11 +41403,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -31858,6 +41424,10 @@ export namespace Prisma {
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutBudgetSettingsInput = {
@@ -31871,11 +41441,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemCreateNestedManyWithoutUserInput
@@ -31890,6 +41462,10 @@ export namespace Prisma {
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutBudgetSettingsInput = {
@@ -31903,11 +41479,13 @@ export namespace Prisma {
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
+    timezone?: string | null
     telegramChatId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
     createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
     learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
@@ -31922,6 +41500,10 @@ export namespace Prisma {
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutBudgetSettingsInput = {
@@ -31951,11 +41533,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUpdateManyWithoutUserNestedInput
@@ -31970,6 +41554,10 @@ export namespace Prisma {
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutBudgetSettingsInput = {
@@ -31983,11 +41571,13 @@ export namespace Prisma {
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
     createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
     learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
@@ -32002,6 +41592,682 @@ export namespace Prisma {
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutTelegramLinkInput = {
+    id?: string
+    email: string
+    name: string
+    password: string
+    role?: $Enums.Role
+    active?: boolean
+    theme?: $Enums.Theme
+    notificationEnabled?: boolean
+    notificationChannel?: $Enums.NotificationChannel
+    notificationEmail?: string | null
+    timezone?: string | null
+    telegramChatId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    goals?: GoalCreateNestedManyWithoutUserInput
+    goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
+    projects?: ProjectCreateNestedManyWithoutAssigneeInput
+    createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
+    learningItems?: LearningItemCreateNestedManyWithoutUserInput
+    ideas?: IdeaCreateNestedManyWithoutUserInput
+    houseworkItems?: HouseworkItemCreateNestedManyWithoutAssigneeInput
+    createdHousework?: HouseworkItemCreateNestedManyWithoutCreatedByInput
+    assets?: AssetCreateNestedManyWithoutUserInput
+    maintenanceRecords?: MaintenanceRecordCreateNestedManyWithoutUserInput
+    calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
+    eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
+    expenses?: ExpenseCreateNestedManyWithoutUserInput
+    alertRules?: AlertRuleCreateNestedManyWithoutUserInput
+    scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
+    budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
+    refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutTelegramLinkInput = {
+    id?: string
+    email: string
+    name: string
+    password: string
+    role?: $Enums.Role
+    active?: boolean
+    theme?: $Enums.Theme
+    notificationEnabled?: boolean
+    notificationChannel?: $Enums.NotificationChannel
+    notificationEmail?: string | null
+    timezone?: string | null
+    telegramChatId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    goals?: GoalUncheckedCreateNestedManyWithoutUserInput
+    goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
+    projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
+    createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
+    learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
+    ideas?: IdeaUncheckedCreateNestedManyWithoutUserInput
+    houseworkItems?: HouseworkItemUncheckedCreateNestedManyWithoutAssigneeInput
+    createdHousework?: HouseworkItemUncheckedCreateNestedManyWithoutCreatedByInput
+    assets?: AssetUncheckedCreateNestedManyWithoutUserInput
+    maintenanceRecords?: MaintenanceRecordUncheckedCreateNestedManyWithoutUserInput
+    calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
+    eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
+    expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
+    scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
+    budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
+    refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutTelegramLinkInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutTelegramLinkInput, UserUncheckedCreateWithoutTelegramLinkInput>
+  }
+
+  export type UserUpsertWithoutTelegramLinkInput = {
+    update: XOR<UserUpdateWithoutTelegramLinkInput, UserUncheckedUpdateWithoutTelegramLinkInput>
+    create: XOR<UserCreateWithoutTelegramLinkInput, UserUncheckedCreateWithoutTelegramLinkInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutTelegramLinkInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutTelegramLinkInput, UserUncheckedUpdateWithoutTelegramLinkInput>
+  }
+
+  export type UserUpdateWithoutTelegramLinkInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    active?: BoolFieldUpdateOperationsInput | boolean
+    theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    goals?: GoalUpdateManyWithoutUserNestedInput
+    goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
+    projects?: ProjectUpdateManyWithoutAssigneeNestedInput
+    createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
+    learningItems?: LearningItemUpdateManyWithoutUserNestedInput
+    ideas?: IdeaUpdateManyWithoutUserNestedInput
+    houseworkItems?: HouseworkItemUpdateManyWithoutAssigneeNestedInput
+    createdHousework?: HouseworkItemUpdateManyWithoutCreatedByNestedInput
+    assets?: AssetUpdateManyWithoutUserNestedInput
+    maintenanceRecords?: MaintenanceRecordUpdateManyWithoutUserNestedInput
+    calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
+    eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
+    expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
+    scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
+    budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
+    refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutTelegramLinkInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    active?: BoolFieldUpdateOperationsInput | boolean
+    theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
+    goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
+    projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
+    createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
+    learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
+    ideas?: IdeaUncheckedUpdateManyWithoutUserNestedInput
+    houseworkItems?: HouseworkItemUncheckedUpdateManyWithoutAssigneeNestedInput
+    createdHousework?: HouseworkItemUncheckedUpdateManyWithoutCreatedByNestedInput
+    assets?: AssetUncheckedUpdateManyWithoutUserNestedInput
+    maintenanceRecords?: MaintenanceRecordUncheckedUpdateManyWithoutUserNestedInput
+    calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
+    eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+    expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
+    scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
+    budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
+    refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutAssistantMessagesInput = {
+    id?: string
+    email: string
+    name: string
+    password: string
+    role?: $Enums.Role
+    active?: boolean
+    theme?: $Enums.Theme
+    notificationEnabled?: boolean
+    notificationChannel?: $Enums.NotificationChannel
+    notificationEmail?: string | null
+    timezone?: string | null
+    telegramChatId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    goals?: GoalCreateNestedManyWithoutUserInput
+    goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
+    projects?: ProjectCreateNestedManyWithoutAssigneeInput
+    createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
+    learningItems?: LearningItemCreateNestedManyWithoutUserInput
+    ideas?: IdeaCreateNestedManyWithoutUserInput
+    houseworkItems?: HouseworkItemCreateNestedManyWithoutAssigneeInput
+    createdHousework?: HouseworkItemCreateNestedManyWithoutCreatedByInput
+    assets?: AssetCreateNestedManyWithoutUserInput
+    maintenanceRecords?: MaintenanceRecordCreateNestedManyWithoutUserInput
+    calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
+    eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
+    expenses?: ExpenseCreateNestedManyWithoutUserInput
+    alertRules?: AlertRuleCreateNestedManyWithoutUserInput
+    scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
+    budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
+    refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutAssistantMessagesInput = {
+    id?: string
+    email: string
+    name: string
+    password: string
+    role?: $Enums.Role
+    active?: boolean
+    theme?: $Enums.Theme
+    notificationEnabled?: boolean
+    notificationChannel?: $Enums.NotificationChannel
+    notificationEmail?: string | null
+    timezone?: string | null
+    telegramChatId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    goals?: GoalUncheckedCreateNestedManyWithoutUserInput
+    goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
+    projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
+    createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
+    learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
+    ideas?: IdeaUncheckedCreateNestedManyWithoutUserInput
+    houseworkItems?: HouseworkItemUncheckedCreateNestedManyWithoutAssigneeInput
+    createdHousework?: HouseworkItemUncheckedCreateNestedManyWithoutCreatedByInput
+    assets?: AssetUncheckedCreateNestedManyWithoutUserInput
+    maintenanceRecords?: MaintenanceRecordUncheckedCreateNestedManyWithoutUserInput
+    calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
+    eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
+    expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
+    scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
+    budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
+    refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutAssistantMessagesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutAssistantMessagesInput, UserUncheckedCreateWithoutAssistantMessagesInput>
+  }
+
+  export type UserUpsertWithoutAssistantMessagesInput = {
+    update: XOR<UserUpdateWithoutAssistantMessagesInput, UserUncheckedUpdateWithoutAssistantMessagesInput>
+    create: XOR<UserCreateWithoutAssistantMessagesInput, UserUncheckedCreateWithoutAssistantMessagesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutAssistantMessagesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutAssistantMessagesInput, UserUncheckedUpdateWithoutAssistantMessagesInput>
+  }
+
+  export type UserUpdateWithoutAssistantMessagesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    active?: BoolFieldUpdateOperationsInput | boolean
+    theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    goals?: GoalUpdateManyWithoutUserNestedInput
+    goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
+    projects?: ProjectUpdateManyWithoutAssigneeNestedInput
+    createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
+    learningItems?: LearningItemUpdateManyWithoutUserNestedInput
+    ideas?: IdeaUpdateManyWithoutUserNestedInput
+    houseworkItems?: HouseworkItemUpdateManyWithoutAssigneeNestedInput
+    createdHousework?: HouseworkItemUpdateManyWithoutCreatedByNestedInput
+    assets?: AssetUpdateManyWithoutUserNestedInput
+    maintenanceRecords?: MaintenanceRecordUpdateManyWithoutUserNestedInput
+    calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
+    eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
+    expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
+    scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
+    budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
+    refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutAssistantMessagesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    active?: BoolFieldUpdateOperationsInput | boolean
+    theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
+    goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
+    projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
+    createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
+    learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
+    ideas?: IdeaUncheckedUpdateManyWithoutUserNestedInput
+    houseworkItems?: HouseworkItemUncheckedUpdateManyWithoutAssigneeNestedInput
+    createdHousework?: HouseworkItemUncheckedUpdateManyWithoutCreatedByNestedInput
+    assets?: AssetUncheckedUpdateManyWithoutUserNestedInput
+    maintenanceRecords?: MaintenanceRecordUncheckedUpdateManyWithoutUserNestedInput
+    calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
+    eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+    expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
+    scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
+    budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
+    refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutAssistantActionLogsInput = {
+    id?: string
+    email: string
+    name: string
+    password: string
+    role?: $Enums.Role
+    active?: boolean
+    theme?: $Enums.Theme
+    notificationEnabled?: boolean
+    notificationChannel?: $Enums.NotificationChannel
+    notificationEmail?: string | null
+    timezone?: string | null
+    telegramChatId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    goals?: GoalCreateNestedManyWithoutUserInput
+    goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
+    projects?: ProjectCreateNestedManyWithoutAssigneeInput
+    createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
+    learningItems?: LearningItemCreateNestedManyWithoutUserInput
+    ideas?: IdeaCreateNestedManyWithoutUserInput
+    houseworkItems?: HouseworkItemCreateNestedManyWithoutAssigneeInput
+    createdHousework?: HouseworkItemCreateNestedManyWithoutCreatedByInput
+    assets?: AssetCreateNestedManyWithoutUserInput
+    maintenanceRecords?: MaintenanceRecordCreateNestedManyWithoutUserInput
+    calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
+    eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
+    expenses?: ExpenseCreateNestedManyWithoutUserInput
+    alertRules?: AlertRuleCreateNestedManyWithoutUserInput
+    scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
+    budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
+    refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutAssistantActionLogsInput = {
+    id?: string
+    email: string
+    name: string
+    password: string
+    role?: $Enums.Role
+    active?: boolean
+    theme?: $Enums.Theme
+    notificationEnabled?: boolean
+    notificationChannel?: $Enums.NotificationChannel
+    notificationEmail?: string | null
+    timezone?: string | null
+    telegramChatId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    goals?: GoalUncheckedCreateNestedManyWithoutUserInput
+    goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
+    projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
+    createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
+    learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
+    ideas?: IdeaUncheckedCreateNestedManyWithoutUserInput
+    houseworkItems?: HouseworkItemUncheckedCreateNestedManyWithoutAssigneeInput
+    createdHousework?: HouseworkItemUncheckedCreateNestedManyWithoutCreatedByInput
+    assets?: AssetUncheckedCreateNestedManyWithoutUserInput
+    maintenanceRecords?: MaintenanceRecordUncheckedCreateNestedManyWithoutUserInput
+    calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
+    eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
+    expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
+    scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
+    budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
+    refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutAssistantActionLogsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutAssistantActionLogsInput, UserUncheckedCreateWithoutAssistantActionLogsInput>
+  }
+
+  export type UserUpsertWithoutAssistantActionLogsInput = {
+    update: XOR<UserUpdateWithoutAssistantActionLogsInput, UserUncheckedUpdateWithoutAssistantActionLogsInput>
+    create: XOR<UserCreateWithoutAssistantActionLogsInput, UserUncheckedCreateWithoutAssistantActionLogsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutAssistantActionLogsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutAssistantActionLogsInput, UserUncheckedUpdateWithoutAssistantActionLogsInput>
+  }
+
+  export type UserUpdateWithoutAssistantActionLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    active?: BoolFieldUpdateOperationsInput | boolean
+    theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    goals?: GoalUpdateManyWithoutUserNestedInput
+    goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
+    projects?: ProjectUpdateManyWithoutAssigneeNestedInput
+    createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
+    learningItems?: LearningItemUpdateManyWithoutUserNestedInput
+    ideas?: IdeaUpdateManyWithoutUserNestedInput
+    houseworkItems?: HouseworkItemUpdateManyWithoutAssigneeNestedInput
+    createdHousework?: HouseworkItemUpdateManyWithoutCreatedByNestedInput
+    assets?: AssetUpdateManyWithoutUserNestedInput
+    maintenanceRecords?: MaintenanceRecordUpdateManyWithoutUserNestedInput
+    calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
+    eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
+    expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
+    scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
+    budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
+    refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutAssistantActionLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    active?: BoolFieldUpdateOperationsInput | boolean
+    theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
+    goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
+    projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
+    createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
+    learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
+    ideas?: IdeaUncheckedUpdateManyWithoutUserNestedInput
+    houseworkItems?: HouseworkItemUncheckedUpdateManyWithoutAssigneeNestedInput
+    createdHousework?: HouseworkItemUncheckedUpdateManyWithoutCreatedByNestedInput
+    assets?: AssetUncheckedUpdateManyWithoutUserNestedInput
+    maintenanceRecords?: MaintenanceRecordUncheckedUpdateManyWithoutUserNestedInput
+    calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
+    eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+    expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
+    scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
+    budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
+    refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutAssistantPendingActionsInput = {
+    id?: string
+    email: string
+    name: string
+    password: string
+    role?: $Enums.Role
+    active?: boolean
+    theme?: $Enums.Theme
+    notificationEnabled?: boolean
+    notificationChannel?: $Enums.NotificationChannel
+    notificationEmail?: string | null
+    timezone?: string | null
+    telegramChatId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    goals?: GoalCreateNestedManyWithoutUserInput
+    goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
+    projects?: ProjectCreateNestedManyWithoutAssigneeInput
+    createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
+    learningItems?: LearningItemCreateNestedManyWithoutUserInput
+    ideas?: IdeaCreateNestedManyWithoutUserInput
+    houseworkItems?: HouseworkItemCreateNestedManyWithoutAssigneeInput
+    createdHousework?: HouseworkItemCreateNestedManyWithoutCreatedByInput
+    assets?: AssetCreateNestedManyWithoutUserInput
+    maintenanceRecords?: MaintenanceRecordCreateNestedManyWithoutUserInput
+    calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
+    eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
+    expenses?: ExpenseCreateNestedManyWithoutUserInput
+    alertRules?: AlertRuleCreateNestedManyWithoutUserInput
+    scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
+    budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
+    refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutAssistantPendingActionsInput = {
+    id?: string
+    email: string
+    name: string
+    password: string
+    role?: $Enums.Role
+    active?: boolean
+    theme?: $Enums.Theme
+    notificationEnabled?: boolean
+    notificationChannel?: $Enums.NotificationChannel
+    notificationEmail?: string | null
+    timezone?: string | null
+    telegramChatId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    goals?: GoalUncheckedCreateNestedManyWithoutUserInput
+    goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
+    projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
+    createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
+    learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
+    ideas?: IdeaUncheckedCreateNestedManyWithoutUserInput
+    houseworkItems?: HouseworkItemUncheckedCreateNestedManyWithoutAssigneeInput
+    createdHousework?: HouseworkItemUncheckedCreateNestedManyWithoutCreatedByInput
+    assets?: AssetUncheckedCreateNestedManyWithoutUserInput
+    maintenanceRecords?: MaintenanceRecordUncheckedCreateNestedManyWithoutUserInput
+    calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
+    eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
+    expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
+    scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
+    budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
+    refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutAssistantPendingActionsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutAssistantPendingActionsInput, UserUncheckedCreateWithoutAssistantPendingActionsInput>
+  }
+
+  export type UserUpsertWithoutAssistantPendingActionsInput = {
+    update: XOR<UserUpdateWithoutAssistantPendingActionsInput, UserUncheckedUpdateWithoutAssistantPendingActionsInput>
+    create: XOR<UserCreateWithoutAssistantPendingActionsInput, UserUncheckedCreateWithoutAssistantPendingActionsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutAssistantPendingActionsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutAssistantPendingActionsInput, UserUncheckedUpdateWithoutAssistantPendingActionsInput>
+  }
+
+  export type UserUpdateWithoutAssistantPendingActionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    active?: BoolFieldUpdateOperationsInput | boolean
+    theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    goals?: GoalUpdateManyWithoutUserNestedInput
+    goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
+    projects?: ProjectUpdateManyWithoutAssigneeNestedInput
+    createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
+    learningItems?: LearningItemUpdateManyWithoutUserNestedInput
+    ideas?: IdeaUpdateManyWithoutUserNestedInput
+    houseworkItems?: HouseworkItemUpdateManyWithoutAssigneeNestedInput
+    createdHousework?: HouseworkItemUpdateManyWithoutCreatedByNestedInput
+    assets?: AssetUpdateManyWithoutUserNestedInput
+    maintenanceRecords?: MaintenanceRecordUpdateManyWithoutUserNestedInput
+    calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
+    eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
+    expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
+    scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
+    budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
+    refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutAssistantPendingActionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    active?: BoolFieldUpdateOperationsInput | boolean
+    theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
+    goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
+    projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
+    createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
+    learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
+    ideas?: IdeaUncheckedUpdateManyWithoutUserNestedInput
+    houseworkItems?: HouseworkItemUncheckedUpdateManyWithoutAssigneeNestedInput
+    createdHousework?: HouseworkItemUncheckedUpdateManyWithoutCreatedByNestedInput
+    assets?: AssetUncheckedUpdateManyWithoutUserNestedInput
+    maintenanceRecords?: MaintenanceRecordUncheckedUpdateManyWithoutUserNestedInput
+    calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
+    eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+    expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
+    scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
+    budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
+    refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type GoalCreateManyUserInput = {
@@ -32027,6 +42293,22 @@ export namespace Prisma {
     note?: string | null
     date?: Date | string
     createdAt?: Date | string
+  }
+
+  export type TaskCreateManyUserInput = {
+    id?: string
+    title: string
+    description?: string | null
+    isShared?: boolean
+    dueDate?: Date | string | null
+    priority?: $Enums.Priority
+    status?: $Enums.ProjectStatus
+    notificationEnabled?: boolean
+    pinToDashboard?: boolean
+    sortOrder?: number
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type ProjectCreateManyAssigneeInput = {
@@ -32071,6 +42353,7 @@ export namespace Prisma {
     deadline?: Date | string | null
     status?: $Enums.ProjectStatus
     notificationEnabled?: boolean
+    pinToDashboard?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -32082,6 +42365,7 @@ export namespace Prisma {
     category?: string | null
     tags?: string | null
     status?: $Enums.IdeaStatus
+    pinToDashboard?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -32184,24 +42468,34 @@ export namespace Prisma {
     name: string
     moduleType: string
     frequency?: $Enums.AlertFrequency
+    dayOfWeek?: number | null
+    dayOfMonth?: number | null
+    time?: string | null
     conditionType: string
     conditionValue?: string | null
+    cooldownHours?: number
+    lastSentAt?: Date | string | null
     notificationChannel?: $Enums.NotificationChannel
     active?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type ScheduledReportCreateManyUserInput = {
     id?: string
+    name: string
     reportType: string
     dateRangePreset?: string | null
     frequency?: $Enums.ReportFrequency
+    dayOfMonth?: number | null
     dayOfWeek?: number | null
     time?: string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: $Enums.NotificationChannel
-    recipients?: string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -32219,6 +42513,40 @@ export namespace Prisma {
   export type RefreshTokenCreateManyUserInput = {
     id?: string
     token: string
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type AssistantMessageCreateManyUserInput = {
+    id?: string
+    channel: $Enums.AssistantChannel
+    externalMessageId?: string | null
+    direction: $Enums.MessageDirection
+    rawText: string
+    normalizedText?: string | null
+    intent?: string | null
+    confidence?: number | null
+    createdAt?: Date | string
+  }
+
+  export type AssistantActionLogCreateManyUserInput = {
+    id?: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    confidence?: number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus: $Enums.ExecutionStatus
+    resultSummary?: string | null
+    errorMessage?: string | null
+    createdAt?: Date | string
+  }
+
+  export type AssistantPendingActionCreateManyUserInput = {
+    id?: string
+    channel: $Enums.AssistantChannel
+    intent: string
+    payload: JsonNullValueInput | InputJsonValue
     expiresAt: Date | string
     createdAt?: Date | string
   }
@@ -32298,6 +42626,54 @@ export namespace Prisma {
     note?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TaskUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isShared?: BoolFieldUpdateOperationsInput | boolean
+    dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    priority?: EnumPriorityFieldUpdateOperationsInput | $Enums.Priority
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TaskUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isShared?: BoolFieldUpdateOperationsInput | boolean
+    dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    priority?: EnumPriorityFieldUpdateOperationsInput | $Enums.Priority
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TaskUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isShared?: BoolFieldUpdateOperationsInput | boolean
+    dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    priority?: EnumPriorityFieldUpdateOperationsInput | $Enums.Priority
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ProjectUpdateWithoutAssigneeInput = {
@@ -32406,6 +42782,7 @@ export namespace Prisma {
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32420,6 +42797,7 @@ export namespace Prisma {
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32434,6 +42812,7 @@ export namespace Prisma {
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32445,6 +42824,7 @@ export namespace Prisma {
     category?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32456,6 +42836,7 @@ export namespace Prisma {
     category?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32467,6 +42848,7 @@ export namespace Prisma {
     category?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
+    pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32759,10 +43141,16 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     moduleType?: StringFieldUpdateOperationsInput | string
     frequency?: EnumAlertFrequencyFieldUpdateOperationsInput | $Enums.AlertFrequency
+    dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
     conditionType?: StringFieldUpdateOperationsInput | string
     conditionValue?: NullableStringFieldUpdateOperationsInput | string | null
+    cooldownHours?: IntFieldUpdateOperationsInput | number
+    lastSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32772,10 +43160,16 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     moduleType?: StringFieldUpdateOperationsInput | string
     frequency?: EnumAlertFrequencyFieldUpdateOperationsInput | $Enums.AlertFrequency
+    dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
     conditionType?: StringFieldUpdateOperationsInput | string
     conditionValue?: NullableStringFieldUpdateOperationsInput | string | null
+    cooldownHours?: IntFieldUpdateOperationsInput | number
+    lastSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32785,52 +43179,70 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     moduleType?: StringFieldUpdateOperationsInput | string
     frequency?: EnumAlertFrequencyFieldUpdateOperationsInput | $Enums.AlertFrequency
+    dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
     conditionType?: StringFieldUpdateOperationsInput | string
     conditionValue?: NullableStringFieldUpdateOperationsInput | string | null
+    cooldownHours?: IntFieldUpdateOperationsInput | number
+    lastSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ScheduledReportUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
     reportType?: StringFieldUpdateOperationsInput | string
     dateRangePreset?: NullableStringFieldUpdateOperationsInput | string | null
     frequency?: EnumReportFrequencyFieldUpdateOperationsInput | $Enums.ReportFrequency
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
     dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
-    recipients?: NullableStringFieldUpdateOperationsInput | string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ScheduledReportUncheckedUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
     reportType?: StringFieldUpdateOperationsInput | string
     dateRangePreset?: NullableStringFieldUpdateOperationsInput | string | null
     frequency?: EnumReportFrequencyFieldUpdateOperationsInput | $Enums.ReportFrequency
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
     dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
-    recipients?: NullableStringFieldUpdateOperationsInput | string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ScheduledReportUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
     reportType?: StringFieldUpdateOperationsInput | string
     dateRangePreset?: NullableStringFieldUpdateOperationsInput | string | null
     frequency?: EnumReportFrequencyFieldUpdateOperationsInput | $Enums.ReportFrequency
+    dayOfMonth?: NullableIntFieldUpdateOperationsInput | number | null
     dayOfWeek?: NullableIntFieldUpdateOperationsInput | number | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    sections?: NullableJsonNullValueInput | InputJsonValue
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
-    recipients?: NullableStringFieldUpdateOperationsInput | string | null
+    recipients?: NullableJsonNullValueInput | InputJsonValue
     active?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32882,6 +43294,108 @@ export namespace Prisma {
   export type RefreshTokenUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantMessageUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    externalMessageId?: NullableStringFieldUpdateOperationsInput | string | null
+    direction?: EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
+    rawText?: StringFieldUpdateOperationsInput | string
+    normalizedText?: NullableStringFieldUpdateOperationsInput | string | null
+    intent?: NullableStringFieldUpdateOperationsInput | string | null
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantMessageUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    externalMessageId?: NullableStringFieldUpdateOperationsInput | string | null
+    direction?: EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
+    rawText?: StringFieldUpdateOperationsInput | string
+    normalizedText?: NullableStringFieldUpdateOperationsInput | string | null
+    intent?: NullableStringFieldUpdateOperationsInput | string | null
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantMessageUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    externalMessageId?: NullableStringFieldUpdateOperationsInput | string | null
+    direction?: EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
+    rawText?: StringFieldUpdateOperationsInput | string
+    normalizedText?: NullableStringFieldUpdateOperationsInput | string | null
+    intent?: NullableStringFieldUpdateOperationsInput | string | null
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantActionLogUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus?: EnumExecutionStatusFieldUpdateOperationsInput | $Enums.ExecutionStatus
+    resultSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantActionLogUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus?: EnumExecutionStatusFieldUpdateOperationsInput | $Enums.ExecutionStatus
+    resultSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantActionLogUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    requestPayload?: NullableJsonNullValueInput | InputJsonValue
+    resolvedEntities?: NullableJsonNullValueInput | InputJsonValue
+    executionStatus?: EnumExecutionStatusFieldUpdateOperationsInput | $Enums.ExecutionStatus
+    resultSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantPendingActionUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantPendingActionUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AssistantPendingActionUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumAssistantChannelFieldUpdateOperationsInput | $Enums.AssistantChannel
+    intent?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

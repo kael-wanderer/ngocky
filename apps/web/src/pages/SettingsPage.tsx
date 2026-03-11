@@ -1,8 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
-import { Settings as SettingsIcon, User, Bell, Palette, Shield, Camera } from 'lucide-react';
+import { Settings as SettingsIcon, User, Bell, Palette, Shield, Camera, Bot, Copy, Check, ExternalLink, Unlink } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 function resizeImageToBase64(file: File, maxSize = 128): Promise<string> {
@@ -29,6 +29,9 @@ export default function SettingsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [tab, setTab] = useState(() => searchParams.get('tab') || 'profile');
     const [msg, setMsg] = useState('');
+    const [linkCode, setLinkCode] = useState<{ code: string; expiresAt: string } | null>(null);
+    const [secondsLeft, setSecondsLeft] = useState(0);
+    const [copied, setCopied] = useState(false);
     const [mfaEnableCode, setMfaEnableCode] = useState('');
     const [mfaDisableCode, setMfaDisableCode] = useState('');
     const [profileForm, setProfileForm] = useState({ name: '', email: '', timezone: 'Asia/Ho_Chi_Minh' });
@@ -39,6 +42,44 @@ export default function SettingsPage() {
         telegramChatId: '',
     });
     const mfaDisableInputRef = useRef<HTMLInputElement>(null);
+
+    const { data: assistantLink, refetch: refetchLink } = useQuery({
+        queryKey: ['assistant-link-status'],
+        queryFn: async () => (await api.get('/assistant/link-status')).data,
+    });
+
+    const generateCode = useMutation({
+        mutationFn: async () => (await api.post('/assistant/link-code')).data,
+        onSuccess: (data) => {
+            setLinkCode({ code: data.code, expiresAt: data.expiresAt });
+            setSecondsLeft(15 * 60);
+        },
+        onError: (e: any) => setMsg(e.response?.data?.message || 'Failed to generate code'),
+    });
+
+    const revokeLink = useMutation({
+        mutationFn: () => api.delete('/assistant/telegram/link'),
+        onSuccess: () => {
+            setLinkCode(null);
+            refetchLink();
+            setMsg('Telegram disconnected.');
+            setTimeout(() => setMsg(''), 3000);
+        },
+        onError: (e: any) => setMsg(e.response?.data?.message || 'Failed to disconnect'),
+    });
+
+    useEffect(() => {
+        if (secondsLeft <= 0) return;
+        const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
+        return () => clearTimeout(t);
+    }, [secondsLeft]);
+
+    const handleCopy = () => {
+        if (!linkCode) return;
+        navigator.clipboard.writeText(`/link ${linkCode.code}`);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     const { data: profile } = useQuery({
         queryKey: ['profile'],
@@ -168,6 +209,7 @@ export default function SettingsPage() {
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'theme', label: 'Theme', icon: Palette },
         { id: 'security', label: 'Security', icon: Shield },
+        { id: 'assistant', label: 'Assistant', icon: Bot },
     ];
 
     const themes = [
@@ -487,6 +529,131 @@ export default function SettingsPage() {
                             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                                 Theme changes apply immediately. No logout is required.
                             </p>
+                        </div>
+                    )}
+
+                    {/* Assistant */}
+                    {tab === 'assistant' && (
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Telegram Assistant</h3>
+                                <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                    Connect your Telegram account to manage tasks, log expenses, and query your calendar via chat.
+                                </p>
+                            </div>
+
+                            {/* Linked state */}
+                            {assistantLink?.linked && (
+                                <div className="rounded-xl border p-5 space-y-4" style={{ borderColor: 'var(--color-border)' }}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center">
+                                            <Bot className="w-5 h-5 text-emerald-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
+                                                Connected
+                                                {assistantLink.link?.telegramUsername && (
+                                                    <span className="ml-1.5 font-normal" style={{ color: 'var(--color-text-secondary)' }}>
+                                                        @{assistantLink.link.telegramUsername}
+                                                    </span>
+                                                )}
+                                            </p>
+                                            {assistantLink.link?.verifiedAt && (
+                                                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                                    Linked {new Date(assistantLink.link.verifiedAt).toLocaleDateString()}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <a
+                                            href="https://t.me/ngocky_notification_bot"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="btn-secondary text-sm flex items-center gap-1.5"
+                                        >
+                                            <ExternalLink className="w-3.5 h-3.5" /> Open Bot
+                                        </a>
+                                        <button
+                                            className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-600 transition-colors"
+                                            onClick={() => revokeLink.mutate()}
+                                            disabled={revokeLink.isPending}
+                                        >
+                                            <Unlink className="w-3.5 h-3.5" />
+                                            {revokeLink.isPending ? 'Disconnecting...' : 'Disconnect'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Unlinked state */}
+                            {!assistantLink?.linked && (
+                                <div className="rounded-xl border p-5 space-y-5" style={{ borderColor: 'var(--color-border)' }}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-light)' }}>
+                                            <Bot className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
+                                        </div>
+                                        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                                            Not connected. Generate a link code to connect.
+                                        </p>
+                                    </div>
+
+                                    {/* Code display */}
+                                    {linkCode && secondsLeft > 0 ? (
+                                        <div className="space-y-3">
+                                            <div className="rounded-lg p-4 space-y-3" style={{ backgroundColor: 'var(--color-primary-light)' }}>
+                                                <p className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                                                    Send this command to{' '}
+                                                    <a href="https://t.me/ngocky_notification_bot" target="_blank" rel="noreferrer" className="underline font-semibold" style={{ color: 'var(--color-primary)' }}>
+                                                        @ngocky_notification_bot
+                                                    </a>
+                                                </p>
+                                                <div className="flex items-center gap-3">
+                                                    <code className="flex-1 font-mono text-lg font-bold tracking-widest text-center py-2 rounded-lg" style={{ color: 'var(--color-primary)', backgroundColor: 'var(--color-bg)' }}>
+                                                        /link {linkCode.code}
+                                                    </code>
+                                                    <button
+                                                        onClick={handleCopy}
+                                                        className="p-2 rounded-lg transition-colors"
+                                                        style={{ backgroundColor: 'var(--color-bg)' }}
+                                                        title="Copy command"
+                                                    >
+                                                        {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />}
+                                                    </button>
+                                                </div>
+                                                <p className="text-xs text-center" style={{ color: 'var(--color-text-secondary)' }}>
+                                                    Expires in {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
+                                                </p>
+                                            </div>
+                                            <button
+                                                className="text-sm underline"
+                                                style={{ color: 'var(--color-primary)' }}
+                                                onClick={() => generateCode.mutate()}
+                                            >
+                                                Generate new code
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            className="btn-primary"
+                                            onClick={() => generateCode.mutate()}
+                                            disabled={generateCode.isPending}
+                                        >
+                                            {generateCode.isPending ? 'Generating...' : 'Generate Link Code'}
+                                        </button>
+                                    )}
+
+                                    <div className="text-xs space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                        <p className="font-medium" style={{ color: 'var(--color-text)' }}>How to connect:</p>
+                                        <ol className="list-decimal list-inside space-y-1">
+                                            <li>Click <strong>Generate Link Code</strong> above</li>
+                                            <li>Open <a href="https://t.me/ngocky_notification_bot" target="_blank" rel="noreferrer" className="underline" style={{ color: 'var(--color-primary)' }}>@ngocky_notification_bot</a> on Telegram</li>
+                                            <li>Send the <code className="font-mono">/link CODE</code> command shown above</li>
+                                            <li>Refresh this page to see your connected status</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 

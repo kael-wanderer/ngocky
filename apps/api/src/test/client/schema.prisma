@@ -19,6 +19,7 @@ enum Role {
 enum PeriodType {
   WEEKLY
   MONTHLY
+  QUARTERLY
 }
 
 enum ProjectStatus {
@@ -65,12 +66,14 @@ enum NotificationChannel {
 enum AlertFrequency {
   DAILY
   WEEKLY
+  MONTHLY
 }
 
 enum ReportFrequency {
   DAILY
   WEEKLY
   MONTHLY
+  QUARTERLY
 }
 
 enum BudgetPeriod {
@@ -83,6 +86,22 @@ enum Theme {
   BLUE_PURPLE
   GREY_BLACK
   RED_ACCENT
+}
+
+enum AssistantChannel {
+  TELEGRAM
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum ExecutionStatus {
+  SUCCESS
+  FAILED
+  PENDING_CONFIRMATION
+  CANCELLED
 }
 
 // ─── User ───────────────────────────────────────────
@@ -98,28 +117,34 @@ model User {
   notificationEnabled Boolean             @default(true)
   notificationChannel NotificationChannel @default(EMAIL)
   notificationEmail   String?
+  timezone            String?             @default("Asia/Ho_Chi_Minh")
   telegramChatId      String?
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
   // Relations
-  goals              Goal[]
-  goalCheckIns       GoalCheckIn[]
-  projects           Project[]           @relation("ProjectAssignee")
-  createdProjects    Project[]           @relation("ProjectCreator")
-  learningItems      LearningItem[]
-  ideas              Idea[]
-  houseworkItems     HouseworkItem[]     @relation("HouseworkAssignee")
-  createdHousework   HouseworkItem[]     @relation("HouseworkCreator")
-  assets             Asset[]
-  maintenanceRecords MaintenanceRecord[]
-  calendarEvents     CalendarEvent[]     @relation("EventCreator")
-  eventParticipants  EventParticipant[]
-  expenses           Expense[]
-  alertRules         AlertRule[]
-  scheduledReports   ScheduledReport[]
-  budgetSettings     BudgetSetting[]
-  refreshTokens      RefreshToken[]
+  goals                   Goal[]
+  goalCheckIns            GoalCheckIn[]
+  tasks                   Task[]
+  projects                Project[]                @relation("ProjectAssignee")
+  createdProjects         Project[]                @relation("ProjectCreator")
+  learningItems           LearningItem[]
+  ideas                   Idea[]
+  houseworkItems          HouseworkItem[]          @relation("HouseworkAssignee")
+  createdHousework        HouseworkItem[]          @relation("HouseworkCreator")
+  assets                  Asset[]
+  maintenanceRecords      MaintenanceRecord[]
+  calendarEvents          CalendarEvent[]          @relation("EventCreator")
+  eventParticipants       EventParticipant[]
+  expenses                Expense[]
+  alertRules              AlertRule[]
+  scheduledReports        ScheduledReport[]
+  budgetSettings          BudgetSetting[]
+  refreshTokens           RefreshToken[]
+  telegramLink            TelegramLink?
+  assistantMessages       AssistantMessage[]
+  assistantActionLogs     AssistantActionLog[]
+  assistantPendingActions AssistantPendingAction[]
 }
 
 model RefreshToken {
@@ -174,6 +199,28 @@ model GoalCheckIn {
   @@index([userId])
 }
 
+model Task {
+  id                  String        @id @default(cuid())
+  title               String
+  description         String?
+  userId              String
+  isShared            Boolean       @default(false)
+  dueDate             DateTime?
+  priority            Priority      @default(MEDIUM)
+  status              ProjectStatus @default(PLANNED)
+  notificationEnabled Boolean       @default(false)
+  pinToDashboard      Boolean       @default(false)
+  sortOrder           Int           @default(0)
+  completedAt         DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
 // ─── Projects ───────────────────────────────────────
 
 model Project {
@@ -213,6 +260,7 @@ model LearningItem {
   status              ProjectStatus @default(PLANNED)
   userId              String
   notificationEnabled Boolean       @default(false)
+  pinToDashboard      Boolean       @default(false)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
@@ -224,15 +272,16 @@ model LearningItem {
 // ─── Ideas ──────────────────────────────────────────
 
 model Idea {
-  id        String     @id @default(cuid())
-  title     String
-  content   String?
-  category  String?
-  tags      String?
-  status    IdeaStatus @default(OPEN)
-  userId    String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id             String     @id @default(cuid())
+  title          String
+  content        String?
+  category       String?
+  tags           String?
+  status         IdeaStatus @default(OPEN)
+  userId         String
+  pinToDashboard Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -370,10 +419,16 @@ model AlertRule {
   name                String
   moduleType          String
   frequency           AlertFrequency      @default(DAILY)
+  dayOfWeek           Int?
+  dayOfMonth          Int?
+  time                String?
   conditionType       String
   conditionValue      String?
+  cooldownHours       Int                 @default(24)
+  lastSentAt          DateTime?
   notificationChannel NotificationChannel @default(EMAIL)
   active              Boolean             @default(true)
+  sortOrder           Int                 @default(0)
   userId              String
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
@@ -387,14 +442,18 @@ model AlertRule {
 
 model ScheduledReport {
   id                  String              @id @default(cuid())
+  name                String
   reportType          String
   dateRangePreset     String?
   frequency           ReportFrequency     @default(WEEKLY)
+  dayOfMonth          Int?
   dayOfWeek           Int?
   time                String?
+  sections            Json?
   notificationChannel NotificationChannel @default(EMAIL)
-  recipients          String?
+  recipients          Json?
   active              Boolean             @default(true)
+  sortOrder           Int                 @default(0)
   userId              String
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
@@ -415,6 +474,72 @@ model BudgetSetting {
   userId    String
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model TelegramLink {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  telegramChatId    String    @unique
+  telegramUserId    String
+  telegramUsername  String?
+  linkCode          String?
+  linkCodeExpiresAt DateTime?
+  verifiedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([telegramChatId])
+}
+
+model AssistantMessage {
+  id                String           @id @default(cuid())
+  userId            String
+  channel           AssistantChannel
+  externalMessageId String?
+  direction         MessageDirection
+  rawText           String
+  normalizedText    String?
+  intent            String?
+  confidence        Float?
+  createdAt         DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AssistantActionLog {
+  id               String           @id @default(cuid())
+  userId           String
+  channel          AssistantChannel
+  intent           String
+  confidence       Float?
+  requestPayload   Json?
+  resolvedEntities Json?
+  executionStatus  ExecutionStatus
+  resultSummary    String?
+  errorMessage     String?
+  createdAt        DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AssistantPendingAction {
+  id        String           @id @default(cuid())
+  userId    String
+  channel   AssistantChannel
+  intent    String
+  payload   Json
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

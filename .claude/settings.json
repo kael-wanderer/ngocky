@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//private/tmp/**)",
+      "Bash(npm run:*)",
+      "Bash(npm uninstall:*)"
+    ]
+  }
+}

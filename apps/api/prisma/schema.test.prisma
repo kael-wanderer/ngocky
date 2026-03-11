@@ -88,6 +88,22 @@ enum Theme {
   RED_ACCENT
 }
 
+enum AssistantChannel {
+  TELEGRAM
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum ExecutionStatus {
+  SUCCESS
+  FAILED
+  PENDING_CONFIRMATION
+  CANCELLED
+}
+
 // ─── User ───────────────────────────────────────────
 
 model User {
@@ -101,6 +117,7 @@ model User {
   notificationEnabled Boolean             @default(true)
   notificationChannel NotificationChannel @default(EMAIL)
   notificationEmail   String?
+  timezone            String?             @default("Asia/Ho_Chi_Minh")
   telegramChatId      String?
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
@@ -124,6 +141,10 @@ model User {
   scheduledReports    ScheduledReport[]
   budgetSettings      BudgetSetting[]
   refreshTokens       RefreshToken[]
+  telegramLink            TelegramLink?
+  assistantMessages       AssistantMessage[]
+  assistantActionLogs     AssistantActionLog[]
+  assistantPendingActions AssistantPendingAction[]
 }
 
 model RefreshToken {
@@ -189,6 +210,7 @@ model Task {
   status              ProjectStatus @default(PLANNED)
   notificationEnabled Boolean       @default(false)
   pinToDashboard      Boolean       @default(false)
+  sortOrder           Int           @default(0)
   completedAt         DateTime?
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
@@ -427,9 +449,9 @@ model ScheduledReport {
   dayOfMonth          Int?
   dayOfWeek           Int?
   time                String?
-  sections            String[]
+  sections            Json?
   notificationChannel NotificationChannel @default(EMAIL)
-  recipients          String[]
+  recipients          Json?
   active              Boolean             @default(true)
   sortOrder           Int                 @default(0)
   userId              String
@@ -452,6 +474,72 @@ model BudgetSetting {
   userId   String
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model TelegramLink {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  telegramChatId    String    @unique
+  telegramUserId    String
+  telegramUsername  String?
+  linkCode          String?
+  linkCodeExpiresAt DateTime?
+  verifiedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([telegramChatId])
+}
+
+model AssistantMessage {
+  id                String           @id @default(cuid())
+  userId            String
+  channel           AssistantChannel
+  externalMessageId String?
+  direction         MessageDirection
+  rawText           String
+  normalizedText    String?
+  intent            String?
+  confidence        Float?
+  createdAt         DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AssistantActionLog {
+  id               String           @id @default(cuid())
+  userId           String
+  channel          AssistantChannel
+  intent           String
+  confidence       Float?
+  requestPayload   Json?
+  resolvedEntities Json?
+  executionStatus  ExecutionStatus
+  resultSummary    String?
+  errorMessage     String?
+  createdAt        DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AssistantPendingAction {
+  id        String           @id @default(cuid())
+  userId    String
+  channel   AssistantChannel
+  intent    String
+  payload   Json
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

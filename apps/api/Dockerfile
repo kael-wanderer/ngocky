@@ -9,7 +9,6 @@ RUN npm install --workspace=apps/api
 COPY apps/api/ ./apps/api/
 RUN cd apps/api && npx prisma generate && npm run build
 
-# ── Production stage ───────────────────────────
 FROM node:20-alpine
 WORKDIR /app
 

@@ -1,15 +1,18 @@
 import { beforeAll, beforeEach, afterAll } from 'vitest';
-import { prisma } from '../config/database';
 import { execSync } from 'child_process';
 
-// We override the DATABASE_URL to use an in-memory or file-based SQLite for tests
-// NOTE: In a real monorepo setup, you'd often use a .env.test file
 process.env.DATABASE_URL = 'file:./test.db';
+let prisma: any;
 
 beforeAll(async () => {
-    // Run migrations on the test database using the test schema
+    // Sync the SQLite test schema directly instead of replaying the main
+    // Postgres migration history.
     console.log('--- Setting up test database ---');
-    execSync('npx prisma migrate dev --name init --schema prisma/schema.test.prisma --skip-generate', { stdio: 'inherit' });
+    execSync(
+        'npx prisma db push --schema prisma/schema.test.prisma --accept-data-loss',
+        { stdio: 'inherit' },
+    );
+    ({ prisma } = await import('../config/database'));
 });
 
 beforeEach(async () => {

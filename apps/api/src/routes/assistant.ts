@@ -11,8 +11,21 @@ import {
     logMessage,
     resolveUserByChatId,
 } from '../services/assistant/telegram';
-import { HELP_TEXT, UNLINKED_TEXT } from '../services/assistant/policies';
+import { ASSISTANT_POLICIES, HELP_TEXT, UNLINKED_TEXT, WELCOME_TEXT, WRITE_INTENTS } from '../services/assistant/policies';
+import { normalizeMessage } from '../services/assistant/messageNormalizer';
+import { parseIntent, type ParsedIntent } from '../services/assistant/intentParser';
+import { executeIntent, logAssistantAction } from '../services/assistant/actionExecutor';
+import { todayISO } from '../services/assistant/utils';
+import { prisma } from '../config/database';
 import { MessageDirection } from '@prisma/client';
+import {
+    buildLowConfidencePending,
+    createPendingAction,
+    getActivePendingAction,
+    resolvePendingActionReply,
+    type PendingActionPayload,
+} from '../services/assistant/pendingActions';
+import type { ResolverContext, ResolverResult } from '../services/assistant/resolvers/types';
 
 const router = Router();
 
@@ -122,28 +135,129 @@ router.post(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { chatId, telegramUserId, telegramUsername, messageId, text } = req.body;
+            const trimmed = text.trim();
 
-            // Handle /help command directly
-            if (text.trim().toLowerCase() === '/help' || text.trim().toLowerCase() === 'help') {
+            // ── Commands that don't require a linked account ──────────────────
+
+            if (trimmed === '/start') {
+                return res.json({ ok: true, reply: WELCOME_TEXT, requiresConfirmation: false });
+            }
+
+            if (trimmed === '/help' || trimmed.toLowerCase() === 'help') {
                 return res.json({ ok: true, reply: HELP_TEXT, requiresConfirmation: false });
             }
 
-            // Resolve linked user
+            // /link <CODE> — verify and bind the account
+            const linkMatch = trimmed.match(/^\/link\s+([A-Z0-9]{8})$/i);
+            if (linkMatch) {
+                const code = linkMatch[1].toUpperCase();
+                try {
+                    const result = await verifyLinkCode(chatId, telegramUserId, telegramUsername, code);
+                    return res.json({ ok: true, reply: result.reply, requiresConfirmation: false });
+                } catch (err: any) {
+                    return res.json({ ok: false, reply: err.message ?? 'Link verification failed\\.', requiresConfirmation: false });
+                }
+            }
+
+            // ── All other commands require a linked account ───────────────────
+
             const userId = await resolveUserByChatId(chatId);
             if (!userId) {
                 return res.json({ ok: true, reply: UNLINKED_TEXT, requiresConfirmation: false });
             }
 
-            // Log inbound message
+            // Get user timezone for date/time resolution
+            const userRecord = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { timezone: true },
+            });
+            const timezone = userRecord?.timezone ?? 'Asia/Ho_Chi_Minh';
+            const today = todayISO(timezone);
+
+            // Normalize message
+            const { normalized } = normalizeMessage(text);
+
+            // Log inbound message with intent metadata
             await logMessage(userId, MessageDirection.INBOUND, text, {
                 externalMessageId: messageId,
             });
 
-            // TODO Phase 3: parse intent and route to executor
+            const ctx: ResolverContext = { userId, timezone, today };
+
+            const pending = await getActivePendingAction(userId);
+            if (pending) {
+                const resolved = await resolvePendingActionReply(pending, normalized, ctx);
+                if (resolved.keepPending) {
+                    await logMessage(userId, MessageDirection.OUTBOUND, resolved.reply);
+                    return res.json({
+                        ok: true,
+                        reply: resolved.reply,
+                        requiresConfirmation: true,
+                    });
+                }
+
+                await maybeStoreFollowupPending(userId, resolved.parsed ?? { intent: pending.intent as any, confidence: 1, entities: {} }, resolved);
+                await logMessage(userId, MessageDirection.OUTBOUND, resolved.reply, {
+                    intent: resolved.parsed?.intent ?? pending.intent,
+                    confidence: resolved.parsed?.confidence ?? 1,
+                });
+                return res.json({
+                    ok: true,
+                    reply: resolved.reply,
+                    requiresConfirmation: resolved.requiresConfirmation,
+                });
+            }
+
+            // Execute intent
+            const parsed = await parseIntent(normalized, timezone);
+
+            await prisma.assistantMessage.updateMany({
+                where: {
+                    userId,
+                    direction: MessageDirection.INBOUND,
+                    externalMessageId: messageId,
+                },
+                data: {
+                    normalizedText: normalized,
+                    intent: parsed.intent,
+                    confidence: parsed.confidence,
+                },
+            });
+
+            if (
+                WRITE_INTENTS.has(parsed.intent) &&
+                parsed.confidence < ASSISTANT_POLICIES.MIN_CONFIDENCE
+            ) {
+                const payload = buildLowConfidencePending(parsed);
+                await createPendingAction(userId, parsed.intent, payload);
+                await logAssistantAction(parsed, ctx, {
+                    reply: payload.prompt,
+                    requiresConfirmation: true,
+                });
+                await logMessage(userId, MessageDirection.OUTBOUND, payload.prompt, {
+                    intent: parsed.intent,
+                    confidence: parsed.confidence,
+                });
+                return res.json({
+                    ok: true,
+                    reply: payload.prompt,
+                    requiresConfirmation: true,
+                });
+            }
+
+            const result = await executeIntent(parsed, ctx);
+            await maybeStoreFollowupPending(userId, parsed, result);
+
+            // Log outbound message
+            await logMessage(userId, MessageDirection.OUTBOUND, result.reply, {
+                intent: parsed.intent,
+                confidence: parsed.confidence,
+            });
+
             return res.json({
                 ok: true,
-                reply: 'Message received\\. Intent parsing coming in Phase 3\\.',
-                requiresConfirmation: false,
+                reply: result.reply,
+                requiresConfirmation: result.requiresConfirmation,
             });
         } catch (err) {
             next(err);
@@ -163,17 +277,47 @@ router.post(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { chatId } = req.body;
+            const selection = req.body.selection.trim();
 
             const userId = await resolveUserByChatId(chatId);
             if (!userId) {
                 return res.json({ ok: true, reply: UNLINKED_TEXT, requiresConfirmation: false });
             }
 
-            // TODO Phase 6: resolve pending action and execute
+            const userRecord = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { timezone: true },
+            });
+            const timezone = userRecord?.timezone ?? 'Asia/Ho_Chi_Minh';
+            const ctx: ResolverContext = { userId, timezone, today: todayISO(timezone) };
+            const pending = await getActivePendingAction(userId);
+
+            if (!pending) {
+                return res.json({
+                    ok: true,
+                    reply: 'There is nothing waiting for confirmation right now\\.',
+                    requiresConfirmation: false,
+                });
+            }
+
+            const resolved = await resolvePendingActionReply(pending, selection, ctx);
+            if (resolved.keepPending) {
+                return res.json({
+                    ok: true,
+                    reply: resolved.reply,
+                    requiresConfirmation: true,
+                });
+            }
+
+            await maybeStoreFollowupPending(
+                userId,
+                resolved.parsed ?? { intent: pending.intent as any, confidence: 1, entities: {} },
+                resolved,
+            );
             return res.json({
                 ok: true,
-                reply: 'Confirmation handling coming in Phase 6\\.',
-                requiresConfirmation: false,
+                reply: resolved.reply,
+                requiresConfirmation: resolved.requiresConfirmation,
             });
         } catch (err) {
             next(err);
@@ -182,3 +326,15 @@ router.post(
 );
 
 export default router;
+
+async function maybeStoreFollowupPending(
+    userId: string,
+    parsed: ParsedIntent,
+    result: ResolverResult,
+): Promise<void> {
+    if (!result.requiresConfirmation || !result.pendingIntent || !result.pendingPayload) {
+        return;
+    }
+
+    await createPendingAction(userId, result.pendingIntent, result.pendingPayload as PendingActionPayload);
+}

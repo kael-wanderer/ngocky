@@ -129,6 +129,7 @@ exports.Prisma.UserScalarFieldEnum = {
   notificationEnabled: 'notificationEnabled',
   notificationChannel: 'notificationChannel',
   notificationEmail: 'notificationEmail',
+  timezone: 'timezone',
   telegramChatId: 'telegramChatId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -169,6 +170,23 @@ exports.Prisma.GoalCheckInScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.TaskScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  userId: 'userId',
+  isShared: 'isShared',
+  dueDate: 'dueDate',
+  priority: 'priority',
+  status: 'status',
+  notificationEnabled: 'notificationEnabled',
+  pinToDashboard: 'pinToDashboard',
+  sortOrder: 'sortOrder',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.ProjectScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -197,6 +215,7 @@ exports.Prisma.LearningItemScalarFieldEnum = {
   status: 'status',
   userId: 'userId',
   notificationEnabled: 'notificationEnabled',
+  pinToDashboard: 'pinToDashboard',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -209,6 +228,7 @@ exports.Prisma.IdeaScalarFieldEnum = {
   tags: 'tags',
   status: 'status',
   userId: 'userId',
+  pinToDashboard: 'pinToDashboard',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -300,10 +320,16 @@ exports.Prisma.AlertRuleScalarFieldEnum = {
   name: 'name',
   moduleType: 'moduleType',
   frequency: 'frequency',
+  dayOfWeek: 'dayOfWeek',
+  dayOfMonth: 'dayOfMonth',
+  time: 'time',
   conditionType: 'conditionType',
   conditionValue: 'conditionValue',
+  cooldownHours: 'cooldownHours',
+  lastSentAt: 'lastSentAt',
   notificationChannel: 'notificationChannel',
   active: 'active',
+  sortOrder: 'sortOrder',
   userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -311,14 +337,18 @@ exports.Prisma.AlertRuleScalarFieldEnum = {
 
 exports.Prisma.ScheduledReportScalarFieldEnum = {
   id: 'id',
+  name: 'name',
   reportType: 'reportType',
   dateRangePreset: 'dateRangePreset',
   frequency: 'frequency',
+  dayOfMonth: 'dayOfMonth',
   dayOfWeek: 'dayOfWeek',
   time: 'time',
+  sections: 'sections',
   notificationChannel: 'notificationChannel',
   recipients: 'recipients',
   active: 'active',
+  sortOrder: 'sortOrder',
   userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -335,14 +365,84 @@ exports.Prisma.BudgetSettingScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.TelegramLinkScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  telegramChatId: 'telegramChatId',
+  telegramUserId: 'telegramUserId',
+  telegramUsername: 'telegramUsername',
+  linkCode: 'linkCode',
+  linkCodeExpiresAt: 'linkCodeExpiresAt',
+  verifiedAt: 'verifiedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AssistantMessageScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  channel: 'channel',
+  externalMessageId: 'externalMessageId',
+  direction: 'direction',
+  rawText: 'rawText',
+  normalizedText: 'normalizedText',
+  intent: 'intent',
+  confidence: 'confidence',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AssistantActionLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  channel: 'channel',
+  intent: 'intent',
+  confidence: 'confidence',
+  requestPayload: 'requestPayload',
+  resolvedEntities: 'resolvedEntities',
+  executionStatus: 'executionStatus',
+  resultSummary: 'resultSummary',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AssistantPendingActionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  channel: 'channel',
+  intent: 'intent',
+  payload: 'payload',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
 };
 
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
 };
 exports.Role = exports.$Enums.Role = {
   OWNER: 'OWNER',
@@ -364,7 +464,8 @@ exports.NotificationChannel = exports.$Enums.NotificationChannel = {
 
 exports.PeriodType = exports.$Enums.PeriodType = {
   WEEKLY: 'WEEKLY',
-  MONTHLY: 'MONTHLY'
+  MONTHLY: 'MONTHLY',
+  QUARTERLY: 'QUARTERLY'
 };
 
 exports.Priority = exports.$Enums.Priority = {
@@ -404,13 +505,15 @@ exports.ExpenseScope = exports.$Enums.ExpenseScope = {
 
 exports.AlertFrequency = exports.$Enums.AlertFrequency = {
   DAILY: 'DAILY',
-  WEEKLY: 'WEEKLY'
+  WEEKLY: 'WEEKLY',
+  MONTHLY: 'MONTHLY'
 };
 
 exports.ReportFrequency = exports.$Enums.ReportFrequency = {
   DAILY: 'DAILY',
   WEEKLY: 'WEEKLY',
-  MONTHLY: 'MONTHLY'
+  MONTHLY: 'MONTHLY',
+  QUARTERLY: 'QUARTERLY'
 };
 
 exports.BudgetPeriod = exports.$Enums.BudgetPeriod = {
@@ -419,11 +522,28 @@ exports.BudgetPeriod = exports.$Enums.BudgetPeriod = {
   YEARLY: 'YEARLY'
 };
 
+exports.AssistantChannel = exports.$Enums.AssistantChannel = {
+  TELEGRAM: 'TELEGRAM'
+};
+
+exports.MessageDirection = exports.$Enums.MessageDirection = {
+  INBOUND: 'INBOUND',
+  OUTBOUND: 'OUTBOUND'
+};
+
+exports.ExecutionStatus = exports.$Enums.ExecutionStatus = {
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED',
+  PENDING_CONFIRMATION: 'PENDING_CONFIRMATION',
+  CANCELLED: 'CANCELLED'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   RefreshToken: 'RefreshToken',
   Goal: 'Goal',
   GoalCheckIn: 'GoalCheckIn',
+  Task: 'Task',
   Project: 'Project',
   LearningItem: 'LearningItem',
   Idea: 'Idea',
@@ -435,7 +555,11 @@ exports.Prisma.ModelName = {
   Expense: 'Expense',
   AlertRule: 'AlertRule',
   ScheduledReport: 'ScheduledReport',
-  BudgetSetting: 'BudgetSetting'
+  BudgetSetting: 'BudgetSetting',
+  TelegramLink: 'TelegramLink',
+  AssistantMessage: 'AssistantMessage',
+  AssistantActionLog: 'AssistantActionLog',
+  AssistantPendingAction: 'AssistantPendingAction'
 };
 
 /**

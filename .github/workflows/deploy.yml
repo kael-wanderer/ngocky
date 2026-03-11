@@ -92,6 +92,7 @@ jobs:
             CORS_ORIGIN=https://ngocky.kael.io.vn
             VITE_API_URL=https://api.ngocky.kael.io.vn
             ASSISTANT_API_KEY=${{ secrets.ASSISTANT_API_KEY }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
             EOF
 
             # Rename prod compose to the one docker uses by default

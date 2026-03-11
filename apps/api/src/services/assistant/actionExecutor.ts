@@ -1,0 +1,109 @@
+import { prisma } from '../../config/database';
+import { AssistantChannel, ExecutionStatus } from '@prisma/client';
+import type { ParsedIntent } from './intentParser';
+import type { ResolverContext, ResolverResult } from './resolvers/types';
+import { FALLBACK_TEXT, HELP_TEXT } from './policies';
+import { resolveTaskCreate } from './resolvers/taskCreate';
+import { resolveTaskStatus } from './resolvers/taskStatus';
+import { resolveTaskQuery } from './resolvers/taskQuery';
+import { resolveProjectTaskStatus } from './resolvers/projectTaskStatus';
+import { resolveCalendarQuery } from './resolvers/calendarQuery';
+import { resolveExpenseCreate } from './resolvers/expenseCreate';
+import { resolveGoalCheckin } from './resolvers/goalCheckin';
+import { resolveHouseworkQuery } from './resolvers/houseworkQuery';
+import { resolveHouseworkStatus } from './resolvers/houseworkStatus';
+
+// ─── Main executor ────────────────────────────────────────────────────────────
+
+export async function executeIntent(
+    parsed: ParsedIntent,
+    ctx: ResolverContext,
+): Promise<ResolverResult> {
+    let result: ResolverResult;
+
+    try {
+        result = await dispatch(parsed, ctx);
+    } catch (err: any) {
+        console.error('[actionExecutor] Resolver error:', err);
+        result = {
+            reply: `Something went wrong\\. Please try again\\.`,
+            requiresConfirmation: false,
+        };
+    }
+
+    // Persist action log (fire-and-forget — don't let logging errors break the reply)
+    logAssistantAction(parsed, ctx, result).catch(e =>
+        console.error('[actionExecutor] Failed to log action:', e),
+    );
+
+    return result;
+}
+
+export async function dispatchIntent(
+    parsed: ParsedIntent,
+    ctx: ResolverContext,
+): Promise<ResolverResult> {
+    const { intent, entities } = parsed;
+
+    switch (intent) {
+        case 'create_task':
+            return resolveTaskCreate(entities, ctx);
+
+        case 'update_task_status':
+            return resolveTaskStatus(entities, ctx);
+
+        case 'query_tasks':
+            return resolveTaskQuery(entities, ctx);
+
+        case 'update_project_task_status':
+            return resolveProjectTaskStatus(entities, ctx);
+
+        case 'query_calendar':
+            return resolveCalendarQuery(entities, ctx);
+
+        case 'create_expense':
+            return resolveExpenseCreate(entities, ctx);
+
+        case 'goal_checkin':
+            return resolveGoalCheckin(entities, ctx);
+
+        case 'query_housework':
+            return resolveHouseworkQuery(entities, ctx);
+
+        case 'update_housework_status':
+            return resolveHouseworkStatus(entities, ctx);
+
+        case 'help':
+            return { reply: HELP_TEXT, requiresConfirmation: false };
+
+        case 'fallback':
+        default:
+            return { reply: FALLBACK_TEXT, requiresConfirmation: false };
+    }
+}
+
+async function dispatch(parsed: ParsedIntent, ctx: ResolverContext): Promise<ResolverResult> {
+    return dispatchIntent(parsed, ctx);
+}
+
+export async function logAssistantAction(
+    parsed: ParsedIntent,
+    ctx: ResolverContext,
+    result: ResolverResult,
+): Promise<void> {
+    const status: ExecutionStatus = result.requiresConfirmation
+        ? ExecutionStatus.PENDING_CONFIRMATION
+        : ExecutionStatus.SUCCESS;
+
+    await prisma.assistantActionLog.create({
+        data: {
+            userId: ctx.userId,
+            channel: AssistantChannel.TELEGRAM,
+            intent: parsed.intent,
+            confidence: parsed.confidence,
+            requestPayload: parsed.entities,
+            executionStatus: status,
+            resultSummary: result.reply.slice(0, 500),
+        },
+    });
+}
