@@ -18,6 +18,8 @@ const envSchema = z.object({
     OWNER_EMAIL: z.string().email(),
     OWNER_PASSWORD: z.string().min(8),
     CORS_ORIGIN: z.string().default('http://localhost:5173'),
+    ASSISTANT_API_KEY: z.string().min(16).default('dev-assistant-key-change-me'),
+    ANTHROPIC_API_KEY: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
