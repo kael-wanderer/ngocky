@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, Wallet, Filter, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Wallet, Filter, FileSpreadsheet, FileText, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
@@ -42,6 +42,12 @@ type SortOrder = 'asc' | 'desc';
 type TimePreset = 'LAST_QUARTER' | 'LAST_MONTH' | 'THIS_MONTH' | 'THIS_QUARTER' | 'CUSTOM';
 
 const formatAmount = (amount: number) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(amount)} VND`;
+const escapeHtml = (value: string) => value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
 const parseAmountInput = (value: string) => {
     const normalized = value.trim().replace(/,/g, '').toUpperCase();
@@ -101,6 +107,7 @@ function getDateRangeFromPreset(preset: TimePreset) {
 export default function ExpensesPage() {
     const qc = useQueryClient();
     const { user } = useAuthStore();
+    const exportContentRef = useRef<HTMLDivElement>(null);
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState<any>(null);
     const [filters, setFilters] = useState({ type: '', scope: '', category: '', timePreset: 'THIS_MONTH' as TimePreset, dateFrom: '', dateTo: '' });
@@ -181,6 +188,103 @@ export default function ExpensesPage() {
 
     const parsedAmount = parseAmountInput(form.amount);
     const amountPreview = Number.isNaN(parsedAmount) ? '' : formatAmount(parsedAmount);
+    const timeRangeLabel = filters.timePreset === 'CUSTOM'
+        ? `${filters.dateFrom || 'Start'} → ${filters.dateTo || 'End'}`
+        : `${effectiveRange.dateFrom} → ${effectiveRange.dateTo}`;
+
+    function handleExportExcel() {
+        const rows = sortedExpenses.map((expense: any) => ({
+            Date: format(new Date(expense.date), 'MMM d, yyyy'),
+            User: expense.user?.name || '',
+            Type: expense.type === 'RECEIVE' ? 'Receive' : 'Pay',
+            Scope: scopeOptions.find((option) => option.value === expense.scope)?.label || expense.scope || '',
+            Category: expense.category || '',
+            Description: expense.description || '',
+            Note: expense.note || '',
+            Shared: expense.isShared ? 'Yes' : 'No',
+            Amount: Math.round(expense.amount || 0),
+        }));
+
+        const html = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+                <head>
+                    <meta charset="UTF-8" />
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { margin: 0 0 12px; }
+                        table { border-collapse: collapse; width: 100%; }
+                        th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; vertical-align: top; }
+                        th { background: #f3f4f6; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Expenses Export</h1>
+                    <p><strong>Time Range:</strong> ${escapeHtml(timeRangeLabel)}</p>
+                    <table>
+                        <thead>
+                            <tr>${Object.keys(rows[0] || { Date: '', User: '', Type: '', Scope: '', Category: '', Description: '', Note: '', Shared: '', Amount: '' })
+                                .map((key) => `<th>${escapeHtml(key)}</th>`).join('')}</tr>
+                        </thead>
+                        <tbody>
+                            ${(rows.length ? rows : [{ Date: '', User: '', Type: '', Scope: '', Category: '', Description: 'No data for this filter.', Note: '', Shared: '', Amount: '' }])
+                                .map((row) => `<tr>${Object.values(row).map((value) => `<td>${escapeHtml(String(value ?? ''))}</td>`).join('')}</tr>`).join('')}
+                        </tbody>
+                    </table>
+                </body>
+            </html>
+        `;
+
+        const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `expenses-${filters.timePreset.toLowerCase()}.xls`;
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function handleExportPdf() {
+        if (!exportContentRef.current) return;
+        const printWindow = window.open('', '_blank', 'width=1280,height=900');
+        if (!printWindow) return;
+
+        const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+            .map((node) => node.outerHTML)
+            .join('\n');
+
+        printWindow.document.open();
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Expenses Export</title>
+                    ${styles}
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 24px; background: #ffffff; color: #111827; }
+                        .print-header { margin-bottom: 24px; }
+                        .print-header h1 { margin: 0 0 8px; font-size: 28px; }
+                        .print-meta { font-size: 14px; color: #4b5563; display: grid; gap: 4px; }
+                        .card { break-inside: avoid; page-break-inside: avoid; }
+                        button { display: none !important; }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">
+                        <h1>Expenses</h1>
+                        <div class="print-meta">
+                            <div><strong>Time Range:</strong> ${escapeHtml(timeRangeLabel)}</div>
+                        </div>
+                    </div>
+                    ${exportContentRef.current.innerHTML}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        window.setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 400);
+    }
 
     function toggleSort(column: SortKey) {
         if (sortBy === column) {
@@ -273,9 +377,29 @@ export default function ExpensesPage() {
                     <Wallet className="w-6 h-6" style={{ color: '#d97706' }} />
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Expenses</h2>
                 </div>
-                <button className="btn-primary" onClick={openCreate}>
-                    <Plus className="w-4 h-4" /> Add Expense
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                        type="button"
+                        className="px-4 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2"
+                        style={{ backgroundColor: '#166534', color: '#fff' }}
+                        onClick={handleExportExcel}
+                    >
+                        <FileSpreadsheet className="w-4 h-4" />
+                        Export Excel
+                    </button>
+                    <button
+                        type="button"
+                        className="px-4 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2"
+                        style={{ backgroundColor: '#1d4ed8', color: '#fff' }}
+                        onClick={handleExportPdf}
+                    >
+                        <FileText className="w-4 h-4" />
+                        Export PDF
+                    </button>
+                    <button className="btn-primary" onClick={openCreate}>
+                        <Plus className="w-4 h-4" /> Add Expense
+                    </button>
+                </div>
             </div>
 
             <div className="card p-4">
@@ -306,23 +430,6 @@ export default function ExpensesPage() {
                         <input type="date" className="input text-sm" value={filters.dateTo} min={filters.dateFrom || undefined} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
                     </div>
                 )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="card p-4">
-                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Total income</div>
-                    <div className="text-2xl font-bold" style={{ color: 'var(--color-success)' }}>{formatAmount(summary.income)}</div>
-                </div>
-                <div className="card p-4">
-                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Total payment</div>
-                    <div className="text-2xl font-bold" style={{ color: 'var(--color-danger)' }}>{formatAmount(summary.payment)}</div>
-                </div>
-                <div className="card p-4">
-                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Remaining fund ({expenses.length} items)</div>
-                    <div className="text-2xl font-bold" style={{ color: summary.remaining < 0 ? 'var(--color-danger)' : 'var(--color-success)' }}>
-                        {formatAmount(summary.remaining)}
-                    </div>
-                </div>
             </div>
 
             {showModal && (
@@ -391,59 +498,77 @@ export default function ExpensesPage() {
             {isLoading ? (
                 <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="card h-16 animate-pulse bg-gray-100" />)}</div>
             ) : (
-                <div className="card overflow-hidden">
-                    <div className="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    {columns.map((column) => (
-                                        <th key={column.key} className={column.key === 'amount' ? 'text-right' : ''}>
-                                            <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort(column.key)}>
-                                                {column.label}
-                                                {renderSortIcon(column.key)}
-                                            </button>
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {sortedExpenses.map((expense: any) => {
-                                    const isReceive = expense.type === 'RECEIVE';
-                                    const canEdit = expense.userId === user?.id;
-                                    const sharedOwnerName = getSharedOwnerName(expense, user?.id);
-                                    return (
-                                        <tr key={expense.id}>
-                                            <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(expense.date), 'MMM d, yyyy')}</td>
-                                            <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{expense.user?.name || '-'}</td>
-                                            <td><span className={`badge ${isReceive ? 'badge-success' : 'badge-danger'}`}>{isReceive ? 'Receive' : 'Pay'}</span></td>
-                                            <td><span className="badge badge-warning">{scopeOptions.find((option) => option.value === expense.scope)?.label || expense.scope}</span></td>
-                                            <td><span className="badge-primary">{expense.category || '-'}</span></td>
-                                            <td>
-                                                <div className="font-medium" style={{ color: 'var(--color-text)' }}>{expense.description}</div>
-                                                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                                    {expense.isShared && <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
-                                                    {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
-                                                    {expense.note && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{expense.note}</span>}
-                                                </div>
-                                                {canEdit && (
-                                                    <div className="flex items-center gap-2 mt-2">
-                                                        <button type="button" className="inline-flex items-center gap-1 text-sm hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={() => openEdit(expense)}>
-                                                            <Pencil className="w-3.5 h-3.5" /> Edit
-                                                        </button>
-                                                        <button type="button" className="inline-flex items-center gap-1 text-sm hover:opacity-80" style={{ color: 'var(--color-danger)' }} onClick={() => handleDelete(expense.id)}>
-                                                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                                                        </button>
+                <div ref={exportContentRef} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="card p-4">
+                            <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Total income</div>
+                            <div className="text-2xl font-bold" style={{ color: 'var(--color-success)' }}>{formatAmount(summary.income)}</div>
+                        </div>
+                        <div className="card p-4">
+                            <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Total payment</div>
+                            <div className="text-2xl font-bold" style={{ color: 'var(--color-danger)' }}>{formatAmount(summary.payment)}</div>
+                        </div>
+                        <div className="card p-4">
+                            <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Remaining fund ({expenses.length} items)</div>
+                            <div className="text-2xl font-bold" style={{ color: summary.remaining < 0 ? 'var(--color-danger)' : 'var(--color-success)' }}>
+                                {formatAmount(summary.remaining)}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="card overflow-hidden">
+                        <div className="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        {columns.map((column) => (
+                                            <th key={column.key} className={column.key === 'amount' ? 'text-right' : ''}>
+                                                <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort(column.key)}>
+                                                    {column.label}
+                                                    {renderSortIcon(column.key)}
+                                                </button>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {sortedExpenses.map((expense: any) => {
+                                        const isReceive = expense.type === 'RECEIVE';
+                                        const canEdit = expense.userId === user?.id;
+                                        const sharedOwnerName = getSharedOwnerName(expense, user?.id);
+                                        return (
+                                            <tr key={expense.id}>
+                                                <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(expense.date), 'MMM d, yyyy')}</td>
+                                                <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{expense.user?.name || '-'}</td>
+                                                <td><span className={`badge ${isReceive ? 'badge-success' : 'badge-danger'}`}>{isReceive ? 'Receive' : 'Pay'}</span></td>
+                                                <td><span className="badge badge-warning">{scopeOptions.find((option) => option.value === expense.scope)?.label || expense.scope}</span></td>
+                                                <td><span className="badge-primary">{expense.category || '-'}</span></td>
+                                                <td>
+                                                    <div className="font-medium" style={{ color: 'var(--color-text)' }}>{expense.description}</div>
+                                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                        {expense.isShared && <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                                        {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
+                                                        {expense.note && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{expense.note}</span>}
                                                     </div>
-                                                )}
-                                            </td>
-                                            <td className="text-right font-semibold" style={{ color: isReceive ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                                                {formatAmount(expense.amount)}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                                    {canEdit && (
+                                                        <div className="flex items-center gap-2 mt-2">
+                                                            <button type="button" className="inline-flex items-center gap-1 text-sm hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={() => openEdit(expense)}>
+                                                                <Pencil className="w-3.5 h-3.5" /> Edit
+                                                            </button>
+                                                            <button type="button" className="inline-flex items-center gap-1 text-sm hover:opacity-80" style={{ color: 'var(--color-danger)' }} onClick={() => handleDelete(expense.id)}>
+                                                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="text-right font-semibold" style={{ color: isReceive ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                                                    {formatAmount(expense.amount)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}

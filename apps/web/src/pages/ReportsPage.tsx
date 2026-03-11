@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/client';
-import { BarChart3, Filter } from 'lucide-react';
+import { BarChart3, FileSpreadsheet, FileText, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const COLORS = ['#4f46e5', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2', '#db2777', '#84cc16'];
@@ -179,15 +179,42 @@ function DataTableCard({
     );
 }
 
+function formatDisplayDate(value?: string | Date | null) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function escapeHtml(value: string) {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function renderExportCell(
+    column: { key: string; label: string; render?: (value: any, row: Record<string, any>) => React.ReactNode },
+    row: Record<string, any>,
+) {
+    const rendered = column.render ? column.render(row[column.key], row) : row[column.key];
+    if (React.isValidElement(rendered)) return formatTableValue(row[column.key]);
+    if (rendered === null || rendered === undefined || rendered === '') return '—';
+    return String(rendered);
+}
+
 export default function ReportsPage() {
-    const [activeTab, setActiveTab] = useState('tasks');
+    const reportContentRef = useRef<HTMLDivElement>(null);
+    const [selectedTabs, setSelectedTabs] = useState<string[]>(['tasks']);
     const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('THIS_WEEK');
     const [viewType, setViewType] = useState<AnalyticsViewType>('CHARTS');
     const [filters, setFilters] = useState({ type: '', scope: '', category: '', dateFrom: '', dateTo: '' });
 
     useEffect(() => {
         setFilters((current) => ({ ...current, type: '', scope: '', category: '' }));
-    }, [activeTab]);
+    }, [selectedTabs]);
 
     const selectedRange = useMemo(() => {
         if (reportTimeRange === 'CUSTOM') return null;
@@ -297,6 +324,42 @@ export default function ReportsPage() {
         queryKey: ['reports', 'idea-topics', baseQuery],
         queryFn: async () => (await api.get(`/reports/idea-topics${reportQuery}`)).data.data,
     });
+    const { data: rawProjectItems } = useQuery({
+        queryKey: ['reports', 'raw-project', baseQuery],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=project&${baseQuery}`)).data.data,
+    });
+    const { data: rawTasks } = useQuery({
+        queryKey: ['reports', 'raw-tasks', baseQuery],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=tasks&${baseQuery}`)).data.data,
+    });
+    const { data: rawGoals } = useQuery({
+        queryKey: ['reports', 'raw-goals', baseQuery],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=goals&${baseQuery}`)).data.data,
+    });
+    const { data: rawCalendar } = useQuery({
+        queryKey: ['reports', 'raw-calendar', baseQuery],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=calendar&${baseQuery}`)).data.data,
+    });
+    const { data: rawHousework } = useQuery({
+        queryKey: ['reports', 'raw-housework', baseQuery],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=housework&${baseQuery}`)).data.data,
+    });
+    const { data: rawExpenses } = useQuery({
+        queryKey: ['reports', 'raw-expenses', baseQuery],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=expenses&${baseQuery}`)).data.data,
+    });
+    const { data: rawAssets } = useQuery({
+        queryKey: ['reports', 'raw-assets', baseQuery],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=assets&${baseQuery}`)).data.data,
+    });
+    const { data: rawLearning } = useQuery({
+        queryKey: ['reports', 'raw-learning', baseQuery],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=learning&${baseQuery}`)).data.data,
+    });
+    const { data: rawIdeas } = useQuery({
+        queryKey: ['reports', 'raw-ideas', baseQuery],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=ideas&${baseQuery}`)).data.data,
+    });
 
     const tabs = [
         { id: 'project', label: 'Project' },
@@ -310,16 +373,19 @@ export default function ReportsPage() {
         { id: 'ideas', label: 'Ideas' },
     ];
 
+    const primaryTab = selectedTabs[0] || 'tasks';
+    const hasMultipleTabsSelected = selectedTabs.length > 1;
+
     const typeFilterOptions =
-        activeTab === 'project' ? projectItemTypeOptions
-            : activeTab === 'tasks' ? taskTypeOptions
-                : activeTab === 'expenses' ? typeOptions
+        primaryTab === 'project' ? projectItemTypeOptions
+            : primaryTab === 'tasks' ? taskTypeOptions
+                : primaryTab === 'expenses' ? typeOptions
                     : [];
-    const showTypeSelect = ['project', 'tasks', 'expenses'].includes(activeTab);
-    const showTypeInput = activeTab === 'assets';
-    const showScopeSelect = activeTab === 'expenses';
-    const showCategorySelect = activeTab === 'expenses';
-    const showCategoryInput = ['project', 'calendar', 'ideas'].includes(activeTab);
+    const showTypeSelect = !hasMultipleTabsSelected && ['project', 'tasks', 'expenses'].includes(primaryTab);
+    const showTypeInput = !hasMultipleTabsSelected && primaryTab === 'assets';
+    const showScopeSelect = !hasMultipleTabsSelected && primaryTab === 'expenses';
+    const showCategorySelect = !hasMultipleTabsSelected && primaryTab === 'expenses';
+    const showCategoryInput = !hasMultipleTabsSelected && ['project', 'calendar', 'ideas'].includes(primaryTab);
     const filterGridCols = 1 + (showTypeSelect || showTypeInput ? 1 : 0) + (showScopeSelect ? 1 : 0) + (showCategorySelect || showCategoryInput ? 1 : 0);
     const filterGridClass = filterGridCols >= 4
         ? 'grid-cols-1 md:grid-cols-4'
@@ -330,6 +396,329 @@ export default function ReportsPage() {
                 : 'grid-cols-1';
     const showCharts = viewType === 'CHARTS' || viewType === 'BOTH';
     const showTables = viewType === 'TABLES' || viewType === 'BOTH';
+    const selectedTimeRangeLabel = reportTimeRangeOptions.find((option) => option.value === reportTimeRange)?.label || reportTimeRange;
+    const selectedDateRangeLabel = reportTimeRange === 'CUSTOM'
+        ? `${filters.dateFrom || 'Start'} → ${filters.dateTo || 'End'}`
+        : selectedRange
+            ? `${formatDisplayDate(selectedRange.start)} → ${formatDisplayDate(selectedRange.end)}`
+            : 'All Time';
+
+    const tableConfigs = {
+        project: {
+            title: 'Project Items',
+            columns: [
+                { key: 'title', label: 'Title' },
+                { key: 'project', label: 'Project' },
+                { key: 'type', label: 'Type' },
+                { key: 'status', label: 'Status' },
+                { key: 'priority', label: 'Priority' },
+                { key: 'deadline', label: 'Deadline', render: (value: any) => formatDisplayDate(value) },
+            ],
+            rows: rawProjectItems || [],
+        },
+        tasks: {
+            title: 'Tasks',
+            columns: [
+                { key: 'title', label: 'Title' },
+                { key: 'taskType', label: 'Type' },
+                { key: 'status', label: 'Status' },
+                { key: 'priority', label: 'Priority' },
+                { key: 'dueDate', label: 'Due Date', render: (value: any) => formatDisplayDate(value) },
+                { key: 'expenseCategory', label: 'Category' },
+            ],
+            rows: rawTasks || [],
+        },
+        goals: {
+            title: 'Goals',
+            columns: [
+                { key: 'title', label: 'Goal' },
+                { key: 'periodType', label: 'Period' },
+                { key: 'completionRate', label: 'Completion', render: (value: any) => `${value}%` },
+                { key: 'currentCount', label: 'Current' },
+                { key: 'targetCount', label: 'Target' },
+                { key: 'periodEnd', label: 'Period End', render: (value: any) => formatDisplayDate(value) },
+            ],
+            rows: rawGoals || [],
+        },
+        calendar: {
+            title: 'Calendar Events',
+            columns: [
+                { key: 'title', label: 'Title' },
+                { key: 'category', label: 'Category' },
+                { key: 'startDate', label: 'Start', render: (value: any) => formatDisplayDate(value) },
+                { key: 'endDate', label: 'End', render: (value: any) => formatDisplayDate(value) },
+                { key: 'location', label: 'Location' },
+                { key: 'allDay', label: 'All Day', render: (value: any) => (value ? 'Yes' : 'No') },
+            ],
+            rows: rawCalendar || [],
+        },
+        housework: {
+            title: 'Housework Items',
+            columns: [
+                { key: 'title', label: 'Title' },
+                { key: 'frequencyType', label: 'Frequency' },
+                { key: 'assignee', label: 'Assignee' },
+                { key: 'nextDueDate', label: 'Next Due', render: (value: any) => formatDisplayDate(value) },
+                { key: 'lastCompletedDate', label: 'Last Completed', render: (value: any) => formatDisplayDate(value) },
+                { key: 'active', label: 'Active', render: (value: any) => (value ? 'Yes' : 'No') },
+            ],
+            rows: rawHousework || [],
+        },
+        expenses: {
+            title: 'Expenses',
+            columns: [
+                { key: 'date', label: 'Date', render: (value: any) => formatDisplayDate(value) },
+                { key: 'description', label: 'Description' },
+                { key: 'type', label: 'Type' },
+                { key: 'scope', label: 'Scope' },
+                { key: 'category', label: 'Category' },
+                { key: 'amount', label: 'Amount', render: (value: any) => formatVND(Number(value || 0)) },
+            ],
+            rows: rawExpenses || [],
+        },
+        assets: {
+            title: 'Appliances & Devices',
+            columns: [
+                { key: 'name', label: 'Name' },
+                { key: 'type', label: 'Type' },
+                { key: 'brand', label: 'Brand' },
+                { key: 'model', label: 'Model' },
+                { key: 'purchaseDate', label: 'Purchase Date', render: (value: any) => formatDisplayDate(value) },
+                { key: 'maintenanceCount', label: 'Maintenance Logs' },
+            ],
+            rows: rawAssets || [],
+        },
+        learning: {
+            title: 'Learning Records',
+            columns: [
+                { key: 'title', label: 'Title' },
+                { key: 'topic', label: 'Topic' },
+                { key: 'status', label: 'Status' },
+                { key: 'progress', label: 'Progress', render: (value: any) => `${value ?? 0}%` },
+                { key: 'deadline', label: 'Deadline', render: (value: any) => formatDisplayDate(value) },
+            ],
+            rows: rawLearning || [],
+        },
+        ideas: {
+            title: 'Ideas',
+            columns: [
+                { key: 'title', label: 'Title' },
+                { key: 'topic', label: 'Topic' },
+                { key: 'category', label: 'Category' },
+                { key: 'status', label: 'Status' },
+                { key: 'createdAt', label: 'Created', render: (value: any) => formatDisplayDate(value) },
+            ],
+            rows: rawIdeas || [],
+        },
+    } as const;
+
+    const chartExportConfigs = {
+        project: [
+            { title: 'Project Items by Status', columns: [{ key: 'status', label: 'Status' }, { key: 'count', label: 'Count' }], rows: projectItemsByStatus || [] },
+            { title: 'Project Items by Type', columns: [{ key: 'type', label: 'Type' }, { key: 'count', label: 'Count' }], rows: projectItemsByType || [] },
+        ],
+        tasks: [
+            { title: 'Tasks by Status', columns: [{ key: 'status', label: 'Status' }, { key: 'count', label: 'Count' }], rows: tasksByStatus || [] },
+        ],
+        goals: [
+            { title: 'Goal Completion Rates', columns: [{ key: 'title', label: 'Goal' }, { key: 'completionRate', label: 'Completion' }, { key: 'currentCount', label: 'Current' }, { key: 'targetCount', label: 'Target' }], rows: goalCompletion || [] },
+        ],
+        calendar: [
+            {
+                title: 'Calendar Overview',
+                columns: [{ key: 'label', label: 'Metric' }, { key: 'value', label: 'Value' }],
+                rows: calendarOverview ? [
+                    { label: 'Total Events', value: calendarOverview.total },
+                    { label: 'Today', value: calendarOverview.today },
+                    { label: 'Upcoming', value: calendarOverview.upcoming },
+                    { label: 'All Day', value: calendarOverview.allDay },
+                ] : [],
+            },
+            { title: 'Events by Category', columns: [{ key: 'category', label: 'Category' }, { key: 'count', label: 'Count' }], rows: calendarByCategory || [] },
+        ],
+        housework: [
+            {
+                title: 'Housework Summary',
+                columns: [{ key: 'label', label: 'Metric' }, { key: 'value', label: 'Value' }],
+                rows: houseworkStatus ? [
+                    { label: 'Total Active', value: houseworkStatus.total },
+                    { label: 'On Track', value: houseworkStatus.onTrack },
+                    { label: 'Overdue', value: houseworkStatus.overdue },
+                    { label: 'Completed', value: houseworkStatus.completed },
+                ] : [],
+            },
+        ],
+        expenses: [
+            { title: 'Expenses by Category', columns: [{ key: 'category', label: 'Category' }, { key: 'count', label: 'Count' }, { key: 'total', label: 'Total', render: (value: any) => formatVND(Number(value || 0)) }], rows: expenseSummary || [] },
+            { title: 'Expense Trend', columns: [{ key: 'month', label: 'Month' }, { key: 'total', label: 'Total', render: (value: any) => formatVND(Number(value || 0)) }], rows: expenseTrend || [] },
+        ],
+        assets: [
+            {
+                title: 'Asset Overview',
+                columns: [{ key: 'label', label: 'Metric' }, { key: 'value', label: 'Value' }],
+                rows: assetOverview ? [
+                    { label: 'Total Assets', value: assetOverview.totalAssets },
+                    { label: 'With Warranty', value: assetOverview.withWarranty },
+                    { label: 'Upcoming Maintenance', value: assetOverview.upcomingMaintenance },
+                    { label: 'Maintenance Cost', value: formatVND(Number(assetOverview.totalMaintenanceCost || 0)) },
+                ] : [],
+            },
+            { title: 'Assets by Type', columns: [{ key: 'type', label: 'Type' }, { key: 'count', label: 'Count' }], rows: assetsByType || [] },
+        ],
+        learning: [
+            { title: 'Learning by Status', columns: [{ key: 'status', label: 'Status' }, { key: 'count', label: 'Count' }], rows: learningStatus || [] },
+            { title: 'Learning by Topic', columns: [{ key: 'topic', label: 'Topic' }, { key: 'count', label: 'Count' }], rows: learningTopics || [] },
+        ],
+        ideas: [
+            { title: 'Ideas by Status', columns: [{ key: 'status', label: 'Status' }, { key: 'count', label: 'Count' }], rows: ideaStatus || [] },
+            { title: 'Ideas by Topic', columns: [{ key: 'topic', label: 'Topic' }, { key: 'count', label: 'Count' }], rows: ideaTopics || [] },
+        ],
+    } as const;
+
+    function buildExportSections() {
+        const sections: Array<{
+            moduleLabel: string;
+            title: string;
+            columns: ReadonlyArray<{ key: string; label: string; render?: (value: any, row: Record<string, any>) => React.ReactNode }>;
+            rows: Array<Record<string, any>>;
+        }> = [];
+
+        selectedTabs.forEach((tabId) => {
+            const moduleLabel = tabs.find((tab) => tab.id === tabId)?.label || tabId;
+            if (showCharts) {
+                (chartExportConfigs[tabId as keyof typeof chartExportConfigs] || []).forEach((section) => {
+                    sections.push({ moduleLabel, ...section });
+                });
+            }
+            if (showTables) {
+                const section = tableConfigs[tabId as keyof typeof tableConfigs];
+                if (section) {
+                    sections.push({ moduleLabel, ...section });
+                }
+            }
+        });
+
+        return sections;
+    }
+
+    function handleExportExcel() {
+        const sections = buildExportSections();
+        const summaryRows = [
+            ['Time Filter', selectedTimeRangeLabel],
+            ['Date Range', selectedDateRangeLabel],
+            ['View Type', viewType],
+            ['Pages', selectedTabs.map((tabId) => tabs.find((tab) => tab.id === tabId)?.label || tabId).join(', ')],
+        ];
+
+        const summaryTable = `
+            <table>
+                ${summaryRows.map(([label, value]) => `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`).join('')}
+            </table>
+        `;
+
+        const sectionsHtml = sections.map((section) => `
+            <h2>${escapeHtml(section.moduleLabel)} · ${escapeHtml(section.title)}</h2>
+            <table>
+                <thead>
+                    <tr>${section.columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+                    ${(section.rows.length ? section.rows : [{}]).map((row) => (
+                        section.rows.length
+                            ? `<tr>${section.columns.map((column) => `<td>${escapeHtml(renderExportCell(column, row))}</td>`).join('')}</tr>`
+                            : `<tr><td colspan="${section.columns.length}">No data for this filter.</td></tr>`
+                    )).join('')}
+                </tbody>
+            </table>
+        `).join('');
+
+        const html = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+                <head>
+                    <meta charset="UTF-8" />
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { margin: 0 0 12px; }
+                        h2 { margin: 24px 0 8px; }
+                        table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }
+                        th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; vertical-align: top; }
+                        th { background: #f3f4f6; }
+                    </style>
+                </head>
+                <body>
+                    <h1>NgocKy Analytics Export</h1>
+                    ${summaryTable}
+                    ${sectionsHtml}
+                </body>
+            </html>
+        `;
+
+        const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ngocky-analytics-${selectedTimeRangeLabel.toLowerCase().replace(/\s+/g, '-')}.xls`;
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function handleExportPdf() {
+        if (!reportContentRef.current) return;
+        const printWindow = window.open('', '_blank', 'width=1280,height=900');
+        if (!printWindow) return;
+
+        const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+            .map((node) => node.outerHTML)
+            .join('\n');
+
+        printWindow.document.open();
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>NgocKy Analytics Export</title>
+                    ${styles}
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 24px; background: #ffffff; color: #111827; }
+                        .print-header { margin-bottom: 24px; }
+                        .print-header h1 { margin: 0 0 8px; font-size: 28px; }
+                        .print-meta { font-size: 14px; color: #4b5563; display: grid; gap: 4px; }
+                        .card { break-inside: avoid; page-break-inside: avoid; }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">
+                        <h1>NgocKy Analytics Export</h1>
+                        <div class="print-meta">
+                            <div><strong>Time Filter:</strong> ${escapeHtml(selectedTimeRangeLabel)}</div>
+                            <div><strong>Date Range:</strong> ${escapeHtml(selectedDateRangeLabel)}</div>
+                            <div><strong>View Type:</strong> ${escapeHtml(viewType)}</div>
+                            <div><strong>Pages:</strong> ${escapeHtml(selectedTabs.map((tabId) => tabs.find((tab) => tab.id === tabId)?.label || tabId).join(', '))}</div>
+                        </div>
+                    </div>
+                    ${reportContentRef.current.innerHTML}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        window.setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 400);
+    }
+
+    function toggleTab(tabId: string) {
+        setSelectedTabs((current) => {
+            if (current.includes(tabId)) {
+                return current.length === 1 ? current : current.filter((id) => id !== tabId);
+            }
+            return tabs.map((tab) => tab.id).filter((id) => id === tabId || current.includes(id));
+        });
+    }
+
+    function selectAllTabs() {
+        setSelectedTabs(tabs.map((tab) => tab.id));
+    }
 
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
@@ -372,7 +761,7 @@ export default function ReportsPage() {
                             </select>
                         )}
                         {showCategoryInput && (
-                            <input type="text" className="input text-sm" placeholder={`Filter by ${activeTab === 'calendar' ? 'calendar' : activeTab} category`} value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} />
+                            <input type="text" className="input text-sm" placeholder={`Filter by ${primaryTab === 'calendar' ? 'calendar' : primaryTab} category`} value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} />
                         )}
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
@@ -407,15 +796,58 @@ export default function ReportsPage() {
                 )}
             </div>
 
-            <div className="flex gap-1 p-1 rounded-lg flex-wrap" style={{ backgroundColor: 'var(--color-bg)' }}>
-                {tabs.map((tab) => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`py-2 px-4 rounded-md text-sm font-medium transition-all ${activeTab === tab.id ? 'shadow-sm' : ''}`} style={{ backgroundColor: activeTab === tab.id ? 'var(--color-surface)' : 'transparent', color: activeTab === tab.id ? 'var(--color-text)' : 'var(--color-text-secondary)' }}>
-                        {tab.label}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex gap-1 p-1 rounded-lg flex-wrap" style={{ backgroundColor: 'var(--color-bg)' }}>
+                    {tabs.map((tab) => {
+                        const selected = selectedTabs.includes(tab.id);
+                        return (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => toggleTab(tab.id)}
+                                className={`py-2 px-4 rounded-md text-sm font-medium transition-all ${selected ? 'shadow-sm' : ''}`}
+                                style={{
+                                    backgroundColor: selected ? 'var(--color-surface)' : 'transparent',
+                                    color: selected ? 'var(--color-text)' : 'var(--color-text-secondary)',
+                                }}
+                            >
+                                {tab.label}
+                            </button>
+                        );
+                    })}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                        type="button"
+                        className="px-4 py-2 rounded-md text-sm font-semibold transition-all"
+                        style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}
+                        onClick={selectAllTabs}
+                    >
+                        Select All
                     </button>
-                ))}
+                    <button
+                        type="button"
+                        className="px-4 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2"
+                        style={{ backgroundColor: '#166534', color: '#fff' }}
+                        onClick={handleExportExcel}
+                    >
+                        <FileSpreadsheet className="w-4 h-4" />
+                        Export Excel
+                    </button>
+                    <button
+                        type="button"
+                        className="px-4 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2"
+                        style={{ backgroundColor: '#1d4ed8', color: '#fff' }}
+                        onClick={handleExportPdf}
+                    >
+                        <FileText className="w-4 h-4" />
+                        Export PDF
+                    </button>
+                </div>
             </div>
 
-            {activeTab === 'project' && (
+            <div ref={reportContentRef} className="space-y-6">
+            {selectedTabs.includes('project') && (
                 <div className="space-y-6">
                     {showCharts && (
                         <div className="grid gap-6 md:grid-cols-2">
@@ -446,29 +878,23 @@ export default function ReportsPage() {
                         </div>
                     )}
                     {showTables && (
-                        <div className="grid gap-6 md:grid-cols-2">
-                            <DataTableCard
-                                title="Project Items by Status"
-                                columns={[
-                                    { key: 'status', label: 'Status' },
-                                    { key: 'count', label: 'Count' },
-                                ]}
-                                rows={projectItemsByStatus || []}
-                            />
-                            <DataTableCard
-                                title="Project Items by Type"
-                                columns={[
-                                    { key: 'type', label: 'Type' },
-                                    { key: 'count', label: 'Count' },
-                                ]}
-                                rows={projectItemsByType || []}
-                            />
-                        </div>
+                        <DataTableCard
+                            title="Project Items"
+                            columns={[
+                                { key: 'title', label: 'Title' },
+                                { key: 'project', label: 'Project' },
+                                { key: 'type', label: 'Type' },
+                                { key: 'status', label: 'Status' },
+                                { key: 'priority', label: 'Priority' },
+                                { key: 'deadline', label: 'Deadline', render: (value) => formatDisplayDate(value) },
+                            ]}
+                            rows={rawProjectItems || []}
+                        />
                     )}
                 </div>
             )}
 
-            {activeTab === 'tasks' && (
+            {selectedTabs.includes('tasks') && (
                 <div className="space-y-6">
                     {showCharts && (
                         <div className="grid gap-6 md:grid-cols-2">
@@ -500,18 +926,22 @@ export default function ReportsPage() {
                     )}
                     {showTables && (
                         <DataTableCard
-                            title="Tasks by Status"
+                            title="Tasks"
                             columns={[
+                                { key: 'title', label: 'Title' },
+                                { key: 'taskType', label: 'Type' },
                                 { key: 'status', label: 'Status' },
-                                { key: 'count', label: 'Count' },
+                                { key: 'priority', label: 'Priority' },
+                                { key: 'dueDate', label: 'Due Date', render: (value) => formatDisplayDate(value) },
+                                { key: 'expenseCategory', label: 'Category' },
                             ]}
-                            rows={tasksByStatus || []}
+                            rows={rawTasks || []}
                         />
                     )}
                 </div>
             )}
 
-            {activeTab === 'calendar' && calendarOverview && (
+            {selectedTabs.includes('calendar') && calendarOverview && (
                 <div className="space-y-6">
                     {showCharts && (
                         <>
@@ -543,34 +973,23 @@ export default function ReportsPage() {
                         </>
                     )}
                     {showTables && (
-                        <div className="grid gap-6 md:grid-cols-2">
-                            <DataTableCard
-                                title="Calendar Overview"
-                                columns={[
-                                    { key: 'label', label: 'Metric' },
-                                    { key: 'value', label: 'Value' },
-                                ]}
-                                rows={[
-                                    { label: 'Total Events', value: calendarOverview.total },
-                                    { label: 'Today', value: calendarOverview.today },
-                                    { label: 'Upcoming', value: calendarOverview.upcoming },
-                                    { label: 'All Day', value: calendarOverview.allDay },
-                                ]}
-                            />
-                            <DataTableCard
-                                title="Events by Category"
-                                columns={[
-                                    { key: 'category', label: 'Category' },
-                                    { key: 'count', label: 'Count' },
-                                ]}
-                                rows={calendarByCategory || []}
-                            />
-                        </div>
+                        <DataTableCard
+                            title="Calendar Events"
+                            columns={[
+                                { key: 'title', label: 'Title' },
+                                { key: 'category', label: 'Category' },
+                                { key: 'startDate', label: 'Start', render: (value) => formatDisplayDate(value) },
+                                { key: 'endDate', label: 'End', render: (value) => formatDisplayDate(value) },
+                                { key: 'location', label: 'Location' },
+                                { key: 'allDay', label: 'All Day', render: (value) => (value ? 'Yes' : 'No') },
+                            ]}
+                            rows={rawCalendar || []}
+                        />
                     )}
                 </div>
             )}
 
-            {activeTab === 'goals' && (
+            {selectedTabs.includes('goals') && (
                 <div className="space-y-6">
                     {showCharts && (
                         <div className="card p-5">
@@ -588,20 +1007,22 @@ export default function ReportsPage() {
                     )}
                     {showTables && (
                         <DataTableCard
-                            title="Goal Completion Rates"
+                            title="Goals"
                             columns={[
                                 { key: 'title', label: 'Goal' },
+                                { key: 'periodType', label: 'Period' },
                                 { key: 'completionRate', label: 'Completion', render: (value) => `${value}%` },
                                 { key: 'currentCount', label: 'Current' },
                                 { key: 'targetCount', label: 'Target' },
+                                { key: 'periodEnd', label: 'Period End', render: (value) => formatDisplayDate(value) },
                             ]}
-                            rows={goalCompletion || []}
+                            rows={rawGoals || []}
                         />
                     )}
                 </div>
             )}
 
-            {activeTab === 'housework' && houseworkStatus && (
+            {selectedTabs.includes('housework') && houseworkStatus && (
                 <div className="space-y-6">
                     {showCharts && (
                         <div className="grid gap-4 md:grid-cols-3">
@@ -619,23 +1040,22 @@ export default function ReportsPage() {
                     )}
                     {showTables && (
                         <DataTableCard
-                            title="Housework Summary"
+                            title="Housework Items"
                             columns={[
-                                { key: 'label', label: 'Metric' },
-                                { key: 'value', label: 'Value' },
+                                { key: 'title', label: 'Title' },
+                                { key: 'frequencyType', label: 'Frequency' },
+                                { key: 'assignee', label: 'Assignee' },
+                                { key: 'nextDueDate', label: 'Next Due', render: (value) => formatDisplayDate(value) },
+                                { key: 'lastCompletedDate', label: 'Last Completed', render: (value) => formatDisplayDate(value) },
+                                { key: 'active', label: 'Active', render: (value) => (value ? 'Yes' : 'No') },
                             ]}
-                            rows={[
-                                { label: 'Total Active', value: houseworkStatus.total },
-                                { label: 'On Track', value: houseworkStatus.onTrack },
-                                { label: 'Overdue', value: houseworkStatus.overdue },
-                                { label: 'Completed', value: houseworkStatus.completed },
-                            ]}
+                            rows={rawHousework || []}
                         />
                     )}
                 </div>
             )}
 
-            {activeTab === 'expenses' && (
+            {selectedTabs.includes('expenses') && (
                 <div className="space-y-6">
                     {showCharts && (
                         <div className="grid gap-6 md:grid-cols-2">
@@ -666,30 +1086,23 @@ export default function ReportsPage() {
                         </div>
                     )}
                     {showTables && (
-                        <div className="grid gap-6 md:grid-cols-2">
-                            <DataTableCard
-                                title="Expenses by Category"
-                                columns={[
-                                    { key: 'category', label: 'Category' },
-                                    { key: 'count', label: 'Count' },
-                                    { key: 'total', label: 'Total', render: (value) => formatVND(Number(value || 0)) },
-                                ]}
-                                rows={expenseSummary || []}
-                            />
-                            <DataTableCard
-                                title="Expense Trend"
-                                columns={[
-                                    { key: 'month', label: 'Month' },
-                                    { key: 'total', label: 'Total', render: (value) => formatVND(Number(value || 0)) },
-                                ]}
-                                rows={expenseTrend || []}
-                            />
-                        </div>
+                        <DataTableCard
+                            title="Expenses"
+                            columns={[
+                                { key: 'date', label: 'Date', render: (value) => formatDisplayDate(value) },
+                                { key: 'description', label: 'Description' },
+                                { key: 'type', label: 'Type' },
+                                { key: 'scope', label: 'Scope' },
+                                { key: 'category', label: 'Category' },
+                                { key: 'amount', label: 'Amount', render: (value) => formatVND(Number(value || 0)) },
+                            ]}
+                            rows={rawExpenses || []}
+                        />
                     )}
                 </div>
             )}
 
-            {activeTab === 'assets' && assetOverview && (
+            {selectedTabs.includes('assets') && assetOverview && (
                 <div className="space-y-6">
                     {showCharts && (
                         <>
@@ -721,34 +1134,23 @@ export default function ReportsPage() {
                         </>
                     )}
                     {showTables && (
-                        <div className="grid gap-6 md:grid-cols-2">
-                            <DataTableCard
-                                title="Asset Overview"
-                                columns={[
-                                    { key: 'label', label: 'Metric' },
-                                    { key: 'value', label: 'Value' },
-                                ]}
-                                rows={[
-                                    { label: 'Total Assets', value: assetOverview.totalAssets },
-                                    { label: 'With Warranty', value: assetOverview.withWarranty },
-                                    { label: 'Upcoming Maintenance', value: assetOverview.upcomingMaintenance },
-                                    { label: 'Maintenance Cost', value: formatVND(Number(assetOverview.totalMaintenanceCost || 0)) },
-                                ]}
-                            />
-                            <DataTableCard
-                                title="Assets by Type"
-                                columns={[
-                                    { key: 'type', label: 'Type' },
-                                    { key: 'count', label: 'Count' },
-                                ]}
-                                rows={assetsByType || []}
-                            />
-                        </div>
+                        <DataTableCard
+                            title="Appliances & Devices"
+                            columns={[
+                                { key: 'name', label: 'Name' },
+                                { key: 'type', label: 'Type' },
+                                { key: 'brand', label: 'Brand' },
+                                { key: 'model', label: 'Model' },
+                                { key: 'purchaseDate', label: 'Purchase Date', render: (value) => formatDisplayDate(value) },
+                                { key: 'maintenanceCount', label: 'Maintenance Logs' },
+                            ]}
+                            rows={rawAssets || []}
+                        />
                     )}
                 </div>
             )}
 
-            {activeTab === 'learning' && (
+            {selectedTabs.includes('learning') && (
                 <div className="space-y-6">
                     {showCharts && (
                         <div className="grid gap-6 md:grid-cols-2">
@@ -779,29 +1181,22 @@ export default function ReportsPage() {
                         </div>
                     )}
                     {showTables && (
-                        <div className="grid gap-6 md:grid-cols-2">
-                            <DataTableCard
-                                title="Learning by Status"
-                                columns={[
-                                    { key: 'status', label: 'Status' },
-                                    { key: 'count', label: 'Count' },
-                                ]}
-                                rows={learningStatus || []}
-                            />
-                            <DataTableCard
-                                title="Learning by Topic"
-                                columns={[
-                                    { key: 'topic', label: 'Topic' },
-                                    { key: 'count', label: 'Count' },
-                                ]}
-                                rows={learningTopics || []}
-                            />
-                        </div>
+                        <DataTableCard
+                            title="Learning Records"
+                            columns={[
+                                { key: 'title', label: 'Title' },
+                                { key: 'topic', label: 'Topic' },
+                                { key: 'status', label: 'Status' },
+                                { key: 'progress', label: 'Progress', render: (value) => `${value ?? 0}%` },
+                                { key: 'deadline', label: 'Deadline', render: (value) => formatDisplayDate(value) },
+                            ]}
+                            rows={rawLearning || []}
+                        />
                     )}
                 </div>
             )}
 
-            {activeTab === 'ideas' && (
+            {selectedTabs.includes('ideas') && (
                 <div className="space-y-6">
                     {showCharts && (
                         <div className="grid gap-6 md:grid-cols-2">
@@ -832,27 +1227,21 @@ export default function ReportsPage() {
                         </div>
                     )}
                     {showTables && (
-                        <div className="grid gap-6 md:grid-cols-2">
-                            <DataTableCard
-                                title="Ideas by Status"
-                                columns={[
-                                    { key: 'status', label: 'Status' },
-                                    { key: 'count', label: 'Count' },
-                                ]}
-                                rows={ideaStatus || []}
-                            />
-                            <DataTableCard
-                                title="Ideas by Topic"
-                                columns={[
-                                    { key: 'topic', label: 'Topic' },
-                                    { key: 'count', label: 'Count' },
-                                ]}
-                                rows={ideaTopics || []}
-                            />
-                        </div>
+                        <DataTableCard
+                            title="Ideas"
+                            columns={[
+                                { key: 'title', label: 'Title' },
+                                { key: 'topic', label: 'Topic' },
+                                { key: 'category', label: 'Category' },
+                                { key: 'status', label: 'Status' },
+                                { key: 'createdAt', label: 'Created', render: (value) => formatDisplayDate(value) },
+                            ]}
+                            rows={rawIdeas || []}
+                        />
                     )}
                 </div>
             )}
+            </div>
         </div>
     );
 }

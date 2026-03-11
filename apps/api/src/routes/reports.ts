@@ -126,6 +126,284 @@ function buildVisibleAssetWhere(userId: string) {
     };
 }
 
+router.get('/raw-records', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.userId;
+        const module = String(req.query.module || '').toLowerCase();
+        const type = req.query.type as string;
+        const scope = req.query.scope as string;
+        const category = req.query.category as string;
+
+        switch (module) {
+            case 'project': {
+                const items = await prisma.projectTask.findMany({
+                    where: {
+                        AND: [
+                            buildVisibleProjectItemWhere(userId),
+                            buildDateFilter(req, 'deadline'),
+                            ...(type ? [{ type: type as any }] : []),
+                            ...(category ? [{ category }] : []),
+                        ],
+                    },
+                    include: {
+                        project: { select: { name: true } },
+                        assignee: { select: { name: true } },
+                    },
+                    orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
+                    take: 200,
+                });
+                return sendSuccess(res, items.map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    type: item.type,
+                    status: item.status,
+                    priority: item.priority,
+                    category: item.category,
+                    project: item.project.name,
+                    assignee: item.assignee?.name || null,
+                    deadline: item.deadline,
+                    updatedAt: item.updatedAt,
+                })));
+            }
+            case 'tasks': {
+                const items = await prisma.task.findMany({
+                    where: {
+                        AND: [
+                            buildVisibleStandaloneTaskWhere(userId),
+                            buildDateFilter(req, 'dueDate'),
+                            ...(type ? [{ taskType: type as any }] : []),
+                        ],
+                    },
+                    orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }],
+                    take: 200,
+                });
+                return sendSuccess(res, items.map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    taskType: item.taskType,
+                    status: item.status,
+                    priority: item.priority,
+                    dueDate: item.dueDate,
+                    amount: item.amount,
+                    expenseCategory: item.expenseCategory,
+                    updatedAt: item.updatedAt,
+                })));
+            }
+            case 'goals': {
+                const items = await prisma.goal.findMany({
+                    where: {
+                        active: true,
+                        AND: [
+                            {
+                                OR: [
+                                    { userId },
+                                    { isShared: true },
+                                ],
+                            },
+                            buildDateFilter(req, 'startDate'),
+                        ],
+                    },
+                    orderBy: { sortOrder: 'asc' },
+                    take: 200,
+                });
+                return sendSuccess(res, items.map((item) => {
+                    const periodEnd = getGoalPeriodEnd(item);
+                    const completionRate = item.targetCount > 0 ? Math.min(100, Math.round((item.currentCount / item.targetCount) * 100)) : 0;
+                    return {
+                        id: item.id,
+                        title: item.title,
+                        periodType: item.periodType,
+                        currentCount: item.currentCount,
+                        targetCount: item.targetCount,
+                        unit: item.unit,
+                        active: item.active,
+                        periodStart: item.currentPeriodStart,
+                        periodEnd,
+                        completionRate,
+                    };
+                }));
+            }
+            case 'calendar': {
+                const items = await prisma.calendarEvent.findMany({
+                    where: {
+                        AND: [
+                            buildVisibleCalendarEventWhere(userId),
+                            buildDateFilter(req, 'startDate'),
+                            ...(category ? [{ category }] : []),
+                        ],
+                    },
+                    orderBy: { startDate: 'asc' },
+                    take: 200,
+                });
+                return sendSuccess(res, items.map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    category: item.category,
+                    startDate: item.startDate,
+                    endDate: item.endDate,
+                    allDay: item.allDay,
+                    location: item.location,
+                    color: item.color,
+                })));
+            }
+            case 'housework': {
+                const items = await prisma.houseworkItem.findMany({
+                    where: {
+                        active: true,
+                        AND: [
+                            {
+                                OR: [
+                                    { assigneeId: userId },
+                                    { createdById: userId },
+                                    { isShared: true },
+                                ],
+                            },
+                            buildDateFilter(req, 'nextDueDate'),
+                        ],
+                    },
+                    include: {
+                        assignee: { select: { name: true } },
+                    },
+                    orderBy: [{ nextDueDate: 'asc' }, { createdAt: 'desc' }],
+                    take: 200,
+                });
+                return sendSuccess(res, items.map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    frequencyType: item.frequencyType,
+                    nextDueDate: item.nextDueDate,
+                    lastCompletedDate: item.lastCompletedDate,
+                    active: item.active,
+                    assignee: item.assignee?.name || null,
+                    estimatedCost: item.estimatedCost,
+                })));
+            }
+            case 'expenses': {
+                const where: any = {
+                    OR: [
+                        { userId },
+                        { isShared: true },
+                    ],
+                };
+                const { dateFrom, dateTo } = getDateBounds(req);
+                if (dateFrom || dateTo) {
+                    where.date = {};
+                    if (dateFrom) where.date.gte = dateFrom;
+                    if (dateTo) where.date.lte = dateTo;
+                }
+                if (type) where.type = type;
+                if (scope) where.scope = scope;
+                if (category) where.category = category;
+
+                const items = await prisma.expense.findMany({
+                    where,
+                    include: { user: { select: { name: true } } },
+                    orderBy: { date: 'desc' },
+                    take: 200,
+                });
+                return sendSuccess(res, items.map((item) => ({
+                    id: item.id,
+                    date: item.date,
+                    description: item.description,
+                    type: item.type,
+                    scope: item.scope,
+                    category: item.category,
+                    amount: item.amount,
+                    user: item.user.name,
+                    note: item.note,
+                })));
+            }
+            case 'assets': {
+                const items = await prisma.asset.findMany({
+                    where: {
+                        AND: [
+                            buildVisibleAssetWhere(userId),
+                            buildDateFilter(req, 'purchaseDate'),
+                            ...(type ? [{ type }] : []),
+                        ],
+                    },
+                    include: {
+                        _count: { select: { maintenanceRecords: true } },
+                    },
+                    orderBy: { createdAt: 'desc' },
+                    take: 200,
+                });
+                return sendSuccess(res, items.map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                    type: item.type,
+                    brand: item.brand,
+                    model: item.model,
+                    purchaseDate: item.purchaseDate,
+                    warrantyMonths: item.warrantyMonths,
+                    maintenanceCount: item._count.maintenanceRecords,
+                })));
+            }
+            case 'learning': {
+                const items = await prisma.learningItem.findMany({
+                    where: {
+                        AND: [
+                            {
+                                OR: [
+                                    { userId },
+                                    { topic: { isShared: true } },
+                                ],
+                            },
+                            buildDateFilter(req, 'deadline'),
+                        ],
+                    },
+                    include: {
+                        topic: { select: { title: true } },
+                    },
+                    orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
+                    take: 200,
+                });
+                return sendSuccess(res, items.map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    topic: item.topic?.title || null,
+                    status: item.status,
+                    progress: item.progress,
+                    deadline: item.deadline,
+                    target: item.target,
+                })));
+            }
+            case 'ideas': {
+                const items = await prisma.idea.findMany({
+                    where: {
+                        AND: [
+                            {
+                                OR: [
+                                    { userId },
+                                    { topic: { isShared: true } },
+                                ],
+                            },
+                            buildDateFilter(req, 'createdAt'),
+                        ],
+                        ...(category ? { category } : {}),
+                    },
+                    include: {
+                        topic: { select: { title: true } },
+                    },
+                    orderBy: { createdAt: 'desc' },
+                    take: 200,
+                });
+                return sendSuccess(res, items.map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    topic: item.topic?.title || null,
+                    category: item.category,
+                    status: item.status,
+                    tags: item.tags,
+                    createdAt: item.createdAt,
+                })));
+            }
+            default:
+                return sendSuccess(res, []);
+        }
+    } catch (err) { next(err); }
+});
+
 // Tasks by status
 router.get('/tasks-by-status', async (req: Request, res: Response, next: NextFunction) => {
     try {
