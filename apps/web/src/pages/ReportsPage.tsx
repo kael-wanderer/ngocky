@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/client';
+import { useAuthStore } from '../stores/auth';
+import { getFeatureFlags } from '../config/features';
 import { BarChart3, FileSpreadsheet, FileText, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
@@ -207,6 +209,7 @@ function renderExportCell(
 
 export default function ReportsPage() {
     const reportContentRef = useRef<HTMLDivElement>(null);
+    const { user } = useAuthStore();
     const [selectedTabs, setSelectedTabs] = useState<string[]>(['tasks']);
     const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('THIS_WEEK');
     const [viewType, setViewType] = useState<AnalyticsViewType>('BOTH');
@@ -361,17 +364,19 @@ export default function ReportsPage() {
         queryFn: async () => (await api.get(`/reports/raw-records?module=ideas&${baseQuery}`)).data.data,
     });
 
-    const tabs = [
-        { id: 'project', label: 'Project' },
-        { id: 'tasks', label: 'Tasks' },
-        { id: 'goals', label: 'Goals' },
-        { id: 'calendar', label: 'Calendar' },
-        { id: 'housework', label: 'Housework' },
-        { id: 'expenses', label: 'Expenses' },
-        { id: 'assets', label: 'Assets' },
-        { id: 'learning', label: 'Learning' },
-        { id: 'ideas', label: 'Ideas' },
+    const ff = getFeatureFlags(user);
+    const allTabs = [
+        { id: 'project',   label: 'Projects',   feature: ff.featureProjects },
+        { id: 'tasks',     label: 'Tasks',       feature: ff.featureTasks },
+        { id: 'expenses',  label: 'Expenses',    feature: ff.featureExpenses },
+        { id: 'housework', label: 'Housework',   feature: ff.featureHousework },
+        { id: 'calendar',  label: 'Calendar',    feature: ff.featureCalendar },
+        { id: 'goals',     label: 'Goals',       feature: ff.featureGoals },
+        { id: 'assets',    label: 'Assets',      feature: ff.featureAssets },
+        { id: 'learning',  label: 'Learning',    feature: ff.featureLearning },
+        { id: 'ideas',     label: 'Ideas',       feature: ff.featureIdeas },
     ];
+    const tabs = allTabs.filter(t => t.feature);
 
     const primaryTab = selectedTabs[0] || 'tasks';
     const hasMultipleTabsSelected = selectedTabs.length > 1;
@@ -717,8 +722,10 @@ export default function ReportsPage() {
     }
 
     function selectAllTabs() {
-        setSelectedTabs(tabs.map((tab) => tab.id));
+        setSelectedTabs(tabs.map((t) => t.id));
     }
+
+    const isAllSelected = selectedTabs.length === tabs.length && tabs.every(t => selectedTabs.includes(t.id));
 
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
@@ -818,10 +825,10 @@ export default function ReportsPage() {
                     <button
                         type="button"
                         onClick={selectAllTabs}
-                        className={`py-2 px-4 rounded-md text-sm font-medium transition-all ${selectedTabs.length === tabs.length ? 'shadow-sm' : ''}`}
+                        className={`py-2 px-4 rounded-md text-sm font-medium transition-all ${isAllSelected ? 'shadow-sm' : ''}`}
                         style={{
-                            backgroundColor: selectedTabs.length === tabs.length ? 'var(--color-surface)' : 'transparent',
-                            color: selectedTabs.length === tabs.length ? 'var(--color-text)' : 'var(--color-text-secondary)',
+                            backgroundColor: isAllSelected ? 'var(--color-surface)' : 'transparent',
+                            color: isAllSelected ? 'var(--color-text)' : 'var(--color-text-secondary)',
                         }}
                     >
                         All
