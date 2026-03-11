@@ -1,6 +1,6 @@
 # NgốcKý – Family Record Management
 
-A private family record management web app for managing goals, standalone tasks, project items, housework, calendars, expenses, appliances & devices, learning records, ideas, analytics, and notifications.
+A private family record management web app for managing goals, standalone tasks, project tasks, housework, calendars, expenses, assets, learning records, ideas, hobby funds, analytics, notifications, a Telegram assistant, and per-user feature-based navigation.
 
 ## Tech Stack
 
@@ -128,12 +128,17 @@ NgocKy/
 | Housework | `POST /api/housework/:id/complete` | Mark complete |
 | Calendar | `GET/POST /api/calendar` | Event CRUD |
 | Expenses | `GET/POST /api/expenses` | Expense CRUD |
+| Funds | `GET/POST /api/funds` | Hobby fund transaction CRUD |
 | Analytics | `GET /api/reports/*` | Analytics chart data + CSV |
 | Alerts | `GET/POST /api/alerts` | Notification rule CRUD |
 | Scheduled Reports | `GET/POST /api/scheduled-reports` | Scheduled report CRUD |
 | Service | `GET /api/service/due-notifications` | n8n reminder polling |
 | Service | `GET /api/service/due-reports` | n8n scheduled report polling |
 | Settings | `GET/PATCH /api/settings/profile` | Profile settings |
+| Assistant | `POST /api/assistant/telegram/message` | Telegram assistant inbound message |
+| Assistant | `POST /api/assistant/link-code` | Generate Telegram link code |
+| Assistant | `GET /api/assistant/link-status` | Telegram link status |
+| Assistant | `DELETE /api/assistant/telegram/link` | Revoke Telegram link |
 
 ## Architecture Decisions
 
@@ -173,24 +178,57 @@ Target reminder architecture:
   - `lastNotificationSentAt`
   - `notificationCooldownHours` with default `24`
 
+## Telegram Assistant
+
+NgocKy includes a Telegram assistant as a chat-first entry point into existing modules.
+
+Current scope:
+
+- create standalone tasks
+- mark standalone tasks done or reopen them
+- update project task status
+- query projects and project tasks
+- query calendar events using natural-language time ranges
+- query personal tasks such as `today`, `tomorrow`, and `this week`
+- log quick expenses and query expense history
+- log goal check-ins and query goal progress
+- query housework items and mark them done
+
+Operating rules:
+
+- Telegram is only the chat UI
+- n8n handles webhook transport/orchestration
+- NgocKy API remains the source of truth for identity, validation, execution, and audit logging
+- low-confidence or ambiguous write actions use confirmation/disambiguation instead of blind execution
+- only linked Telegram users can execute assistant actions
+
+Account linking:
+
+- user generates a one-time link code from `User Settings > Assistant`
+- user sends `/link <code>` to the Telegram bot
+- link codes expire after 15 minutes
+- one Telegram chat can only be linked to one NgocKy user
+
 ## Modules
 
-- **Dashboard** – Summary cards, filters (`Today`, `This week`, `Next week`, `This month`, `Next month`, `Status`, `Category`), overdue feed for true due items, pinned items, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Appliances & Devices`, `Learning`, `Ideas`)
+- **Dashboard** – Summary cards, filters (`Today`, `This week`, `Next week`, `This month`, `Next month`, `Status`, `Category`), overdue feed for true due items, pinned items, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Assets`, `Learning`, `Ideas`)
 - **Goals** – Recurring goals with check-in tracking, progress bars, reset periods (`Weekly`, `Monthly`, `Quarterly`), sharing, dashboard pinning, drag reorder, and optional reminders
 - **Tasks** – Standalone tasks with repeat rules (`Daily`, `Weekly`, `Monthly`, `Quarterly`), payment-task support, sharing, dashboard pinning, drag reorder, and optional reminders
-- **Projects** – Shared boards with kanban + list view, project item types (`Task`, `Bug`, `Feature`, `Story`, `Epic`), priorities, deadlines, assignees, drag-and-drop status updates, and per-item sharing
+- **Projects** – Shared boards with kanban + list view, project task types (`Task`, `Bug`, `Feature`, `Story`, `Epic`), priorities, deadlines, assignees, drag-and-drop status updates, and per-item sharing
 - **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete`, grouped operational states, sharing, and optional reminders
 - **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`, `Quarterly`), shared visibility, participants, and optional pre-start reminders
-- **Appliances & Devices** – Home appliance/device registry with sharing, warranty tracking, maintenance records, linked maintenance calendar events, reminder support, and automatic expense creation when a maintenance log includes cost
+- **Assets** – Home appliance/device registry with sharing, warranty tracking, maintenance records, linked maintenance calendar events, reminder support, and automatic expense creation when a maintenance log includes cost
 - **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, running totals in `VND`, and categories including `Maintenance`, `Insurance`, `Family Support`, `Gift`, and `Ca Keo`
-- **Learning** – Topic-first learning management with shared topics, shared ownership display on histories, duplicate actions, and progress/deadline tracking
+- **Learning** – Topic-first learning management with shared topics, topic categories (`Soft-skill`, `Expertise`, `AI`, `Other`), shared ownership display on histories, duplicate actions, and progress/deadline tracking
 - **Ideas** – Topic-first idea capture with shared topics, shared ownership display on logs, duplicate actions, and category/status tracking
+- **Funds** – Hobby transaction ledger with fields `Description`, `Type` (`Buy`, `Sell`, `Top-up`), `Scope` (`Mechanical keyboard`, `Play Station`), `Category` (`Keycap`, `Kit`, `Shipping`, `Accessories`), `Date`, and `Amount`
+- **Assistant** – Telegram-based assistant for quick task actions, calendar queries, expense logging, goal check-ins, housework updates, and project/project-task lookup with confirmation/disambiguation for ambiguous writes
 - **Analytics** – Charts and summaries for project items, standalone tasks, goals, calendar, housework, expenses, assets, learning, and ideas with time-aware filters
 - **Notifications** – Rule-based notification settings with drag reorder, double-click-to-edit, and schedule-time based due logic
 - **Scheduled Reports** – Scheduled report management with drag reorder, double-click-to-edit, report types `Weekly Summary`, `Next Week Tasks`, `Today Tasks`, and `Tomorrow Tasks`, and schedule frequencies including `One Time`, `Daily`, `Weekly`, `Monthly`, and `Quarterly`
-- **Settings** – Profile, notifications, password change, TOTP MFA enrollment, and theme picker with immediate apply (`Blue Purple`, `Grey Black`, `Red Accent`, `Dark`, `Modern Green`, `Multi Color Block`); profile/notification fields use explicit Save buttons
+- **Settings** – Profile, Features, notifications, Assistant link management, password change, TOTP MFA enrollment, and theme picker with immediate apply (`Blue Purple`, `Grey Black`, `Red Accent`, `Dark`, `Modern Green`, `Multi Color Block`); profile/notification fields use explicit Save buttons
 - **User Management** – Admin-only user creation, role assignment, activate/deactivate
-- **Navigation** – Grouped, collapsible sidebar with customizable cross-group drag arrangement for non-admin pages
+- **Navigation** – Grouped, collapsible sidebar with customizable cross-group drag arrangement for non-admin pages and per-user visibility controlled by the `Features` settings tab
 
 ## Dashboard Filters
 
@@ -242,6 +280,22 @@ Current shared modules include:
 - Appliances & Devices
 - Learning topics
 - Idea topics
+
+## Feature Visibility
+
+Navigation visibility is user-configurable from `User Settings > Features`.
+
+- **Personal**: Tasks, Projects, Goals, Expenses, Ideas
+- **Family**: Housework, Assets, Calendar
+- **Hobby**: Learning, Funds
+
+Behavior:
+
+- checking a child item shows that page in the navigator
+- unchecking a child item hides that page from the navigator
+- hidden pages also redirect away if visited directly by URL
+- if all child items inside a group are unchecked, that group disappears from the sidebar
+- dashboard, analytics, settings, and admin pages are not controlled by these feature toggles
 
 Shared child records follow the shared state of their parent container:
 

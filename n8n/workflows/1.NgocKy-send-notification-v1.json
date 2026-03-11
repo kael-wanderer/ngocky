@@ -1,0 +1,320 @@
+{
+  "name": "1.NgocKy-send-notification-v1",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000001",
+      "name": "Every 15 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -64,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.ngocky.kael.io.vn/api/service/due-notifications",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJuOG4tc2VydmljZSIsImVtYWlsIjoibjhuQG5nb2NreS5zZXJ2aWNlIiwicm9sZSI6Ik9XTkVSIiwiaWF0IjoxNzcyOTc1ODYxLCJleHAiOjIwODgzMzU4NjF9.fxp75c2Pum4yFU5tum9ArexJ6tnHoOrL1GJTTlyUfwc"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000002",
+      "name": "Get Due Notifications",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $json.data || [];\nif (items.length === 0) return [];\nreturn items.map(item => ({ json: item }));"
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000003",
+      "name": "Split Notifications",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $json;\nconst user = item.user;\n\nconst escapeHtml = (value) => String(value ?? '')\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;');\n\nconst fmtDate = (date) => {\n  if (!date) return '—';\n  return escapeHtml(\n    new Date(date).toLocaleString('en-US', {\n      weekday: 'short',\n      day: 'numeric',\n      month: 'short',\n      hour: '2-digit',\n      minute: '2-digit',\n      hour12: false,\n      timeZone: 'Asia/Ho_Chi_Minh',\n    })\n  );\n};\n\nconst typeConfig = {\n  GOAL:        { emoji: '🎯', label: 'Goal Reminder' },\n  TASK:        { emoji: '⚡', label: 'Task Due' },\n  HOUSEWORK:   { emoji: '🏠', label: 'Housework Due' },\n  MAINTENANCE: { emoji: '🔧', label: 'Maintenance Due' },\n  CALENDAR:    { emoji: '📅', label: 'Upcoming Event' },\n};\n\nconst priorityEmoji = { URGENT: '🔴', HIGH: '🟠', MEDIUM: '🔵', LOW: '⚪' };\n\nconst cfg = typeConfig[item.type] || { emoji: '🔔', label: 'Reminder' };\nconst title = escapeHtml(item.title);\nconst subtitle = escapeHtml(item.subtitle);\nconst location = escapeHtml(item.location);\n\nlet text = `${cfg.emoji} <b>${cfg.label}</b>\\n`;\ntext += `<b>${title}</b>\\n`;\n\nif (item.subtitle) text += `📁 ${subtitle}\\n`;\nif (item.type === 'TASK' && item.priority) text += `${priorityEmoji[item.priority] || '🔵'} Priority: ${escapeHtml(item.priority)}\\n`;\nif (item.dueDate) text += `⏰ Due: ${fmtDate(item.dueDate)}\\n`;\nif (item.location) text += `📍 ${location}\\n`;\n\nconst emailSubject = `${cfg.emoji} ${cfg.label}: ${item.title}`;\n\nreturn [{\n  json: {\n    telegramText: text,\n    emailSubject,\n    emailBody: text.replace(/<[^>]*>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'),\n    telegramChatId: user.telegramChatId,\n    notificationEmail: user.notificationEmail,\n    notificationChannel: user.notificationChannel,\n    userName: user.name,\n  }\n}];\n"
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000004",
+      "name": "Format Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "check-telegram",
+              "leftValue": "={{ $json.notificationChannel }}",
+              "rightValue": "EMAIL",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000005",
+      "name": "Should Send Telegram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8298888340:AAH4aNRFUmiF5az0rnwkGkgBbwIc8TKfPzk/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $json.telegramChatId, text: $json.telegramText, parse_mode: 'HTML' }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000006",
+      "name": "Send Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1104,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "check-email",
+              "leftValue": "={{ $json.notificationChannel }}",
+              "rightValue": "TELEGRAM",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000007",
+      "name": "Should Send Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        432
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        480
+      ],
+      "id": "169c6a76-cbf5-4d80-8036-273bc3679cd4",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fromEmail": "cong.bui@wizeline.com",
+        "toEmail": "={{ $json.notificationEmail }}",
+        "subject": "={{ $json.emailSubject }}",
+        "html": "={{ $json.emailBody }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1168,
+        320
+      ],
+      "id": "50d688af-5e07-4d02-bd35-324203d657f4",
+      "name": "Send Email",
+      "webhookId": "8b5c8c7c-9cfb-461d-bb38-a57d06b1004a",
+      "executeOnce": false,
+      "credentials": {
+        "smtp": {
+          "id": "o7w3oo4mY20TOvjp",
+          "name": "CBT_SMTP_account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Every 15 Minutes": [
+      {
+        "json": {
+          "timestamp": "2026-03-09T21:15:49.006+07:00",
+          "Readable date": "March 9th 2026, 9:15:49 pm",
+          "Readable time": "9:15:49 pm",
+          "Day of week": "Monday",
+          "Year": "2026",
+          "Month": "March",
+          "Day of month": "09",
+          "Hour": "21",
+          "Minute": "15",
+          "Second": "49",
+          "Timezone": "Asia/Ho_Chi_Minh (UTC+07:00)"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Every 15 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Get Due Notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Due Notifications": {
+      "main": [
+        [
+          {
+            "node": "Split Notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Notifications": {
+      "main": [
+        [
+          {
+            "node": "Format Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Notification": {
+      "main": [
+        [
+          {
+            "node": "Should Send Telegram?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Should Send Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Send Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Should Send Email?": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get Due Notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "219ee39d-d32a-4d64-a89a-5095116ccf8e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "84dfe6f660992ab67cbf337f1ca22d0da0cb540f7e6cc22b45ff99532f788940"
+  },
+  "id": "1CARjmLQR9bsYvEo",
+  "tags": []
+}

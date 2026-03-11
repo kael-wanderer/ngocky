@@ -2,7 +2,7 @@
 
 ## Overview
 
-NgốcKý is a family record management hub designed to manage personal and household tasks, track goals, record events, and monitor expenses. It is built as a monorepo with a React/Vite frontend and an Express/Prisma/PostgreSQL backend, hosted on a VPS via Docker/Caddy.
+NgốcKý is a family record management hub designed to manage personal and household tasks, track goals, record events, monitor expenses, and support Telegram-based assistant interactions. It is built as a monorepo with a React/Vite frontend and an Express/Prisma/PostgreSQL backend, hosted on a VPS via Docker/Caddy.
 
 ---
 
@@ -103,6 +103,11 @@ This mirrors the asset/log interaction model:
 
 Learning topics can be shared to all users. Histories are records, not deadline-managed tasks.
 
+Navigation note:
+
+- Learning now lives under the `Hobby` sidebar group instead of `Personal`
+- Learning visibility can be enabled or disabled per user from `Settings > Features`
+
 ### 6. Idea Topics & Logs
 
 Ideas follow the same two-layer structure as Learning and Assets:
@@ -137,6 +142,7 @@ Calendar also serves as a destination module for linked reminders generated from
 The following modules are treated as records:
 
 - Expenses
+- Funds
 - Asset maintenance logs
 - Learning histories
 - Idea logs
@@ -240,15 +246,54 @@ Notifications and Scheduled Reports are now separate pages in the sidebar, thoug
   - `Today Tasks` uses the same data shape as `Tomorrow Tasks` but targets the current local day instead of the next one
   - `Quarterly` scheduled reports currently use the existing `dayOfMonth` selector and run in Jan/Apr/Jul/Oct
 
-### 12. Navigation Model
+### 12. Telegram Assistant
+
+NgocKy includes a Telegram assistant that uses chat as an alternate UI for selected actions.
+
+Current supported scope:
+
+- create standalone tasks
+- update standalone task status
+- update project task status
+- query projects and project tasks
+- query calendar events with natural-language date filters
+- query standalone tasks
+- create and query expenses
+- log goal check-ins and query goals
+- query and update housework status
+
+Boundary decisions:
+
+- Telegram is only the frontend channel
+- n8n is transport/orchestration, not the source of truth
+- NgocKy API owns identity, authorization, validation, ambiguity handling, execution, and audit logging
+- the LLM is used for intent extraction, not direct database writes
+
+Identity and linking:
+
+- one Telegram chat maps to one NgocKy user
+- user generates a one-time link code from Settings
+- user sends `/link <code>` to the bot
+- link code validity is 15 minutes
+- verified link state is stored separately from the basic user profile
+
+Safety and UX rules:
+
+- write actions do not always require confirmation
+- confirmation is required when confidence is low, multiple matches exist, required fields are missing, or multiple items could be affected
+- when multiple matches exist, the assistant responds with a short disambiguation list instead of guessing
+- all assistant writes must be auditable
+
+### 13. Navigation Model
 
 The application sidebar now supports grouped navigation with persisted user customization.
 
 Fixed groups:
 
 - `Dashboard`: Dashboard, Analytics
-- `Personal`: Goals, Expenses, Learning, Ideas, Tasks, Projects
-- `Family`: Housework, Appliances & Devices, Calendar
+- `Personal`: Tasks, Projects, Goals, Expenses, Ideas
+- `Family`: Housework, Assets, Calendar
+- `Hobby`: Learning, Funds
 - `Settings`: Reports, Notifications, User Settings
 - `Admin`: User Management
 
@@ -259,17 +304,25 @@ Behavior:
 - non-admin pages can be drag-reordered within a group
 - non-admin pages can also be dragged across groups
 - admin navigation remains fixed to avoid role/permission ambiguity
+- page visibility is controlled per user in `Settings > Features`
+- if all child pages in a feature group are disabled, that whole group disappears from the sidebar
+- hidden pages are also blocked at the route level and redirect to dashboard if opened directly
 
-### 13. Settings Save Model
+### 14. Settings Save Model
 
 Settings behavior is intentionally mixed based on action type:
 
 - **Profile** fields (`name`, `email`, `timezone`) now use local draft state and require explicit `Save`
+- **Features** fields control module visibility per user and require explicit `Save`
+  - `Personal`: Tasks, Projects, Goals, Expenses, Ideas
+  - `Family`: Housework, Assets, Calendar
+  - `Hobby`: Learning, Funds
 - **Notification** fields (`notificationEnabled`, `notificationChannel`, `notificationEmail`, `telegramChatId`) also require explicit `Save`
+- **Assistant** tab manages Telegram link generation, link status, and revocation
 - **Theme** changes still apply immediately
 - **Avatar upload** still updates immediately after upload
 
-### 14. Auth Session Model
+### 15. Auth Session Model
 
 - access token expiry is controlled by `JWT_EXPIRY`
 - refresh token lifetime is controlled by `JWT_REFRESH_EXPIRY`

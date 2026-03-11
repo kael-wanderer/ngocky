@@ -38,6 +38,7 @@ export class AuthService {
                     featureHousework: !!user.featureHousework,
                     featureAssets: !!user.featureAssets,
                     featureCalendar: !!user.featureCalendar,
+                    featureCollection: !!user.featureCollection,
                     featureFunds: !!user.featureFunds,
                 },
             };
@@ -67,6 +68,7 @@ export class AuthService {
                 featureHousework: !!user.featureHousework,
                 featureAssets: !!user.featureAssets,
                 featureCalendar: !!user.featureCalendar,
+                featureCollection: !!user.featureCollection,
                 featureFunds: !!user.featureFunds,
             },
         };
@@ -102,6 +104,7 @@ export class AuthService {
                 featureHousework: !!user.featureHousework,
                 featureAssets: !!user.featureAssets,
                 featureCalendar: !!user.featureCalendar,
+                featureCollection: !!user.featureCollection,
                 featureFunds: !!user.featureFunds,
             },
         };
@@ -146,6 +149,7 @@ export class AuthService {
                 featureHousework: !!stored.user.featureHousework,
                 featureAssets: !!stored.user.featureAssets,
                 featureCalendar: !!stored.user.featureCalendar,
+                featureCollection: !!stored.user.featureCollection,
                 featureFunds: !!stored.user.featureFunds,
             },
         };

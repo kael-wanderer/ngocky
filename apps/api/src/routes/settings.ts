@@ -31,6 +31,7 @@ const profileSelect: any = {
     featureHousework: true,
     featureAssets: true,
     featureCalendar: true,
+    featureCollection: true,
     featureFunds: true,
 } as const;
 
@@ -67,6 +68,7 @@ router.patch('/profile', async (req: Request, res: Response, next: NextFunction)
             'featureHousework',
             'featureAssets',
             'featureCalendar',
+            'featureCollection',
             'featureFunds',
         ];
         const data: any = {};

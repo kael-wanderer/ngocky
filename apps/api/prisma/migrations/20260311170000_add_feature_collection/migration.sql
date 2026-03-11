@@ -1,0 +1,2 @@
+ALTER TABLE "User"
+ADD COLUMN "featureCollection" BOOLEAN NOT NULL DEFAULT true;

@@ -51,8 +51,25 @@ const DEFAULT_GROUP_STATE: Record<string, boolean> = {
 
 const GROUP_STORAGE_KEY = 'ngocky-sidebar-groups';
 const GROUP_ORDER_STORAGE_KEY = 'ngocky-sidebar-group-order';
+const GROUP_ORDER_VERSION_KEY = 'ngocky-sidebar-group-order-version';
+const GROUP_ORDER_VERSION = 2;
 const CUSTOMIZABLE_GROUP_IDS = navGroups.filter((group) => group.id !== 'admin').map((group) => group.id);
 const CUSTOMIZABLE_NAV_PATHS = navItems.map((item) => item.to);
+
+function migrateLegacyGroupOrder(order: Record<string, string[]>) {
+    const next: Record<string, string[]> = {};
+    for (const [groupId, items] of Object.entries(order || {})) {
+        next[groupId] = Array.isArray(items) ? [...items] : [];
+    }
+
+    const hobbyRoutes = ['/learning', '/collection', '/funds'];
+    for (const groupId of Object.keys(next)) {
+        next[groupId] = next[groupId].filter((to) => !hobbyRoutes.includes(to));
+    }
+
+    next.hobby = hobbyRoutes;
+    return next;
+}
 
 function normalizeGroupOrder(order: Record<string, string[]>, includeAdmin: boolean) {
     const next: Record<string, string[]> = {};
@@ -105,7 +122,10 @@ export default function AppLayout() {
         if (typeof window === 'undefined') return normalizeGroupOrder({}, false);
         try {
             const saved = window.localStorage.getItem(GROUP_ORDER_STORAGE_KEY);
-            return normalizeGroupOrder(saved ? JSON.parse(saved) : {}, false);
+            const savedVersion = Number(window.localStorage.getItem(GROUP_ORDER_VERSION_KEY) || '0');
+            const parsed = saved ? JSON.parse(saved) : {};
+            const migrated = savedVersion < GROUP_ORDER_VERSION ? migrateLegacyGroupOrder(parsed) : parsed;
+            return normalizeGroupOrder(migrated, false);
         } catch {
             return normalizeGroupOrder({}, false);
         }
@@ -141,6 +161,7 @@ export default function AppLayout() {
     useEffect(() => {
         if (typeof window === 'undefined') return;
         window.localStorage.setItem(GROUP_ORDER_STORAGE_KEY, JSON.stringify(groupOrder));
+        window.localStorage.setItem(GROUP_ORDER_VERSION_KEY, String(GROUP_ORDER_VERSION));
     }, [groupOrder]);
 
     const toggleGroup = (groupId: string) => {

@@ -3,7 +3,9 @@
     "allow": [
       "Read(//private/tmp/**)",
       "Bash(npm run:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(grep -rn \"assets\\\\|ideas\" /Users/cong.bui/Kael/20-Projects/NgocKy/apps/web/src/layouts/ --include=*.tsx -l)",
+      "Bash(find /Users/cong.bui/Kael/20-Projects/NgocKy/apps/web/src -name *.tsx)"
     ]
   }
 }

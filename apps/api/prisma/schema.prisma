@@ -195,6 +195,7 @@ model User {
   featureHousework    Boolean             @default(true)
   featureAssets       Boolean             @default(true)
   featureCalendar     Boolean             @default(true)
+  featureCollection   Boolean             @default(true)
   featureFunds        Boolean             @default(true)
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt

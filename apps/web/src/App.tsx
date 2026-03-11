@@ -73,7 +73,7 @@ export default function App() {
                         <Route path="assets" element={<FeatureRoute route="/assets"><AssetsPage /></FeatureRoute>} />
                         <Route path="learning" element={<FeatureRoute route="/learning"><LearningPage /></FeatureRoute>} />
                         <Route path="ideas" element={<FeatureRoute route="/ideas"><IdeasPage /></FeatureRoute>} />
-                        <Route path="collection" element={<CollectionPage />} />
+                        <Route path="collection" element={<FeatureRoute route="/collection"><CollectionPage /></FeatureRoute>} />
                         <Route path="notifications" element={<AlertsPage forcedTab="RULES" />} />
                         <Route path="scheduled-reports" element={<AlertsPage forcedTab="REPORTS" />} />
                         <Route path="alerts" element={<Navigate to="/notifications" replace />} />

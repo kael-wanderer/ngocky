@@ -171,6 +171,7 @@ export default function SettingsPage() {
             featureHousework: profile.featureHousework ?? true,
             featureAssets: profile.featureAssets ?? true,
             featureCalendar: profile.featureCalendar ?? true,
+            featureCollection: profile.featureCollection ?? true,
             featureFunds: profile.featureFunds ?? true,
         });
     }, [profile]);

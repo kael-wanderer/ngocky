@@ -8,6 +8,7 @@ export const FEATURE_FLAGS = {
     featureHousework: true,
     featureAssets: true,
     featureCalendar: true,
+    featureCollection: true,
     featureFunds: true,
 } as const;
 
@@ -33,7 +34,6 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
             { key: 'featureProjects', label: 'Projects', route: '/projects' },
             { key: 'featureGoals', label: 'Goals', route: '/goals' },
             { key: 'featureExpenses', label: 'Expenses', route: '/expenses' },
-            { key: 'featureLearning', label: 'Learning', route: '/learning' },
             { key: 'featureIdeas', label: 'Ideas', route: '/ideas' },
         ],
     },
@@ -50,6 +50,8 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         id: 'hobby',
         label: 'Hobby',
         items: [
+            { key: 'featureLearning', label: 'Learning', route: '/learning' },
+            { key: 'featureCollection', label: 'Collection', route: '/collection' },
             { key: 'featureFunds', label: 'Funds', route: '/funds' },
         ],
     },
