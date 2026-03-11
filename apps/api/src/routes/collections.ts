@@ -168,6 +168,39 @@ router.delete('/:id/items/:itemId', async (req, res, next) => {
     } catch (e) { next(e); }
 });
 
+// ─── Bulk import ─────────────────────────────────────
+
+router.post('/:id/items/import', async (req, res, next) => {
+    try {
+        const userId = req.user!.id;
+        const col = await prisma.collection.findFirst({
+            where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
+        });
+        if (!col) throw new NotFoundError('Collection not found');
+
+        const rows: Array<{ name: string; price?: number | null; status?: string | null; data?: any }> = req.body.items ?? [];
+        if (!rows.length) return sendSuccess(res, { created: 0 });
+
+        const lastOrder = await prisma.collectionItem.aggregate({ where: { collectionId: col.id }, _max: { sortOrder: true } });
+        let order = (lastOrder._max.sortOrder ?? -1) + 1;
+
+        await prisma.collectionItem.createMany({
+            data: rows.map(r => ({
+                collectionId: col.id,
+                name: String(r.name ?? '').trim() || 'Untitled',
+                price: r.price != null ? Number(r.price) : null,
+                status: r.status ?? null,
+                imageUrl: null,
+                data: r.data ?? {},
+                sortOrder: order++,
+            })),
+            skipDuplicates: false,
+        });
+
+        sendCreated(res, { created: rows.length });
+    } catch (e) { next(e); }
+});
+
 // ─── Views ────────────────────────────────────────────
 
 router.get('/:id/views', async (req, res, next) => {

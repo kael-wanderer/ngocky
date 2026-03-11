@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { ChevronDown, ChevronRight, Filter, FolderOpen, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Filter, FolderOpen, Pencil, Plus, Save, Trash2, Upload, X } from 'lucide-react';
 import { useAuthStore } from '../stores/auth';
 
 // ─── Types ───────────────────────────────────────────
@@ -106,6 +106,7 @@ export default function CollectionPage() {
     const [showViewModal, setShowViewModal] = useState(false);
     const [editingView, setEditingView] = useState<CollectionView | null>(null);
     const [showSchemaEditor, setShowSchemaEditor] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
 
     // Queries
     const { data: collections = [] } = useQuery<Collection[]>({
@@ -164,6 +165,17 @@ export default function CollectionPage() {
     const deleteCollMut = useMutation({
         mutationFn: (id: string) => api.delete(`/collections/${id}`),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['collections'] }); setSelectedId(null); },
+    });
+
+    // Import mutation
+    const importItemsMut = useMutation({
+        mutationFn: (items: any[]) => api.post(`/collections/${selectedId}/items/import`, { items }),
+        onSuccess: ({ data }) => {
+            qc.invalidateQueries({ queryKey: ['collection-items', selectedId] });
+            qc.invalidateQueries({ queryKey: ['collections'] });
+            setShowImportModal(false);
+            alert(`✅ Imported ${data.data.created} items`);
+        },
     });
 
     // Mutations — Items
@@ -293,6 +305,9 @@ export default function CollectionPage() {
                                             </button>
                                         </>
                                     )}
+                                    <button onClick={() => setShowImportModal(true)} className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded-lg">
+                                        <Upload className="w-4 h-4" />Import CSV
+                                    </button>
                                     <button onClick={openNewItem} className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg">
                                         <Plus className="w-4 h-4" />Add Item
                                     </button>
@@ -440,6 +455,15 @@ export default function CollectionPage() {
                     }}
                     onDelete={editingView ? () => deleteViewMut.mutate(editingView.id) : undefined}
                     onClose={() => setShowViewModal(false)}
+                />
+            )}
+
+            {showImportModal && selectedCollection && (
+                <CsvImportModal
+                    fieldSchema={fieldSchema}
+                    onImport={items => importItemsMut.mutate(items)}
+                    onClose={() => setShowImportModal(false)}
+                    loading={importItemsMut.isPending}
                 />
             )}
 
@@ -685,6 +709,200 @@ function ViewModal({ initial, fieldSchema, currentFilters, onSave, onDelete, onC
                     <div className="flex gap-2">
                         <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
                         <button onClick={() => name && onSave({ name, filters: useCurrentFilters ? currentFilters : (initial?.filters ?? []) })} disabled={!name} className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── CSV Import Modal ─────────────────────────────────
+
+function parseCSV(text: string): { headers: string[]; rows: string[][] } {
+    const lines = text.trim().split(/\r?\n/);
+    function parseLine(line: string): string[] {
+        const cols: string[] = [];
+        let cur = '';
+        let inQuote = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
+                else inQuote = !inQuote;
+            } else if (ch === ',' && !inQuote) {
+                cols.push(cur.trim()); cur = '';
+            } else {
+                cur += ch;
+            }
+        }
+        cols.push(cur.trim());
+        return cols;
+    }
+    const headers = parseLine(lines[0]);
+    const rows = lines.slice(1).filter(l => l.trim()).map(parseLine);
+    return { headers, rows };
+}
+
+function autoMap(csvHeaders: string[], fieldSchema: FieldDef[]): Record<string, string> {
+    const mapping: Record<string, string> = {};
+    const allTargets = [
+        { key: 'name', label: 'Name' },
+        { key: 'price', label: 'Price' },
+        ...fieldSchema,
+    ];
+    csvHeaders.forEach(h => {
+        const norm = h.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const match = allTargets.find(t => {
+            const tnorm = t.label.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return tnorm === norm || t.key.toLowerCase() === norm;
+        });
+        if (match) mapping[h] = match.key;
+    });
+    return mapping;
+}
+
+function CsvImportModal({ fieldSchema, onImport, onClose, loading }: {
+    fieldSchema: FieldDef[];
+    onImport: (items: any[]) => void;
+    onClose: () => void;
+    loading: boolean;
+}) {
+    const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+    const [csvRows, setCsvRows] = useState<string[][]>([]);
+    const [mapping, setMapping] = useState<Record<string, string>>({});
+    const [preview, setPreview] = useState<any[]>([]);
+
+    const allTargets = [
+        { key: '', label: '— skip —' },
+        { key: 'name', label: 'Name' },
+        { key: 'price', label: 'Price' },
+        ...fieldSchema,
+    ];
+
+    function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            const text = ev.target?.result as string;
+            const { headers, rows } = parseCSV(text);
+            setCsvHeaders(headers);
+            setCsvRows(rows);
+            setMapping(autoMap(headers, fieldSchema));
+        };
+        reader.readAsText(file);
+    }
+
+    React.useEffect(() => {
+        if (!csvRows.length) { setPreview([]); return; }
+        const items = csvRows.slice(0, 5).map(row => buildItem(row, csvHeaders, mapping, fieldSchema));
+        setPreview(items);
+    }, [mapping, csvRows]);
+
+    function buildItem(row: string[], headers: string[], mapping: Record<string, string>, schema: FieldDef[]) {
+        const item: any = { name: '', price: null, data: {} };
+        headers.forEach((h, i) => {
+            const target = mapping[h];
+            if (!target) return;
+            const val = row[i] ?? '';
+            if (target === 'name') { item.name = val; return; }
+            if (target === 'price') { item.price = val ? Number(String(val).replace(/[^0-9.]/g, '')) || null : null; return; }
+            const fd = schema.find(f => f.key === target);
+            if (!fd) return;
+            if (fd.type === 'multiselect') {
+                item.data[target] = val ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+            } else if (fd.type === 'number') {
+                item.data[target] = val ? Number(val) : null;
+            } else {
+                item.data[target] = val;
+            }
+        });
+        return item;
+    }
+
+    function handleImport() {
+        const items = csvRows.map(row => buildItem(row, csvHeaders, mapping, fieldSchema));
+        onImport(items.filter(i => i.name));
+    }
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                    <h2 className="text-lg font-bold mb-1 text-gray-900 dark:text-white">Import from CSV</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        Export your Notion database as CSV (••• → Export → CSV), then upload here.
+                        Columns are auto-mapped to your fields.
+                    </p>
+
+                    {!csvHeaders.length ? (
+                        <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-10 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                            <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                            <span className="text-sm text-gray-500">Click to select CSV file</span>
+                            <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleFile} />
+                        </label>
+                    ) : (
+                        <>
+                            <div className="mb-4">
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    {csvRows.length} rows found. Map CSV columns to collection fields:
+                                </p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {csvHeaders.map(h => (
+                                        <div key={h} className="flex items-center gap-2">
+                                            <span className="text-xs text-gray-500 w-28 truncate" title={h}>{h}</span>
+                                            <span className="text-gray-300">→</span>
+                                            <select
+                                                value={mapping[h] ?? ''}
+                                                onChange={e => setMapping(p => ({ ...p, [h]: e.target.value }))}
+                                                className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded px-1.5 py-1 bg-white dark:bg-gray-800"
+                                            >
+                                                {allTargets.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+                                            </select>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {preview.length > 0 && (
+                                <div className="mb-4">
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Preview (first {preview.length} rows):</p>
+                                    <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                                        <table className="text-xs w-full">
+                                            <thead className="bg-gray-50 dark:bg-gray-800">
+                                                <tr>
+                                                    <th className="px-2 py-1 text-left font-medium text-gray-500">Name</th>
+                                                    <th className="px-2 py-1 text-right font-medium text-gray-500">Price</th>
+                                                    {fieldSchema.slice(0, 4).map(f => <th key={f.key} className="px-2 py-1 text-left font-medium text-gray-500">{f.label}</th>)}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {preview.map((item, i) => (
+                                                    <tr key={i} className="border-t border-gray-100 dark:border-gray-800">
+                                                        <td className="px-2 py-1 font-medium text-gray-800 dark:text-gray-200">{item.name || <span className="text-red-400">⚠ empty</span>}</td>
+                                                        <td className="px-2 py-1 text-right text-gray-600">{item.price ?? '—'}</td>
+                                                        {fieldSchema.slice(0, 4).map(f => (
+                                                            <td key={f.key} className="px-2 py-1 text-gray-600 max-w-[80px] truncate">
+                                                                {Array.isArray(item.data[f.key]) ? item.data[f.key].join(', ') : String(item.data[f.key] ?? '')}
+                                                            </td>
+                                                        ))}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    <div className="flex gap-2 justify-end mt-4">
+                        <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
+                        {csvRows.length > 0 && (
+                            <button onClick={handleImport} disabled={loading} className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
+                                {loading ? 'Importing…' : `Import ${csvRows.length} rows`}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
