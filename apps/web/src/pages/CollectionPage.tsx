@@ -167,9 +167,16 @@ export default function CollectionPage() {
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['collections'] }); setSelectedId(null); },
     });
 
-    // Import mutation
+    // Import mutation (optionally saves new fields to schema first)
     const importItemsMut = useMutation({
-        mutationFn: (items: any[]) => api.post(`/collections/${selectedId}/items/import`, { items }),
+        mutationFn: async ({ items, newFields }: { items: any[]; newFields: FieldDef[] }) => {
+            if (newFields.length > 0 && selectedCollection) {
+                await api.patch(`/collections/${selectedCollection.id}`, {
+                    fieldSchema: [...(selectedCollection.fieldSchema ?? []), ...newFields],
+                });
+            }
+            return api.post(`/collections/${selectedId}/items/import`, { items });
+        },
         onSuccess: ({ data }) => {
             qc.invalidateQueries({ queryKey: ['collection-items', selectedId] });
             qc.invalidateQueries({ queryKey: ['collections'] });
@@ -461,7 +468,7 @@ export default function CollectionPage() {
             {showImportModal && selectedCollection && (
                 <CsvImportModal
                     fieldSchema={fieldSchema}
-                    onImport={items => importItemsMut.mutate(items)}
+                    onImport={(items, newFields) => importItemsMut.mutate({ items, newFields })}
                     onClose={() => setShowImportModal(false)}
                     loading={importItemsMut.isPending}
                 />
@@ -743,6 +750,22 @@ function parseCSV(text: string): { headers: string[]; rows: string[][] } {
     return { headers, rows };
 }
 
+// __new__ sentinel means "create this CSV column as a new field"
+const NEW_FIELD_SENTINEL = '__new__';
+
+function guessFieldType(header: string): FieldType {
+    const h = header.toLowerCase();
+    if (['spec', 'extras', 'tags', 'tag', 'categories'].some(k => h.includes(k))) return 'multiselect';
+    if (['price', 'cost', 'amount', 'value', 'qty', 'quantity'].some(k => h.includes(k))) return 'number';
+    if (['url', 'link', 'website', 'image'].some(k => h.includes(k))) return 'url';
+    if (['category', 'type', 'status', 'color', 'build'].some(k => h.includes(k))) return 'select';
+    return 'text';
+}
+
+function toFieldKey(label: string): string {
+    return label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || `field_${Date.now()}`;
+}
+
 function autoMap(csvHeaders: string[], fieldSchema: FieldDef[]): Record<string, string> {
     const mapping: Record<string, string> = {};
     const allTargets = [
@@ -756,24 +779,28 @@ function autoMap(csvHeaders: string[], fieldSchema: FieldDef[]): Record<string, 
             const tnorm = t.label.toLowerCase().replace(/[^a-z0-9]/g, '');
             return tnorm === norm || t.key.toLowerCase() === norm;
         });
-        if (match) mapping[h] = match.key;
+        // Map to existing field, or default to "create new field"
+        mapping[h] = match ? match.key : NEW_FIELD_SENTINEL;
     });
     return mapping;
 }
 
 function CsvImportModal({ fieldSchema, onImport, onClose, loading }: {
     fieldSchema: FieldDef[];
-    onImport: (items: any[]) => void;
+    onImport: (items: any[], newFields: FieldDef[]) => void;
     onClose: () => void;
     loading: boolean;
 }) {
     const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
     const [csvRows, setCsvRows] = useState<string[][]>([]);
     const [mapping, setMapping] = useState<Record<string, string>>({});
+    // For headers mapped to __new__, track the field type the user chose
+    const [newFieldTypes, setNewFieldTypes] = useState<Record<string, FieldType>>({});
     const [preview, setPreview] = useState<any[]>([]);
 
     const allTargets = [
         { key: '', label: '— skip —' },
+        { key: NEW_FIELD_SENTINEL, label: '✨ Create new field' },
         { key: 'name', label: 'Name' },
         { key: 'price', label: 'Price' },
         ...fieldSchema,
@@ -788,26 +815,39 @@ function CsvImportModal({ fieldSchema, onImport, onClose, loading }: {
             const { headers, rows } = parseCSV(text);
             setCsvHeaders(headers);
             setCsvRows(rows);
-            setMapping(autoMap(headers, fieldSchema));
+            const m = autoMap(headers, fieldSchema);
+            setMapping(m);
+            // Pre-set guessed types for new fields
+            const types: Record<string, FieldType> = {};
+            headers.forEach(h => { if (m[h] === NEW_FIELD_SENTINEL) types[h] = guessFieldType(h); });
+            setNewFieldTypes(types);
         };
         reader.readAsText(file);
     }
 
-    React.useEffect(() => {
-        if (!csvRows.length) { setPreview([]); return; }
-        const items = csvRows.slice(0, 5).map(row => buildItem(row, csvHeaders, mapping, fieldSchema));
-        setPreview(items);
-    }, [mapping, csvRows]);
+    // Effective schema = existing + new fields from this import
+    const pendingNewFields: FieldDef[] = csvHeaders
+        .filter(h => mapping[h] === NEW_FIELD_SENTINEL)
+        .map(h => ({ key: toFieldKey(h), label: h, type: newFieldTypes[h] ?? 'text' }));
 
-    function buildItem(row: string[], headers: string[], mapping: Record<string, string>, schema: FieldDef[]) {
+    const effectiveSchema = [...fieldSchema, ...pendingNewFields];
+
+    function getFieldKey(csvHeader: string): string {
+        if (mapping[csvHeader] === NEW_FIELD_SENTINEL) {
+            return toFieldKey(csvHeader);
+        }
+        return mapping[csvHeader] ?? '';
+    }
+
+    function buildItem(row: string[], headers: string[]) {
         const item: any = { name: '', price: null, data: {} };
         headers.forEach((h, i) => {
-            const target = mapping[h];
+            const target = getFieldKey(h);
             if (!target) return;
             const val = row[i] ?? '';
             if (target === 'name') { item.name = val; return; }
             if (target === 'price') { item.price = val ? Number(String(val).replace(/[^0-9.]/g, '')) || null : null; return; }
-            const fd = schema.find(f => f.key === target);
+            const fd = effectiveSchema.find(f => f.key === target);
             if (!fd) return;
             if (fd.type === 'multiselect') {
                 item.data[target] = val ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
@@ -820,10 +860,18 @@ function CsvImportModal({ fieldSchema, onImport, onClose, loading }: {
         return item;
     }
 
+    React.useEffect(() => {
+        if (!csvRows.length) { setPreview([]); return; }
+        setPreview(csvRows.slice(0, 3).map(row => buildItem(row, csvHeaders)));
+    }, [mapping, csvRows, newFieldTypes]);
+
     function handleImport() {
-        const items = csvRows.map(row => buildItem(row, csvHeaders, mapping, fieldSchema));
-        onImport(items.filter(i => i.name));
+        const items = csvRows.map(row => buildItem(row, csvHeaders)).filter(i => i.name);
+        onImport(items, pendingNewFields);
     }
+
+    const newCount = pendingNewFields.length;
+    const previewCols = effectiveSchema.slice(0, 3);
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -831,8 +879,7 @@ function CsvImportModal({ fieldSchema, onImport, onClose, loading }: {
                 <div className="p-6">
                     <h2 className="text-lg font-bold mb-1 text-gray-900 dark:text-white">Import from CSV</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        Export your Notion database as CSV (••• → Export → CSV), then upload here.
-                        Columns are auto-mapped to your fields.
+                        Export from Notion (••• → Export → CSV) then upload. Unmapped columns are auto-created as new fields.
                     </p>
 
                     {!csvHeaders.length ? (
@@ -843,22 +890,40 @@ function CsvImportModal({ fieldSchema, onImport, onClose, loading }: {
                         </label>
                     ) : (
                         <>
+                            {newCount > 0 && (
+                                <div className="mb-3 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-sm text-blue-700 dark:text-blue-300">
+                                    ✨ {newCount} new field{newCount > 1 ? 's' : ''} will be created: {pendingNewFields.map(f => f.label).join(', ')}
+                                </div>
+                            )}
                             <div className="mb-4">
                                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    {csvRows.length} rows found. Map CSV columns to collection fields:
+                                    {csvRows.length} rows · Map columns:
                                 </p>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1.5">
                                     {csvHeaders.map(h => (
                                         <div key={h} className="flex items-center gap-2">
-                                            <span className="text-xs text-gray-500 w-28 truncate" title={h}>{h}</span>
-                                            <span className="text-gray-300">→</span>
+                                            <span className="text-xs text-gray-500 w-32 truncate flex-shrink-0" title={h}>{h}</span>
+                                            <span className="text-gray-300 flex-shrink-0">→</span>
                                             <select
                                                 value={mapping[h] ?? ''}
                                                 onChange={e => setMapping(p => ({ ...p, [h]: e.target.value }))}
-                                                className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded px-1.5 py-1 bg-white dark:bg-gray-800"
+                                                className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded px-1.5 py-1 bg-white dark:bg-gray-800 min-w-0"
                                             >
                                                 {allTargets.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
                                             </select>
+                                            {mapping[h] === NEW_FIELD_SENTINEL && (
+                                                <select
+                                                    value={newFieldTypes[h] ?? 'text'}
+                                                    onChange={e => setNewFieldTypes(p => ({ ...p, [h]: e.target.value as FieldType }))}
+                                                    className="text-xs border border-blue-300 dark:border-blue-600 rounded px-1.5 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 flex-shrink-0"
+                                                >
+                                                    <option value="text">Text</option>
+                                                    <option value="select">Select</option>
+                                                    <option value="multiselect">Multi-select</option>
+                                                    <option value="number">Number</option>
+                                                    <option value="url">URL</option>
+                                                </select>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -873,7 +938,7 @@ function CsvImportModal({ fieldSchema, onImport, onClose, loading }: {
                                                 <tr>
                                                     <th className="px-2 py-1 text-left font-medium text-gray-500">Name</th>
                                                     <th className="px-2 py-1 text-right font-medium text-gray-500">Price</th>
-                                                    {fieldSchema.slice(0, 4).map(f => <th key={f.key} className="px-2 py-1 text-left font-medium text-gray-500">{f.label}</th>)}
+                                                    {previewCols.map(f => <th key={f.key} className="px-2 py-1 text-left font-medium text-gray-500">{f.label}</th>)}
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -881,7 +946,7 @@ function CsvImportModal({ fieldSchema, onImport, onClose, loading }: {
                                                     <tr key={i} className="border-t border-gray-100 dark:border-gray-800">
                                                         <td className="px-2 py-1 font-medium text-gray-800 dark:text-gray-200">{item.name || <span className="text-red-400">⚠ empty</span>}</td>
                                                         <td className="px-2 py-1 text-right text-gray-600">{item.price ?? '—'}</td>
-                                                        {fieldSchema.slice(0, 4).map(f => (
+                                                        {previewCols.map(f => (
                                                             <td key={f.key} className="px-2 py-1 text-gray-600 max-w-[80px] truncate">
                                                                 {Array.isArray(item.data[f.key]) ? item.data[f.key].join(', ') : String(item.data[f.key] ?? '')}
                                                             </td>
@@ -900,7 +965,7 @@ function CsvImportModal({ fieldSchema, onImport, onClose, loading }: {
                         <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
                         {csvRows.length > 0 && (
                             <button onClick={handleImport} disabled={loading} className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
-                                {loading ? 'Importing…' : `Import ${csvRows.length} rows`}
+                                {loading ? 'Importing…' : `Import ${csvRows.length} rows${newCount > 0 ? ` + ${newCount} fields` : ''}`}
                             </button>
                         )}
                     </div>
