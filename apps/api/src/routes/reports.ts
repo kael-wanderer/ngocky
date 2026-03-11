@@ -50,10 +50,15 @@ function buildRangeValue(start: Date | null, end: Date | null) {
     return range;
 }
 
-function buildDateFilter(req: Request, primaryField: string, fallbackField = 'createdAt') {
+function buildDateFilter(req: Request, primaryField: string, fallbackField?: string | null) {
     const { dateFrom, dateTo } = getDateBounds(req);
     const range = buildRangeValue(dateFrom, dateTo);
     if (!range) return {};
+    if (!fallbackField || fallbackField === primaryField) {
+        return {
+            [primaryField]: range,
+        };
+    }
     return {
         OR: [
             { [primaryField]: range },
@@ -140,7 +145,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                     where: {
                         AND: [
                             buildVisibleProjectItemWhere(userId),
-                            buildDateFilter(req, 'deadline'),
+                            buildDateFilter(req, 'deadline', 'createdAt'),
                             ...(type ? [{ type: type as any }] : []),
                             ...(category ? [{ category }] : []),
                         ],
@@ -170,7 +175,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                     where: {
                         AND: [
                             buildVisibleStandaloneTaskWhere(userId),
-                            buildDateFilter(req, 'dueDate'),
+                            buildDateFilter(req, 'dueDate', 'createdAt'),
                             ...(type ? [{ taskType: type as any }] : []),
                         ],
                     },
@@ -258,7 +263,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                                     { isShared: true },
                                 ],
                             },
-                            buildDateFilter(req, 'nextDueDate'),
+                            buildDateFilter(req, 'nextDueDate', 'createdAt'),
                         ],
                     },
                     include: {
@@ -318,7 +323,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                     where: {
                         AND: [
                             buildVisibleAssetWhere(userId),
-                            buildDateFilter(req, 'purchaseDate'),
+                            buildDateFilter(req, 'purchaseDate', 'createdAt'),
                             ...(type ? [{ type }] : []),
                         ],
                     },
@@ -349,7 +354,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                                     { topic: { isShared: true } },
                                 ],
                             },
-                            buildDateFilter(req, 'deadline'),
+                            buildDateFilter(req, 'deadline', 'createdAt'),
                         ],
                     },
                     include: {
@@ -414,7 +419,7 @@ router.get('/tasks-by-status', async (req: Request, res: Response, next: NextFun
             where: {
                 AND: [
                     buildVisibleStandaloneTaskWhere(userId),
-                    buildDateFilter(req, 'dueDate'),
+                    buildDateFilter(req, 'dueDate', 'createdAt'),
                     ...(type ? [{ taskType: type as any }] : []),
                 ],
             },
@@ -434,7 +439,7 @@ router.get('/project-items-by-status', async (req: Request, res: Response, next:
             where: {
                 AND: [
                     buildVisibleProjectItemWhere(userId),
-                    buildDateFilter(req, 'deadline'),
+                    buildDateFilter(req, 'deadline', 'createdAt'),
                     ...(type ? [{ type: type as any }] : []),
                     ...(category ? [{ category }] : []),
                 ],
@@ -454,7 +459,7 @@ router.get('/project-items-by-type', async (req: Request, res: Response, next: N
             where: {
                 AND: [
                     buildVisibleProjectItemWhere(userId),
-                    buildDateFilter(req, 'deadline'),
+                    buildDateFilter(req, 'deadline', 'createdAt'),
                     ...(category ? [{ category }] : []),
                 ],
             },
@@ -553,7 +558,7 @@ router.get('/asset-overview', async (req: Request, res: Response, next: NextFunc
                 where: {
                     AND: [
                         visibleAssets,
-                        buildDateFilter(req, 'purchaseDate'),
+                        buildDateFilter(req, 'purchaseDate', 'createdAt'),
                         ...(type ? [{ type }] : []),
                     ],
                 },
@@ -590,7 +595,7 @@ router.get('/assets-by-type', async (req: Request, res: Response, next: NextFunc
             where: {
                 AND: [
                     buildVisibleAssetWhere(userId),
-                    buildDateFilter(req, 'purchaseDate'),
+                    buildDateFilter(req, 'purchaseDate', 'createdAt'),
                 ],
             },
             select: { type: true },
@@ -648,7 +653,7 @@ router.get('/housework-status', async (req: Request, res: Response, next: NextFu
                         { isShared: true },
                     ],
                 },
-                buildDateFilter(req, 'nextDueDate'),
+                buildDateFilter(req, 'nextDueDate', 'createdAt'),
             ],
         };
         const [total, overdue, completed] = await Promise.all([
@@ -674,7 +679,7 @@ router.get('/learning-status', async (req: Request, res: Response, next: NextFun
                             { topic: { isShared: true } },
                         ],
                     },
-                    buildDateFilter(req, 'deadline'),
+                    buildDateFilter(req, 'deadline', 'createdAt'),
                 ],
             },
             _count: { _all: true },
