@@ -401,7 +401,7 @@ export default function CollectionPage() {
                                         </tr>
                                     )}
                                     {sortedItems.map(item => (
-                                        <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                                        <tr key={item.id} className="group hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                                             <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{item.name}</td>
                                             <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300 tabular-nums">
                                                 {item.price != null ? `${formatVND(item.price)} ₫` : <span className="text-gray-300">—</span>}
