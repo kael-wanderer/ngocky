@@ -97,6 +97,7 @@ router.post('/', validate(createStandaloneTaskSchema), async (req: Request, res:
                 }),
                 amount: req.body.amount ?? null,
                 expenseCategory: req.body.expenseCategory ?? null,
+                scope: req.body.scope ?? 'PERSONAL',
                 dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
                 repeatUntil: req.body.repeatUntil ? new Date(req.body.repeatUntil) : null,
                 sortOrder,
@@ -129,6 +130,7 @@ router.patch('/:id', validate(updateStandaloneTaskSchema), async (req: Request, 
                 ...reminderFields,
                 amount: req.body.amount === null ? null : req.body.amount ?? undefined,
                 expenseCategory: req.body.expenseCategory === null ? null : req.body.expenseCategory ?? undefined,
+                scope: req.body.scope ?? undefined,
                 dueDate: req.body.dueDate === null ? null : req.body.dueDate ? new Date(req.body.dueDate) : undefined,
                 repeatUntil: req.body.repeatUntil === null ? null : req.body.repeatUntil ? new Date(req.body.repeatUntil) : undefined,
                 completedAt: req.body.status && req.body.status !== 'DONE' ? null : undefined,
@@ -149,6 +151,7 @@ router.post('/:id/complete', async (req: Request, res: Response, next: NextFunct
             taskType?: 'TASK' | 'PAYMENT';
             amount?: number | null;
             expenseCategory?: string | null;
+            scope?: 'PERSONAL' | 'FAMILY' | 'KEO' | 'PROJECT' | null;
         };
 
         const completedAt = new Date();
@@ -162,7 +165,7 @@ router.post('/:id/complete', async (req: Request, res: Response, next: NextFunct
                         date: completedAt,
                         amount: paymentTask.amount,
                         note: 'Automated task item',
-                        scope: 'PERSONAL',
+                        scope: paymentTask.scope || 'PERSONAL',
                         isShared: false,
                         userId: paymentTask.userId,
                     },

@@ -315,7 +315,7 @@ export default function AssetsPage() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Microwave className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Appliances & Devices</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Assets</h2>
                 </div>
                 <button className="btn-primary" onClick={openCreateAsset}>
                     <Plus className="w-4 h-4" /> New Device
@@ -325,7 +325,7 @@ export default function AssetsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1 space-y-4">
                     <div className="flex items-center justify-between gap-3">
-                        <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>My Appliances & Devices</h3>
+                        <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>My Assets</h3>
                         <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>Drag to arrange</span>
                     </div>
                     {assetsLoading ? (

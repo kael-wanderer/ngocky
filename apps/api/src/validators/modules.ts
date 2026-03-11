@@ -83,6 +83,7 @@ const standaloneTaskSchemaBase = z.object({
     taskType: z.enum(['TASK', 'PAYMENT']).optional(),
     amount: z.number().positive().nullable().optional(),
     expenseCategory: z.string().optional().nullable(),
+    scope: z.enum(['PERSONAL', 'FAMILY', 'KEO', 'PROJECT']).optional(),
     isShared: z.boolean().optional(),
     dueDate: z.string().datetime().nullable().optional(),
     priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
@@ -116,6 +117,9 @@ function validateStandaloneTaskPayment(data: any, ctx: z.RefinementCtx) {
     }
     if (!data.expenseCategory) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['expenseCategory'], message: 'expenseCategory is required for payment tasks' });
+    }
+    if (!data.scope) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scope'], message: 'scope is required for payment tasks' });
     }
 }
 

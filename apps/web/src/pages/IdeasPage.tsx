@@ -6,7 +6,8 @@ import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
 
 const emptyTopicForm = () => ({ title: '', description: '', isShared: false });
-const emptyLogForm = () => ({ title: '', content: '', category: '', status: 'OPEN', tags: [] as string[] });
+const ideaFieldOptions = ['Project', 'Blog', 'App', 'Collection', 'Hobby', 'Creative', 'Other'] as const;
+const emptyLogForm = () => ({ title: '', content: '', category: '', field: 'Other', status: 'OPEN', tags: [] as string[] });
 
 export default function IdeasPage() {
     const qc = useQueryClient();
@@ -136,6 +137,7 @@ export default function IdeasPage() {
             title: log.title || '',
             content: log.content || '',
             category: log.category || '',
+            field: log.field || 'Other',
             status: log.status || 'OPEN',
             tags: log.tags || [],
         });
@@ -149,6 +151,7 @@ export default function IdeasPage() {
             title: `${log.title} Copy`,
             content: log.content || '',
             category: log.category || '',
+            field: log.field || 'Other',
             status: log.status || 'OPEN',
             tags: log.tags || [],
         });
@@ -297,7 +300,10 @@ export default function IdeasPage() {
                                     return (
                                     <div key={log.id} className="card p-5 group break-inside-avoid animate-fade-in hover:shadow-lg transition-all duration-300">
                                         <div className="flex items-start justify-between mb-3">
-                                            {log.category && <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-600">{log.category}</span>}
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                {log.category && <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-600">{log.category}</span>}
+                                                {log.field && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">{log.field}</span>}
+                                            </div>
                                             {canManage && (
                                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button className={`p-1 ${log.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={() => togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
@@ -397,10 +403,16 @@ export default function IdeasPage() {
                                 <label className="label">Content</label>
                                 <textarea className="input" rows={4} value={logForm.content} onChange={(e) => setLogForm({ ...logForm, content: e.target.value })} />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div>
                                     <label className="label">Category</label>
                                     <input className="input" value={logForm.category} onChange={(e) => setLogForm({ ...logForm, category: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="label">Field</label>
+                                    <select className="input" value={logForm.field} onChange={(e) => setLogForm({ ...logForm, field: e.target.value })}>
+                                        {ideaFieldOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="label">Status</label>

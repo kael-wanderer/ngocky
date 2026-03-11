@@ -17,7 +17,7 @@ const typeOptions = [
 const scopeOptions = [
     { value: 'PERSONAL', label: 'Personal' },
     { value: 'FAMILY', label: 'Family' },
-    { value: 'KEO', label: 'Keo' },
+    { value: 'KEO', label: 'Ca Keo' },
     { value: 'PROJECT', label: 'Project' },
 ];
 const timeOptions = [
@@ -408,6 +408,9 @@ export default function ExpensesPage() {
                     <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <select className="input text-sm" value={filters.timePreset} onChange={(e) => handleTimePresetChange(e.target.value as TimePreset)}>
+                        {timeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
                     <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value, category: filters.category && !((e.target.value || form.type) === 'RECEIVE' ? receiveCategories : payCategories).includes(filters.category) ? '' : filters.category })}>
                         <option value="">All Types</option>
                         {typeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -419,9 +422,6 @@ export default function ExpensesPage() {
                     <select className="input text-sm" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
                         <option value="">All Categories</option>
                         {(filters.type === 'RECEIVE' ? receiveCategories : filters.type === 'PAY' ? payCategories : allCategories).map((category) => <option key={category} value={category}>{category}</option>)}
-                    </select>
-                    <select className="input text-sm" value={filters.timePreset} onChange={(e) => handleTimePresetChange(e.target.value as TimePreset)}>
-                        {timeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                     </select>
                 </div>
                 {filters.timePreset === 'CUSTOM' && (

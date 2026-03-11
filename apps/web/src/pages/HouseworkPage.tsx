@@ -508,7 +508,7 @@ export default function HouseworkPage() {
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Housework</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
+                    <label className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm whitespace-nowrap" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
                         <input type="checkbox" checked={showCompleted} onChange={(e) => setShowCompleted(e.target.checked)} />
                         Show completed
                     </label>

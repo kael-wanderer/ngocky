@@ -10,7 +10,7 @@ const expenseCategories = ['AI', 'Ca Keo', 'Food', 'Gift', 'Healthcare', 'House'
 const scopeOptions = [
     { value: 'PERSONAL', label: 'Personal' },
     { value: 'FAMILY', label: 'Family' },
-    { value: 'KEO', label: 'Keo' },
+    { value: 'KEO', label: 'Ca Keo' },
     { value: 'PROJECT', label: 'Project' },
 ];
 const typeOptions = [
@@ -368,7 +368,7 @@ export default function ReportsPage() {
         { id: 'calendar', label: 'Calendar' },
         { id: 'housework', label: 'Housework' },
         { id: 'expenses', label: 'Expenses' },
-        { id: 'assets', label: 'Appliances & Devices' },
+        { id: 'assets', label: 'Assets' },
         { id: 'learning', label: 'Learning' },
         { id: 'ideas', label: 'Ideas' },
     ];
@@ -477,7 +477,7 @@ export default function ReportsPage() {
             rows: rawExpenses || [],
         },
         assets: {
-            title: 'Appliances & Devices',
+            title: 'Assets',
             columns: [
                 { key: 'name', label: 'Name' },
                 { key: 'type', label: 'Type' },
@@ -815,16 +815,19 @@ export default function ReportsPage() {
                             </button>
                         );
                     })}
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
                     <button
                         type="button"
-                        className="px-4 py-2 rounded-md text-sm font-semibold transition-all"
-                        style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}
                         onClick={selectAllTabs}
+                        className={`py-2 px-4 rounded-md text-sm font-medium transition-all ${selectedTabs.length === tabs.length ? 'shadow-sm' : ''}`}
+                        style={{
+                            backgroundColor: selectedTabs.length === tabs.length ? 'var(--color-surface)' : 'transparent',
+                            color: selectedTabs.length === tabs.length ? 'var(--color-text)' : 'var(--color-text-secondary)',
+                        }}
                     >
-                        Select All
+                        All
                     </button>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
                     <button
                         type="button"
                         className="px-4 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2"
@@ -1135,7 +1138,7 @@ export default function ReportsPage() {
                     )}
                     {showTables && (
                         <DataTableCard
-                            title="Appliances & Devices"
+                            title="Assets"
                             columns={[
                                 { key: 'name', label: 'Name' },
                                 { key: 'type', label: 'Type' },

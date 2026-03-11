@@ -53,6 +53,7 @@ export const updateMaintenanceRecordSchema = maintenanceRecordSchemaBase.partial
 export const createLearningTopicSchema = z.object({
     title: z.string().min(1).max(200),
     description: z.string().optional(),
+    category: z.enum(['Soft-skill', 'Expertise', 'AI', 'Other']).optional(),
     isShared: z.boolean().optional(),
 });
 
@@ -85,6 +86,7 @@ export const createIdeaLogSchema = z.object({
     title: z.string().min(1).max(200),
     content: z.string().optional(),
     category: z.string().optional(),
+    field: z.enum(['Project', 'Blog', 'App', 'Collection', 'Hobby', 'Creative', 'Other']).optional(),
     tags: z.array(z.string()).optional(),
     status: z.enum(['OPEN', 'REVIEWING', 'ARCHIVED']).optional(),
     pinToDashboard: z.boolean().optional(),

@@ -48,7 +48,7 @@ const SECTIONS_BY_TYPE: Record<string, { key: string; label: string }[]> = {
         { key: 'HOUSEWORK', label: 'Housework' },
         { key: 'CALENDAR', label: 'Calendar Events' },
         { key: 'EXPENSES', label: 'Expenses' },
-        { key: 'ASSETS', label: 'Appliances & Devices' },
+        { key: 'ASSETS', label: 'Assets' },
         { key: 'LEARNING', label: 'Learning' },
         { key: 'IDEAS', label: 'Ideas' },
     ],
@@ -559,7 +559,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                         <option value="HOUSEWORK">Housework</option>
                                         <option value="EXPENSE">Expenses</option>
                                         <option value="CALENDAR">Calendar</option>
-                                        <option value="ASSETS">Appliances & Devices</option>
+                                        <option value="ASSETS">Assets</option>
                                     </select>
                                 </div>
                                 <div>

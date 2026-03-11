@@ -17,7 +17,7 @@ const navItems = [
     { to: '/learning', icon: GraduationCap, label: 'Learning' },
     { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
     { to: '/housework', icon: Home, label: 'Housework' },
-    { to: '/assets', icon: Microwave, label: 'Appliances & Devices' },
+    { to: '/assets', icon: Microwave, label: 'Assets' },
     { to: '/calendar', icon: Calendar, label: 'Calendar' },
     { to: '/scheduled-reports', icon: FileText, label: 'Schedule Action' },
     { to: '/notifications', icon: BellRing, label: 'Notifications' },

@@ -55,6 +55,8 @@ enum IdeaStatus {
 enum ExpenseScope {
   PERSONAL
   FAMILY
+  KEO
+  PROJECT
 }
 
 enum NotificationChannel {
@@ -203,6 +205,10 @@ model Task {
   id                  String        @id @default(cuid())
   title               String
   description         String?
+  taskType            TaskType      @default(TASK)
+  amount              Float?
+  expenseCategory     String?
+  scope               ExpenseScope  @default(PERSONAL)
   userId              String
   isShared            Boolean       @default(false)
   dueDate             DateTime?
@@ -276,6 +282,7 @@ model Idea {
   title     String
   content   String?
   category  String?
+  field     String?
   tags      String?
   status    IdeaStatus @default(OPEN)
   userId    String

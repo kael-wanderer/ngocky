@@ -7,7 +7,8 @@ import NotificationFields, { buildNotificationPayload, emptyNotification, loadNo
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
 
-const emptyTopicForm = () => ({ title: '', description: '', isShared: false });
+const topicCategoryOptions = ['Soft-skill', 'Expertise', 'AI', 'Other'] as const;
+const emptyTopicForm = () => ({ title: '', description: '', category: 'Other', isShared: false });
 const emptyHistoryForm = () => ({
     title: '',
     description: '',
@@ -121,13 +122,13 @@ export default function LearningPage() {
 
     function openEditTopic(topic: any) {
         setEditingTopic(topic);
-        setTopicForm({ title: topic.title || '', description: topic.description || '', isShared: !!topic.isShared });
+        setTopicForm({ title: topic.title || '', description: topic.description || '', category: topic.category || 'Other', isShared: !!topic.isShared });
         setShowTopicModal(true);
     }
 
     function duplicateTopic(topic: any) {
         setEditingTopic(null);
-        setTopicForm({ title: `${topic.title} Copy`, description: topic.description || '', isShared: !!topic.isShared });
+        setTopicForm({ title: `${topic.title} Copy`, description: topic.description || '', category: topic.category || 'Other', isShared: !!topic.isShared });
         setShowTopicModal(true);
     }
 
@@ -286,6 +287,7 @@ export default function LearningPage() {
                                                     <div>
                                                         <div className="flex items-center gap-2 flex-wrap">
                                                             <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{topic.title}</h4>
+                                                            {topic.category && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">{topic.category}</span>}
                                                             {topic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                                                         </div>
                                                         {sharedOwnerName && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
@@ -321,6 +323,7 @@ export default function LearningPage() {
                                 <div>
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <h3 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTopic.title}</h3>
+                                        {activeTopic.category && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">{activeTopic.category}</span>}
                                         {activeTopic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                                     </div>
                                     {getSharedOwnerName(activeTopic, user?.id) && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {getSharedOwnerName(activeTopic, user?.id)}</p>}
@@ -416,6 +419,12 @@ export default function LearningPage() {
                             <div>
                                 <label className="label">Description</label>
                                 <textarea className="input" rows={3} value={topicForm.description} onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="label">Category</label>
+                                <select className="input" value={topicForm.category} onChange={(e) => setTopicForm({ ...topicForm, category: e.target.value })}>
+                                    {topicCategoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
+                                </select>
                             </div>
                             <label className="flex items-center gap-2 text-sm">
                                 <input type="checkbox" checked={topicForm.isShared} onChange={(e) => setTopicForm({ ...topicForm, isShared: e.target.checked })} />
