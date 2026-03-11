@@ -226,7 +226,9 @@ model User {
   assistantMessages       AssistantMessage[]
   assistantActionLogs     AssistantActionLog[]
   assistantPendingActions AssistantPendingAction[]
+  collections             Collection[]
 }
+
 
 model RefreshToken {
   id        String   @id @default(cuid())
@@ -797,4 +799,58 @@ model BudgetSetting {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ─── Collection ──────────────────────────────────────
+
+model Collection {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  fieldSchema Json     @default("[]")
+  isShared    Boolean  @default(false)
+  ownerId     String
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  items CollectionItem[]
+  views CollectionView[]
+
+  @@index([ownerId])
+}
+
+model CollectionItem {
+  id           String   @id @default(cuid())
+  collectionId String
+  name         String
+  price        Float?
+  status       String?
+  imageUrl     String?
+  data         Json     @default("{}")
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@index([collectionId])
+  @@index([name])
+}
+
+model CollectionView {
+  id            String   @id @default(cuid())
+  collectionId  String
+  name          String
+  filters       Json     @default("[]")
+  sort          Json     @default("{}")
+  groupBy       String?
+  visibleFields Json     @default("[]")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@index([collectionId])
 }

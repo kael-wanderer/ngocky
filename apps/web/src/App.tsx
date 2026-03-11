@@ -15,6 +15,7 @@ import ReportsPage from './pages/ReportsPage';
 import AssetsPage from './pages/AssetsPage';
 import LearningPage from './pages/LearningPage';
 import IdeasPage from './pages/IdeasPage';
+import CollectionPage from './pages/CollectionPage';
 import AlertsPage from './pages/AlertsPage';
 import SettingsPage from './pages/SettingsPage';
 import UsersPage from './pages/UsersPage';
@@ -72,6 +73,7 @@ export default function App() {
                         <Route path="assets" element={<FeatureRoute route="/assets"><AssetsPage /></FeatureRoute>} />
                         <Route path="learning" element={<FeatureRoute route="/learning"><LearningPage /></FeatureRoute>} />
                         <Route path="ideas" element={<FeatureRoute route="/ideas"><IdeasPage /></FeatureRoute>} />
+                        <Route path="collection" element={<CollectionPage />} />
                         <Route path="notifications" element={<AlertsPage forcedTab="RULES" />} />
                         <Route path="scheduled-reports" element={<AlertsPage forcedTab="REPORTS" />} />
                         <Route path="alerts" element={<Navigate to="/notifications" replace />} />
