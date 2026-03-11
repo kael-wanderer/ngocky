@@ -1,5 +1,5 @@
--- CreateTable
-CREATE TABLE "Collection" (
+-- CreateTable (IF NOT EXISTS — idempotent, safe to re-run)
+CREATE TABLE IF NOT EXISTS "Collection" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -14,7 +14,7 @@ CREATE TABLE "Collection" (
 );
 
 -- CreateTable
-CREATE TABLE "CollectionItem" (
+CREATE TABLE IF NOT EXISTS "CollectionItem" (
     "id" TEXT NOT NULL,
     "collectionId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE "CollectionItem" (
 );
 
 -- CreateTable
-CREATE TABLE "CollectionView" (
+CREATE TABLE IF NOT EXISTS "CollectionView" (
     "id" TEXT NOT NULL,
     "collectionId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -45,22 +45,26 @@ CREATE TABLE "CollectionView" (
 );
 
 -- CreateIndex
-CREATE INDEX "Collection_ownerId_idx" ON "Collection"("ownerId");
+CREATE INDEX IF NOT EXISTS "Collection_ownerId_idx" ON "Collection"("ownerId");
 
 -- CreateIndex
-CREATE INDEX "CollectionItem_collectionId_idx" ON "CollectionItem"("collectionId");
+CREATE INDEX IF NOT EXISTS "CollectionItem_collectionId_idx" ON "CollectionItem"("collectionId");
 
 -- CreateIndex
-CREATE INDEX "CollectionItem_name_idx" ON "CollectionItem"("name");
+CREATE INDEX IF NOT EXISTS "CollectionItem_name_idx" ON "CollectionItem"("name");
 
 -- CreateIndex
-CREATE INDEX "CollectionView_collectionId_idx" ON "CollectionView"("collectionId");
+CREATE INDEX IF NOT EXISTS "CollectionView_collectionId_idx" ON "CollectionView"("collectionId");
 
--- AddForeignKey
-ALTER TABLE "Collection" ADD CONSTRAINT "Collection_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- AddForeignKey (ignore if already exists)
+DO $$ BEGIN
+    ALTER TABLE "Collection" ADD CONSTRAINT "Collection_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- AddForeignKey
-ALTER TABLE "CollectionItem" ADD CONSTRAINT "CollectionItem_collectionId_fkey" FOREIGN KEY ("collectionId") REFERENCES "Collection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "CollectionItem" ADD CONSTRAINT "CollectionItem_collectionId_fkey" FOREIGN KEY ("collectionId") REFERENCES "Collection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- AddForeignKey
-ALTER TABLE "CollectionView" ADD CONSTRAINT "CollectionView_collectionId_fkey" FOREIGN KEY ("collectionId") REFERENCES "Collection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "CollectionView" ADD CONSTRAINT "CollectionView_collectionId_fkey" FOREIGN KEY ("collectionId") REFERENCES "Collection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
