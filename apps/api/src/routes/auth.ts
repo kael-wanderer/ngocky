@@ -102,7 +102,29 @@ router.get('/me', authenticate, async (req: Request, res: Response, next: NextFu
         const { prisma } = await import('../config/database');
         const user = await prisma.user.findUnique({
             where: { id: req.user!.userId },
-            select: { id: true, email: true, name: true, role: true, theme: true, active: true, mfaEnabled: true, notificationEnabled: true, notificationChannel: true, notificationEmail: true, telegramChatId: true, avatarUrl: true } as any,
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                theme: true,
+                active: true,
+                mfaEnabled: true,
+                notificationEnabled: true,
+                notificationChannel: true,
+                notificationEmail: true,
+                telegramChatId: true,
+                avatarUrl: true,
+                featureGoals: true,
+                featureProjects: true,
+                featureIdeas: true,
+                featureLearning: true,
+                featureExpenses: true,
+                featureTasks: true,
+                featureHousework: true,
+                featureAssets: true,
+                featureCalendar: true,
+            } as any,
         });
         sendSuccess(res, user);
     } catch (err) { next(err); }

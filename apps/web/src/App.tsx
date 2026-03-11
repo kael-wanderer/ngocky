@@ -17,6 +17,7 @@ import IdeasPage from './pages/IdeasPage';
 import AlertsPage from './pages/AlertsPage';
 import SettingsPage from './pages/SettingsPage';
 import UsersPage from './pages/UsersPage';
+import { isFeatureRouteEnabled } from './config/features';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -37,6 +38,14 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
 }
 
+function FeatureRoute({ route, children }: { route: string; children: React.ReactNode }) {
+    const { user } = useAuthStore();
+    if (!isFeatureRouteEnabled(route, user)) {
+        return <Navigate to="/" replace />;
+    }
+    return <>{children}</>;
+}
+
 export default function App() {
     const { initialize, isAuthenticated } = useAuthStore();
 
@@ -51,16 +60,16 @@ export default function App() {
                     <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
                     <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                         <Route index element={<DashboardPage />} />
-                        <Route path="goals" element={<GoalsPage forcedTab="GOALS" />} />
-                        <Route path="tasks" element={<GoalsPage forcedTab="TASKS" />} />
-                        <Route path="projects" element={<ProjectsPage />} />
-                        <Route path="housework" element={<HouseworkPage />} />
-                        <Route path="calendar" element={<CalendarPage />} />
-                        <Route path="expenses" element={<ExpensesPage />} />
+                        <Route path="goals" element={<FeatureRoute route="/goals"><GoalsPage forcedTab="GOALS" /></FeatureRoute>} />
+                        <Route path="tasks" element={<FeatureRoute route="/tasks"><GoalsPage forcedTab="TASKS" /></FeatureRoute>} />
+                        <Route path="projects" element={<FeatureRoute route="/projects"><ProjectsPage /></FeatureRoute>} />
+                        <Route path="housework" element={<FeatureRoute route="/housework"><HouseworkPage /></FeatureRoute>} />
+                        <Route path="calendar" element={<FeatureRoute route="/calendar"><CalendarPage /></FeatureRoute>} />
+                        <Route path="expenses" element={<FeatureRoute route="/expenses"><ExpensesPage /></FeatureRoute>} />
                         <Route path="reports" element={<ReportsPage />} />
-                        <Route path="assets" element={<AssetsPage />} />
-                        <Route path="learning" element={<LearningPage />} />
-                        <Route path="ideas" element={<IdeasPage />} />
+                        <Route path="assets" element={<FeatureRoute route="/assets"><AssetsPage /></FeatureRoute>} />
+                        <Route path="learning" element={<FeatureRoute route="/learning"><LearningPage /></FeatureRoute>} />
+                        <Route path="ideas" element={<FeatureRoute route="/ideas"><IdeasPage /></FeatureRoute>} />
                         <Route path="notifications" element={<AlertsPage forcedTab="RULES" />} />
                         <Route path="scheduled-reports" element={<AlertsPage forcedTab="REPORTS" />} />
                         <Route path="alerts" element={<Navigate to="/notifications" replace />} />

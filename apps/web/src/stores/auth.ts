@@ -1,6 +1,7 @@
 import { create } from 'zustand';
+import type { FeatureFlags } from '../config/features';
 
-interface User {
+interface User extends FeatureFlags {
     id: string;
     email: string;
     name: string;

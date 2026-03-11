@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
+import { getFeatureFlags, isFeatureRouteEnabled } from '../config/features';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, LogOut, Menu, X,
@@ -110,6 +111,7 @@ export default function AppLayout() {
     const [dragOverGroup, setDragOverGroup] = useState<string | null>(null);
 
     const isAdmin = user?.role === 'OWNER' || user?.role === 'ADMIN';
+    const featureFlags = getFeatureFlags(user);
 
     const handleLogout = () => {
         logout();
@@ -145,8 +147,15 @@ export default function AppLayout() {
     };
 
     const resolveNavItem = (to: string) => [...navItems, ...adminItems].find((item) => item.to === to);
-    const visibleGroups = navGroups.filter((group) => group.id !== 'admin' || isAdmin);
+    const visibleGroups = navGroups.filter((group) => {
+        if (group.id === 'admin') return isAdmin;
+        if (group.id === 'personal' || group.id === 'family') {
+            return group.items.some((to) => isFeatureRouteEnabled(to, featureFlags));
+        }
+        return true;
+    });
     const mobileItems = ['/', '/goals', '/tasks', '/calendar', '/settings']
+        .filter((to) => isFeatureRouteEnabled(to, featureFlags))
         .map((to) => resolveNavItem(to))
         .filter(Boolean) as Array<(typeof navItems)[number]>;
 
@@ -226,8 +235,11 @@ export default function AppLayout() {
                     {visibleGroups.map((group) => {
                         const orderedPaths = groupOrder[group.id] || group.items;
                         const items = orderedPaths
+                            .filter((to) => isFeatureRouteEnabled(to, featureFlags))
                             .map((to) => resolveNavItem(to))
                             .filter(Boolean) as Array<(typeof navItems)[number]>;
+
+                        if (items.length === 0) return null;
 
                         if (collapsed) {
                             return (

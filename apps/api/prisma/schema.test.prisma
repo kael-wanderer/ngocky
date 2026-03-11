@@ -121,6 +121,15 @@ model User {
   notificationEmail   String?
   timezone            String?             @default("Asia/Ho_Chi_Minh")
   telegramChatId      String?
+  featureGoals        Boolean             @default(true)
+  featureProjects     Boolean             @default(true)
+  featureIdeas        Boolean             @default(true)
+  featureLearning     Boolean             @default(true)
+  featureExpenses     Boolean             @default(true)
+  featureTasks        Boolean             @default(true)
+  featureHousework    Boolean             @default(true)
+  featureAssets       Boolean             @default(true)
+  featureCalendar     Boolean             @default(true)
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 

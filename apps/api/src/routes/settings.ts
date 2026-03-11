@@ -22,6 +22,15 @@ const profileSelect: any = {
     telegramChatId: true,
     timezone: true,
     avatarUrl: true,
+    featureGoals: true,
+    featureProjects: true,
+    featureIdeas: true,
+    featureLearning: true,
+    featureExpenses: true,
+    featureTasks: true,
+    featureHousework: true,
+    featureAssets: true,
+    featureCalendar: true,
 } as const;
 
 // Get profile/settings
@@ -38,7 +47,26 @@ router.get('/profile', async (req: Request, res: Response, next: NextFunction) =
 // Update profile
 router.patch('/profile', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const allowedFields = ['name', 'email', 'theme', 'notificationEnabled', 'notificationChannel', 'notificationEmail', 'telegramChatId', 'timezone', 'avatarUrl'];
+        const allowedFields = [
+            'name',
+            'email',
+            'theme',
+            'notificationEnabled',
+            'notificationChannel',
+            'notificationEmail',
+            'telegramChatId',
+            'timezone',
+            'avatarUrl',
+            'featureGoals',
+            'featureProjects',
+            'featureIdeas',
+            'featureLearning',
+            'featureExpenses',
+            'featureTasks',
+            'featureHousework',
+            'featureAssets',
+            'featureCalendar',
+        ];
         const data: any = {};
         allowedFields.forEach((f) => { if (req.body[f] !== undefined) data[f] = req.body[f]; });
 

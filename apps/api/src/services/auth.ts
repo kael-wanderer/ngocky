@@ -29,6 +29,15 @@ export class AuthService {
                     role: user.role,
                     theme: user.theme,
                     mfaEnabled: true,
+                    featureGoals: !!user.featureGoals,
+                    featureProjects: !!user.featureProjects,
+                    featureIdeas: !!user.featureIdeas,
+                    featureLearning: !!user.featureLearning,
+                    featureExpenses: !!user.featureExpenses,
+                    featureTasks: !!user.featureTasks,
+                    featureHousework: !!user.featureHousework,
+                    featureAssets: !!user.featureAssets,
+                    featureCalendar: !!user.featureCalendar,
                 },
             };
         }
@@ -48,6 +57,15 @@ export class AuthService {
                 theme: user.theme,
                 mfaEnabled: !!user.mfaEnabled,
                 avatarUrl: user.avatarUrl ?? null,
+                featureGoals: !!user.featureGoals,
+                featureProjects: !!user.featureProjects,
+                featureIdeas: !!user.featureIdeas,
+                featureLearning: !!user.featureLearning,
+                featureExpenses: !!user.featureExpenses,
+                featureTasks: !!user.featureTasks,
+                featureHousework: !!user.featureHousework,
+                featureAssets: !!user.featureAssets,
+                featureCalendar: !!user.featureCalendar,
             },
         };
     }
@@ -73,6 +91,15 @@ export class AuthService {
                 theme: user.theme,
                 mfaEnabled: true,
                 avatarUrl: user.avatarUrl ?? null,
+                featureGoals: !!user.featureGoals,
+                featureProjects: !!user.featureProjects,
+                featureIdeas: !!user.featureIdeas,
+                featureLearning: !!user.featureLearning,
+                featureExpenses: !!user.featureExpenses,
+                featureTasks: !!user.featureTasks,
+                featureHousework: !!user.featureHousework,
+                featureAssets: !!user.featureAssets,
+                featureCalendar: !!user.featureCalendar,
             },
         };
     }
@@ -107,6 +134,15 @@ export class AuthService {
                 theme: stored.user.theme,
                 mfaEnabled: !!stored.user.mfaEnabled,
                 avatarUrl: stored.user.avatarUrl ?? null,
+                featureGoals: !!stored.user.featureGoals,
+                featureProjects: !!stored.user.featureProjects,
+                featureIdeas: !!stored.user.featureIdeas,
+                featureLearning: !!stored.user.featureLearning,
+                featureExpenses: !!stored.user.featureExpenses,
+                featureTasks: !!stored.user.featureTasks,
+                featureHousework: !!stored.user.featureHousework,
+                featureAssets: !!stored.user.featureAssets,
+                featureCalendar: !!stored.user.featureCalendar,
             },
         };
     }

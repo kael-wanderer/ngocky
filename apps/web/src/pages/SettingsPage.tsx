@@ -2,8 +2,9 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
-import { Settings as SettingsIcon, User, Bell, Palette, Shield, Camera, Bot, Copy, Check, ExternalLink, Unlink } from 'lucide-react';
+import { Settings as SettingsIcon, User, Bell, Palette, Shield, Camera, Bot, Copy, Check, ExternalLink, Unlink, LayoutGrid } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { FEATURE_GROUPS, FEATURE_FLAGS, type FeatureFlags, type FeatureFlagKey } from '../config/features';
 
 function resizeImageToBase64(file: File, maxSize = 128): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -35,6 +36,7 @@ export default function SettingsPage() {
     const [mfaEnableCode, setMfaEnableCode] = useState('');
     const [mfaDisableCode, setMfaDisableCode] = useState('');
     const [profileForm, setProfileForm] = useState({ name: '', email: '', timezone: 'Asia/Ho_Chi_Minh' });
+    const [featureForm, setFeatureForm] = useState<FeatureFlags>(FEATURE_FLAGS);
     const [notificationForm, setNotificationForm] = useState({
         notificationEnabled: true,
         notificationChannel: 'EMAIL',
@@ -159,6 +161,17 @@ export default function SettingsPage() {
             notificationEmail: profile.notificationEmail || '',
             telegramChatId: profile.telegramChatId || '',
         });
+        setFeatureForm({
+            featureGoals: profile.featureGoals ?? true,
+            featureProjects: profile.featureProjects ?? true,
+            featureIdeas: profile.featureIdeas ?? true,
+            featureLearning: profile.featureLearning ?? true,
+            featureExpenses: profile.featureExpenses ?? true,
+            featureTasks: profile.featureTasks ?? true,
+            featureHousework: profile.featureHousework ?? true,
+            featureAssets: profile.featureAssets ?? true,
+            featureCalendar: profile.featureCalendar ?? true,
+        });
     }, [profile]);
 
     const handleTabClick = (id: string) => {
@@ -197,11 +210,19 @@ export default function SettingsPage() {
 
     const tabs = [
         { id: 'profile', label: 'Profile', icon: User },
+        { id: 'features', label: 'Features', icon: LayoutGrid },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'theme', label: 'Theme', icon: Palette },
         { id: 'security', label: 'Security', icon: Shield },
         { id: 'assistant', label: 'Assistant', icon: Bot },
     ];
+
+    const handleFeatureToggle = (key: FeatureFlagKey, checked: boolean) => {
+        setFeatureForm((current) => ({
+            ...current,
+            [key]: checked,
+        }));
+    };
 
     const themes = [
         { id: 'BLUE_PURPLE', name: 'Blue Purple', colors: ['#4f46e5', '#7c3aed', '#eef2ff'] },
@@ -315,6 +336,57 @@ export default function SettingsPage() {
                                 <button
                                     className="btn-primary"
                                     onClick={() => updateProfile.mutate(profileForm)}
+                                    disabled={updateProfile.isPending}
+                                >
+                                    {updateProfile.isPending ? 'Saving...' : 'Save'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Notifications */}
+                    {tab === 'features' && profile && (
+                        <div className="space-y-5">
+                            <div>
+                                <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Features</h3>
+                                <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                    Enable the pages you want to see in the navigator. Personal and Family groups disappear automatically when all items inside them are off.
+                                </p>
+                            </div>
+
+                            <div className="space-y-4">
+                                {FEATURE_GROUPS.map((group) => (
+                                    <div key={group.id} className="rounded-xl border p-4 space-y-4" style={{ borderColor: 'var(--color-border)' }}>
+                                        <div>
+                                            <h4 className="font-semibold" style={{ color: 'var(--color-text)' }}>{group.label}</h4>
+                                            <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                                {group.id === 'personal' ? 'Planning and self-management pages.' : 'Shared home and family pages.'}
+                                            </p>
+                                        </div>
+                                        <div className="grid gap-3 md:grid-cols-2">
+                                            {group.items.map((item) => (
+                                                <label key={item.key} className="flex items-center justify-between gap-4 rounded-lg border px-3 py-3 cursor-pointer" style={{ borderColor: 'var(--color-border)' }}>
+                                                    <div>
+                                                        <div className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{item.label}</div>
+                                                        <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{item.route}</div>
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="rounded"
+                                                        checked={featureForm[item.key]}
+                                                        onChange={(e) => handleFeatureToggle(item.key, e.target.checked)}
+                                                    />
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div>
+                                <button
+                                    className="btn-primary"
+                                    onClick={() => updateProfile.mutate(featureForm)}
                                     disabled={updateProfile.isPending}
                                 >
                                     {updateProfile.isPending ? 'Saving...' : 'Save'}
