@@ -359,6 +359,46 @@ Reports currently expose chart data for:
 - learning
 - ideas
 
+### Analytics Time Filter
+
+Analytics uses these time presets, in this display order:
+
+- `Today`
+- `This Week`
+- `Last Week`
+- `This Month`
+- `Last Month`
+- `This Quarter`
+- `Last Quarter`
+- `This Year`
+- `Last Year`
+- `Custom`
+
+Preset definitions:
+
+- `Today`: current local day only
+- `This Week`: Monday to Sunday of the current week
+- `Last Week`: Monday to Sunday of the previous week
+- `This Month`: first to last day of the current month
+- `Last Month`: first to last day of the previous month
+- `This Quarter`: current quarter based on Jan-Apr-Jul-Oct boundaries
+- `Last Quarter`: previous quarter based on Jan-Apr-Jul-Oct boundaries
+- `This Year`: January 1 to December 31 of the current year
+- `Last Year`: January 1 to December 31 of the previous year
+- `Custom`: explicit start/end dates chosen by the user
+
+Concrete examples for Wednesday, March 11, 2026:
+
+- `Today`: March 11, 2026
+- `This Week`: March 9, 2026 to March 15, 2026
+- `Last Week`: March 2, 2026 to March 8, 2026
+- `This Month`: March 1, 2026 to March 31, 2026
+- `Last Month`: February 1, 2026 to February 28, 2026
+- `This Quarter`: January 1, 2026 to March 31, 2026
+- `Last Quarter`: October 1, 2025 to December 31, 2025
+- `This Year`: January 1, 2026 to December 31, 2026
+- `Last Year`: January 1, 2025 to December 31, 2025
+
 ### Scheduled Action Coverage
 
 Scheduled action rules support modules including:

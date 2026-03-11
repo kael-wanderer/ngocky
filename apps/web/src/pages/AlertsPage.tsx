@@ -60,6 +60,7 @@ const SECTIONS_BY_TYPE: Record<string, { key: string; label: string }[]> = {
         { key: 'CALENDAR', label: 'Calendar Events' },
     ],
     TODAY_TASKS: [
+        { key: 'GOALS', label: 'Goals' },
         { key: 'PROJECT', label: 'Project' },
         { key: 'TASKS', label: 'Task' },
         { key: 'HOUSEWORK', label: 'Housework' },

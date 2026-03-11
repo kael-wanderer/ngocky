@@ -247,7 +247,11 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                     ? getDayRange(1)
                     : getWeekRange(1);
 
-            const [project, tasks, housework, calendar] = await Promise.all([
+            const [goals, project, tasks, housework, calendar] = await Promise.all([
+                prisma.goal.findMany({
+                    where: { userId, active: true },
+                    orderBy: { sortOrder: 'asc' },
+                }),
                 prisma.projectTask.findMany({
                     where: { project: { ownerId: userId }, deadline: { gte: start, lte: end }, status: { not: 'DONE' } },
                     include: { project: { select: { name: true } } },
@@ -272,6 +276,20 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                 sections: report.sections ?? [],
                 user: userInfo,
                 period: { start, end },
+                goals: goals
+                    .map((goal) => {
+                        const periodEnd = getGoalPeriodEnd(goal.currentPeriodStart, goal.periodType);
+                        return {
+                            title: goal.title,
+                            currentCount: goal.currentCount,
+                            targetCount: goal.targetCount,
+                            unit: goal.unit,
+                            periodType: goal.periodType,
+                            dueDate: periodEnd,
+                            completed: goal.currentCount >= goal.targetCount,
+                        };
+                    })
+                    .filter((goal) => goal.dueDate >= start && goal.dueDate <= end),
                 project: project.map(t => ({
                     title: t.title,
                     priority: t.priority,

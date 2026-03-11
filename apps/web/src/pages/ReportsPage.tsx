@@ -29,28 +29,132 @@ const taskTypeOptions = [
     { value: 'PAYMENT', label: 'Payment' },
 ];
 
-type ReportTimeRange = 'ALL' | 'TODAY' | 'WEEK' | 'MONTH' | 'CUSTOM';
+type ReportTimeRange =
+    | 'TODAY'
+    | 'THIS_WEEK'
+    | 'LAST_WEEK'
+    | 'THIS_MONTH'
+    | 'LAST_MONTH'
+    | 'THIS_QUARTER'
+    | 'LAST_QUARTER'
+    | 'THIS_YEAR'
+    | 'LAST_YEAR'
+    | 'CUSTOM';
+
+const reportTimeRangeOptions: Array<{ value: ReportTimeRange; label: string }> = [
+    { value: 'TODAY', label: 'Today' },
+    { value: 'THIS_WEEK', label: 'This Week' },
+    { value: 'LAST_WEEK', label: 'Last Week' },
+    { value: 'THIS_MONTH', label: 'This Month' },
+    { value: 'LAST_MONTH', label: 'Last Month' },
+    { value: 'THIS_QUARTER', label: 'This Quarter' },
+    { value: 'LAST_QUARTER', label: 'Last Quarter' },
+    { value: 'THIS_YEAR', label: 'This Year' },
+    { value: 'LAST_YEAR', label: 'Last Year' },
+    { value: 'CUSTOM', label: 'Custom' },
+];
+
+function startOfDay(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+}
+
+function endOfDay(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+}
+
+function getQuarterStartMonth(month: number) {
+    return Math.floor(month / 3) * 3;
+}
+
+function getRangeForPreset(preset: Exclude<ReportTimeRange, 'CUSTOM'>) {
+    const now = new Date();
+    const today = startOfDay(now);
+
+    switch (preset) {
+        case 'TODAY':
+            return { start: today, end: endOfDay(today) };
+        case 'THIS_WEEK': {
+            const start = new Date(today);
+            start.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1));
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6);
+            return { start, end: endOfDay(end) };
+        }
+        case 'LAST_WEEK': {
+            const thisWeekStart = new Date(today);
+            thisWeekStart.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1));
+            const start = new Date(thisWeekStart);
+            start.setDate(thisWeekStart.getDate() - 7);
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6);
+            return { start, end: endOfDay(end) };
+        }
+        case 'THIS_MONTH':
+            return {
+                start: new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0),
+                end: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999),
+            };
+        case 'LAST_MONTH':
+            return {
+                start: new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0),
+                end: new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999),
+            };
+        case 'THIS_QUARTER': {
+            const quarterStartMonth = getQuarterStartMonth(now.getMonth());
+            return {
+                start: new Date(now.getFullYear(), quarterStartMonth, 1, 0, 0, 0, 0),
+                end: new Date(now.getFullYear(), quarterStartMonth + 3, 0, 23, 59, 59, 999),
+            };
+        }
+        case 'LAST_QUARTER': {
+            const currentQuarterStartMonth = getQuarterStartMonth(now.getMonth());
+            const start = new Date(now.getFullYear(), currentQuarterStartMonth - 3, 1, 0, 0, 0, 0);
+            return {
+                start,
+                end: new Date(start.getFullYear(), start.getMonth() + 3, 0, 23, 59, 59, 999),
+            };
+        }
+        case 'THIS_YEAR':
+            return {
+                start: new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0),
+                end: new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999),
+            };
+        case 'LAST_YEAR':
+            return {
+                start: new Date(now.getFullYear() - 1, 0, 1, 0, 0, 0, 0),
+                end: new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999),
+            };
+    }
+}
 
 export default function ReportsPage() {
     const [activeTab, setActiveTab] = useState('tasks');
-    const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('ALL');
+    const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('THIS_MONTH');
     const [filters, setFilters] = useState({ type: '', scope: '', category: '', dateFrom: '', dateTo: '' });
 
     useEffect(() => {
         setFilters((current) => ({ ...current, type: '', scope: '', category: '' }));
     }, [activeTab]);
 
+    const selectedRange = useMemo(() => {
+        if (reportTimeRange === 'CUSTOM') return null;
+        return getRangeForPreset(reportTimeRange);
+    }, [reportTimeRange]);
+
     const baseQuery = useMemo(() => {
         const params = new URLSearchParams();
         params.set('groupBy', 'category');
-        if (!['ALL', 'CUSTOM'].includes(reportTimeRange)) params.set('timeRange', reportTimeRange);
         if (filters.type) params.set('type', filters.type);
         if (filters.scope) params.set('scope', filters.scope);
         if (filters.category) params.set('category', filters.category);
+        if (selectedRange) {
+            params.set('dateFrom', selectedRange.start.toISOString());
+            params.set('dateTo', selectedRange.end.toISOString());
+        }
         if (reportTimeRange === 'CUSTOM' && filters.dateFrom) params.set('dateFrom', new Date(`${filters.dateFrom}T00:00:00`).toISOString());
         if (reportTimeRange === 'CUSTOM' && filters.dateTo) params.set('dateTo', new Date(`${filters.dateTo}T23:59:59.999`).toISOString());
         return params.toString();
-    }, [reportTimeRange, filters]);
+    }, [reportTimeRange, filters, selectedRange]);
 
     const expenseQuery = useMemo(() => {
         const params = new URLSearchParams(baseQuery);
@@ -186,11 +290,9 @@ export default function ReportsPage() {
                 </div>
                 <div className={`grid ${filterGridClass} gap-3`}>
                     <select className="input text-sm" value={reportTimeRange} onChange={(e) => setReportTimeRange(e.target.value as ReportTimeRange)}>
-                        <option value="ALL">All Time</option>
-                        <option value="TODAY">Today</option>
-                        <option value="WEEK">Week</option>
-                        <option value="MONTH">Month</option>
-                        <option value="CUSTOM">Custom</option>
+                        {reportTimeRangeOptions.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
                     </select>
                     {showTypeSelect && (
                         <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>
