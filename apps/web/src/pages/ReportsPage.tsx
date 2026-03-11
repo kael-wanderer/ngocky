@@ -401,11 +401,11 @@ export default function ReportsPage() {
         ? `${filters.dateFrom || 'Start'} → ${filters.dateTo || 'End'}`
         : selectedRange
             ? `${formatDisplayDate(selectedRange.start)} → ${formatDisplayDate(selectedRange.end)}`
-            : 'All Time';
+        : 'All Time';
 
     const tableConfigs = {
         project: {
-            title: 'Project Items',
+            title: 'Project Tasks',
             columns: [
                 { key: 'title', label: 'Title' },
                 { key: 'project', label: 'Project' },
@@ -514,8 +514,8 @@ export default function ReportsPage() {
 
     const chartExportConfigs = {
         project: [
-            { title: 'Project Items by Status', columns: [{ key: 'status', label: 'Status' }, { key: 'count', label: 'Count' }], rows: projectItemsByStatus || [] },
-            { title: 'Project Items by Type', columns: [{ key: 'type', label: 'Type' }, { key: 'count', label: 'Count' }], rows: projectItemsByType || [] },
+            { title: 'Project Tasks by Status', columns: [{ key: 'status', label: 'Status' }, { key: 'count', label: 'Count' }], rows: projectItemsByStatus || [] },
+            { title: 'Project Tasks by Type', columns: [{ key: 'type', label: 'Type' }, { key: 'count', label: 'Count' }], rows: projectItemsByType || [] },
         ],
         tasks: [
             { title: 'Tasks by Status', columns: [{ key: 'status', label: 'Status' }, { key: 'count', label: 'Count' }], rows: tasksByStatus || [] },
@@ -852,7 +852,7 @@ export default function ReportsPage() {
                     {showCharts && (
                         <div className="grid gap-6 md:grid-cols-2">
                             <div className="card p-5">
-                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Project Items by Status</h3>
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Project Tasks by Status</h3>
                                 <ResponsiveContainer width="100%" height={280}>
                                     <BarChart data={projectItemsByStatus || []}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
@@ -864,7 +864,7 @@ export default function ReportsPage() {
                                 </ResponsiveContainer>
                             </div>
                             <div className="card p-5">
-                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Project Items by Type</h3>
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Project Tasks by Type</h3>
                                 <ResponsiveContainer width="100%" height={280}>
                                     <PieChart>
                                         <Pie data={projectItemsByType || []} dataKey="count" nameKey="type" cx="50%" cy="50%" outerRadius={100} label>
@@ -879,7 +879,7 @@ export default function ReportsPage() {
                     )}
                     {showTables && (
                         <DataTableCard
-                            title="Project Items"
+                            title="Project Tasks"
                             columns={[
                                 { key: 'title', label: 'Title' },
                                 { key: 'project', label: 'Project' },

@@ -461,7 +461,7 @@ export default function ProjectsPage() {
                     <button className="p-2 rounded-lg border hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--color-border)' }} onClick={refreshBoard} title="Refresh board">
                         <RefreshCw className={`w-4 h-4 ${activeBoardLoading || moveTaskMut.isPending ? 'animate-spin' : ''}`} />
                     </button>
-                    <button className="btn-primary" onClick={() => { setEditingTask(null); setTaskForm({ ...emptyTaskForm }); setShowCreateTask(true); }}><Plus className="w-4 h-4" /> New Item</button>
+                    <button className="btn-primary" onClick={() => { setEditingTask(null); setTaskForm({ ...emptyTaskForm }); setShowCreateTask(true); }}><Plus className="w-4 h-4" /> New Project Task</button>
                 </div>
             </div>
 
@@ -528,7 +528,7 @@ export default function ProjectsPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreateTask(false); setEditingTask(null); setTaskForm({ ...emptyTaskForm }); } }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">{editingTask ? 'Edit Item' : 'Create Item'}</h3>
+                            <h3 className="text-lg font-semibold">{editingTask ? 'Edit Project Tasks' : 'New Project Task'}</h3>
                             <button onClick={() => { setShowCreateTask(false); setEditingTask(null); setTaskForm({ ...emptyTaskForm }); }}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
@@ -589,7 +589,7 @@ export default function ProjectsPage() {
                             </label>
                             <NotificationFields form={taskForm} setForm={setTaskForm} />
                             <button type="submit" className="btn-primary w-full" disabled={createTaskMut.isPending || updateTaskMut.isPending}>
-                                {createTaskMut.isPending || updateTaskMut.isPending ? 'Saving...' : (editingTask ? 'Save Changes' : 'Create Item')}
+                                {createTaskMut.isPending || updateTaskMut.isPending ? 'Saving...' : (editingTask ? 'Save Changes' : 'Create Project Task')}
                             </button>
                         </form>
                     </div>
