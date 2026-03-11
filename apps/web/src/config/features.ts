@@ -8,7 +8,7 @@ export const FEATURE_FLAGS = {
     featureHousework: true,
     featureAssets: true,
     featureCalendar: true,
-    featureCollection: true,
+    featureKeyboard: true,
     featureFunds: true,
 } as const;
 
@@ -50,7 +50,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         id: 'hobby',
         label: 'Hobby',
         items: [
-            { key: 'featureCollection', label: 'Collection', route: '/collection' },
+            { key: 'featureKeyboard', label: 'Keyboard', route: '/keyboard' },
             { key: 'featureFunds', label: 'Funds', route: '/funds' },
             { key: 'featureLearning', label: 'Learning', route: '/learning' },
         ],

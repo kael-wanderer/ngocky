@@ -25,7 +25,7 @@ import alertRoutes from './routes/alerts';
 import scheduledReportRoutes from './routes/scheduled-reports';
 import serviceRoutes from './routes/service';
 import assistantRoutes from './routes/assistant';
-import collectionRoutes from './routes/collections';
+import keyboardRoutes from './routes/keyboards';
 
 const app = express();
 
@@ -60,7 +60,7 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/scheduled-reports', scheduledReportRoutes);
 app.use('/api/service', serviceRoutes);
 app.use('/api/assistant', assistantRoutes);
-app.use('/api/collections', collectionRoutes);
+app.use('/api/keyboards', keyboardRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);

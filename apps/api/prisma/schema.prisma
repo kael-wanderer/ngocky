@@ -195,7 +195,7 @@ model User {
   featureHousework    Boolean             @default(true)
   featureAssets       Boolean             @default(true)
   featureCalendar     Boolean             @default(true)
-  featureCollection   Boolean             @default(true)
+  featureKeyboard     Boolean             @default(true)
   featureFunds        Boolean             @default(true)
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
@@ -227,7 +227,7 @@ model User {
   assistantMessages       AssistantMessage[]
   assistantActionLogs     AssistantActionLog[]
   assistantPendingActions AssistantPendingAction[]
-  collections             Collection[]
+  keyboards               Keyboard[]
 }
 
 
@@ -802,56 +802,30 @@ model BudgetSetting {
   @@index([userId])
 }
 
-// ─── Collection ──────────────────────────────────────
+// ─── Keyboard ────────────────────────────────────────
 
-model Collection {
+model Keyboard {
   id          String   @id @default(cuid())
   name        String
+  price       Float?
+  category    String?
+  tag         String?
+  color       String?
+  spec        Json     @default("[]")
+  extras      Json     @default("[]")
   description String?
-  fieldSchema Json     @default("[]")
+  note        String?
+  stab        String?
+  switchAlpha String?
+  switchMod   String?
   isShared    Boolean  @default(false)
   ownerId     String
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  owner User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  items CollectionItem[]
-  views CollectionView[]
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@index([ownerId])
-}
-
-model CollectionItem {
-  id           String   @id @default(cuid())
-  collectionId String
-  name         String
-  price        Float?
-  status       String?
-  imageUrl     String?
-  data         Json     @default("{}")
-  sortOrder    Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-
-  @@index([collectionId])
   @@index([name])
-}
-
-model CollectionView {
-  id            String   @id @default(cuid())
-  collectionId  String
-  name          String
-  filters       Json     @default("[]")
-  sort          Json     @default("{}")
-  groupBy       String?
-  visibleFields Json     @default("[]")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-
-  @@index([collectionId])
 }

@@ -107,8 +107,6 @@ jobs:
             docker exec ngocky-db psql -U ngocky -d postgres -c "ALTER ROLE ngocky WITH PASSWORD '${{ secrets.DB_PASSWORD }}';"
 
             # Run DB operations in one-off containers to avoid OOM from docker exec on running api
-            # Resolve any previously failed migrations before deploying (safe no-op if none)
-            docker compose run --rm api npx prisma migrate resolve --rolled-back 20260311200000_add_collection_module 2>/dev/null || true
             docker compose run --rm api npx prisma migrate deploy
             docker compose run --rm api npm run db:seed
 

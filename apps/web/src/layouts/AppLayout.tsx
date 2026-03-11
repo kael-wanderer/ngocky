@@ -5,7 +5,7 @@ import { getFeatureFlags, isFeatureRouteEnabled } from '../config/features';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, LogOut, Menu, X,
-    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, GripVertical, Coins, Archive
+    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, GripVertical, Coins, Keyboard
 } from 'lucide-react';
 
 const navItems = [
@@ -19,7 +19,7 @@ const navItems = [
     { to: '/calendar', icon: Calendar, label: 'Calendar' },
     { to: '/housework', icon: Home, label: 'Housework' },
     { to: '/assets', icon: Microwave, label: 'Assets' },
-    { to: '/collection', icon: Archive, label: 'Collection' },
+    { to: '/keyboard', icon: Keyboard, label: 'Keyboard' },
     { to: '/funds', icon: Coins, label: 'Funds' },
     { to: '/learning', icon: GraduationCap, label: 'Learning' },
     { to: '/scheduled-reports', icon: FileText, label: 'Schedule Action' },
@@ -35,7 +35,7 @@ const navGroups = [
     { id: 'dashboard', label: 'Dashboard', items: ['/', '/reports'] },
     { id: 'personal', label: 'Personal', items: ['/tasks', '/projects', '/expenses', '/goals', '/ideas'] },
     { id: 'family', label: 'Family', items: ['/calendar', '/housework', '/assets'] },
-    { id: 'hobby', label: 'Hobby', items: ['/collection', '/funds', '/learning'] },
+    { id: 'hobby', label: 'Hobby', items: ['/keyboard', '/funds', '/learning'] },
     { id: 'settings', label: 'Settings', items: ['/scheduled-reports', '/notifications', '/settings'] },
     { id: 'admin', label: 'Admin', items: ['/users'] },
 ] as const;
@@ -62,7 +62,7 @@ function migrateLegacyGroupOrder(order: Record<string, string[]>) {
         next[groupId] = Array.isArray(items) ? [...items] : [];
     }
 
-    const hobbyRoutes = ['/learning', '/collection', '/funds'];
+    const hobbyRoutes = ['/learning', '/keyboard', '/funds'];
     for (const groupId of Object.keys(next)) {
         next[groupId] = next[groupId].filter((to) => !hobbyRoutes.includes(to));
     }
