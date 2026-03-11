@@ -8,13 +8,14 @@ export const FEATURE_FLAGS = {
     featureHousework: true,
     featureAssets: true,
     featureCalendar: true,
+    featureFunds: true,
 } as const;
 
 export type FeatureFlagKey = keyof typeof FEATURE_FLAGS;
 export type FeatureFlags = Record<FeatureFlagKey, boolean>;
 
 export type FeatureGroup = {
-    id: 'personal' | 'family';
+    id: 'personal' | 'family' | 'hobby';
     label: string;
     items: Array<{
         key: FeatureFlagKey;
@@ -28,12 +29,12 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         id: 'personal',
         label: 'Personal',
         items: [
-            { key: 'featureGoals', label: 'Goals', route: '/goals' },
-            { key: 'featureProjects', label: 'Projects', route: '/projects' },
-            { key: 'featureIdeas', label: 'Ideas', route: '/ideas' },
-            { key: 'featureLearning', label: 'Learning', route: '/learning' },
-            { key: 'featureExpenses', label: 'Expenses', route: '/expenses' },
             { key: 'featureTasks', label: 'Tasks', route: '/tasks' },
+            { key: 'featureProjects', label: 'Projects', route: '/projects' },
+            { key: 'featureGoals', label: 'Goals', route: '/goals' },
+            { key: 'featureExpenses', label: 'Expenses', route: '/expenses' },
+            { key: 'featureLearning', label: 'Learning', route: '/learning' },
+            { key: 'featureIdeas', label: 'Ideas', route: '/ideas' },
         ],
     },
     {
@@ -43,6 +44,13 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
             { key: 'featureHousework', label: 'Housework', route: '/housework' },
             { key: 'featureAssets', label: 'Assets', route: '/assets' },
             { key: 'featureCalendar', label: 'Calendar', route: '/calendar' },
+        ],
+    },
+    {
+        id: 'hobby',
+        label: 'Hobby',
+        items: [
+            { key: 'featureFunds', label: 'Funds', route: '/funds' },
         ],
     },
 ];

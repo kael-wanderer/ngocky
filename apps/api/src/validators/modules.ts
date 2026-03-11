@@ -346,3 +346,14 @@ export const createExpenseSchema = z.object({
 });
 
 export const updateExpenseSchema = createExpenseSchema.partial();
+
+export const createFundSchema = z.object({
+    description: z.string().min(1).max(200),
+    type: z.enum(['BUY', 'SELL', 'TOP_UP']),
+    scope: z.enum(['MECHANICAL_KEYBOARD', 'PLAY_STATION']),
+    category: z.enum(['KEYCAP', 'KIT', 'SHIPPING', 'ACCESSORIES']),
+    date: z.string().datetime(),
+    amount: z.number().positive(),
+});
+
+export const updateFundSchema = createFundSchema.partial();

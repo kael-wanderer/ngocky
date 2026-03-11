@@ -31,6 +31,7 @@ const profileSelect: any = {
     featureHousework: true,
     featureAssets: true,
     featureCalendar: true,
+    featureFunds: true,
 } as const;
 
 // Get profile/settings
@@ -66,6 +67,7 @@ router.patch('/profile', async (req: Request, res: Response, next: NextFunction)
             'featureHousework',
             'featureAssets',
             'featureCalendar',
+            'featureFunds',
         ];
         const data: any = {};
         allowedFields.forEach((f) => { if (req.body[f] !== undefined) data[f] = req.body[f]; });

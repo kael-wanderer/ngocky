@@ -5,7 +5,7 @@ import { getFeatureFlags, isFeatureRouteEnabled } from '../config/features';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, LogOut, Menu, X,
-    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, GripVertical
+    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, GripVertical, Coins
 } from 'lucide-react';
 
 const navItems = [
@@ -20,6 +20,7 @@ const navItems = [
     { to: '/housework', icon: Home, label: 'Housework' },
     { to: '/assets', icon: Microwave, label: 'Assets' },
     { to: '/calendar', icon: Calendar, label: 'Calendar' },
+    { to: '/funds', icon: Coins, label: 'Funds' },
     { to: '/scheduled-reports', icon: FileText, label: 'Schedule Action' },
     { to: '/notifications', icon: BellRing, label: 'Notifications' },
     { to: '/settings', icon: Settings, label: 'User Settings' },
@@ -31,8 +32,9 @@ const adminItems = [
 
 const navGroups = [
     { id: 'dashboard', label: 'Dashboard', items: ['/', '/reports'] },
-    { id: 'personal', label: 'Personal', items: ['/goals', '/expenses', '/learning', '/ideas', '/tasks', '/projects'] },
+    { id: 'personal', label: 'Personal', items: ['/tasks', '/projects', '/goals', '/expenses', '/learning', '/ideas'] },
     { id: 'family', label: 'Family', items: ['/housework', '/assets', '/calendar'] },
+    { id: 'hobby', label: 'Hobby', items: ['/funds'] },
     { id: 'settings', label: 'Settings', items: ['/scheduled-reports', '/notifications', '/settings'] },
     { id: 'admin', label: 'Admin', items: ['/users'] },
 ] as const;
@@ -41,6 +43,7 @@ const DEFAULT_GROUP_STATE: Record<string, boolean> = {
     dashboard: true,
     personal: true,
     family: true,
+    hobby: true,
     settings: true,
     admin: true,
 };
@@ -149,7 +152,7 @@ export default function AppLayout() {
     const resolveNavItem = (to: string) => [...navItems, ...adminItems].find((item) => item.to === to);
     const visibleGroups = navGroups.filter((group) => {
         if (group.id === 'admin') return isAdmin;
-        if (group.id === 'personal' || group.id === 'family') {
+        if (group.id === 'personal' || group.id === 'family' || group.id === 'hobby') {
             return group.items.some((to) => isFeatureRouteEnabled(to, featureFlags));
         }
         return true;

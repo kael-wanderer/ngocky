@@ -82,6 +82,24 @@ enum ExpenseType {
   RECEIVE
 }
 
+enum HobbyFundType {
+  BUY
+  SELL
+  TOP_UP
+}
+
+enum HobbyFundScope {
+  MECHANICAL_KEYBOARD
+  PLAY_STATION
+}
+
+enum HobbyFundCategory {
+  KEYCAP
+  KIT
+  SHIPPING
+  ACCESSORIES
+}
+
 enum NotificationChannel {
   EMAIL
   TELEGRAM
@@ -177,6 +195,7 @@ model User {
   featureHousework    Boolean             @default(true)
   featureAssets       Boolean             @default(true)
   featureCalendar     Boolean             @default(true)
+  featureFunds        Boolean             @default(true)
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
@@ -197,6 +216,7 @@ model User {
   calendarEvents      CalendarEvent[]     @relation("EventCreator")
   eventParticipants   EventParticipant[]
   expenses            Expense[]
+  fundTransactions    FundTransaction[]
   alertRules          AlertRule[]
   scheduledReports    ScheduledReport[]
   budgetSettings      BudgetSetting[]
@@ -603,6 +623,27 @@ model Expense {
 
   @@index([userId])
   @@index([date])
+  @@index([category])
+}
+
+model FundTransaction {
+  id          String            @id @default(cuid())
+  date        DateTime
+  description String
+  amount      Float
+  type        HobbyFundType
+  scope       HobbyFundScope
+  category    HobbyFundCategory
+  userId      String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@index([type])
+  @@index([scope])
   @@index([category])
 }
 

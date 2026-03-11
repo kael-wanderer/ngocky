@@ -171,6 +171,7 @@ export default function SettingsPage() {
             featureHousework: profile.featureHousework ?? true,
             featureAssets: profile.featureAssets ?? true,
             featureCalendar: profile.featureCalendar ?? true,
+            featureFunds: profile.featureFunds ?? true,
         });
     }, [profile]);
 
@@ -360,7 +361,7 @@ export default function SettingsPage() {
                                         <div>
                                             <h4 className="font-semibold" style={{ color: 'var(--color-text)' }}>{group.label}</h4>
                                             <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                                {group.id === 'personal' ? 'Planning and self-management pages.' : 'Shared home and family pages.'}
+                                                {group.id === 'personal' ? 'Planning and self-management pages.' : group.id === 'family' ? 'Shared home and family pages.' : 'Hobby and collection finance pages.'}
                                             </p>
                                         </div>
                                         <div className="grid gap-3 md:grid-cols-2">

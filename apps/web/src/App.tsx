@@ -10,6 +10,7 @@ import ProjectsPage from './pages/ProjectsPage';
 import HouseworkPage from './pages/HouseworkPage';
 import CalendarPage from './pages/CalendarPage';
 import ExpensesPage from './pages/ExpensesPage';
+import FundsPage from './pages/FundsPage';
 import ReportsPage from './pages/ReportsPage';
 import AssetsPage from './pages/AssetsPage';
 import LearningPage from './pages/LearningPage';
@@ -66,6 +67,7 @@ export default function App() {
                         <Route path="housework" element={<FeatureRoute route="/housework"><HouseworkPage /></FeatureRoute>} />
                         <Route path="calendar" element={<FeatureRoute route="/calendar"><CalendarPage /></FeatureRoute>} />
                         <Route path="expenses" element={<FeatureRoute route="/expenses"><ExpensesPage /></FeatureRoute>} />
+                        <Route path="funds" element={<FeatureRoute route="/funds"><FundsPage /></FeatureRoute>} />
                         <Route path="reports" element={<ReportsPage />} />
                         <Route path="assets" element={<FeatureRoute route="/assets"><AssetsPage /></FeatureRoute>} />
                         <Route path="learning" element={<FeatureRoute route="/learning"><LearningPage /></FeatureRoute>} />
