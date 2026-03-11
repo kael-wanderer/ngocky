@@ -9,7 +9,9 @@ import { resolveTaskQuery } from './resolvers/taskQuery';
 import { resolveProjectTaskStatus } from './resolvers/projectTaskStatus';
 import { resolveCalendarQuery } from './resolvers/calendarQuery';
 import { resolveExpenseCreate } from './resolvers/expenseCreate';
+import { resolveExpenseQuery } from './resolvers/expenseQuery';
 import { resolveGoalCheckin } from './resolvers/goalCheckin';
+import { resolveGoalQuery } from './resolvers/goalQuery';
 import { resolveHouseworkQuery } from './resolvers/houseworkQuery';
 import { resolveHouseworkStatus } from './resolvers/houseworkStatus';
 
@@ -64,8 +66,14 @@ export async function dispatchIntent(
         case 'create_expense':
             return resolveExpenseCreate(entities, ctx);
 
+        case 'query_expenses':
+            return resolveExpenseQuery(entities, ctx);
+
         case 'goal_checkin':
             return resolveGoalCheckin(entities, ctx);
+
+        case 'query_goals':
+            return resolveGoalQuery(entities, ctx);
 
         case 'query_housework':
             return resolveHouseworkQuery(entities, ctx);

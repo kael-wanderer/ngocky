@@ -29,7 +29,9 @@ export const ASSISTANT_INTENTS = [
     'query_calendar',
     'query_tasks',
     'create_expense',
+    'query_expenses',
     'goal_checkin',
+    'query_goals',
     'query_housework',
     'update_housework_status',
     'link_telegram',
@@ -61,8 +63,12 @@ export const HELP_TEXT = `NgocKy Assistant — available commands:
 
 *Expenses*
 • "spent <amount> on <category>"
+• "show expenses this month"
+• "tell me all expenses of March"
 
 *Goals*
+• "show my goals"
+• "what is my goal progress"
 • "logged <value> km for running goal"
 
 *Housework*

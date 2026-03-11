@@ -53,9 +53,18 @@ create_expense:
   examples: "spent 50000 on coffee", "tiêu 200k ăn trưa", "chi 150000 cho xăng"
   note: "50k" = 50000, "200k" = 200000, "1 triệu"/"1tr" = 1000000, "1.5 triệu" = 1500000
 
+query_expenses:
+  entities: { "dateRange": { "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" } (optional), "category": "string (optional)" }
+  examples: "show expenses this month", "tell me all expenses of March", "chi tiêu tháng 3", "how much did I spend this week", "expenses last month", "show food expenses"
+  note: "of March" / "tháng 3" = from 2026-03-01 to 2026-03-31; resolve month names to full date ranges
+
 goal_checkin:
   entities: { "goalTitle": "string (required)", "quantity": <number, optional default 1>, "note": "string (optional)" }
   examples: "logged 5km for running goal", "check in running 5km", "đăng ký chạy bộ 5km", "tập gym xong"
+
+query_goals:
+  entities: {}
+  examples: "show my goals", "what are my goals", "goal progress", "how am I doing on my goals", "what progress of goals this week", "mục tiêu của tôi", "tiến độ mục tiêu"
 
 query_housework:
   entities: { "dateRange": { "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" } (optional) }
