@@ -19,7 +19,7 @@ const navItems = [
     { to: '/housework', icon: Home, label: 'Housework' },
     { to: '/assets', icon: Microwave, label: 'Appliances & Devices' },
     { to: '/calendar', icon: Calendar, label: 'Calendar' },
-    { to: '/scheduled-reports', icon: FileText, label: 'Reports' },
+    { to: '/scheduled-reports', icon: FileText, label: 'Schedule Action' },
     { to: '/notifications', icon: BellRing, label: 'Notifications' },
     { to: '/settings', icon: Settings, label: 'User Settings' },
 ];

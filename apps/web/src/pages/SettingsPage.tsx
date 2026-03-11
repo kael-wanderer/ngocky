@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
 import { Settings as SettingsIcon, User, Bell, Palette, Shield, Camera } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 function resizeImageToBase64(file: File, maxSize = 128): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -25,7 +26,8 @@ function resizeImageToBase64(file: File, maxSize = 128): Promise<string> {
 export default function SettingsPage() {
     const { user, setUser } = useAuthStore();
     const qc = useQueryClient();
-    const [tab, setTab] = useState('profile');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [tab, setTab] = useState(() => searchParams.get('tab') || 'profile');
     const [msg, setMsg] = useState('');
     const [mfaEnableCode, setMfaEnableCode] = useState('');
     const [mfaDisableCode, setMfaDisableCode] = useState('');
@@ -117,6 +119,20 @@ export default function SettingsPage() {
             telegramChatId: profile.telegramChatId || '',
         });
     }, [profile]);
+
+    React.useEffect(() => {
+        const nextTab = searchParams.get('tab') || 'profile';
+        if (nextTab !== tab) {
+            setTab(nextTab);
+        }
+    }, [searchParams, tab]);
+
+    React.useEffect(() => {
+        if ((searchParams.get('tab') || 'profile') === tab) return;
+        const next = new URLSearchParams(searchParams);
+        next.set('tab', tab);
+        setSearchParams(next, { replace: true });
+    }, [tab, searchParams, setSearchParams]);
 
     const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Bell, BellRing, Copy, FileText, Info, Mail, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Bell, BellRing, Copy, FileText, Info, Mail, Pencil, Plus, Send, Trash2, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const CONDITIONS_BY_MODULE: Record<string, { value: string; label: string; hasThreshold?: boolean }[]> = {
     GOAL: [
@@ -52,6 +53,7 @@ const SECTIONS_BY_TYPE: Record<string, { key: string; label: string }[]> = {
         { key: 'IDEAS', label: 'Ideas' },
     ],
     NEXT_WEEK_TASKS: [
+        { key: 'GOALS', label: 'Goals' },
         { key: 'PROJECT', label: 'Project' },
         { key: 'TASKS', label: 'Task' },
         { key: 'HOUSEWORK', label: 'Housework' },
@@ -64,6 +66,7 @@ const SECTIONS_BY_TYPE: Record<string, { key: string; label: string }[]> = {
         { key: 'CALENDAR', label: 'Calendar Events' },
     ],
     TOMORROW_TASKS: [
+        { key: 'GOALS', label: 'Goals' },
         { key: 'PROJECT', label: 'Project' },
         { key: 'TASKS', label: 'Task' },
         { key: 'HOUSEWORK', label: 'Housework' },
@@ -96,6 +99,7 @@ function normalizeReportFrequency(frequency?: string) {
 }
 
 const emptyReportForm = (reportType = 'WEEKLY_SUMMARY') => ({
+    name: '',
     reportType,
     frequency: getDefaultFrequency(reportType),
     dayOfWeek: 1,
@@ -111,6 +115,7 @@ type AlertsPageProps = {
 
 export default function AlertsPage({ forcedTab }: AlertsPageProps) {
     const qc = useQueryClient();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'RULES' | 'REPORTS'>(forcedTab || 'RULES');
     const [showRuleModal, setShowRuleModal] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
@@ -163,6 +168,10 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
     const { data: reports, isLoading: reportsLoading } = useQuery({
         queryKey: ['scheduled-reports'],
         queryFn: async () => (await api.get('/scheduled-reports')).data.data,
+    });
+    const { data: profile } = useQuery({
+        queryKey: ['profile'],
+        queryFn: async () => (await api.get('/settings/profile')).data.data,
     });
 
     const createReportMut = useMutation({
@@ -242,6 +251,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
     function openEditReport(report: any) {
         setEditingReport(report);
         setReportForm({
+            name: report.name || '',
             reportType: report.reportType || 'WEEKLY_SUMMARY',
             frequency: normalizeReportFrequency(report.frequency) || getDefaultFrequency(report.reportType || 'WEEKLY_SUMMARY'),
             dayOfWeek: report.dayOfWeek ?? 1,
@@ -255,6 +265,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
 
     function duplicateReport(report: any) {
         createReportMut.mutate({
+            name: report.name ? `${report.name} (Copy)` : `${REPORT_TYPE_LABELS[report.reportType] || report.reportType} (Copy)`,
             reportType: report.reportType,
             frequency: normalizeReportFrequency(report.frequency),
             dayOfWeek: report.dayOfWeek,
@@ -311,17 +322,45 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
         setDragOverReportId(null);
     }
 
+    function openNotificationSettings() {
+        navigate('/settings?tab=notifications');
+    }
+
+    function renderChannelIcons() {
+        const channel = profile?.notificationChannel || 'EMAIL';
+        const mailIcon = <Mail className="w-3.5 h-3.5 text-red-500" />;
+        const telegramIcon = <Send className="w-3.5 h-3.5 text-sky-500" />;
+
+        if (channel === 'BOTH') {
+            return (
+                <>
+                    {telegramIcon}
+                    {mailIcon}
+                </>
+            );
+        }
+
+        return channel === 'TELEGRAM' ? telegramIcon : mailIcon;
+    }
+
+    function getChannelLabel() {
+        const channel = profile?.notificationChannel || 'EMAIL';
+        if (channel === 'BOTH') return 'via Telegram + Email';
+        if (channel === 'TELEGRAM') return 'via Telegram';
+        return 'via Email';
+    }
+
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     <BellRing className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTab === 'RULES' ? 'Notifications' : 'Scheduled Reports'}</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTab === 'RULES' ? 'Notifications' : 'Schedule Action'}</h2>
                 </div>
                 {showTabSwitcher && (
                     <div className="flex bg-gray-100 p-1 rounded-lg self-start sm:self-auto">
                         <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'RULES' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('RULES')} style={activeTab === 'RULES' ? { color: 'var(--color-primary)' } : {}}>Notification Settings</button>
-                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'REPORTS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('REPORTS')} style={activeTab === 'REPORTS' ? { color: 'var(--color-primary)' } : {}}>Scheduled Reports</button>
+                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'REPORTS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('REPORTS')} style={activeTab === 'REPORTS' ? { color: 'var(--color-primary)' } : {}}>Schedule Action</button>
                     </div>
                 )}
             </div>
@@ -329,7 +368,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
                 <Info className="w-5 h-5 text-blue-500 flex-shrink-0" />
                 <div className="text-xs text-blue-800 leading-relaxed">
-                    <strong>Schedule Reports:</strong> Reports are delivered via your notification channel configured in Settings. Alert rules and scheduled reports can be edited or duplicated directly from this page.
+                    <strong>Schedule Action:</strong> Actions are delivered via your notification channel configured in Settings. Alert rules and scheduled actions can be edited or duplicated directly from this page.
                 </div>
             </div>
 
@@ -400,8 +439,8 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
             ) : (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Schedules</h3>
-                        <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateReport}><Plus className="w-3.5 h-3.5" /> New Schedule</button>
+                        <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Actions</h3>
+                        <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateReport}><Plus className="w-3.5 h-3.5" /> New Action</button>
                     </div>
 
                     {reportsLoading ? (
@@ -427,7 +466,14 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <h4 className="font-bold text-sm" style={{ color: 'var(--color-text)' }}>{REPORT_TYPE_LABELS[report.reportType] || report.reportType}</h4>
+                                                <button
+                                                    type="button"
+                                                    className="font-bold text-sm text-left hover:opacity-80"
+                                                    style={{ color: 'var(--color-text)' }}
+                                                    onClick={() => openEditReport(report)}
+                                                >
+                                                    {report.name}
+                                                </button>
                                                 <button
                                                     className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${report.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
                                                     onClick={() => toggleReportMut.mutate({ id: report.id, active: !report.active })}
@@ -435,6 +481,9 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                                     {report.active ? 'ENABLED' : 'DISABLED'}
                                                 </button>
                                             </div>
+                                            <p className="text-[11px] mt-1 font-medium uppercase" style={{ color: 'var(--color-primary)' }}>
+                                                {REPORT_TYPE_LABELS[report.reportType] || report.reportType}
+                                            </p>
                                             <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
                                                 {normalizeReportFrequency(report.frequency) === 'ONE_TIME'
                                                     ? `One time at ${report.time}`
@@ -450,9 +499,14 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                     </div>
 
                                     <div className="flex items-center gap-3">
-                                        <span className="text-xs font-bold inline-flex items-center gap-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                            <Mail className="w-3.5 h-3.5" /> via Settings channel
-                                        </span>
+                                        <button
+                                            type="button"
+                                            className="text-xs font-bold inline-flex items-center gap-1 hover:opacity-80"
+                                            style={{ color: 'var(--color-text-secondary)' }}
+                                            onClick={openNotificationSettings}
+                                        >
+                                            {renderChannelIcons()} {getChannelLabel()}
+                                        </button>
                                     </div>
 
                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -536,7 +590,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 )}
                             </div>
 
-                            {/* Schedule */}
+                            {/* Action */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="label">Frequency <span className="text-red-500">*</span></label>
@@ -598,7 +652,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) closeReportModal(); }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingReport ? 'Edit Schedule' : 'Schedule Report'}</h3>
+                            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingReport ? 'Edit Action' : 'Schedule Action'}</h3>
                             <button onClick={closeReportModal}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
@@ -606,9 +660,19 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                             if (editingReport) updateReportMut.mutate({ id: editingReport.id, body: reportForm });
                             else createReportMut.mutate(reportForm);
                         }} className="space-y-4">
+                            <div>
+                                <label className="label">Name <span className="text-red-500">*</span></label>
+                                <input
+                                    className="input"
+                                    value={reportForm.name}
+                                    onChange={(e) => setReportForm({ ...reportForm, name: e.target.value })}
+                                    placeholder="e.g. Morning Today Tasks"
+                                    required
+                                />
+                            </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
-                                    <label className="label">Report Type</label>
+                                    <label className="label">Action Type</label>
                                     <select
                                         className="input"
                                         value={reportForm.reportType}
@@ -716,7 +780,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 <span style={{ color: 'var(--color-text)' }}>Enable schedule</span>
                             </label>
                             <button type="submit" className="btn-primary w-full" disabled={createReportMut.isPending || updateReportMut.isPending}>
-                                {editingReport ? 'Save Schedule' : 'Schedule Report'}
+                                {editingReport ? 'Save Action' : 'Schedule Action'}
                             </button>
                         </form>
                     </div>

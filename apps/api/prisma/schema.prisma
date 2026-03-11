@@ -620,6 +620,7 @@ model AlertRule {
 
 model ScheduledReport {
   id                  String              @id @default(cuid())
+  name                String
   reportType          String
   dateRangePreset     String?
   frequency           ReportFrequency     @default(WEEKLY)
