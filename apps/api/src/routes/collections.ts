@@ -11,7 +11,7 @@ router.use(authenticate);
 
 router.get('/', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const collections = await prisma.collection.findMany({
             where: { OR: [{ ownerId: userId }, { isShared: true }] },
             include: { _count: { select: { items: true } } },
@@ -23,7 +23,7 @@ router.get('/', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const { name, description, fieldSchema, isShared } = req.body;
         const last = await prisma.collection.aggregate({ where: { ownerId: userId }, _max: { sortOrder: true } });
         const collection = await prisma.collection.create({
@@ -42,7 +42,7 @@ router.post('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const col = await prisma.collection.findFirst({
             where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
             include: { views: { orderBy: { createdAt: 'asc' } } },
@@ -54,7 +54,7 @@ router.get('/:id', async (req, res, next) => {
 
 router.patch('/:id', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const col = await prisma.collection.findFirst({ where: { id: req.params.id, ownerId: userId } });
         if (!col) throw new NotFoundError('Collection not found');
         const { name, description, fieldSchema, isShared } = req.body;
@@ -73,7 +73,7 @@ router.patch('/:id', async (req, res, next) => {
 
 router.delete('/:id', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const col = await prisma.collection.findFirst({ where: { id: req.params.id, ownerId: userId } });
         if (!col) throw new NotFoundError('Collection not found');
         await prisma.collection.delete({ where: { id: col.id } });
@@ -85,7 +85,7 @@ router.delete('/:id', async (req, res, next) => {
 
 router.get('/:id/items', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const col = await prisma.collection.findFirst({
             where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
         });
@@ -106,7 +106,7 @@ router.get('/:id/items', async (req, res, next) => {
 
 router.post('/:id/items', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const col = await prisma.collection.findFirst({
             where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
         });
@@ -131,7 +131,7 @@ router.post('/:id/items', async (req, res, next) => {
 
 router.patch('/:id/items/:itemId', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const col = await prisma.collection.findFirst({
             where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
         });
@@ -156,7 +156,7 @@ router.patch('/:id/items/:itemId', async (req, res, next) => {
 
 router.delete('/:id/items/:itemId', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const col = await prisma.collection.findFirst({
             where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
         });
@@ -172,7 +172,7 @@ router.delete('/:id/items/:itemId', async (req, res, next) => {
 
 router.post('/:id/items/import', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const col = await prisma.collection.findFirst({
             where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
         });
@@ -205,7 +205,7 @@ router.post('/:id/items/import', async (req, res, next) => {
 
 router.get('/:id/views', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const col = await prisma.collection.findFirst({
             where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
         });
@@ -217,7 +217,7 @@ router.get('/:id/views', async (req, res, next) => {
 
 router.post('/:id/views', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const col = await prisma.collection.findFirst({
             where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
         });
@@ -232,7 +232,7 @@ router.post('/:id/views', async (req, res, next) => {
 
 router.patch('/:id/views/:viewId', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const col = await prisma.collection.findFirst({
             where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
         });
@@ -256,7 +256,7 @@ router.patch('/:id/views/:viewId', async (req, res, next) => {
 
 router.delete('/:id/views/:viewId', async (req, res, next) => {
     try {
-        const userId = req.user!.id;
+        const userId = req.user!.userId;
         const col = await prisma.collection.findFirst({
             where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
         });
