@@ -161,19 +161,10 @@ export default function SettingsPage() {
         });
     }, [profile]);
 
-    React.useEffect(() => {
-        const nextTab = searchParams.get('tab') || 'profile';
-        if (nextTab !== tab) {
-            setTab(nextTab);
-        }
-    }, [searchParams, tab]);
-
-    React.useEffect(() => {
-        if ((searchParams.get('tab') || 'profile') === tab) return;
-        const next = new URLSearchParams(searchParams);
-        next.set('tab', tab);
-        setSearchParams(next, { replace: true });
-    }, [tab, searchParams, setSearchParams]);
+    const handleTabClick = (id: string) => {
+        setTab(id);
+        setSearchParams({ tab: id }, { replace: true });
+    };
 
     const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -236,7 +227,7 @@ export default function SettingsPage() {
                     {tabs.map((t) => (
                         <button
                             key={t.id}
-                            onClick={() => setTab(t.id)}
+                            onClick={() => handleTabClick(t.id)}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${tab === t.id ? 'shadow-sm' : ''
                                 }`}
                             style={{
