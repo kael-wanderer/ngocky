@@ -40,6 +40,14 @@ update_project_task_status:
   entities: { "taskTitle": "string (required)", "projectName": "string (optional)", "status": "PLANNED|IN_PROGRESS|DONE (required)" }
   examples: "mark website design as in progress", "update task write report to done"
 
+query_projects:
+  entities: {}
+  examples: "show my projects", "what projects do I have", "list projects", "dự án của tôi", "các dự án đang chạy"
+
+query_project_tasks:
+  entities: { "projectName": "string (optional)", "status": "PLANNED|IN_PROGRESS|DONE (optional)" }
+  examples: "tasks in website project", "show tasks for app redesign", "what tasks are in progress for budget project", "pending tasks in project X", "công việc trong dự án Y"
+
 query_calendar:
   entities: { "dateRange": { "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" }, "keyword": "string (optional)" }
   examples: "what events do I have tomorrow", "lịch hôm nay", "show events this week", "any meetings Friday?"

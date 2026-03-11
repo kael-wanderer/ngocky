@@ -7,6 +7,8 @@ import { resolveTaskCreate } from './resolvers/taskCreate';
 import { resolveTaskStatus } from './resolvers/taskStatus';
 import { resolveTaskQuery } from './resolvers/taskQuery';
 import { resolveProjectTaskStatus } from './resolvers/projectTaskStatus';
+import { resolveProjectQuery } from './resolvers/projectQuery';
+import { resolveProjectTaskQuery } from './resolvers/projectTaskQuery';
 import { resolveCalendarQuery } from './resolvers/calendarQuery';
 import { resolveExpenseCreate } from './resolvers/expenseCreate';
 import { resolveExpenseQuery } from './resolvers/expenseQuery';
@@ -59,6 +61,12 @@ export async function dispatchIntent(
 
         case 'update_project_task_status':
             return resolveProjectTaskStatus(entities, ctx);
+
+        case 'query_projects':
+            return resolveProjectQuery(entities, ctx);
+
+        case 'query_project_tasks':
+            return resolveProjectTaskQuery(entities, ctx);
 
         case 'query_calendar':
             return resolveCalendarQuery(entities, ctx);

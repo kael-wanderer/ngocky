@@ -23,9 +23,13 @@ Telegram is the chat UI. NgocKy API remains the system of record for identity, a
 - query calendar events by natural language date/time filters
 - query personal tasks such as `today`, `tomorrow`, `this week`
 - add a quick expense log (amount + category + optional note)
+- query expense history by date range or category
 - log a goal check-in (progress value + goal name)
+- query goal progress
 - query housework items by status/due date
 - mark a housework item done
+- list projects with task counts and board status
+- list project tasks filtered by project name or status
 
 ### Out of scope for V1
 
@@ -176,10 +180,14 @@ The LLM should return structured intents, not direct prose-only decisions.
 - `create_task`
 - `update_task_status`
 - `update_project_task_status`
+- `query_projects`
+- `query_project_tasks`
 - `query_calendar`
 - `query_tasks`
 - `create_expense`
+- `query_expenses`
 - `goal_checkin`
+- `query_goals`
 - `query_housework`
 - `update_housework_status`
 - `link_telegram`

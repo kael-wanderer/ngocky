@@ -26,6 +26,8 @@ export const ASSISTANT_INTENTS = [
     'create_task',
     'update_task_status',
     'update_project_task_status',
+    'query_projects',
+    'query_project_tasks',
     'query_calendar',
     'query_tasks',
     'create_expense',
@@ -56,6 +58,11 @@ export const HELP_TEXT = `NgocKy Assistant — available commands:
 • "add task <title> [due <date>]"
 • "mark <task name> done"
 • "what tasks do I have today"
+
+*Projects*
+• "show my projects"
+• "tasks in website project"
+• "mark website design as in progress"
 
 *Calendar*
 • "what events do I have tomorrow"

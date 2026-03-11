@@ -325,6 +325,34 @@ LLM system prompt includes:
 - supported: mark done
 - call `PATCH /api/housework/:id`
 
+### `query_projects` → `resolvers/projectQuery.ts`
+
+- list all projects owned by or shared with user
+- include task counts: total, done, in-progress per project
+- show board status badge (Plan / Active / Done / On Hold)
+- max 10 results
+
+### `query_project_tasks` → `resolvers/projectTaskQuery.ts`
+
+- optional `projectName` fuzzy match to scope to one project
+- optional `status` filter: PLANNED, IN_PROGRESS, DONE
+- if no project specified, return all project tasks user created or shared
+- format: status icon + title + project name (when not scoped) + deadline
+- max 10 results
+
+### `query_expenses` → `resolvers/expenseQuery.ts`
+
+- optional date range (month names resolved to full ranges)
+- optional category filter
+- returns list of expenses sorted by date desc + total sum
+- max 10 results
+
+### `query_goals` → `resolvers/goalQuery.ts`
+
+- list all active goals for user or shared
+- show current/target count, percentage, ASCII progress bar
+- max 10 results
+
 ### `help` intent
 
 Return the formatted help text defined in the design document.
