@@ -10,6 +10,7 @@ const prisma = new PrismaClient();
 
 async function main() {
     console.log('🌱 Seeding database...\n');
+    const isProduction = process.env.NODE_ENV === 'production';
 
     // ─── Owner ────────────────────────────────────────
     const ownerPassword = await bcrypt.hash(process.env.OWNER_PASSWORD || 'ChangeMe123!', 12);
@@ -26,35 +27,42 @@ async function main() {
     });
     console.log(`✅ Owner: ${owner.email}`);
 
-    // ─── Admin ────────────────────────────────────────
-    const adminPassword = await bcrypt.hash('Admin123!', 12);
-    const admin = await prisma.user.upsert({
-        where: { email: 'admin@ngocky.local' },
-        update: {},
-        create: {
-            email: 'admin@ngocky.local',
-            name: 'Admin User',
-            password: adminPassword,
-            role: 'ADMIN',
-            active: true,
-        },
-    });
-    console.log(`✅ Admin: ${admin.email}`);
+    let admin = await prisma.user.findUnique({ where: { email: 'admin@ngocky.local' } });
+    let user = await prisma.user.findUnique({ where: { email: 'user@ngocky.local' } });
 
-    // ─── Normal User ──────────────────────────────────
-    const userPassword = await bcrypt.hash('User1234!', 12);
-    const user = await prisma.user.upsert({
-        where: { email: 'user@ngocky.local' },
-        update: {},
-        create: {
-            email: 'user@ngocky.local',
-            name: 'Family Member',
-            password: userPassword,
-            role: 'USER',
-            active: true,
-        },
-    });
-    console.log(`✅ User: ${user.email}`);
+    if (!isProduction) {
+        // ─── Admin ────────────────────────────────────────
+        const adminPassword = await bcrypt.hash('Admin123!', 12);
+        admin = await prisma.user.upsert({
+            where: { email: 'admin@ngocky.local' },
+            update: {},
+            create: {
+                email: 'admin@ngocky.local',
+                name: 'Admin User',
+                password: adminPassword,
+                role: 'ADMIN',
+                active: true,
+            },
+        });
+        console.log(`✅ Admin: ${admin.email}`);
+
+        // ─── Normal User ──────────────────────────────────
+        const userPassword = await bcrypt.hash('User1234!', 12);
+        user = await prisma.user.upsert({
+            where: { email: 'user@ngocky.local' },
+            update: {},
+            create: {
+                email: 'user@ngocky.local',
+                name: 'Family Member',
+                password: userPassword,
+                role: 'USER',
+                active: true,
+            },
+        });
+        console.log(`✅ User: ${user.email}`);
+    } else {
+        console.log('⏭️ Production mode: skipping demo admin/user seed');
+    }
 
     // ─── Goals ────────────────────────────────────────
     const goalCount = await prisma.goal.count();
@@ -95,7 +103,7 @@ async function main() {
                 data: {
                     title: 'Meditation',
                     description: 'Meditate daily - 5 sessions per week minimum',
-                    userId: user.id,
+                    userId: user?.id || owner.id,
                     periodType: 'WEEKLY',
                     targetCount: 5,
                     currentCount: 2,
@@ -147,7 +155,7 @@ async function main() {
                     priority: 'MEDIUM',
                     status: 'PLANNED',
                     deadline: new Date(now.getTime() + 7 * 86400000),
-                    assigneeId: admin.id,
+                    assigneeId: admin?.id,
                     createdById: owner.id,
                     kanbanOrder: 1,
                 },
@@ -190,7 +198,7 @@ async function main() {
                 data: {
                     title: 'Weekly House Cleanup',
                     description: 'Vacuum, mop, dust all rooms',
-                    assigneeId: user.id,
+                    assigneeId: user?.id || owner.id,
                     createdById: owner.id,
                     frequencyType: 'WEEKLY',
                     nextDueDate: new Date(now.getTime() + 3 * 86400000),
@@ -202,7 +210,7 @@ async function main() {
                 data: {
                     title: 'Grocery Shopping',
                     description: 'Weekly groceries refill',
-                    assigneeId: admin.id,
+                    assigneeId: admin?.id || owner.id,
                     createdById: owner.id,
                     frequencyType: 'WEEKLY',
                     nextDueDate: new Date(now.getTime() + 2 * 86400000),
@@ -250,7 +258,11 @@ async function main() {
                     category: 'Family',
                     color: '#4F46E5',
                     createdById: owner.id,
-                    participants: { create: [{ userId: admin.id }, { userId: user.id }] },
+                    participants: {
+                        create: [admin?.id, user?.id]
+                            .filter((participantId): participantId is string => !!participantId)
+                            .map((participantId) => ({ userId: participantId })),
+                    },
                 },
             }),
             prisma.calendarEvent.create({
@@ -274,7 +286,11 @@ async function main() {
                     category: 'Travel',
                     color: '#059669',
                     createdById: owner.id,
-                    participants: { create: [{ userId: admin.id }, { userId: user.id }] },
+                    participants: {
+                        create: [admin?.id, user?.id]
+                            .filter((participantId): participantId is string => !!participantId)
+                            .map((participantId) => ({ userId: participantId })),
+                    },
                 },
             }),
         ]);
@@ -288,12 +304,12 @@ async function main() {
     if (expenseCount === 0) {
         const now = new Date();
         await Promise.all([
-            prisma.expense.create({ data: { date: new Date(), description: 'Grocery shopping', amount: 85.50, category: 'Food', scope: 'FAMILY', userId: admin.id } }),
+            prisma.expense.create({ data: { date: new Date(), description: 'Grocery shopping', amount: 85.50, category: 'Food', scope: 'FAMILY', userId: admin?.id || owner.id } }),
             prisma.expense.create({ data: { date: new Date(), description: 'Electric bill', amount: 120, category: 'Utilities', scope: 'FAMILY', userId: owner.id, recurring: true } }),
             prisma.expense.create({ data: { date: new Date(now.getTime() - 86400000), description: 'Coffee subscription', amount: 15, category: 'Food', scope: 'PERSONAL', userId: owner.id, recurring: true } }),
             prisma.expense.create({ data: { date: new Date(now.getTime() - 2 * 86400000), description: 'Gym membership', amount: 45, category: 'Health', scope: 'PERSONAL', userId: owner.id, recurring: true } }),
             prisma.expense.create({ data: { date: new Date(now.getTime() - 3 * 86400000), description: 'Internet bill', amount: 40, category: 'Utilities', scope: 'FAMILY', userId: owner.id, recurring: true } }),
-            prisma.expense.create({ data: { date: new Date(now.getTime() - 5 * 86400000), description: 'Phone case', amount: 25, category: 'Shopping', scope: 'PERSONAL', userId: user.id } }),
+            prisma.expense.create({ data: { date: new Date(now.getTime() - 5 * 86400000), description: 'Phone case', amount: 25, category: 'Shopping', scope: 'PERSONAL', userId: user?.id || owner.id } }),
         ]);
         console.log(`✅ Expenses created`);
     } else {
@@ -358,8 +374,10 @@ async function main() {
     console.log('\n🎉 Seeding complete!');
     console.log('\nTest accounts:');
     console.log('  Owner: owner@ngocky.local / ChangeMe123!');
-    console.log('  Admin: admin@ngocky.local / Admin123!');
-    console.log('  User:  user@ngocky.local  / User1234!');
+    if (!isProduction) {
+        console.log('  Admin: admin@ngocky.local / Admin123!');
+        console.log('  User:  user@ngocky.local  / User1234!');
+    }
 }
 
 main()

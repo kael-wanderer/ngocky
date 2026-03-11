@@ -289,7 +289,12 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                             completed: goal.currentCount >= goal.targetCount,
                         };
                     })
-                    .filter((goal) => goal.dueDate >= start && goal.dueDate <= end),
+                    .filter((goal) => {
+                        if (report.reportType === 'TODAY_TASKS' || report.reportType === 'TOMORROW_TASKS') {
+                            return !goal.completed;
+                        }
+                        return goal.dueDate >= start && goal.dueDate <= end;
+                    }),
                 project: project.map(t => ({
                     title: t.title,
                     priority: t.priority,

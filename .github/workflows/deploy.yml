@@ -84,8 +84,8 @@ jobs:
             DATABASE_URL=postgresql://ngocky:${{ secrets.DB_PASSWORD }}@postgres:5432/ngocky?schema=public
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
-            JWT_EXPIRY=15m
-            JWT_REFRESH_EXPIRY=7d
+            JWT_EXPIRY=30d
+            JWT_REFRESH_EXPIRY=60d
             OWNER_NAME="${{ secrets.OWNER_NAME }}"
             OWNER_EMAIL="${{ secrets.OWNER_EMAIL }}"
             OWNER_PASSWORD="${{ secrets.OWNER_PASSWORD }}"

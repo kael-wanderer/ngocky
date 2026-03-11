@@ -209,7 +209,7 @@ export default function ReportsPage() {
     const reportContentRef = useRef<HTMLDivElement>(null);
     const [selectedTabs, setSelectedTabs] = useState<string[]>(['tasks']);
     const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('THIS_WEEK');
-    const [viewType, setViewType] = useState<AnalyticsViewType>('CHARTS');
+    const [viewType, setViewType] = useState<AnalyticsViewType>('BOTH');
     const [filters, setFilters] = useState({ type: '', scope: '', category: '', dateFrom: '', dateTo: '' });
 
     useEffect(() => {
