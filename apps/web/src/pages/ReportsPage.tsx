@@ -41,6 +41,8 @@ type ReportTimeRange =
     | 'LAST_YEAR'
     | 'CUSTOM';
 
+type AnalyticsViewType = 'CHARTS' | 'TABLES' | 'BOTH';
+
 const reportTimeRangeOptions: Array<{ value: ReportTimeRange; label: string }> = [
     { value: 'TODAY', label: 'Today' },
     { value: 'THIS_WEEK', label: 'This Week' },
@@ -127,9 +129,60 @@ function getRangeForPreset(preset: Exclude<ReportTimeRange, 'CUSTOM'>) {
     }
 }
 
+function formatTableValue(value: unknown) {
+    if (value === null || value === undefined || value === '') return '—';
+    if (typeof value === 'number') return value.toLocaleString('en-US');
+    return String(value);
+}
+
+function DataTableCard({
+    title,
+    columns,
+    rows,
+}: {
+    title: string;
+    columns: Array<{ key: string; label: string; render?: (value: any, row: Record<string, any>) => React.ReactNode }>;
+    rows: Array<Record<string, any>>;
+}) {
+    return (
+        <div className="card p-5 overflow-hidden">
+            <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>{title}</h3>
+            {rows.length ? (
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b" style={{ borderColor: 'var(--color-border)' }}>
+                                {columns.map((column) => (
+                                    <th key={column.key} className="text-left py-2 pr-4 font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
+                                        {column.label}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows.map((row, rowIndex) => (
+                                <tr key={`${title}-${rowIndex}`} className="border-b last:border-b-0" style={{ borderColor: 'var(--color-border)' }}>
+                                    {columns.map((column) => (
+                                        <td key={column.key} className="py-2 pr-4 align-top" style={{ color: 'var(--color-text)' }}>
+                                            {column.render ? column.render(row[column.key], row) : formatTableValue(row[column.key])}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No data for this filter.</p>
+            )}
+        </div>
+    );
+}
+
 export default function ReportsPage() {
     const [activeTab, setActiveTab] = useState('tasks');
-    const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('THIS_MONTH');
+    const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('THIS_WEEK');
+    const [viewType, setViewType] = useState<AnalyticsViewType>('CHARTS');
     const [filters, setFilters] = useState({ type: '', scope: '', category: '', dateFrom: '', dateTo: '' });
 
     useEffect(() => {
@@ -275,6 +328,8 @@ export default function ReportsPage() {
             : filterGridCols === 2
                 ? 'grid-cols-1 md:grid-cols-2'
                 : 'grid-cols-1';
+    const showCharts = viewType === 'CHARTS' || viewType === 'BOTH';
+    const showTables = viewType === 'TABLES' || viewType === 'BOTH';
 
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
@@ -286,38 +341,63 @@ export default function ReportsPage() {
             <div className="card p-4 space-y-3">
                 <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
-                    <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Analytics Filters · Time Scope</span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>🔍 Analytics Configuration</span>
                 </div>
-                <div className={`grid ${filterGridClass} gap-3`}>
-                    <select className="input text-sm" value={reportTimeRange} onChange={(e) => setReportTimeRange(e.target.value as ReportTimeRange)}>
-                        {reportTimeRangeOptions.map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                    </select>
-                    {showTypeSelect && (
-                        <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>
-                            <option value="">All Types</option>
-                            {typeFilterOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div className={`grid ${filterGridClass} gap-3 flex-1`}>
+                        <select className="input text-sm" value={reportTimeRange} onChange={(e) => setReportTimeRange(e.target.value as ReportTimeRange)}>
+                            {reportTimeRangeOptions.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
                         </select>
-                    )}
-                    {showTypeInput && (
-                        <input type="text" className="input text-sm" placeholder="Filter by asset type" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} />
-                    )}
-                    {showScopeSelect && (
-                        <select className="input text-sm" value={filters.scope} onChange={(e) => setFilters({ ...filters, scope: e.target.value })}>
-                            <option value="">All Scopes</option>
-                            {scopeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                        </select>
-                    )}
-                    {showCategorySelect && (
-                        <select className="input text-sm" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
-                            <option value="">All Categories</option>
-                            {expenseCategories.map((category) => <option key={category} value={category}>{category}</option>)}
-                        </select>
-                    )}
-                    {showCategoryInput && (
-                        <input type="text" className="input text-sm" placeholder={`Filter by ${activeTab === 'calendar' ? 'calendar' : activeTab} category`} value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} />
-                    )}
+                        {showTypeSelect && (
+                            <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>
+                                <option value="">All Types</option>
+                                {typeFilterOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                            </select>
+                        )}
+                        {showTypeInput && (
+                            <input type="text" className="input text-sm" placeholder="Filter by asset type" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} />
+                        )}
+                        {showScopeSelect && (
+                            <select className="input text-sm" value={filters.scope} onChange={(e) => setFilters({ ...filters, scope: e.target.value })}>
+                                <option value="">All Scopes</option>
+                                {scopeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                            </select>
+                        )}
+                        {showCategorySelect && (
+                            <select className="input text-sm" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
+                                <option value="">All Categories</option>
+                                {expenseCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+                            </select>
+                        )}
+                        {showCategoryInput && (
+                            <input type="text" className="input text-sm" placeholder={`Filter by ${activeTab === 'calendar' ? 'calendar' : activeTab} category`} value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} />
+                        )}
+                    </div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-sm font-semibold" style={{ color: 'var(--color-text-secondary)' }}>View Type:</span>
+                        <div className="flex gap-2 rounded-2xl p-1" style={{ backgroundColor: 'var(--color-bg)' }}>
+                            {[
+                                { value: 'CHARTS', label: '📈 Charts' },
+                                { value: 'TABLES', label: '📋 Tables' },
+                                { value: 'BOTH', label: '📊 Both' },
+                            ].map((option) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => setViewType(option.value as AnalyticsViewType)}
+                                    className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all ${viewType === option.value ? 'shadow-sm' : ''}`}
+                                    style={{
+                                        backgroundColor: viewType === option.value ? 'var(--color-primary)' : 'var(--color-surface)',
+                                        color: viewType === option.value ? '#fff' : 'var(--color-text)',
+                                    }}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
                 {reportTimeRange === 'CUSTOM' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -336,237 +416,441 @@ export default function ReportsPage() {
             </div>
 
             {activeTab === 'project' && (
-                <div className="grid gap-6 md:grid-cols-2">
-                    <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Project Items by Status</h3>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <BarChart data={projectItemsByStatus || []}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                                <XAxis dataKey="status" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip />
-                                <Bar dataKey="count" fill="#0f766e" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Project Items by Type</h3>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <PieChart>
-                                <Pie data={projectItemsByType || []} dataKey="count" nameKey="type" cx="50%" cy="50%" outerRadius={100} label>
-                                    {(projectItemsByType || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
+                <div className="space-y-6">
+                    {showCharts && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Project Items by Status</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <BarChart data={projectItemsByStatus || []}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                        <XAxis dataKey="status" tick={{ fontSize: 12 }} />
+                                        <YAxis tick={{ fontSize: 12 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#0f766e" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Project Items by Type</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <PieChart>
+                                        <Pie data={projectItemsByType || []} dataKey="count" nameKey="type" cx="50%" cy="50%" outerRadius={100} label>
+                                            {(projectItemsByType || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
+                    {showTables && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <DataTableCard
+                                title="Project Items by Status"
+                                columns={[
+                                    { key: 'status', label: 'Status' },
+                                    { key: 'count', label: 'Count' },
+                                ]}
+                                rows={projectItemsByStatus || []}
+                            />
+                            <DataTableCard
+                                title="Project Items by Type"
+                                columns={[
+                                    { key: 'type', label: 'Type' },
+                                    { key: 'count', label: 'Count' },
+                                ]}
+                                rows={projectItemsByType || []}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 
             {activeTab === 'tasks' && (
-                <div className="grid gap-6 md:grid-cols-2">
-                    <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Task Navigator Items by Status</h3>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <BarChart data={tasksByStatus || []}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                                <XAxis dataKey="status" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip />
-                                <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Task Status Distribution</h3>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <PieChart>
-                                <Pie data={tasksByStatus || []} dataKey="count" nameKey="status" cx="50%" cy="50%" outerRadius={100} label>
-                                    {(tasksByStatus || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
+                <div className="space-y-6">
+                    {showCharts && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Task Navigator Items by Status</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <BarChart data={tasksByStatus || []}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                        <XAxis dataKey="status" tick={{ fontSize: 12 }} />
+                                        <YAxis tick={{ fontSize: 12 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Task Status Distribution</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <PieChart>
+                                        <Pie data={tasksByStatus || []} dataKey="count" nameKey="status" cx="50%" cy="50%" outerRadius={100} label>
+                                            {(tasksByStatus || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
+                    {showTables && (
+                        <DataTableCard
+                            title="Tasks by Status"
+                            columns={[
+                                { key: 'status', label: 'Status' },
+                                { key: 'count', label: 'Count' },
+                            ]}
+                            rows={tasksByStatus || []}
+                        />
+                    )}
                 </div>
             )}
 
             {activeTab === 'calendar' && calendarOverview && (
                 <div className="space-y-6">
-                    <div className="grid gap-4 md:grid-cols-4">
-                        {[
-                            { label: 'Total Events', value: calendarOverview.total, color: '#4f46e5' },
-                            { label: 'Today', value: calendarOverview.today, color: '#059669' },
-                            { label: 'Upcoming', value: calendarOverview.upcoming, color: '#d97706' },
-                            { label: 'All Day', value: calendarOverview.allDay, color: '#7c3aed' },
-                        ].map((item) => (
-                            <div key={item.label} className="card p-6 text-center">
-                                <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{item.label}</p>
-                                <p className="text-4xl font-bold" style={{ color: item.color }}>{item.value}</p>
+                    {showCharts && (
+                        <>
+                            <div className="grid gap-4 md:grid-cols-4">
+                                {[
+                                    { label: 'Total Events', value: calendarOverview.total, color: '#4f46e5' },
+                                    { label: 'Today', value: calendarOverview.today, color: '#059669' },
+                                    { label: 'Upcoming', value: calendarOverview.upcoming, color: '#d97706' },
+                                    { label: 'All Day', value: calendarOverview.allDay, color: '#7c3aed' },
+                                ].map((item) => (
+                                    <div key={item.label} className="card p-6 text-center">
+                                        <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{item.label}</p>
+                                        <p className="text-4xl font-bold" style={{ color: item.color }}>{item.value}</p>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                    <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Events by Category</h3>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <PieChart>
-                                <Pie data={calendarByCategory || []} dataKey="count" nameKey="category" cx="50%" cy="50%" outerRadius={100} label>
-                                    {(calendarByCategory || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Events by Category</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <PieChart>
+                                        <Pie data={calendarByCategory || []} dataKey="count" nameKey="category" cx="50%" cy="50%" outerRadius={100} label>
+                                            {(calendarByCategory || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </>
+                    )}
+                    {showTables && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <DataTableCard
+                                title="Calendar Overview"
+                                columns={[
+                                    { key: 'label', label: 'Metric' },
+                                    { key: 'value', label: 'Value' },
+                                ]}
+                                rows={[
+                                    { label: 'Total Events', value: calendarOverview.total },
+                                    { label: 'Today', value: calendarOverview.today },
+                                    { label: 'Upcoming', value: calendarOverview.upcoming },
+                                    { label: 'All Day', value: calendarOverview.allDay },
+                                ]}
+                            />
+                            <DataTableCard
+                                title="Events by Category"
+                                columns={[
+                                    { key: 'category', label: 'Category' },
+                                    { key: 'count', label: 'Count' },
+                                ]}
+                                rows={calendarByCategory || []}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 
             {activeTab === 'goals' && (
-                <div className="card p-5">
-                    <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Goal Completion Rates</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={goalCompletion || []} layout="vertical">
-                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                            <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
-                            <YAxis dataKey="title" type="category" width={150} tick={{ fontSize: 12 }} />
-                            <Tooltip formatter={(v: any) => `${v}%`} />
-                            <Bar dataKey="completionRate" fill="#7c3aed" radius={[0, 4, 4, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div className="space-y-6">
+                    {showCharts && (
+                        <div className="card p-5">
+                            <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Goal Completion Rates</h3>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart data={goalCompletion || []} layout="vertical">
+                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
+                                    <YAxis dataKey="title" type="category" width={150} tick={{ fontSize: 12 }} />
+                                    <Tooltip formatter={(v: any) => `${v}%`} />
+                                    <Bar dataKey="completionRate" fill="#7c3aed" radius={[0, 4, 4, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
+                    {showTables && (
+                        <DataTableCard
+                            title="Goal Completion Rates"
+                            columns={[
+                                { key: 'title', label: 'Goal' },
+                                { key: 'completionRate', label: 'Completion', render: (value) => `${value}%` },
+                                { key: 'currentCount', label: 'Current' },
+                                { key: 'targetCount', label: 'Target' },
+                            ]}
+                            rows={goalCompletion || []}
+                        />
+                    )}
                 </div>
             )}
 
             {activeTab === 'housework' && houseworkStatus && (
-                <div className="grid gap-4 md:grid-cols-3">
-                    {[
-                        { label: 'Total Active', value: houseworkStatus.total, color: '#4f46e5' },
-                        { label: 'On Track', value: houseworkStatus.onTrack, color: '#059669' },
-                        { label: 'Overdue', value: houseworkStatus.overdue, color: '#dc2626' },
-                    ].map((item) => (
-                        <div key={item.label} className="card p-6 text-center">
-                            <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{item.label}</p>
-                            <p className="text-4xl font-bold" style={{ color: item.color }}>{item.value}</p>
+                <div className="space-y-6">
+                    {showCharts && (
+                        <div className="grid gap-4 md:grid-cols-3">
+                            {[
+                                { label: 'Total Active', value: houseworkStatus.total, color: '#4f46e5' },
+                                { label: 'On Track', value: houseworkStatus.onTrack, color: '#059669' },
+                                { label: 'Overdue', value: houseworkStatus.overdue, color: '#dc2626' },
+                            ].map((item) => (
+                                <div key={item.label} className="card p-6 text-center">
+                                    <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{item.label}</p>
+                                    <p className="text-4xl font-bold" style={{ color: item.color }}>{item.value}</p>
+                                </div>
+                            ))}
                         </div>
-                    ))}
+                    )}
+                    {showTables && (
+                        <DataTableCard
+                            title="Housework Summary"
+                            columns={[
+                                { key: 'label', label: 'Metric' },
+                                { key: 'value', label: 'Value' },
+                            ]}
+                            rows={[
+                                { label: 'Total Active', value: houseworkStatus.total },
+                                { label: 'On Track', value: houseworkStatus.onTrack },
+                                { label: 'Overdue', value: houseworkStatus.overdue },
+                                { label: 'Completed', value: houseworkStatus.completed },
+                            ]}
+                        />
+                    )}
                 </div>
             )}
 
             {activeTab === 'expenses' && (
-                <div className="grid gap-6 md:grid-cols-2">
-                    <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>By Category</h3>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <PieChart>
-                                <Pie data={expenseSummary || []} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={100} label>
-                                    {(expenseSummary || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                                </Pie>
-                                <Tooltip formatter={(v: any) => formatVND(Number(v))} />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Monthly Trend</h3>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <BarChart data={expenseTrend || []}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip formatter={(v: any) => formatVND(Number(v))} />
-                                <Bar dataKey="total" fill="#d97706" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
+                <div className="space-y-6">
+                    {showCharts && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>By Category</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <PieChart>
+                                        <Pie data={expenseSummary || []} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={100} label>
+                                            {(expenseSummary || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                        </Pie>
+                                        <Tooltip formatter={(v: any) => formatVND(Number(v))} />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Monthly Trend</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <BarChart data={expenseTrend || []}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                                        <YAxis tick={{ fontSize: 12 }} />
+                                        <Tooltip formatter={(v: any) => formatVND(Number(v))} />
+                                        <Bar dataKey="total" fill="#d97706" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
+                    {showTables && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <DataTableCard
+                                title="Expenses by Category"
+                                columns={[
+                                    { key: 'category', label: 'Category' },
+                                    { key: 'count', label: 'Count' },
+                                    { key: 'total', label: 'Total', render: (value) => formatVND(Number(value || 0)) },
+                                ]}
+                                rows={expenseSummary || []}
+                            />
+                            <DataTableCard
+                                title="Expense Trend"
+                                columns={[
+                                    { key: 'month', label: 'Month' },
+                                    { key: 'total', label: 'Total', render: (value) => formatVND(Number(value || 0)) },
+                                ]}
+                                rows={expenseTrend || []}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 
             {activeTab === 'assets' && assetOverview && (
                 <div className="space-y-6">
-                    <div className="grid gap-4 md:grid-cols-4">
-                        {[
-                            { label: 'Total Assets', value: assetOverview.totalAssets, color: '#4f46e5' },
-                            { label: 'With Warranty', value: assetOverview.withWarranty, color: '#0891b2' },
-                            { label: 'Upcoming Maintenance', value: assetOverview.upcomingMaintenance, color: '#d97706' },
-                            { label: 'Maintenance Cost', value: formatVND(Number(assetOverview.totalMaintenanceCost || 0)), color: '#059669' },
-                        ].map((item) => (
-                            <div key={item.label} className="card p-6 text-center">
-                                <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{item.label}</p>
-                                <p className="text-2xl font-bold" style={{ color: item.color }}>{item.value}</p>
+                    {showCharts && (
+                        <>
+                            <div className="grid gap-4 md:grid-cols-4">
+                                {[
+                                    { label: 'Total Assets', value: assetOverview.totalAssets, color: '#4f46e5' },
+                                    { label: 'With Warranty', value: assetOverview.withWarranty, color: '#0891b2' },
+                                    { label: 'Upcoming Maintenance', value: assetOverview.upcomingMaintenance, color: '#d97706' },
+                                    { label: 'Maintenance Cost', value: formatVND(Number(assetOverview.totalMaintenanceCost || 0)), color: '#059669' },
+                                ].map((item) => (
+                                    <div key={item.label} className="card p-6 text-center">
+                                        <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{item.label}</p>
+                                        <p className="text-2xl font-bold" style={{ color: item.color }}>{item.value}</p>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                    <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Assets by Type</h3>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <PieChart>
-                                <Pie data={assetsByType || []} dataKey="count" nameKey="type" cx="50%" cy="50%" outerRadius={100} label>
-                                    {(assetsByType || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Assets by Type</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <PieChart>
+                                        <Pie data={assetsByType || []} dataKey="count" nameKey="type" cx="50%" cy="50%" outerRadius={100} label>
+                                            {(assetsByType || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </>
+                    )}
+                    {showTables && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <DataTableCard
+                                title="Asset Overview"
+                                columns={[
+                                    { key: 'label', label: 'Metric' },
+                                    { key: 'value', label: 'Value' },
+                                ]}
+                                rows={[
+                                    { label: 'Total Assets', value: assetOverview.totalAssets },
+                                    { label: 'With Warranty', value: assetOverview.withWarranty },
+                                    { label: 'Upcoming Maintenance', value: assetOverview.upcomingMaintenance },
+                                    { label: 'Maintenance Cost', value: formatVND(Number(assetOverview.totalMaintenanceCost || 0)) },
+                                ]}
+                            />
+                            <DataTableCard
+                                title="Assets by Type"
+                                columns={[
+                                    { key: 'type', label: 'Type' },
+                                    { key: 'count', label: 'Count' },
+                                ]}
+                                rows={assetsByType || []}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 
             {activeTab === 'learning' && (
-                <div className="grid gap-6 md:grid-cols-2">
-                    <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Learning by Status</h3>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <BarChart data={learningStatus || []}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                                <XAxis dataKey="status" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip />
-                                <Bar dataKey="count" fill="#0891b2" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Learning by Topic</h3>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <PieChart>
-                                <Pie data={learningTopics || []} dataKey="count" nameKey="topic" cx="50%" cy="50%" outerRadius={100} label>
-                                    {(learningTopics || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
+                <div className="space-y-6">
+                    {showCharts && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Learning by Status</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <BarChart data={learningStatus || []}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                        <XAxis dataKey="status" tick={{ fontSize: 12 }} />
+                                        <YAxis tick={{ fontSize: 12 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#0891b2" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Learning by Topic</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <PieChart>
+                                        <Pie data={learningTopics || []} dataKey="count" nameKey="topic" cx="50%" cy="50%" outerRadius={100} label>
+                                            {(learningTopics || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
+                    {showTables && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <DataTableCard
+                                title="Learning by Status"
+                                columns={[
+                                    { key: 'status', label: 'Status' },
+                                    { key: 'count', label: 'Count' },
+                                ]}
+                                rows={learningStatus || []}
+                            />
+                            <DataTableCard
+                                title="Learning by Topic"
+                                columns={[
+                                    { key: 'topic', label: 'Topic' },
+                                    { key: 'count', label: 'Count' },
+                                ]}
+                                rows={learningTopics || []}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 
             {activeTab === 'ideas' && (
-                <div className="grid gap-6 md:grid-cols-2">
-                    <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Ideas by Status</h3>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <BarChart data={ideaStatus || []}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                                <XAxis dataKey="status" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip />
-                                <Bar dataKey="count" fill="#db2777" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="card p-5">
-                        <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Ideas by Topic</h3>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <PieChart>
-                                <Pie data={ideaTopics || []} dataKey="count" nameKey="topic" cx="50%" cy="50%" outerRadius={100} label>
-                                    {(ideaTopics || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
+                <div className="space-y-6">
+                    {showCharts && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Ideas by Status</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <BarChart data={ideaStatus || []}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                        <XAxis dataKey="status" tick={{ fontSize: 12 }} />
+                                        <YAxis tick={{ fontSize: 12 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#db2777" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Ideas by Topic</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <PieChart>
+                                        <Pie data={ideaTopics || []} dataKey="count" nameKey="topic" cx="50%" cy="50%" outerRadius={100} label>
+                                            {(ideaTopics || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
+                    {showTables && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <DataTableCard
+                                title="Ideas by Status"
+                                columns={[
+                                    { key: 'status', label: 'Status' },
+                                    { key: 'count', label: 'Count' },
+                                ]}
+                                rows={ideaStatus || []}
+                            />
+                            <DataTableCard
+                                title="Ideas by Topic"
+                                columns={[
+                                    { key: 'topic', label: 'Topic' },
+                                    { key: 'count', label: 'Count' },
+                                ]}
+                                rows={ideaTopics || []}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
         </div>
