@@ -8,6 +8,7 @@ import {
     format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay,
     isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek,
 } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 
@@ -47,14 +48,6 @@ const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
 });
 
 const UNASSIGNED_COLOR = '#94a3b8';
-const USER_COLORS_KEY = 'cakeo_user_colors';
-
-function loadUserColors(): Record<string, string> {
-    try { return JSON.parse(localStorage.getItem(USER_COLORS_KEY) || '{}'); } catch { return {}; }
-}
-function saveUserColors(colors: Record<string, string>) {
-    localStorage.setItem(USER_COLORS_KEY, JSON.stringify(colors));
-}
 
 type CaKeoView = 'calendar' | 'list' | 'kanban';
 
@@ -80,6 +73,7 @@ const emptyForm = () => ({
 
 export default function CaKeoPage() {
     const qc = useQueryClient();
+    const navigate = useNavigate();
     const [view, setView] = useState<CaKeoView>('calendar');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -89,8 +83,6 @@ export default function CaKeoPage() {
     const [formError, setFormError] = useState('');
     const [filters, setFilters] = useState({ status: '', assignerId: '', category: '' });
     const [calTypeFilter, setCalTypeFilter] = useState<string[]>(TYPES);
-    const [userColors, setUserColors] = useState<Record<string, string>>(loadUserColors);
-    const [showColorConfig, setShowColorConfig] = useState(false);
 
     // Queries
     const { data: usersData } = useQuery({
@@ -111,6 +103,11 @@ export default function CaKeoPage() {
         },
     });
     const items: any[] = itemsData || [];
+
+    const { data: colorSettingsData } = useQuery({
+        queryKey: ['settings', 'color-settings', 'cakeo'],
+        queryFn: async () => (await api.get('/settings/color-settings/cakeo')).data.data,
+    });
 
     // Mutations
     const createMut = useMutation({
@@ -168,15 +165,14 @@ export default function CaKeoPage() {
     }, [items, users]);
 
     // User color helpers
+    const userColors = useMemo(() => {
+        const entries = colorSettingsData?.entries || [];
+        return Object.fromEntries(entries.map((entry: any) => [entry.entityKey, entry.color]));
+    }, [colorSettingsData]);
+
     function getAssigneeColor(assignerId: string | null | undefined): string {
         if (!assignerId) return UNASSIGNED_COLOR;
         return userColors[assignerId] || UNASSIGNED_COLOR;
-    }
-
-    function updateUserColor(userId: string, color: string) {
-        const next = { ...userColors, [userId]: color };
-        setUserColors(next);
-        saveUserColors(next);
     }
 
     // Modal helpers
@@ -277,8 +273,8 @@ export default function CaKeoPage() {
                     </div>
                     <button
                         className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border transition-colors"
-                        style={{ borderColor: 'var(--color-border)', color: showColorConfig ? '#ec4899' : 'var(--color-text-secondary)' }}
-                        onClick={() => setShowColorConfig(!showColorConfig)}
+                        style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                        onClick={() => navigate('/settings?tab=colors')}
                     >
                         <Palette className="w-3.5 h-3.5" /> User Colors
                     </button>
@@ -297,25 +293,6 @@ export default function CaKeoPage() {
                         {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
-                {/* User Color Config */}
-                {showColorConfig && users.length > 0 && (
-                    <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--color-border)' }}>
-                        <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>Assignee Colors</p>
-                        <div className="flex flex-wrap gap-4">
-                            {users.map((u: any) => (
-                                <label key={u.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                                    <input
-                                        type="color"
-                                        className="w-7 h-7 rounded cursor-pointer border-0 p-0.5"
-                                        value={userColors[u.id] || UNASSIGNED_COLOR}
-                                        onChange={(e) => updateUserColor(u.id, e.target.value)}
-                                    />
-                                    <span style={{ color: 'var(--color-text)' }}>{u.name}</span>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Modal */}

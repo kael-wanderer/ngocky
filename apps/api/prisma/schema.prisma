@@ -145,6 +145,14 @@ enum Theme {
   OCEAN_INK
 }
 
+enum ColorSettingModule {
+  CAKEO
+}
+
+enum ColorSettingScope {
+  ASSIGNEE
+}
+
 enum RepeatFrequency {
   DAILY
   WEEKLY
@@ -196,6 +204,7 @@ model User {
   telegramChatId      String?
   timezone            String              @default("Asia/Ho_Chi_Minh")
   avatarUrl           String?
+  mobileNavItems      Json                @default("[\"/\",\"/goals\",\"/tasks\",\"/calendar\",\"/settings\"]")
   featureGoals        Boolean             @default(true)
   featureProjects     Boolean             @default(true)
   featureIdeas        Boolean             @default(true)
@@ -241,6 +250,20 @@ model User {
   keyboards               Keyboard[]
   cakeos                  CaKeo[]                  @relation("CaKeoOwner")
   assignedCaKeos          CaKeo[]                  @relation("CaKeoAssigner")
+}
+
+model ModuleColorSetting {
+  id        String             @id @default(cuid())
+  module    ColorSettingModule
+  scope     ColorSettingScope
+  entityKey String
+  color     String
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([module, scope, entityKey])
+  @@unique([module, scope, color])
+  @@index([module, scope])
 }
 
 

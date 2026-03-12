@@ -13,6 +13,15 @@ const itemInclude = {
     assigner: { select: { id: true, name: true, email: true } },
 };
 
+const CAKEO_EDITOR_EMAILS = new Set([
+    'cong.buithanh@gmail.com',
+    'kist.t1108@gmail.com',
+]);
+
+function canEditCakeoItem(req: Request, ownerId: string) {
+    return ownerId === req.user!.userId || CAKEO_EDITOR_EMAILS.has(req.user!.email.toLowerCase());
+}
+
 function buildWhere(userId: string) {
     return {
         OR: [
@@ -100,10 +109,9 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 // PATCH /api/cakeos/:id — update item
 router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user!.userId;
         const existing = await prisma.caKeo.findUnique({ where: { id: req.params.id } });
         if (!existing) throw new NotFoundError('CaKeo item');
-        if (existing.ownerId !== userId) throw new ForbiddenError('Not your item');
+        if (!canEditCakeoItem(req, existing.ownerId)) throw new ForbiddenError('Not allowed to edit this item');
 
         const { title, description, type, category, status, assignerId, startDate, endDate, allDay, color, showOnCalendar, isShared } = req.body;
 

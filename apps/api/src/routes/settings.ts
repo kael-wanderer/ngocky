@@ -1,10 +1,13 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
-import { authenticate } from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
+import { validate } from '../middleware/validate';
 import { sendSuccess, sendMessage } from '../utils/response';
 import { config } from '../config/env';
 import { buildOtpAuthUrl, buildQrCodeUrl, generateTotpSecret, verifyTotpCode } from '../utils/mfa';
-import { UnauthorizedError } from '../utils/errors';
+import { UnauthorizedError, ValidationError } from '../utils/errors';
+import { updateCakeoColorSettingsSchema } from '../validators/settings';
+import { getCakeoColorSettings, resetCakeoColorSettings, saveCakeoColorSettings } from '../utils/colorSettings';
 
 const router = Router();
 router.use(authenticate);
@@ -22,6 +25,7 @@ const profileSelect: any = {
     telegramChatId: true,
     timezone: true,
     avatarUrl: true,
+    mobileNavItems: true,
     featureGoals: true,
     featureProjects: true,
     featureIdeas: true,
@@ -35,6 +39,38 @@ const profileSelect: any = {
     featureFunds: true,
     featureCaKeo: true,
 } as const;
+
+const PHONE_VIEW_ALLOWED_ROUTES = [
+    '/',
+    '/reports',
+    '/tasks',
+    '/projects',
+    '/expenses',
+    '/goals',
+    '/ideas',
+    '/calendar',
+    '/cakeo',
+    '/housework',
+    '/assets',
+    '/keyboard',
+    '/funds',
+    '/learning',
+    '/settings',
+] as const;
+
+function normalizeMobileNavItems(value: unknown) {
+    if (value === undefined) return undefined;
+    if (!Array.isArray(value)) throw new ValidationError('Phone View must be an array of routes');
+
+    const next = value
+        .map((item) => String(item))
+        .filter((item) => PHONE_VIEW_ALLOWED_ROUTES.includes(item as any));
+
+    if (next.length < 3 || next.length > 6) throw new ValidationError('Phone View must contain between 3 and 6 modules');
+    if (new Set(next).size !== next.length) throw new ValidationError('Phone View modules must be unique');
+
+    return next;
+}
 
 // Get profile/settings
 router.get('/profile', async (req: Request, res: Response, next: NextFunction) => {
@@ -60,6 +96,7 @@ router.patch('/profile', async (req: Request, res: Response, next: NextFunction)
             'telegramChatId',
             'timezone',
             'avatarUrl',
+            'mobileNavItems',
             'featureGoals',
             'featureProjects',
             'featureIdeas',
@@ -75,6 +112,8 @@ router.patch('/profile', async (req: Request, res: Response, next: NextFunction)
         ];
         const data: any = {};
         allowedFields.forEach((f) => { if (req.body[f] !== undefined) data[f] = req.body[f]; });
+        const mobileNavItems = normalizeMobileNavItems(req.body.mobileNavItems);
+        if (mobileNavItems !== undefined) data.mobileNavItems = mobileNavItems;
 
         const user = await prisma.user.update({
             where: { id: req.user!.userId },
@@ -82,6 +121,27 @@ router.patch('/profile', async (req: Request, res: Response, next: NextFunction)
             select: profileSelect,
         });
         sendSuccess(res, user);
+    } catch (err) { next(err); }
+});
+
+router.get('/color-settings/cakeo', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const data = await getCakeoColorSettings();
+        sendSuccess(res, data);
+    } catch (err) { next(err); }
+});
+
+router.put('/color-settings/cakeo', authorize('OWNER', 'ADMIN'), validate(updateCakeoColorSettingsSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const data = await saveCakeoColorSettings(req.body.entries);
+        sendSuccess(res, data);
+    } catch (err) { next(err); }
+});
+
+router.post('/color-settings/cakeo/reset', authorize('OWNER', 'ADMIN'), async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const data = await resetCakeoColorSettings();
+        sendSuccess(res, data);
     } catch (err) { next(err); }
 });
 

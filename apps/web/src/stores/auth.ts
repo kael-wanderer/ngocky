@@ -9,6 +9,7 @@ interface User extends FeatureFlags {
     theme: string;
     mfaEnabled?: boolean;
     avatarUrl?: string | null;
+    mobileNavItems?: string[];
 }
 
 interface AuthState {

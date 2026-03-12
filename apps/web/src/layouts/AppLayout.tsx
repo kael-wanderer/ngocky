@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
-import { getFeatureFlags, isFeatureRouteEnabled } from '../config/features';
+import { getFeatureFlags, getMobileNavItems, isFeatureRouteEnabled } from '../config/features';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, LogOut, Menu, X,
@@ -210,8 +210,7 @@ export default function AppLayout() {
         }
         return true;
     });
-    const mobileItems = ['/', '/goals', '/tasks', '/calendar', '/settings']
-        .filter((to) => isFeatureRouteEnabled(to, featureFlags))
+    const mobileItems = getMobileNavItems(user)
         .map((to) => resolveNavItem(to))
         .filter(Boolean) as Array<(typeof navItems)[number]>;
 
@@ -549,7 +548,7 @@ export default function AppLayout() {
                                             navigate('/settings?tab=features');
                                         }}
                                     >
-                                        Feature options
+                                        Desktop Features
                                     </button>
                                     <button
                                         type="button"

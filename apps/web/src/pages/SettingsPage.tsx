@@ -1,10 +1,10 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
-import { Settings as SettingsIcon, User, Bell, Palette, Shield, Camera, Bot, Copy, Check, ExternalLink, Unlink, LayoutGrid } from 'lucide-react';
+import { Settings as SettingsIcon, User, Bell, Palette, Shield, Camera, Bot, Copy, Check, ExternalLink, Unlink, LayoutGrid, Smartphone, ChevronUp, ChevronDown } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import { FEATURE_GROUPS, FEATURE_FLAGS, type FeatureFlags, type FeatureFlagKey } from '../config/features';
+import { DEFAULT_MOBILE_NAV_ITEMS, FEATURE_GROUPS, FEATURE_FLAGS, MOBILE_NAV_OPTIONS, getMobileNavItems, type FeatureFlags, type FeatureFlagKey } from '../config/features';
 
 function resizeImageToBase64(file: File, maxSize = 128): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -43,6 +43,8 @@ export default function SettingsPage() {
         notificationEmail: '',
         telegramChatId: '',
     });
+    const [cakeoColorForm, setCakeoColorForm] = useState<Record<string, string>>({});
+    const [phoneViewForm, setPhoneViewForm] = useState<string[]>([...DEFAULT_MOBILE_NAV_ITEMS]);
     const mfaDisableInputRef = useRef<HTMLInputElement>(null);
 
     const { data: assistantLink, refetch: refetchLink } = useQuery({
@@ -93,6 +95,16 @@ export default function SettingsPage() {
         queryFn: async () => (await api.get('/settings/mfa')).data.data,
     });
 
+    const { data: cakeoUsers = [] } = useQuery({
+        queryKey: ['cakeo-users'],
+        queryFn: async () => (await api.get('/cakeos/users')).data.data,
+    });
+
+    const { data: cakeoColorSettings, refetch: refetchCakeoColors } = useQuery({
+        queryKey: ['settings', 'color-settings', 'cakeo'],
+        queryFn: async () => (await api.get('/settings/color-settings/cakeo')).data.data,
+    });
+
     const updateProfile = useMutation({
         mutationFn: (body: any) => api.patch('/settings/profile', body),
         onSuccess: (res) => {
@@ -107,6 +119,32 @@ export default function SettingsPage() {
         mutationFn: (body: any) => api.post('/auth/change-password', body),
         onSuccess: () => { setMsg('Password changed!'); setTimeout(() => setMsg(''), 2000); },
         onError: (e: any) => { setMsg(e.response?.data?.message || 'Failed'); },
+    });
+
+    const saveCakeoColors = useMutation({
+        mutationFn: (entries: Array<{ entityKey: string; color: string }>) => api.put('/settings/color-settings/cakeo', { entries }),
+        onSuccess: async () => {
+            await Promise.all([
+                qc.invalidateQueries({ queryKey: ['settings', 'color-settings', 'cakeo'] }),
+                qc.invalidateQueries({ queryKey: ['cakeos'] }),
+            ]);
+            setMsg('Ca Keo colors saved.');
+            setTimeout(() => setMsg(''), 2500);
+        },
+        onError: (e: any) => setMsg(e.response?.data?.message || 'Failed to save Ca Keo colors'),
+    });
+
+    const resetCakeoColors = useMutation({
+        mutationFn: () => api.post('/settings/color-settings/cakeo/reset'),
+        onSuccess: async () => {
+            await Promise.all([
+                refetchCakeoColors(),
+                qc.invalidateQueries({ queryKey: ['cakeos'] }),
+            ]);
+            setMsg('Ca Keo colors reset to default.');
+            setTimeout(() => setMsg(''), 2500);
+        },
+        onError: (e: any) => setMsg(e.response?.data?.message || 'Failed to reset Ca Keo colors'),
     });
 
     const setupMfa = useMutation({
@@ -175,7 +213,17 @@ export default function SettingsPage() {
             featureFunds: profile.featureFunds ?? true,
             featureCaKeo: profile.featureCaKeo ?? true,
         });
+        setPhoneViewForm(getMobileNavItems(profile));
     }, [profile]);
+
+    useEffect(() => {
+        if (!cakeoColorSettings?.entries) return;
+        setCakeoColorForm(
+            Object.fromEntries(
+                cakeoColorSettings.entries.map((entry: { entityKey: string; color: string }) => [entry.entityKey, entry.color]),
+            ),
+        );
+    }, [cakeoColorSettings]);
 
     const handleTabClick = (id: string) => {
         setTab(id);
@@ -213,8 +261,10 @@ export default function SettingsPage() {
 
     const tabs = [
         { id: 'profile', label: 'Profile', icon: User },
-        { id: 'features', label: 'Features', icon: LayoutGrid },
+        { id: 'features', label: 'Desktop Features', icon: LayoutGrid },
+        { id: 'phone-view', label: 'Phone View', icon: Smartphone },
         { id: 'notifications', label: 'Notifications', icon: Bell },
+        { id: 'colors', label: 'Color Settings', icon: Palette },
         { id: 'theme', label: 'Theme', icon: Palette },
         { id: 'security', label: 'Security', icon: Shield },
         { id: 'assistant', label: 'Assistant', icon: Bot },
@@ -238,6 +288,78 @@ export default function SettingsPage() {
         { id: 'AMBER_LEDGER', name: 'Amber Ledger', colors: ['#c17c2f', '#eadfcd', '#fbf6ec'] },
         { id: 'OCEAN_INK', name: 'Ocean Ink', colors: ['#2ea7a0', '#294055', '#0f1722'] },
     ];
+
+    const canManageSharedColors = user?.role === 'OWNER' || user?.role === 'ADMIN';
+    const cakeoColorRows = useMemo(() => {
+        const users = cakeoColorSettings?.users || cakeoUsers;
+        return [
+            { entityKey: 'UNASSIGNED', label: 'Unassigned', helper: 'Default shared color for tasks without an assignee' },
+            ...users.map((u: any) => ({
+                entityKey: u.id,
+                label: u.name,
+                helper: u.email,
+            })),
+        ];
+    }, [cakeoColorSettings, cakeoUsers]);
+
+    const cakeoUsedColors = new Set(Object.values(cakeoColorForm).map((value) => value?.toLowerCase()).filter(Boolean));
+
+    const handleCakeoColorChange = (entityKey: string, color: string) => {
+        const normalizedColor = color.toLowerCase();
+        const duplicateOwner = Object.entries(cakeoColorForm).find(([key, value]) => key !== entityKey && value?.toLowerCase() === normalizedColor);
+        if (duplicateOwner) {
+            setMsg('Each Ca Keo color must be unique. Please choose a different color.');
+            setTimeout(() => setMsg(''), 3000);
+            return;
+        }
+        setCakeoColorForm((current) => ({ ...current, [entityKey]: normalizedColor }));
+    };
+
+    const handleSaveCakeoColors = () => {
+        const missingEntry = cakeoColorRows.find((row) => !cakeoColorForm[row.entityKey]);
+        if (missingEntry) {
+            setMsg(`Missing color for ${missingEntry.label}.`);
+            setTimeout(() => setMsg(''), 3000);
+            return;
+        }
+
+        const entries = cakeoColorRows.map((row) => ({
+            entityKey: row.entityKey,
+            color: cakeoColorForm[row.entityKey],
+        }));
+        saveCakeoColors.mutate(entries);
+    };
+
+    const selectedPhoneView = useMemo(
+        () => MOBILE_NAV_OPTIONS.filter((item) => phoneViewForm.includes(item.to)),
+        [phoneViewForm],
+    );
+
+    const handleTogglePhoneView = (route: string) => {
+        setPhoneViewForm((current) => {
+            if (current.includes(route)) {
+                return current.filter((item) => item !== route);
+            }
+            if (current.length >= 6) {
+                setMsg('Phone View can show at most 6 modules.');
+                setTimeout(() => setMsg(''), 2500);
+                return current;
+            }
+            return [...current, route];
+        });
+    };
+
+    const movePhoneViewItem = (route: string, direction: 'up' | 'down') => {
+        setPhoneViewForm((current) => {
+            const index = current.indexOf(route);
+            if (index === -1) return current;
+            const nextIndex = direction === 'up' ? index - 1 : index + 1;
+            if (nextIndex < 0 || nextIndex >= current.length) return current;
+            const next = [...current];
+            [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+            return next;
+        });
+    };
 
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
@@ -354,9 +476,9 @@ export default function SettingsPage() {
                     {tab === 'features' && profile && (
                         <div className="space-y-5">
                             <div>
-                                <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Features</h3>
+                                <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Desktop Features</h3>
                                 <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                    Enable the pages you want to see in the navigator. Personal and Family groups disappear automatically when all items inside them are off.
+                                    Control which modules appear in desktop navigation. Phone bottom navigation is configured separately in Phone View.
                                 </p>
                             </div>
 
@@ -446,6 +568,160 @@ export default function SettingsPage() {
                                 >
                                     {updateProfile.isPending ? 'Saving...' : 'Save'}
                                 </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {tab === 'phone-view' && profile && (
+                        <div className="space-y-5">
+                            <div>
+                                <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Phone View</h3>
+                                <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                    Pick 3 to 6 modules for the bottom navigation on phone view. Order here is the order shown on mobile.
+                                </p>
+                            </div>
+
+                            <div className="rounded-xl border p-4 space-y-4" style={{ borderColor: 'var(--color-border)' }}>
+                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                    <div>
+                                        <div className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>Selected modules</div>
+                                        <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{phoneViewForm.length} selected, minimum 3, maximum 6</div>
+                                    </div>
+                                    <button
+                                        className="btn-secondary"
+                                        onClick={() => setPhoneViewForm([...DEFAULT_MOBILE_NAV_ITEMS])}
+                                        disabled={updateProfile.isPending}
+                                    >
+                                        Reset Default
+                                    </button>
+                                </div>
+
+                                <div className="space-y-2">
+                                    {selectedPhoneView.map((item, index) => (
+                                        <div key={item.to} className="flex items-center justify-between gap-4 rounded-lg border px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
+                                            <div>
+                                                <div className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{index + 1}. {item.label}</div>
+                                                <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{item.to}</div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button type="button" className="btn-ghost p-2" onClick={() => movePhoneViewItem(item.to, 'up')} disabled={index === 0}>
+                                                    <ChevronUp className="w-4 h-4" />
+                                                </button>
+                                                <button type="button" className="btn-ghost p-2" onClick={() => movePhoneViewItem(item.to, 'down')} disabled={index === selectedPhoneView.length - 1}>
+                                                    <ChevronDown className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div>
+                                    <div className="text-sm font-semibold mb-3" style={{ color: 'var(--color-text)' }}>All modules</div>
+                                    <div className="grid gap-3 md:grid-cols-2">
+                                        {MOBILE_NAV_OPTIONS.map((item) => {
+                                            const active = phoneViewForm.includes(item.to);
+                                            return (
+                                                <button
+                                                    key={item.to}
+                                                    type="button"
+                                                    onClick={() => handleTogglePhoneView(item.to)}
+                                                    className="rounded-lg border px-4 py-3 text-left transition-all"
+                                                    style={{
+                                                        borderColor: active ? 'var(--color-primary)' : 'var(--color-border)',
+                                                        backgroundColor: active ? 'var(--color-primary-light)' : 'transparent',
+                                                    }}
+                                                >
+                                                    <div className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{item.label}</div>
+                                                    <div className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>{item.to}</div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <button
+                                        className="btn-primary"
+                                        onClick={() => updateProfile.mutate({ mobileNavItems: phoneViewForm })}
+                                        disabled={updateProfile.isPending || phoneViewForm.length < 3 || phoneViewForm.length > 6}
+                                    >
+                                        {updateProfile.isPending ? 'Saving...' : 'Save'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {tab === 'colors' && (
+                        <div className="space-y-5">
+                            <div>
+                                <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Color Settings</h3>
+                                <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                    Shared module colors live here so everyone sees the same assignee colors across the system.
+                                </p>
+                            </div>
+
+                            <div className="rounded-xl border p-4 space-y-4" style={{ borderColor: 'var(--color-border)' }}>
+                                <div className="flex items-start justify-between gap-4 flex-wrap">
+                                    <div>
+                                        <h4 className="font-semibold" style={{ color: 'var(--color-text)' }}>Ca Keo</h4>
+                                        <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                            Configure shared colors for assignees and unassigned items. Colors must stay unique.
+                                        </p>
+                                    </div>
+                                    {!canManageSharedColors && (
+                                        <span className="text-xs px-2.5 py-1 rounded-full" style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}>
+                                            Read only
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="space-y-3">
+                                    {cakeoColorRows.map((row) => {
+                                        const currentColor = cakeoColorForm[row.entityKey] || '';
+                                        const isDuplicate = !!currentColor && Array.from(cakeoUsedColors).filter((value) => value === currentColor.toLowerCase()).length > 1;
+                                        return (
+                                            <div key={row.entityKey} className="flex items-center justify-between gap-4 rounded-lg border px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
+                                                <div className="min-w-0">
+                                                    <div className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{row.label}</div>
+                                                    <div className="text-xs truncate" style={{ color: isDuplicate ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                                                        {isDuplicate ? 'Duplicate color detected' : row.helper}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: currentColor || '#ffffff', borderColor: 'var(--color-border)' }} />
+                                                    <input
+                                                        type="color"
+                                                        value={currentColor || '#94a3b8'}
+                                                        disabled={!canManageSharedColors}
+                                                        onChange={(e) => handleCakeoColorChange(row.entityKey, e.target.value)}
+                                                        className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent p-0"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="flex items-center gap-3 flex-wrap">
+                                    <button
+                                        className="btn-primary"
+                                        onClick={handleSaveCakeoColors}
+                                        disabled={!canManageSharedColors || saveCakeoColors.isPending || resetCakeoColors.isPending}
+                                    >
+                                        {saveCakeoColors.isPending ? 'Saving...' : 'Save'}
+                                    </button>
+                                    <button
+                                        className="btn-secondary"
+                                        onClick={() => resetCakeoColors.mutate()}
+                                        disabled={!canManageSharedColors || saveCakeoColors.isPending || resetCakeoColors.isPending}
+                                    >
+                                        {resetCakeoColors.isPending ? 'Resetting...' : 'Reset to Default'}
+                                    </button>
+                                    <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                        Default: `Unassigned` grey, `cong.buithanh@gmail.com` blue, `kist.t1108@gmail.com` green.
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     )}

@@ -20,7 +20,7 @@ import CaKeoPage from './pages/CaKeoPage';
 import AlertsPage from './pages/AlertsPage';
 import SettingsPage from './pages/SettingsPage';
 import UsersPage from './pages/UsersPage';
-import { isFeatureRouteEnabled } from './config/features';
+import { isRouteAccessible } from './config/features';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -44,7 +44,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 function FeatureRoute({ route, children }: { route: string; children: React.ReactNode }) {
     const { user } = useAuthStore();
-    if (!isFeatureRouteEnabled(route, user)) {
+    if (!isRouteAccessible(route, user)) {
         return <Navigate to="/" replace />;
     }
     return <>{children}</>;
