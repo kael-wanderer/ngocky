@@ -155,7 +155,7 @@ router.post(
                     const result = await verifyLinkCode(chatId, telegramUserId, telegramUsername, code);
                     return res.json({ ok: true, reply: result.reply, requiresConfirmation: false });
                 } catch (err: any) {
-                    return res.json({ ok: false, reply: err.message ?? 'Link verification failed\\.', requiresConfirmation: false });
+                    return res.json({ ok: false, reply: err.message ?? 'Link verification failed.', requiresConfirmation: false });
                 }
             }
 
@@ -295,7 +295,7 @@ router.post(
             if (!pending) {
                 return res.json({
                     ok: true,
-                    reply: 'There is nothing waiting for confirmation right now\\.',
+                    reply: 'There is nothing waiting for confirmation right now.',
                     requiresConfirmation: false,
                 });
             }

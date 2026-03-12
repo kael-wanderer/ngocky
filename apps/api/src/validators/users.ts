@@ -15,7 +15,7 @@ export const updateUserSchema = z.object({
     notificationChannel: z.enum(['EMAIL', 'TELEGRAM', 'BOTH']).optional(),
     notificationEmail: z.string().email().nullable().optional(),
     telegramChatId: z.string().nullable().optional(),
-    theme: z.enum(['BLUE_PURPLE', 'GREY_BLACK', 'RED_ACCENT', 'DARK', 'MODERN_GREEN', 'MULTI_COLOR_BLOCK']).optional(),
+    theme: z.enum(['BLUE_PURPLE', 'GREY_BLACK', 'RED_ACCENT', 'DARK', 'MODERN_GREEN', 'MULTI_COLOR_BLOCK', 'PAPER_MINT', 'AMBER_LEDGER', 'OCEAN_INK']).optional(),
 });
 
 export const resetPasswordSchema = z.object({

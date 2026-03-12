@@ -100,11 +100,11 @@ export async function verifyLinkCode(
     });
 
     if (!record) {
-        throw new Error('Link code not found\\. Generate a new one from NgocKy Settings\\.');
+        throw new Error('Link code not found. Generate a new one from NgocKy Settings.');
     }
 
     if (!record.linkCodeExpiresAt || record.linkCodeExpiresAt < new Date()) {
-        throw new Error('Link code has expired\\. Generate a new one from NgocKy Settings\\.');
+        throw new Error('Link code has expired. Generate a new one from NgocKy Settings.');
     }
 
     // Check if this chatId is already linked to a different user
@@ -113,7 +113,7 @@ export async function verifyLinkCode(
     });
     if (existingChat && existingChat.userId !== record.userId) {
         throw new Error(
-            'This Telegram account is already linked to another NgocKy user\\.',
+            'This Telegram account is already linked to another NgocKy user.',
         );
     }
 
@@ -131,7 +131,7 @@ export async function verifyLinkCode(
 
     return {
         userId: record.userId,
-        reply: '✅ Your Telegram account is now linked to NgocKy\\. Send /help to see what I can do\\.',
+        reply: 'Your Telegram account is now linked to NgocKy. Send /help to see what I can do.',
     };
 }
 

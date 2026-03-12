@@ -58,62 +58,62 @@ export const WRITE_INTENTS: ReadonlySet<AssistantIntent> = new Set([
     'update_housework_status',
 ]);
 
-export const HELP_TEXT = `NgocKy Assistant — available commands:
+export const HELP_TEXT = `NgocKy Assistant - available commands:
 
-*Tasks*
-• "add task <title> [due <date>]"
-• "mark <task name> done"
-• "what tasks do I have today"
+Tasks
+- add task [title] [due date]
+- mark [task name] done
+- what tasks do I have today
 
-*Projects*
-• "show my projects"
-• "tasks in website project"
-• "mark website design as in progress"
+Projects
+- show my projects
+- tasks in website project
+- mark website design as in progress
 
-*Calendar*
-• "what events do I have tomorrow"
-• "show events this week"
+Calendar
+- what events do I have tomorrow
+- show events this week
 
-*Expenses*
-• "spent <amount> on <category>"
-• "show expenses this month"
-• "tell me all expenses of March"
+Expenses
+- spent [amount] on [category]
+- show expenses this month
+- tell me all expenses of March
 
-*Funds*
-• "log a buy fund for 2m keycap mechanical keyboard"
-• "show my funds this month"
-• "show keyboard sell funds"
+Funds
+- log a buy fund for 2m keycap mechanical keyboard
+- show my funds this month
+- show keyboard sell funds
 
-*Keyboard*
-• "add keyboard kohaku r1 kit 30m"
-• "show my keyboards"
-• "show red keycaps"
+Keyboard
+- add keyboard kohaku r1 kit 30m
+- show my keyboards
+- show red keycaps
 
-*Goals*
-• "show my goals"
-• "what is my goal progress"
-• "logged <value> km for running goal"
+Goals
+- show my goals
+- what is my goal progress
+- logged [value] km for running goal
 
-*Housework*
-• "what chores are due today"
-• "mark dishes done"
+Housework
+- what chores are due today
+- mark dishes done
 
-Send /link <code> to connect your NgocKy account\\.`;
+Send /link [code] to connect your NgocKy account.`;
 
 export const FALLBACK_TEXT =
-    "I didn't understand that\\. Send /help to see what I can do\\.";
+    "I didn't understand that. Send /help to see what I can do.";
 
 export const WELCOME_TEXT =
-    'Welcome to *NgocKy Assistant* 🤖\n\n' +
-    'I can help you manage tasks, calendar events, expenses, funds, keyboard collection items, and more \\— all from Telegram\\.\n\n' +
+    'Welcome to NgocKy Assistant.\n\n' +
+    'I can help you manage tasks, calendar events, expenses, funds, keyboard collection items, and more from Telegram.\n\n' +
     'To get started:\n' +
-    '1\\. Open NgocKy Settings in the web app\n' +
-    '2\\. Go to the *Assistant* tab\n' +
-    '3\\. Click *Generate Link Code*\n' +
-    '4\\. Send `/link <code>` here to connect your account\n\n' +
-    'Send /help after linking to see all commands\\.';
+    '1. Open NgocKy Settings in the web app\n' +
+    '2. Go to the Assistant tab\n' +
+    '3. Click Generate Link Code\n' +
+    '4. Send /link [code] here to connect your account\n\n' +
+    'Send /help after linking to see all commands.';
 
 export const UNLINKED_TEXT =
-    'Your Telegram account is not linked to NgocKy\\. ' +
+    'Your Telegram account is not linked to NgocKy. ' +
     'Open Settings in the NgocKy app to generate a link code, ' +
-    'then send `/link <code>` here\\.';
+    'then send /link [code] here.';

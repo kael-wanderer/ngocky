@@ -160,6 +160,7 @@ Create n8n workflow "NgocKy Assistant — Inbound":
    - Header: `X-Assistant-Api-Key: {{$env.ASSISTANT_API_KEY}}`
    - Body: `{ chatId, telegramUserId, telegramUsername, messageId, text }`
 5. **Telegram node (sendMessage)** — send `{{ $json.reply }}` to `chatId`
+   - Set `parse_mode = HTML`
 
 Notes:
 - Funds and Keyboard do not require new n8n branches because the workflow forwards raw text and the backend resolves the module intent.

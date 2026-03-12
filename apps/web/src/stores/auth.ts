@@ -15,6 +15,7 @@ interface AuthState {
     user: User | null;
     token: string | null;
     isAuthenticated: boolean;
+    isInitialized: boolean;
     login: (user: User, token: string) => void;
     logout: () => void;
     setUser: (user: User) => void;
@@ -28,17 +29,21 @@ const applyTheme = (theme?: string) => {
     else if (theme === 'DARK') document.documentElement.classList.add('theme-dark');
     else if (theme === 'MODERN_GREEN') document.documentElement.classList.add('theme-modern-green');
     else if (theme === 'MULTI_COLOR_BLOCK') document.documentElement.classList.add('theme-multi-color-block');
+    else if (theme === 'PAPER_MINT') document.documentElement.classList.add('theme-paper-mint');
+    else if (theme === 'AMBER_LEDGER') document.documentElement.classList.add('theme-amber-ledger');
+    else if (theme === 'OCEAN_INK') document.documentElement.classList.add('theme-ocean-ink');
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
     user: null,
     token: null,
     isAuthenticated: false,
+    isInitialized: false,
 
     login: (user, token) => {
         localStorage.setItem('ngocky_token', token);
         localStorage.setItem('ngocky_user', JSON.stringify(user));
-        set({ user, token, isAuthenticated: true });
+        set({ user, token, isAuthenticated: true, isInitialized: true });
         applyTheme(user.theme);
     },
 
@@ -53,7 +58,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         localStorage.removeItem('ngocky_token');
         localStorage.removeItem('ngocky_user');
         document.documentElement.className = '';
-        set({ user: null, token: null, isAuthenticated: false });
+        set({ user: null, token: null, isAuthenticated: false, isInitialized: true });
     },
 
     setUser: (user) => {
@@ -68,12 +73,14 @@ export const useAuthStore = create<AuthState>((set) => ({
         if (token && userStr) {
             try {
                 const user = JSON.parse(userStr);
-                set({ user, token, isAuthenticated: true });
+                set({ user, token, isAuthenticated: true, isInitialized: true });
                 applyTheme(user.theme);
+                return;
             } catch {
                 localStorage.removeItem('ngocky_token');
                 localStorage.removeItem('ngocky_user');
             }
         }
+        set({ user: null, token: null, isAuthenticated: false, isInitialized: true });
     },
 }));

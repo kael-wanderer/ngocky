@@ -185,6 +185,63 @@ function KeyboardCategoryBadge({ category }: { category: string }) {
     );
 }
 
+function MultiSelectFilter({
+    label,
+    allLabel,
+    options,
+    selected,
+    onChange,
+    className = '',
+}: {
+    label: string;
+    allLabel: string;
+    options: { value: string; label: string }[];
+    selected: string[];
+    onChange: (values: string[]) => void;
+    className?: string;
+}) {
+    const summary = selected.length === 0
+        ? allLabel
+        : selected.length === 1
+            ? options.find((option) => option.value === selected[0])?.label ?? selected[0]
+            : `${selected.length} selected`;
+
+    return (
+        <details className={`relative ${className}`}>
+            <summary className="list-none cursor-pointer text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 whitespace-nowrap overflow-hidden text-ellipsis">
+                {summary}
+            </summary>
+            <div className="absolute left-0 z-20 mt-2 w-full min-w-[180px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg p-2 max-h-64 overflow-y-auto">
+                <div className="mb-2 flex items-center justify-between px-1">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
+                    {selected.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => onChange([])}
+                            className="text-xs text-gray-400 hover:text-red-500"
+                        >
+                            Clear
+                        </button>
+                    )}
+                </div>
+                <div className="space-y-1">
+                    {options.map((option) => (
+                        <label key={option.value} className="flex items-center gap-2 rounded px-2 py-1 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={selected.includes(option.value)}
+                                onChange={() => onChange(toggleArr(selected, option.value))}
+                                className="rounded"
+                            />
+                            <span>{option.label}</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
+        </details>
+    );
+}
+
 // ─── CSV helpers ─────────────────────────────────────
 
 function parseCSV(text: string): { headers: string[]; rows: string[][] } {
@@ -228,10 +285,10 @@ export default function KeyboardPage() {
     const qc = useQueryClient();
 
     // Filters
-    const [filterCategory, setFilterCategory] = useState('');
-    const [filterTag, setFilterTag] = useState('');
-    const [filterColor, setFilterColor] = useState('');
-    const [filterPriceRange, setFilterPriceRange] = useState('');
+    const [filterCategory, setFilterCategory] = useState<string[]>([]);
+    const [filterTag, setFilterTag] = useState<string[]>([]);
+    const [filterColor, setFilterColor] = useState<string[]>([]);
+    const [filterPriceRange, setFilterPriceRange] = useState<string[]>([]);
     const [filterSearch, setFilterSearch] = useState('');
     const [sortBy, setSortBy] = useState<SortKey>('name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -294,10 +351,10 @@ export default function KeyboardPage() {
     // Filtering
     const filtered = items.filter(item => {
         if (filterSearch && !item.name.toLowerCase().includes(filterSearch.toLowerCase())) return false;
-        if (filterCategory && item.category !== filterCategory) return false;
-        if (filterTag && item.tag !== filterTag) return false;
-        if (filterColor && item.color !== filterColor) return false;
-        if (!matchesPriceRange(item.price, filterPriceRange)) return false;
+        if (filterCategory.length > 0 && (!item.category || !filterCategory.includes(item.category))) return false;
+        if (filterTag.length > 0 && (!item.tag || !filterTag.includes(item.tag))) return false;
+        if (filterColor.length > 0 && (!item.color || !filterColor.includes(item.color))) return false;
+        if (filterPriceRange.length > 0 && !filterPriceRange.some((range) => matchesPriceRange(item.price, range))) return false;
         return true;
     });
 
@@ -331,11 +388,30 @@ export default function KeyboardPage() {
         });
     }, [filtered, sortBy, sortOrder]);
 
+    const summary = useMemo(() => {
+        const values = {
+            kit: 0,
+            keycap: 0,
+            accessories: 0,
+            total: 0,
+        };
+
+        for (const item of sortedItems) {
+            const price = item.price ?? 0;
+            values.total += price;
+            if (item.category === 'Kit') values.kit += price;
+            if (item.category === 'Keycap') values.keycap += price;
+            if (item.category === 'Accessories') values.accessories += price;
+        }
+
+        return values;
+    }, [sortedItems]);
+
     const totalItems = sortedItems.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
     const paginatedItems = sortedItems.slice((page - 1) * pageSize, page * pageSize);
-    const totalPrice = sortedItems.reduce((s, i) => s + (i.price ?? 0), 0);
-    const activeFilterCount = [filterCategory, filterTag, filterColor, filterPriceRange].filter(Boolean).length;
+    const totalPrice = summary.total;
+    const activeFilterCount = [filterCategory, filterTag, filterColor, filterPriceRange].filter((values) => values.length > 0).length;
 
     function toggleSort(column: SortKey) {
         if (sortBy === column) {
@@ -386,26 +462,61 @@ export default function KeyboardPage() {
                         />
                     </div>
                     {activeFilterCount > 0 && (
-                        <button onClick={() => { setFilterCategory(''); setFilterTag(''); setFilterColor(''); setFilterPriceRange(''); }} className="shrink-0 text-xs text-gray-400 hover:text-red-500">
+                        <button onClick={() => { setFilterCategory([]); setFilterTag([]); setFilterColor([]); setFilterPriceRange([]); }} className="shrink-0 text-xs text-gray-400 hover:text-red-500">
                             Clear
                         </button>
                     )}
-                    <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="min-w-[150px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                        <option value="">All categories</option>
-                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <select value={filterTag} onChange={e => setFilterTag(e.target.value)} className="min-w-[150px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                        <option value="">All tags</option>
-                        {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                    <select value={filterColor} onChange={e => setFilterColor(e.target.value)} className="min-w-[150px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                        <option value="">All colors</option>
-                        {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <select value={filterPriceRange} onChange={e => setFilterPriceRange(e.target.value)} className="min-w-[170px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                        <option value="">All prices</option>
-                        {PRICE_RANGES.map(range => <option key={range.value} value={range.value}>{range.label}</option>)}
-                    </select>
+                    <MultiSelectFilter
+                        className="min-w-[150px] flex-1"
+                        label="Category"
+                        allLabel="All categories"
+                        options={CATEGORIES.map((value) => ({ value, label: value }))}
+                        selected={filterCategory}
+                        onChange={setFilterCategory}
+                    />
+                    <MultiSelectFilter
+                        className="min-w-[150px] flex-1"
+                        label="Tag"
+                        allLabel="All tags"
+                        options={TAGS.map((value) => ({ value, label: value }))}
+                        selected={filterTag}
+                        onChange={setFilterTag}
+                    />
+                    <MultiSelectFilter
+                        className="min-w-[150px] flex-1"
+                        label="Color"
+                        allLabel="All colors"
+                        options={COLORS.map((value) => ({ value, label: value }))}
+                        selected={filterColor}
+                        onChange={setFilterColor}
+                    />
+                    <MultiSelectFilter
+                        className="min-w-[170px] flex-1"
+                        label="Price"
+                        allLabel="All prices"
+                        options={PRICE_RANGES.map((range) => ({ value: range.value, label: range.label }))}
+                        selected={filterPriceRange}
+                        onChange={setFilterPriceRange}
+                    />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Kit</div>
+                    <div className="text-2xl font-bold" style={{ color: '#2563eb' }}>{formatVND(summary.kit)}</div>
+                </div>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Keycap</div>
+                    <div className="text-2xl font-bold" style={{ color: '#16a34a' }}>{formatVND(summary.keycap)}</div>
+                </div>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Accessories</div>
+                    <div className="text-2xl font-bold" style={{ color: '#6b7280' }}>{formatVND(summary.accessories)}</div>
+                </div>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Total ({sortedItems.length} items)</div>
+                    <div className="text-2xl font-bold" style={{ color: 'var(--color-success)' }}>{formatVND(summary.total)}</div>
                 </div>
             </div>
 

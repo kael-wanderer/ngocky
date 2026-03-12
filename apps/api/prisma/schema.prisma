@@ -140,6 +140,9 @@ enum Theme {
   DARK
   MODERN_GREEN
   MULTI_COLOR_BLOCK
+  PAPER_MINT
+  AMBER_LEDGER
+  OCEAN_INK
 }
 
 enum RepeatFrequency {

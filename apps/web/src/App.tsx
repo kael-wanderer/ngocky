@@ -28,7 +28,8 @@ const queryClient = new QueryClient({
 });
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-    const { isAuthenticated } = useAuthStore();
+    const { isAuthenticated, isInitialized } = useAuthStore();
+    if (!isInitialized) return null;
     return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
@@ -49,7 +50,7 @@ function FeatureRoute({ route, children }: { route: string; children: React.Reac
 }
 
 export default function App() {
-    const { initialize, isAuthenticated } = useAuthStore();
+    const { initialize, isAuthenticated, isInitialized } = useAuthStore();
 
     useEffect(() => {
         initialize();
@@ -59,7 +60,7 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
             <BrowserRouter>
                 <Routes>
-                    <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
+                    <Route path="/login" element={!isInitialized ? null : isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
                     <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                         <Route index element={<DashboardPage />} />
                         <Route path="goals" element={<FeatureRoute route="/goals"><GoalsPage forcedTab="GOALS" /></FeatureRoute>} />

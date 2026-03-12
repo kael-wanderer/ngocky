@@ -160,11 +160,11 @@ In V1, only text messages are processed. Other message types (photo, sticker, vo
 
 ### Telegram message formatting
 
-Use **MarkdownV2** mode for Telegram responses. Key rules:
-- Escape special characters: `.`, `!`, `-`, `(`, `)`, `>`, `#`
+Use **HTML** mode for Telegram responses. Key rules:
 - Keep responses under 4096 characters (Telegram limit)
-- Use bold (`*text*`) for item titles, inline code (`` `value` ``) for dates/statuses
-- Do not use HTML mode
+- Escape user-facing `<`, `>`, and `&` when needed
+- Prefer plain text or simple tags like `<b>` when formatting is useful
+- Avoid MarkdownV2-specific escaping rules in static replies
 
 ### Response length guidelines
 
@@ -300,19 +300,19 @@ The `intentParser` service injects the user's timezone from their settings recor
 `help` intent reply:
 
 ```
-NgocKy Assistant — available commands:
+NgocKy Assistant - available commands:
 
-*Tasks*
-• "add task <title> [due <date>]"
-• "mark <task name> done"
-• "what tasks do I have today"
+Tasks
+- add task [title] [due date]
+- mark [task name] done
+- what tasks do I have today
 
-*Calendar*
-• "what events do I have tomorrow"
-• "show events this week"
+Calendar
+- what events do I have tomorrow
+- show events this week
 
-*Expenses*
-• "spent <amount> on <category>"
+Expenses
+- spent [amount] on [category]
 
 *Goals*
 • "logged <value> km for running goal"
