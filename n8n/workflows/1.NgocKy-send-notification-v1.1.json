@@ -1,5 +1,5 @@
 {
-  "name": "1.NgocKy-send-notification-v1",
+  "name": "1.NgocKy-send-notification-v1.1",
   "nodes": [
     {
       "parameters": {
@@ -76,9 +76,10 @@
       "parameters": {
         "conditions": {
           "options": {
-            "caseSensitive": false,
+            "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "loose"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -107,7 +108,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.telegram.org/bot8298888340:AAH4aNRFUmiF5az0rnwkGkgBbwIc8TKfPzk/sendMessage",
+        "url": "https://api.telegram.org/bot{{$env.NGOCKY_TELEGRAM_BOT_TOKEN}}/sendMessage",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ chat_id: $json.telegramChatId, text: $json.telegramText, parse_mode: 'HTML' }) }}",
@@ -120,8 +121,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1104,
-        80
+        1200,
+        96
       ]
     },
     {
@@ -310,7 +311,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "versionId": "219ee39d-d32a-4d64-a89a-5095116ccf8e",
+  "versionId": "0638692c-dd48-4378-915e-5eceb63b4e8f",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "84dfe6f660992ab67cbf337f1ca22d0da0cb540f7e6cc22b45ff99532f788940"

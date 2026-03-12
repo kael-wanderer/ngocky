@@ -1,5 +1,5 @@
 {
-  "name": "2.NgocKy-Schedule-Actionn-v1",
+  "name": "2.NgocKy-Schedule-Actionn-v1.1",
   "nodes": [
     {
       "parameters": {
@@ -126,7 +126,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.telegram.org/bot8298888340:AAH4aNRFUmiF5az0rnwkGkgBbwIc8TKfPzk/sendMessage",
+        "url": "=https://api.telegram.org/bot{{$env.NGOCKY_TELEGRAM_BOT_TOKEN}}/sendMessage",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ chat_id: $json.telegramChatId, text: $json.telegramText, parse_mode: 'HTML' }) }}",
@@ -326,7 +326,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "versionId": "74ff6a70-4b16-4811-86c2-e29eb9235743",
+  "versionId": "326873ca-d5da-46f9-a9c3-124623612f53",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "84dfe6f660992ab67cbf337f1ca22d0da0cb540f7e6cc22b45ff99532f788940"

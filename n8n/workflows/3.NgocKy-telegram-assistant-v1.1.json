@@ -1,5 +1,5 @@
 {
-  "name": "3.NgocKy-telegram-assistant-v1",
+  "name": "3.NgocKy-telegram-assistant-v1.1",
   "nodes": [
     {
       "parameters": {
@@ -79,7 +79,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.telegram.org/bot8298888340:AAH4aNRFUmiF5az0rnwkGkgBbwIc8TKfPzk/sendMessage",
+        "url": "=https://api.telegram.org/bot{{$env.NGOCKY_TELEGRAM_BOT_TOKEN}}/sendMessage",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -143,43 +143,7 @@
       "name": "skip_action?"
     }
   ],
-  "pinData": {
-    "Telegram Trigger": [
-      {
-        "json": {
-          "update_id": 618869947,
-          "message": {
-            "message_id": 25,
-            "from": {
-              "id": 7503656458,
-              "is_bot": false,
-              "first_name": "Kael",
-              "last_name": "W",
-              "language_code": "en"
-            },
-            "chat": {
-              "id": 7503656458,
-              "first_name": "Kael",
-              "last_name": "W",
-              "type": "private"
-            },
-            "date": 1773211717,
-            "text": "/start",
-            "entities": [
-              {
-                "offset": 0,
-                "length": 6,
-                "type": "bot_command"
-              }
-            ]
-          }
-        },
-        "pairedItem": {
-          "item": 0
-        }
-      }
-    ]
-  },
+  "pinData": {},
   "connections": {
     "Telegram Trigger": {
       "main": [
@@ -233,17 +197,15 @@
       ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "845faf9e-3166-4f10-9cd7-c31e14469451",
+  "versionId": "4d8d60bc-db00-4eef-b36d-9211f99ccb5e",
   "meta": {
-    "templateCredsSetupCompleted": true,
     "instanceId": "84dfe6f660992ab67cbf337f1ca22d0da0cb540f7e6cc22b45ff99532f788940"
   },
-  "id": "MwHJCDV9S01wpZ0s",
   "tags": []
 }
