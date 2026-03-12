@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin, LayoutGrid, List, Copy, Filter } from 'lucide-react';
+import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin, LayoutGrid, List, Copy, Filter, ArrowUp, ArrowDown } from 'lucide-react';
 import { addMonths, addWeeks, endOfMonth, endOfWeek, format, isWithinInterval, startOfMonth, startOfToday, startOfWeek } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
@@ -49,6 +49,8 @@ const emptyForm = {
 type HouseworkFormState = typeof emptyForm;
 type HouseworkDueDateFilter = 'ALL' | 'TODAY' | 'THIS_WEEK' | 'NEXT_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH';
 type HouseworkStatusFilter = 'ALL' | 'PLANNED' | 'IN_PROGRESS' | 'DONE';
+type HouseworkSortKey = 'title' | 'description' | 'frequencyType' | 'status' | 'nextDueDate' | 'notification' | 'showOnCalendar';
+type HouseworkGridSort = 'TITLE_ASC' | 'TITLE_DESC' | 'DUE_ASC' | 'DUE_DESC';
 
 function getNormalizedFormByFrequency(form: HouseworkFormState, frequencyType: string): HouseworkFormState {
     const nextForm = { ...form, frequencyType };
@@ -316,6 +318,9 @@ export default function HouseworkPage() {
         frequency: 'ALL',
         status: 'ALL',
     });
+    const [sortBy, setSortBy] = useState<HouseworkSortKey>('nextDueDate');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [gridSort, setGridSort] = useState<HouseworkGridSort>('DUE_ASC');
     const editIdParam = searchParams.get('editId');
 
     const { data, isLoading } = useQuery({
@@ -486,12 +491,64 @@ export default function HouseworkPage() {
 
     const sortedItems = useMemo(() => {
         return [...filteredItems].sort((a, b) => {
+            const getValue = (item: any, key: HouseworkSortKey) => {
+                switch (key) {
+                    case 'title':
+                        return item.title || '';
+                    case 'description':
+                        return item.description || '';
+                    case 'frequencyType':
+                        return item.frequencyType || '';
+                    case 'status':
+                        return item.status || '';
+                    case 'nextDueDate':
+                        return item.nextDueDate ? new Date(item.nextDueDate).getTime() : Number.MAX_SAFE_INTEGER;
+                    case 'notification':
+                        return formatNotification(item) || '';
+                    case 'showOnCalendar':
+                        return item.showOnCalendar ? 1 : 0;
+                    default:
+                        return '';
+                }
+            };
+
+            const left = getValue(a, sortBy);
+            const right = getValue(b, sortBy);
+            const result = typeof left === 'number' && typeof right === 'number'
+                ? left - right
+                : String(left).localeCompare(String(right), undefined, { sensitivity: 'base' });
+
+            return sortOrder === 'asc' ? result : -result;
+        });
+    }, [filteredItems, sortBy, sortOrder]);
+
+    const gridSortedItems = useMemo(() => {
+        return [...filteredItems].sort((a, b) => {
+            if (gridSort === 'TITLE_ASC' || gridSort === 'TITLE_DESC') {
+                const result = (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' });
+                return gridSort === 'TITLE_ASC' ? result : -result;
+            }
+
             const left = a.nextDueDate ? new Date(a.nextDueDate).getTime() : Number.MAX_SAFE_INTEGER;
             const right = b.nextDueDate ? new Date(b.nextDueDate).getTime() : Number.MAX_SAFE_INTEGER;
-            if (left !== right) return left - right;
-            return (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' });
+            const result = left - right;
+            return gridSort === 'DUE_ASC' ? result : -result;
         });
-    }, [filteredItems]);
+    }, [filteredItems, gridSort]);
+
+    const toggleSort = (column: HouseworkSortKey) => {
+        if (sortBy === column) {
+            setSortOrder((current) => current === 'asc' ? 'desc' : 'asc');
+            return;
+        }
+        setSortBy(column);
+        setSortOrder(column === 'nextDueDate' ? 'asc' : 'desc');
+    };
+
+    const renderSortIcon = (column: HouseworkSortKey) => {
+        if (sortBy !== column) return <ArrowUp className="w-3.5 h-3.5 opacity-30" />;
+        return sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />;
+    };
 
     const renderActions = (item: any, canManage: boolean) => (
         <div className="flex items-center gap-1">
@@ -552,7 +609,7 @@ export default function HouseworkPage() {
                     {recurrenceLabel && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{recurrenceLabel}</span>}
                     {item.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
                     {item.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
-                    {item.showOnCalendar && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700">Calendar</span>}
+                    {item.showOnCalendar && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700">Housework</span>}
                     {!item.active && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Disabled</span>}
                 </div>
 
@@ -625,7 +682,7 @@ export default function HouseworkPage() {
                 <td className="py-3 px-4">
                     <div className="flex items-center gap-1 flex-wrap">
                         {item.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
-                        {item.showOnCalendar && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-700 font-semibold">Calendar</span>}
+                        {item.showOnCalendar && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-700 font-semibold">Housework</span>}
                         {item.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                     </div>
                 </td>
@@ -691,6 +748,16 @@ export default function HouseworkPage() {
                         <option value="DONE">Done</option>
                     </select>
                 </div>
+                {viewMode === 'grid' && (
+                    <div className="flex justify-end">
+                        <select className="input max-w-[220px]" value={gridSort} onChange={(e) => setGridSort(e.target.value as HouseworkGridSort)}>
+                            <option value="TITLE_ASC">Name (A-Z)</option>
+                            <option value="TITLE_DESC">Name (Z-A)</option>
+                            <option value="DUE_ASC">Due Date (ASC)</option>
+                            <option value="DUE_DESC">Due Date (DESC)</option>
+                        </select>
+                    </div>
+                )}
             </div>
 
             {(showCreate || editingItem) && (
@@ -729,20 +796,20 @@ export default function HouseworkPage() {
                 </div>
             ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {sortedItems.map((item: any) => renderGridItem(item))}
+                    {gridSortedItems.map((item: any) => renderGridItem(item))}
                 </div>
             ) : (
                 <div className="table-container">
                     <table className="w-full">
                         <thead>
                             <tr>
-                                <th>Title</th>
-                                <th>Description</th>
-                                <th>Frequency</th>
-                                <th>Status</th>
-                                <th>Due Date</th>
-                                <th>Notification</th>
-                                <th>Options</th>
+                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('title')}>Title {renderSortIcon('title')}</button></th>
+                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('description')}>Description {renderSortIcon('description')}</button></th>
+                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('frequencyType')}>Frequency {renderSortIcon('frequencyType')}</button></th>
+                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('status')}>Status {renderSortIcon('status')}</button></th>
+                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('nextDueDate')}>Due Date {renderSortIcon('nextDueDate')}</button></th>
+                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('notification')}>Notification {renderSortIcon('notification')}</button></th>
+                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('showOnCalendar')}>Options {renderSortIcon('showOnCalendar')}</button></th>
                                 <th className="text-right">Actions</th>
                             </tr>
                         </thead>

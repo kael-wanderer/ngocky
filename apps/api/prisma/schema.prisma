@@ -604,6 +604,7 @@ model MaintenanceRecord {
 model CalendarEvent {
   id          String             @id @default(cuid())
   title       String
+  type        String             @default("EVENT")
   description String?
   startDate   DateTime
   endDate     DateTime?

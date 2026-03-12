@@ -801,6 +801,14 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     }, [goals, editIdParam, checkInIdParam, activeTab]);
 
     useEffect(() => {
+        if (!tasks.length) return;
+        if (editIdParam && activeTab === 'TASKS') {
+            const task = tasks.find((entry: any) => entry.id === editIdParam);
+            if (task) openEditTask(task);
+        }
+    }, [tasks, editIdParam, activeTab]);
+
+    useEffect(() => {
         if (forcedTab) return;
         const next = new URLSearchParams(searchParams);
         next.set('tab', activeTab === 'TASKS' ? 'tasks' : 'goals');
@@ -821,6 +829,16 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             }, { replace: true });
         }
     }, [editGoal, checkInGoalId, showCreate, editIdParam, checkInIdParam, setSearchParams, activeTab]);
+
+    useEffect(() => {
+        if (!editTask && !showTaskModal && editIdParam && activeTab === 'TASKS') {
+            setSearchParams((prev) => {
+                const next = new URLSearchParams(prev);
+                next.delete('editId');
+                return next;
+            }, { replace: true });
+        }
+    }, [editTask, showTaskModal, editIdParam, setSearchParams, activeTab]);
 
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
@@ -1132,6 +1150,11 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                                 Add Expense
                                                             </span>
                                                         )}
+                                                        {task.showOnCalendar && (
+                                                            <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-cyan-50 text-cyan-700">
+                                                                Task
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="px-3 py-2.5 hidden sm:table-cell">
@@ -1225,6 +1248,11 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                     {hasAutoExpense && (
                                                         <span className="text-[10px] font-medium px-2 py-1 rounded bg-emerald-50 text-emerald-600">
                                                             Add Expense
+                                                        </span>
+                                                    )}
+                                                    {task.showOnCalendar && (
+                                                        <span className="text-[10px] font-medium px-2 py-1 rounded bg-cyan-50 text-cyan-700">
+                                                            Task
                                                         </span>
                                                     )}
                                                 </div>

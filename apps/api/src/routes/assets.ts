@@ -34,6 +34,7 @@ function buildMaintenanceEventData(asset: any, payload: any, userId: string) {
 
     return {
         title: `${asset.name}: ${serviceTypeLabel}`,
+        type: 'EVENT',
         description: details || `Next recommended service for ${asset.name}`,
         startDate: nextRecommendedDate,
         endDate: null,

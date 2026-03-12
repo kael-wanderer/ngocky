@@ -535,6 +535,11 @@ export default function AssetsPage() {
                                                                     <Calendar className="w-3 h-3" /> Next: {new Date(record.nextRecommendedDate).toLocaleDateString()}
                                                                 </span>
                                                             )}
+                                                            {record.linkedEventId && (
+                                                                <span className="text-[10px] font-medium mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700">
+                                                                    <Calendar className="w-3 h-3" /> Asset
+                                                                </span>
+                                                            )}
                                                             {record.pinToDashboard && (
                                                                 <span className="text-[10px] font-medium mt-1 inline-flex items-center gap-1 text-amber-600">
                                                                     <Pin className="w-3 h-3" /> Pinned

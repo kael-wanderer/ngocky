@@ -279,6 +279,7 @@ export const updateHouseworkSchema = houseworkSchemaBase.partial().extend({
 
 const eventSchemaBase = z.object({
     title: z.string().min(1).max(200),
+    type: z.enum(['MEETING', 'EVENT']).optional(),
     description: z.string().optional(),
     startDate: z.string().datetime(),
     endDate: z.string().datetime().optional(),

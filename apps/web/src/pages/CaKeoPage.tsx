@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Baby, Plus, X, ChevronLeft, ChevronRight, Pencil, Trash2,
@@ -8,7 +8,7 @@ import {
     format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay,
     isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek,
 } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 
@@ -66,6 +66,7 @@ const emptyForm = () => ({
 export default function CaKeoPage() {
     const qc = useQueryClient();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [view, setView] = useState<CaKeoView>('calendar');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -75,6 +76,7 @@ export default function CaKeoPage() {
     const [formError, setFormError] = useState('');
     const [filters, setFilters] = useState({ status: '', assignerId: '', category: '' });
     const [calTypeFilter, setCalTypeFilter] = useState<string[]>(TYPES);
+    const editIdParam = searchParams.get('editId');
 
     // Queries
     const { data: usersData } = useQuery({
@@ -235,6 +237,18 @@ export default function CaKeoPage() {
             prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
         );
     }
+
+    useEffect(() => {
+        if (!editIdParam || !items.length) return;
+        const item = items.find((entry: any) => entry.id === editIdParam);
+        if (item) openEdit(item);
+    }, [editIdParam, items]);
+
+    useEffect(() => {
+        if (!showModal && editIdParam) {
+            setSearchParams({});
+        }
+    }, [showModal, editIdParam, setSearchParams]);
 
     return (
         <div className="space-y-6 pb-20 lg:pb-0">

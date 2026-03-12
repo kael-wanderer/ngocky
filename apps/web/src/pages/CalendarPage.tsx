@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { Calendar as CalIcon, Plus, X, ChevronLeft, ChevronRight, Pencil, Trash2, Pin } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, addDays } from 'date-fns';
-import { useSearchParams } from 'react-router-dom';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, addDays, isWithinInterval } from 'date-fns';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 
 type CalendarView = 'today' | 'week' | 'month';
@@ -47,15 +47,143 @@ const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
     return { value: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`, label: `${h12}:${String(m).padStart(2, '0')}${period}` };
 });
 
+const COLOR_STORAGE_KEY = 'calendar-recent-colors';
+const PRESET_COLORS = [
+    '#111827',
+    '#ef4444',
+    '#f97316',
+    '#f59e0b',
+    '#eab308',
+    '#22c55e',
+    '#14b8a6',
+    '#3b82f6',
+    '#6366f1',
+    '#8b5cf6',
+    '#ec4899',
+    '#6b7280',
+] as const;
+
+function normalizeHexColor(value: string) {
+    const next = value.trim().replace('#', '');
+    if (/^[0-9a-fA-F]{6}$/.test(next)) return `#${next.toLowerCase()}`;
+    return null;
+}
+
+function getCalendarTypeBadge(type?: string) {
+    if (type === 'MEETING') {
+        return { label: 'Meeting', style: { backgroundColor: '#fef2f2', color: '#dc2626' } };
+    }
+
+    return { label: 'Event', style: { backgroundColor: '#ecfdf5', color: '#16a34a' } };
+}
+
+function ColorPicker({
+    value,
+    onChange,
+    recentColors,
+}: {
+    value: string;
+    onChange: (next: string) => void;
+    recentColors: string[];
+}) {
+    const current = normalizeHexColor(value) || '#4f46e5';
+    const [open, setOpen] = useState(false);
+    const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (!open) return;
+
+        const handleOutsideClick = (event: MouseEvent) => {
+            if (!wrapperRef.current?.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleOutsideClick);
+        return () => document.removeEventListener('mousedown', handleOutsideClick);
+    }, [open]);
+
+    return (
+        <div ref={wrapperRef} className="relative">
+            <div className="flex items-center gap-3">
+                <label className="label mb-0">Color</label>
+                <button
+                    type="button"
+                    className="h-9 w-9 rounded border border-gray-300 shadow-sm"
+                    style={{ backgroundColor: current }}
+                    onClick={() => setOpen((currentValue) => !currentValue)}
+                    title={`Change color ${current}`}
+                />
+            </div>
+            {recentColors.length > 0 && (
+                <div className="mt-3 flex items-center gap-2">
+                    {recentColors.slice(0, 5).map((color) => (
+                        <button
+                            key={color}
+                            type="button"
+                            className={`h-6 w-6 rounded-full border ${current === color ? 'border-slate-900' : 'border-gray-300'}`}
+                            style={{ backgroundColor: color }}
+                            onClick={() => onChange(color)}
+                            title={color}
+                        />
+                    ))}
+                </div>
+            )}
+            {open && (
+                <div className="absolute left-0 top-full z-30 mt-3 w-[260px] rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Basic Colors</p>
+                    <div className="mt-3 grid grid-cols-4 gap-3">
+                        {PRESET_COLORS.map((color) => (
+                            <button
+                                key={color}
+                                type="button"
+                                className={`h-9 w-9 rounded-lg border-2 transition-transform hover:scale-[1.03] ${current === color ? 'border-slate-900' : 'border-gray-200'}`}
+                                style={{ backgroundColor: color }}
+                                onClick={() => {
+                                    onChange(color);
+                                    setOpen(false);
+                                }}
+                                title={color}
+                            />
+                        ))}
+                    </div>
+                    <div className="mt-4 flex items-center justify-between">
+                        <label className="flex items-center gap-2 text-xs text-gray-500">
+                            <span>#</span>
+                            <input
+                                type="text"
+                                className="w-24 rounded border border-gray-200 px-2 py-1 text-xs text-gray-700"
+                                value={current.slice(1)}
+                                onChange={(e) => {
+                                    const next = normalizeHexColor(e.target.value);
+                                    if (next) onChange(next);
+                                }}
+                                placeholder="ec4899"
+                            />
+                        </label>
+                        <button
+                            type="button"
+                            className="text-xs font-medium text-gray-500 hover:text-gray-800"
+                            onClick={() => setOpen(false)}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 const emptyForm = {
     title: '',
+    type: 'EVENT',
     description: '',
     startDate: '',
     startTime: '09:00',
     endDate: '',
     endTime: '10:00',
     allDay: false,
-    location: '',
     color: '#4f46e5',
     isShared: true,
     pinToDashboard: false,
@@ -67,14 +195,18 @@ const emptyForm = {
 
 export default function CalendarPage() {
     const qc = useQueryClient();
+    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const [view, setView] = useState<CalendarView>('month');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [showCreate, setShowCreate] = useState(false);
     const [editingEvent, setEditingEvent] = useState<any>(null);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [selectedRange, setSelectedRange] = useState<{ start: Date; end: Date } | null>(null);
+    const [selectedTimeRange, setSelectedTimeRange] = useState<{ startTime: string; endTime: string } | null>(null);
     const [form, setForm] = useState({ ...emptyForm });
     const [formError, setFormError] = useState('');
+    const [recentColors, setRecentColors] = useState<string[]>([]);
     const eventIdParam = searchParams.get('eventId');
     const dateParam = searchParams.get('date');
 
@@ -119,7 +251,12 @@ export default function CalendarPage() {
 
     const createMut = useMutation({
         mutationFn: (body: any) => api.post('/calendar', body),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['calendar'] }); setShowCreate(false); setForm({ ...emptyForm }); },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['calendar'] });
+            setShowCreate(false);
+            setForm({ ...emptyForm });
+            clearSelection();
+        },
     });
 
     const updateMut = useMutation({
@@ -128,6 +265,7 @@ export default function CalendarPage() {
             qc.invalidateQueries({ queryKey: ['calendar'] });
             setEditingEvent(null);
             setForm({ ...emptyForm });
+            clearSelection();
         },
     });
 
@@ -183,23 +321,33 @@ export default function CalendarPage() {
     const currentTimePx = (() => { const n = new Date(); return (n.getHours() * 60 + n.getMinutes()) * PX_PER_MIN; })();
     const timeGridRef = useRef<HTMLDivElement>(null);
 
+    const normalizeRange = (left: Date, right: Date) => left <= right ? { start: left, end: right } : { start: right, end: left };
+    const clearSelection = () => {
+        setSelectedRange(null);
+        setSelectedTimeRange(null);
+    };
+
     const openCreate = () => {
         setEditingEvent(null);
         setFormError('');
-        const base = selectedDate || new Date();
+        const baseRange = selectedRange || (selectedDate ? { start: selectedDate, end: selectedDate } : null);
+        const base = baseRange?.start || selectedDate || new Date();
         const now = new Date();
         let h = now.getHours();
         let m = Math.ceil(now.getMinutes() / 15) * 15;
         if (m >= 60) { h += 1; m = 0; }
         if (h >= 24) h = 23;
-        const startTime = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        const fallbackStart = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         const endH = h + 1 > 23 ? 23 : h + 1;
-        const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        const fallbackEnd = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        const startTime = selectedTimeRange?.startTime || fallbackStart;
+        const endTime = selectedTimeRange?.endTime || fallbackEnd;
         setForm({
             ...emptyForm,
+            type: 'EVENT',
             startDate: format(base, 'yyyy-MM-dd'),
             startTime,
-            endDate: format(base, 'yyyy-MM-dd'),
+            endDate: format(baseRange?.end || base, 'yyyy-MM-dd'),
             endTime,
         });
         setShowCreate(true);
@@ -207,17 +355,18 @@ export default function CalendarPage() {
 
     const openEdit = (event: any) => {
         setShowCreate(false);
+        clearSelection();
         setEditingEvent(event);
         setFormError('');
         setForm({
             title: event.title || '',
+            type: event.type || 'EVENT',
             description: event.description || '',
             startDate: format(new Date(event.startDate), 'yyyy-MM-dd'),
             startTime: format(new Date(event.startDate), 'HH:mm'),
             endDate: event.endDate ? format(new Date(event.endDate), 'yyyy-MM-dd') : '',
             endTime: event.endDate ? format(new Date(event.endDate), 'HH:mm') : '',
             allDay: !!event.allDay,
-            location: event.location || '',
             color: event.color || '#4f46e5',
             isShared: !!event.isShared,
             pinToDashboard: !!event.pinToDashboard,
@@ -229,14 +378,79 @@ export default function CalendarPage() {
     };
 
     const handleDelete = (id: string) => {
-        if (window.confirm('Delete this event?')) deleteMut.mutate(id);
+        if (window.confirm('Delete this item?')) deleteMut.mutate(id);
     };
 
     const getSourceId = (event: any) => event.sourceEventId || event.id;
 
+    const handleEventClick = (event: any) => {
+        const sourceId = getSourceId(event);
+        if (!event._source) {
+            openEdit(event);
+            return;
+        }
+
+        if (event._source === 'cakeo') {
+            navigate(`/cakeo?editId=${sourceId}`);
+            return;
+        }
+
+        if (event._source === 'task') {
+            navigate(`/tasks?editId=${sourceId}`);
+            return;
+        }
+
+        if (event._source === 'housework') {
+            navigate(`/housework?editId=${sourceId}`);
+        }
+    };
+
+    const handleMonthDaySelect = (day: Date) => {
+        setSelectedDate(day);
+        setSelectedTimeRange(null);
+        setSelectedRange((current) => {
+            if (!current || current.start.getTime() !== current.end.getTime()) {
+                return { start: day, end: day };
+            }
+            return normalizeRange(current.start, day);
+        });
+    };
+
+    const handleTimeGridSelection = (day: Date, startTime: string, endTime: string) => {
+        setSelectedDate(day);
+        if (view === 'today') {
+            setSelectedRange({ start: day, end: day });
+            setSelectedTimeRange({ startTime, endTime });
+            setEditingEvent(null);
+            setFormError('');
+            setForm({ ...emptyForm, startDate: format(day, 'yyyy-MM-dd'), startTime, endDate: format(day, 'yyyy-MM-dd'), endTime });
+            setShowCreate(true);
+            return;
+        }
+
+        setSelectedTimeRange((currentTime) => currentTime || { startTime, endTime });
+        setSelectedRange((current) => {
+            if (!current || current.start.getTime() !== current.end.getTime()) {
+                return { start: day, end: day };
+            }
+            return normalizeRange(current.start, day);
+        });
+    };
+
     const togglePin = (event: any) => {
         updateMut.mutate({ id: getSourceId(event), body: { pinToDashboard: !event.pinToDashboard } });
     };
+
+    useEffect(() => {
+        try {
+            const stored = JSON.parse(window.localStorage.getItem(COLOR_STORAGE_KEY) || '[]');
+            if (Array.isArray(stored)) {
+                setRecentColors(stored.filter((value): value is string => typeof value === 'string').slice(0, 5));
+            }
+        } catch {
+            setRecentColors([]);
+        }
+    }, []);
 
     useEffect(() => {
         if (dateParam) {
@@ -244,6 +458,7 @@ export default function CalendarPage() {
             if (!Number.isNaN(parsed.getTime())) {
                 setSelectedDate(parsed);
                 setCurrentDate(parsed);
+                setSelectedRange({ start: parsed, end: parsed });
             }
         }
     }, [dateParam]);
@@ -254,6 +469,7 @@ export default function CalendarPage() {
         if (!event) return;
         setSelectedDate(new Date(event.startDate));
         setCurrentDate(new Date(event.startDate));
+        clearSelection();
         openEdit(event);
     }, [eventIdParam, events]);
 
@@ -302,16 +518,16 @@ export default function CalendarPage() {
                             <button key={mode} onClick={() => setView(mode)} className={`px-3 py-2 text-sm ${view === mode ? 'bg-gray-100' : ''}`}>{mode[0].toUpperCase() + mode.slice(1)}</button>
                         ))}
                     </div>
-                    <button className="btn-primary" onClick={openCreate}><Plus className="w-4 h-4" /> New Event</button>
+                    <button className="btn-primary" onClick={openCreate}><Plus className="w-4 h-4" /> New Item</button>
                 </div>
             </div>
 
             {(showCreate || editingEvent) && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreate(false); setEditingEvent(null); } }}>
-                    <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreate(false); setEditingEvent(null); clearSelection(); } }}>
+                    <div className="card p-6 w-full max-w-2xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">{editingEvent ? 'Edit Event' : 'Create Event'}</h3>
-                            <button onClick={() => { setShowCreate(false); setEditingEvent(null); }}><X className="w-5 h-5" /></button>
+                            <h3 className="text-lg font-semibold">{editingEvent ? 'Edit Item' : 'Create Item'}</h3>
+                            <button onClick={() => { setShowCreate(false); setEditingEvent(null); clearSelection(); }}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
@@ -324,6 +540,7 @@ export default function CalendarPage() {
                             }
                             const body: any = {
                                 ...form,
+                                type: form.type,
                                 startDate: startAt.toISOString(),
                                 repeatFrequency: form.repeatFrequency || null,
                                 repeatEndType: form.repeatFrequency ? (form.repeatEndType || 'NEVER') : null,
@@ -333,17 +550,28 @@ export default function CalendarPage() {
                             else delete body.endDate;
                             if (form.repeatFrequency && form.repeatEndType === 'ON_DATE' && form.repeatUntil) body.repeatUntil = new Date(`${form.repeatUntil}T23:59:59.999`).toISOString();
                             else body.repeatUntil = null;
+                            setRecentColors((current) => {
+                                const next = [form.color, ...current.filter((color) => color !== form.color)].slice(0, 5);
+                                window.localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(next));
+                                return next;
+                            });
                             if (editingEvent) updateMut.mutate({ id: getSourceId(editingEvent), body });
                             else createMut.mutate(body);
                         }} className="space-y-4">
-                            <div><label className="label">Title <span className="text-red-500">*</span></label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                            <div><label className="label">Description <span className="text-red-500">*</span></label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label className="label">Type</label>
+                                    <select className="input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                                        <option value="MEETING">Meeting</option>
+                                        <option value="EVENT">Event</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="label">Start Date <span className="text-red-500">*</span></label>
-                                    <label className="relative block cursor-pointer">
-                                        <span className="input block text-sm">{form.startDate ? format(new Date(`${form.startDate}T00:00`), 'MMM dd, yyyy') : 'Select date'}</span>
-                                        <input type="date" required className="absolute inset-0 opacity-0 w-full cursor-pointer" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
-                                    </label>
+                                    <input type="date" required className="input" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="label">Start Time</label>
@@ -353,10 +581,7 @@ export default function CalendarPage() {
                                 </div>
                                 <div>
                                     <label className="label">End Date</label>
-                                    <label className="relative block cursor-pointer">
-                                        <span className="input block text-sm">{form.endDate ? format(new Date(`${form.endDate}T00:00`), 'MMM dd, yyyy') : 'None'}</span>
-                                        <input type="date" className="absolute inset-0 opacity-0 w-full cursor-pointer" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
-                                    </label>
+                                    <input type="date" className="input" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="label">End Time</label>
@@ -365,8 +590,7 @@ export default function CalendarPage() {
                                     </select>
                                 </div>
                             </div>
-                            <div><label className="label">Location</label><input className="input" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className={`grid grid-cols-1 gap-4 ${form.repeatFrequency ? 'lg:grid-cols-3' : 'sm:grid-cols-2'}`}>
                                 <div>
                                     <label className="label">Repeat</label>
                                     <select className="input" value={form.repeatFrequency} onChange={(e) => setForm({ ...form, repeatFrequency: e.target.value, repeatEndType: e.target.value ? (form.repeatEndType || 'NEVER') : '', repeatUntil: e.target.value ? form.repeatUntil : '' })}>
@@ -386,6 +610,9 @@ export default function CalendarPage() {
                                         </select>
                                     </div>
                                 )}
+                                <div>
+                                    <ColorPicker value={form.color} onChange={(color) => setForm({ ...form, color })} recentColors={recentColors} />
+                                </div>
                             </div>
                             {form.repeatFrequency && form.repeatEndType === 'ON_DATE' && (
                                 <div>
@@ -393,18 +620,24 @@ export default function CalendarPage() {
                                     <input type="date" min={form.startDate || format(new Date(), 'yyyy-MM-dd')} className="input" value={form.repeatUntil} onChange={(e) => setForm({ ...form, repeatUntil: e.target.value })} />
                                 </div>
                             )}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div><label className="label">Color</label><input type="color" className="input h-10 p-1" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} /></div>
-                                <div className="space-y-2">
-                                    <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.allDay} onChange={(e) => setForm({ ...form, allDay: e.target.checked })} className="rounded" /> All day</label>
-                                    <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} className="rounded" /> Shared</label>
-                                    <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} className="rounded" /> Pin to dashboard</label>
-                                </div>
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.allDay} onChange={(e) => setForm({ ...form, allDay: e.target.checked })} className="rounded" /> All day</label>
+                                <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} className="rounded" /> Shared</label>
+                                <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} className="rounded" /> Pin to dashboard</label>
+                                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.notificationEnabled}
+                                        onChange={(e) => setForm({ ...form, notificationEnabled: e.target.checked })}
+                                        className="rounded"
+                                    />
+                                    Notification
+                                </label>
                             </div>
+                            {form.notificationEnabled && <NotificationFields form={form} setForm={setForm} />}
                             {formError && (
                                 <p className="text-sm text-red-500">{formError}</p>
                             )}
-                            <NotificationFields form={form} setForm={setForm} />
                             <div className="flex items-center justify-between gap-3 pt-2">
                                 <div>
                                     {editingEvent && (
@@ -412,7 +645,7 @@ export default function CalendarPage() {
                                             type="button"
                                             className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
                                             onClick={() => {
-                                                if (window.confirm('Delete this event?')) {
+                                                if (window.confirm('Delete this item?')) {
                                                     deleteMut.mutate(getSourceId(editingEvent));
                                                     setEditingEvent(null);
                                                 }
@@ -423,10 +656,10 @@ export default function CalendarPage() {
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={() => { setShowCreate(false); setEditingEvent(null); }}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={() => { setShowCreate(false); setEditingEvent(null); clearSelection(); }}>
                                         Cancel
                                     </button>
-                                    <button type="submit" className="btn-primary" disabled={createMut.isPending || updateMut.isPending}>{editingEvent ? 'Save' : 'Create Event'}</button>
+                                    <button type="submit" className="btn-primary" disabled={createMut.isPending || updateMut.isPending}>{editingEvent ? 'Save' : 'Create Item'}</button>
                                 </div>
                             </div>
                         </form>
@@ -454,8 +687,19 @@ export default function CalendarPage() {
                                 const isToday = isSameDay(day, today);
                                 const inMonth = isSameMonth(day, currentDate);
                                 const isSelected = selectedDate && isSameDay(day, selectedDate);
+                                const inSelectedRange = !!(selectedRange && isWithinInterval(day, { start: selectedRange.start, end: selectedRange.end }));
                                 return (
-                                    <button key={day.toISOString()} onClick={() => setSelectedDate(day)} className={`aspect-square p-1 rounded-lg text-sm transition-all relative ${isSelected ? 'ring-2 ring-offset-1' : 'hover:bg-gray-50'}`} style={{ color: inMonth ? 'var(--color-text)' : 'var(--color-text-secondary)', opacity: inMonth ? 1 : 0.4, ...(isSelected ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}) }}>
+                                    <button
+                                        key={day.toISOString()}
+                                        onClick={() => handleMonthDaySelect(day)}
+                                        className={`aspect-square p-1 rounded-lg text-sm transition-all relative ${isSelected ? 'ring-2 ring-offset-1' : 'hover:bg-gray-50'}`}
+                                        style={{
+                                            color: inMonth ? 'var(--color-text)' : 'var(--color-text-secondary)',
+                                            opacity: inMonth ? 1 : 0.4,
+                                            ...(inSelectedRange ? { backgroundColor: '#ede9fe' } : {}),
+                                            ...(isSelected ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}),
+                                        }}
+                                    >
                                         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium ${isToday ? 'text-white' : ''}`} style={isToday ? { backgroundColor: 'var(--color-primary)' } : {}}>{format(day, 'd')}</span>
                                         {dayEvents.length > 0 && (
                                             <div className="flex justify-center gap-0.5 mt-0.5">{dayEvents.slice(0, 3).map((e: any, i: number) => (<div key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: e.color || 'var(--color-primary)' }} />))}</div>
@@ -471,7 +715,7 @@ export default function CalendarPage() {
                         {selectedDate && selectedEvents.length === 0 && <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No events</p>}
                         <div className="space-y-2">
                             {selectedEvents.map((e: any) => (
-                                <div key={e.id} className="p-3 rounded-lg border-l-4" style={{ borderColor: e.color || 'var(--color-primary)', backgroundColor: 'var(--color-bg)' }} onDoubleClick={() => { if (!e._source) openEdit(e); }}>
+                                <div key={e.id} className="p-3 rounded-lg border-l-4 cursor-pointer" style={{ borderColor: e.color || 'var(--color-primary)', backgroundColor: 'var(--color-bg)' }} onClick={() => handleEventClick(e)}>
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
@@ -481,19 +725,29 @@ export default function CalendarPage() {
                                             {e._source === 'cakeo' && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#fce7f3', color: '#ec4899' }}>Ca Keo</span>}
                                             {e._source === 'task' && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#eef2ff', color: '#4338ca' }}>Task</span>}
                                             {e._source === 'housework' && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#ecfdf5', color: '#059669' }}>Housework</span>}
+                                            {!e._source && e.category === 'ASSET' && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#ecfeff', color: '#0f766e' }}>Asset</span>}
+                                            {!e._source && e.category !== 'ASSET' && (
+                                                (() => {
+                                                    const badge = getCalendarTypeBadge(e.type);
+                                                    return (
+                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={badge.style}>
+                                                            {badge.label}
+                                                        </span>
+                                                    );
+                                                })()
+                                            )}
                                             {e.createdBy?.name && <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Owner: {e.createdBy.name}</p>}
                                         </div>
                                         {!e._source && (
                                             <div className="flex items-center gap-1">
                                                 <button className={`p-1 ${e.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin event" onClick={() => togglePin(e)}><Pin className="w-3.5 h-3.5" /></button>
-                                                <button className="p-1 hover:text-indigo-500" title="Edit event" onClick={() => openEdit(e)}><Pencil className="w-3.5 h-3.5" /></button>
+                                                <button className="p-1 hover:text-indigo-500" title="Edit item" onClick={() => openEdit(e)}><Pencil className="w-3.5 h-3.5" /></button>
                                                 <button className="p-1 hover:text-red-500" title="Delete event" onClick={() => handleDelete(getSourceId(e))}><Trash2 className="w-3.5 h-3.5" /></button>
                                             </div>
                                         )}
                                     </div>
                                     <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>{e.allDay ? 'All day' : format(new Date(e.startDate), 'h:mm a')}{e.endDate && !e.allDay && ` - ${format(new Date(e.endDate), 'h:mm a')}`}</p>
                                     {e.repeatFrequency && <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Repeats: {e.repeatFrequency.toLowerCase()}</p>}
-                                    {e.location && <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Location: {e.location}</p>}
                                 </div>
                             ))}
                         </div>
@@ -508,8 +762,16 @@ export default function CalendarPage() {
                         <div className="w-14 flex-shrink-0" />
                         {viewDays.map((day) => {
                             const isDayToday = isSameDay(day, today);
+                            const inSelectedRange = !!(selectedRange && isWithinInterval(day, { start: selectedRange.start, end: selectedRange.end }));
                             return (
-                                <div key={day.toISOString()} className="flex-1 text-center py-2 border-l" style={{ borderColor: 'var(--color-border)' }}>
+                                <div
+                                    key={day.toISOString()}
+                                    className="flex-1 text-center py-2 border-l transition-colors"
+                                    style={{
+                                        borderColor: 'var(--color-border)',
+                                        ...(inSelectedRange ? { backgroundColor: '#ede9fe' } : {}),
+                                    }}
+                                >
                                     <div className="text-[11px] font-medium uppercase tracking-wide mb-0.5" style={{ color: 'var(--color-text-secondary)' }}>{format(day, 'EEE')}</div>
                                     <div className="inline-flex items-center justify-center w-9 h-9 rounded-full text-lg font-bold" style={isDayToday ? { backgroundColor: 'var(--color-primary)', color: 'white' } : { color: 'var(--color-text)' }}>
                                         {format(day, 'd')}
@@ -538,11 +800,15 @@ export default function CalendarPage() {
                                 const dayEvts = getEventsForDay(day);
                                 const isDayToday = isSameDay(day, today);
                                 const laid = layoutDayEvents(dayEvts);
+                                const inSelectedRange = !!(selectedRange && isWithinInterval(day, { start: selectedRange.start, end: selectedRange.end }));
                                 return (
                                     <div
                                         key={day.toISOString()}
                                         className="flex-1 relative border-l"
-                                        style={{ borderColor: 'var(--color-border)' }}
+                                        style={{
+                                            borderColor: 'var(--color-border)',
+                                            ...(inSelectedRange ? { backgroundColor: '#faf5ff' } : {}),
+                                        }}
                                         onClick={(e) => {
                                             if ((e.target as HTMLElement).closest('[data-event="1"]')) return;
                                             const rect = e.currentTarget.getBoundingClientRect();
@@ -554,11 +820,7 @@ export default function CalendarPage() {
                                             const startTime = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
                                             const endH = h + 1 > 23 ? 23 : h + 1;
                                             const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                                            setEditingEvent(null);
-                                            setFormError('');
-                                            setSelectedDate(day);
-                                            setForm({ ...emptyForm, startDate: format(day, 'yyyy-MM-dd'), startTime, endDate: format(day, 'yyyy-MM-dd'), endTime });
-                                            setShowCreate(true);
+                                            handleTimeGridSelection(day, startTime, endTime);
                                         }}
                                     >
                                         {/* Hour lines */}
@@ -594,9 +856,22 @@ export default function CalendarPage() {
                                                         width: `calc(${colPct}% - 4px)`,
                                                         backgroundColor: e.color || 'var(--color-primary)',
                                                     }}
-                                                    onClick={(ev) => { ev.stopPropagation(); if (!e._source) openEdit(e); }}
+                                                    onClick={(ev) => { ev.stopPropagation(); handleEventClick(e); }}
                                                 >
                                                     <div className="px-1 py-0.5 overflow-hidden h-full">
+                                                        {!e._source && (
+                                                            (() => {
+                                                                const badge = getCalendarTypeBadge(e.type);
+                                                                return (
+                                                                    <span
+                                                                        className="mb-0.5 inline-flex rounded-full px-1 py-[1px] text-[9px] font-semibold leading-none"
+                                                                        style={badge.style}
+                                                                    >
+                                                                        {badge.label}
+                                                                    </span>
+                                                                );
+                                                            })()
+                                                        )}
                                                         <p className="text-[11px] font-semibold text-white leading-tight truncate">{e.title}</p>
                                                         {height > 30 && (
                                                             <p className="text-[10px] text-white/80 leading-tight">{format(start, 'h:mm a')}{e.endDate ? ` – ${format(end, 'h:mm a')}` : ''}</p>
@@ -612,8 +887,21 @@ export default function CalendarPage() {
                                                 data-event="1"
                                                 className="absolute left-0.5 right-0.5 z-10 rounded cursor-pointer hover:opacity-90 px-1 py-0.5"
                                                 style={{ top: 2, backgroundColor: e.color || 'var(--color-primary)' }}
-                                                onClick={(ev) => { ev.stopPropagation(); if (!e._source) openEdit(e); }}
+                                                onClick={(ev) => { ev.stopPropagation(); handleEventClick(e); }}
                                             >
+                                                {!e._source && (
+                                                    (() => {
+                                                        const badge = getCalendarTypeBadge(e.type);
+                                                        return (
+                                                            <span
+                                                                className="mb-0.5 inline-flex rounded-full px-1 py-[1px] text-[9px] font-semibold leading-none"
+                                                                style={badge.style}
+                                                            >
+                                                                {badge.label}
+                                                            </span>
+                                                        );
+                                                    })()
+                                                )}
                                                 <p className="text-[11px] font-semibold text-white leading-tight truncate">{e.title}</p>
                                             </div>
                                         ))}
