@@ -39,14 +39,6 @@ const STATUS_BG: Record<string, string> = {
     CANCELLED: '#f1f5f9',
 };
 
-const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
-    const h = Math.floor(i / 4);
-    const m = (i % 4) * 15;
-    const period = h < 12 ? 'am' : 'pm';
-    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    return { value: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`, label: `${h12}:${String(m).padStart(2, '0')}${period}` };
-});
-
 const UNASSIGNED_COLOR = '#94a3b8';
 
 type CaKeoView = 'calendar' | 'list' | 'kanban';

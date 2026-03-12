@@ -668,7 +668,7 @@ export default function SettingsPage() {
                             <div>
                                 <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Color Settings</h3>
                                 <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                    Shared module colors live here so everyone sees the same assignee colors across the system.
+                                    Set your own shared module colors here. Unassigned Ca Keo items always stay grey.
                                 </p>
                             </div>
 
@@ -677,60 +677,108 @@ export default function SettingsPage() {
                                     <div>
                                         <h4 className="font-semibold" style={{ color: 'var(--color-text)' }}>Ca Keo</h4>
                                         <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                            Configure shared colors for assignees and unassigned items. Colors must stay unique.
+                                            Pick the color for your own Ca Keo assignments. Your color must stay unique in this module.
                                         </p>
                                     </div>
-                                    {!canManageSharedColors && (
-                                        <span className="text-xs px-2.5 py-1 rounded-full" style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}>
-                                            Read only
-                                        </span>
-                                    )}
                                 </div>
 
                                 <div className="space-y-3">
-                                    {cakeoColorRows.map((row) => {
-                                        const currentColor = cakeoColorForm[row.entityKey] || '';
-                                        const isDuplicate = !!currentColor && Array.from(cakeoUsedColors).filter((value) => value === currentColor.toLowerCase()).length > 1;
-                                        return (
-                                            <div key={row.entityKey} className="flex items-center justify-between gap-4 rounded-lg border px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
-                                                <div className="min-w-0">
-                                                    <div className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{row.label}</div>
-                                                    <div className="text-xs truncate" style={{ color: isDuplicate ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
-                                                        {isDuplicate ? 'Duplicate color detected' : row.helper}
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: currentColor || '#ffffff', borderColor: 'var(--color-border)' }} />
-                                                    <input
-                                                        type="color"
-                                                        value={currentColor || '#94a3b8'}
-                                                        disabled={!canManageSharedColors}
-                                                        onChange={(e) => handleCakeoColorChange(row.entityKey, e.target.value)}
-                                                        className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent p-0"
-                                                    />
-                                                </div>
+                                    <div className="flex items-center justify-between gap-4 rounded-lg border px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
+                                        <div className="min-w-0">
+                                            <div className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Unassigned</div>
+                                            <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                                Fixed shared color for items without an assignee
                                             </div>
-                                        );
-                                    })}
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: '#94a3b8', borderColor: 'var(--color-border)' }} />
+                                            <input type="color" value="#94a3b8" disabled className="w-10 h-10 rounded border-0 bg-transparent p-0 opacity-60" />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between gap-4 rounded-lg border px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
+                                        <div className="min-w-0">
+                                            <div className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{user?.name || 'Current user'}</div>
+                                            <div className="text-xs truncate" style={{ color: cakeoUsedColors.has(cakeoColor.toLowerCase()) ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                                                {cakeoUsedColors.has(cakeoColor.toLowerCase()) ? 'Duplicate color detected' : user?.email}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: cakeoColor, borderColor: 'var(--color-border)' }} />
+                                            <input
+                                                type="color"
+                                                value={cakeoColor}
+                                                onChange={(e) => handleOwnColorChange(e.target.value, setCakeoColor, cakeoUsedColors, 'Ca Keo')}
+                                                className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent p-0"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center gap-3 flex-wrap">
                                     <button
                                         className="btn-primary"
-                                        onClick={handleSaveCakeoColors}
-                                        disabled={!canManageSharedColors || saveCakeoColors.isPending || resetCakeoColors.isPending}
+                                        onClick={() => saveCakeoColors.mutate(cakeoColor)}
+                                        disabled={saveCakeoColors.isPending || resetCakeoColors.isPending}
                                     >
                                         {saveCakeoColors.isPending ? 'Saving...' : 'Save'}
                                     </button>
                                     <button
                                         className="btn-secondary"
                                         onClick={() => resetCakeoColors.mutate()}
-                                        disabled={!canManageSharedColors || saveCakeoColors.isPending || resetCakeoColors.isPending}
+                                        disabled={saveCakeoColors.isPending || resetCakeoColors.isPending}
                                     >
                                         {resetCakeoColors.isPending ? 'Resetting...' : 'Reset to Default'}
                                     </button>
                                     <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                                         Default: `Unassigned` grey, `cong.buithanh@gmail.com` blue, `kist.t1108@gmail.com` green.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="rounded-xl border p-4 space-y-4" style={{ borderColor: 'var(--color-border)' }}>
+                                <div>
+                                    <h4 className="font-semibold" style={{ color: 'var(--color-text)' }}>Calendar</h4>
+                                    <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                        Pick the color for your own Calendar items. Your color must stay unique in this module.
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center justify-between gap-4 rounded-lg border px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
+                                    <div className="min-w-0">
+                                        <div className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{user?.name || 'Current user'}</div>
+                                        <div className="text-xs truncate" style={{ color: calendarUsedColors.has(calendarColor.toLowerCase()) ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                                            {calendarUsedColors.has(calendarColor.toLowerCase()) ? 'Duplicate color detected' : user?.email}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: calendarColor, borderColor: 'var(--color-border)' }} />
+                                        <input
+                                            type="color"
+                                            value={calendarColor}
+                                            onChange={(e) => handleOwnColorChange(e.target.value, setCalendarColor, calendarUsedColors, 'Calendar')}
+                                            className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent p-0"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3 flex-wrap">
+                                    <button
+                                        className="btn-primary"
+                                        onClick={() => saveCalendarColor.mutate(calendarColor)}
+                                        disabled={saveCalendarColor.isPending || resetCalendarColor.isPending}
+                                    >
+                                        {saveCalendarColor.isPending ? 'Saving...' : 'Save'}
+                                    </button>
+                                    <button
+                                        className="btn-secondary"
+                                        onClick={() => resetCalendarColor.mutate()}
+                                        disabled={saveCalendarColor.isPending || resetCalendarColor.isPending}
+                                    >
+                                        {resetCalendarColor.isPending ? 'Resetting...' : 'Reset to Default'}
+                                    </button>
+                                    <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                        Default: `cong.buithanh@gmail.com` blue, `kist.t1108@gmail.com` green.
                                     </span>
                                 </div>
                             </div>

@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
-import { authenticate, authorize } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { sendSuccess, sendMessage } from '../utils/response';
 import { config } from '../config/env';
