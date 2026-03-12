@@ -516,10 +516,14 @@ export default function FundsPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {sortedFunds.map((fund: any) => {
+                                    {sortedFunds.map((fund: any, index: number) => {
                                         const tone = fund.type === 'BUY' ? 'var(--color-danger)' : fund.type === 'SELL' ? 'var(--color-success)' : '#2563eb';
                                         return (
-                                            <tr key={fund.id} onDoubleClick={() => openEdit(fund)} className="cursor-pointer">
+                                            <tr
+                                                key={fund.id}
+                                                onDoubleClick={() => openEdit(fund)}
+                                                className={`cursor-pointer ${index % 2 === 0 ? 'bg-[#ecfdf5]' : 'bg-white'} hover:bg-[#d1fae5] transition-colors`}
+                                            >
                                                 <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(fund.date), 'MMM d, yyyy')}</td>
                                                 <td>
                                                     <span className="badge badge-primary" style={getTypeBadgeStyle(fund.type)}>

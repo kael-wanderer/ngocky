@@ -112,6 +112,11 @@ export default function CalendarPage() {
         queryFn: async () => (await api.get('/tasks?limit=200')).data.data,
     });
 
+    const { data: houseworkData } = useQuery({
+        queryKey: ['housework-calendar'],
+        queryFn: async () => (await api.get('/housework?limit=200')).data.data,
+    });
+
     const createMut = useMutation({
         mutationFn: (body: any) => api.post('/calendar', body),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['calendar'] }); setShowCreate(false); setForm({ ...emptyForm }); },
@@ -149,7 +154,21 @@ export default function CalendarPage() {
             allDay: false,
             color: item.taskType === 'PAYMENT' ? '#f59e0b' : '#4f46e5',
         }));
-    const events = [...calendarEvents, ...cakeoEvents, ...taskEvents];
+    const houseworkEvents = (houseworkData || [])
+        .filter((item: any) => item.showOnCalendar && item.nextDueDate)
+        .filter((item: any) => {
+            const dueDate = new Date(item.nextDueDate);
+            return dueDate >= range.start && dueDate <= range.end;
+        })
+        .map((item: any) => ({
+            ...item,
+            _source: 'housework',
+            startDate: item.nextDueDate,
+            endDate: item.nextDueDate,
+            allDay: false,
+            color: '#059669',
+        }));
+    const events = [...calendarEvents, ...cakeoEvents, ...taskEvents, ...houseworkEvents];
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
     const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -461,6 +480,7 @@ export default function CalendarPage() {
                                             </div>
                                             {e._source === 'cakeo' && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#fce7f3', color: '#ec4899' }}>Ca Keo</span>}
                                             {e._source === 'task' && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#eef2ff', color: '#4338ca' }}>Task</span>}
+                                            {e._source === 'housework' && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#ecfdf5', color: '#059669' }}>Housework</span>}
                                             {e.createdBy?.name && <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Owner: {e.createdBy.name}</p>}
                                         </div>
                                         {!e._source && (

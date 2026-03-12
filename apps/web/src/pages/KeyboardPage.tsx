@@ -617,7 +617,7 @@ export default function KeyboardPage() {
                                 <tr
                                     key={item.id}
                                     onDoubleClick={() => openEdit(item)}
-                                    className={`group border-t border-gray-200 dark:border-gray-800 cursor-pointer ${index % 2 === 0 ? 'bg-[#f2f2f2] dark:bg-[#202225]' : 'bg-white dark:bg-gray-900'} hover:bg-[#e9e9e9] dark:hover:bg-[#2a2d31]'}`}
+                                    className={`group border-t border-gray-200 dark:border-gray-800 cursor-pointer ${index % 2 === 0 ? 'bg-[#ecfdf5] dark:bg-[#202225]' : 'bg-white dark:bg-gray-900'} hover:bg-[#d1fae5] dark:hover:bg-[#2a2d31]'}`}
                                 >
                                     <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{item.name}</td>
                                     <td className="px-3 py-2">

@@ -217,6 +217,7 @@ router.post('/:id/complete', async (req: Request, res: Response, next: NextFunct
 
         if (item.frequencyType !== 'ONE_TIME') {
             data.nextDueDate = calculateNextDueDateFromRule(item, now);
+            data.status = 'PLANNED';
             Object.assign(data, resolveReminderFields(
                 { ...item, nextDueDate: data.nextDueDate },
                 {
@@ -227,6 +228,7 @@ router.post('/:id/complete', async (req: Request, res: Response, next: NextFunct
             ));
         } else {
             data.active = false;
+            data.status = 'DONE';
             Object.assign(data, resolveReminderFields(
                 { ...item, notificationEnabled: false },
                 {

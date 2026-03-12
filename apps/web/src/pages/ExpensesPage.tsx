@@ -586,12 +586,16 @@ export default function ExpensesPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {sortedExpenses.map((expense: any) => {
+                                    {sortedExpenses.map((expense: any, index: number) => {
                                         const isReceive = expense.type === 'RECEIVE';
                                         const canEdit = expense.userId === user?.id;
                                         const sharedOwnerName = getSharedOwnerName(expense, user?.id);
                                         return (
-                                            <tr key={expense.id} onDoubleClick={() => canEdit && openEdit(expense)} className={canEdit ? 'cursor-pointer' : ''}>
+                                            <tr
+                                                key={expense.id}
+                                                onClick={() => canEdit && openEdit(expense)}
+                                                className={`${canEdit ? 'cursor-pointer' : ''} ${index % 2 === 0 ? 'bg-[#ecfdf5]' : 'bg-white'} hover:bg-[#d1fae5] transition-colors`}
+                                            >
                                                 <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(expense.date), 'MMM d, yyyy')}</td>
                                                 <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{expense.user?.name || '-'}</td>
                                                 <td><span className={`badge ${isReceive ? 'badge-success' : 'badge-danger'}`}>{isReceive ? 'Receive' : 'Pay'}</span></td>
@@ -607,10 +611,10 @@ export default function ExpensesPage() {
                                                     </div>
                                                     {canEdit && (
                                                         <div className="flex items-center gap-2 mt-2">
-                                                            <button type="button" className="inline-flex items-center gap-1 text-sm hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={() => openEdit(expense)}>
+                                                            <button type="button" className="inline-flex items-center gap-1 text-sm hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={(e) => { e.stopPropagation(); openEdit(expense); }}>
                                                                 <Pencil className="w-3.5 h-3.5" /> Edit
                                                             </button>
-                                                            <button type="button" className="inline-flex items-center gap-1 text-sm hover:opacity-80" style={{ color: 'var(--color-danger)' }} onClick={() => handleDelete(expense.id)}>
+                                                            <button type="button" className="inline-flex items-center gap-1 text-sm hover:opacity-80" style={{ color: 'var(--color-danger)' }} onClick={(e) => { e.stopPropagation(); handleDelete(expense.id); }}>
                                                                 <Trash2 className="w-3.5 h-3.5" /> Delete
                                                             </button>
                                                         </div>

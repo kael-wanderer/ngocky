@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin, LayoutGrid, List, Copy } from 'lucide-react';
-import { format } from 'date-fns';
+import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin, LayoutGrid, List, Copy, Filter } from 'lucide-react';
+import { addMonths, addWeeks, endOfMonth, endOfWeek, format, isWithinInterval, startOfMonth, startOfToday, startOfWeek } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useAuthStore } from '../stores/auth';
@@ -29,30 +29,15 @@ const weekdayLabels: Record<string, string> = {
 };
 
 const frequencyOptions = ['ONE_TIME', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY'];
-type HouseworkFormState = {
-    title: string;
-    description: string;
-    isShared: boolean;
-    frequencyType: string;
-    nextDueDate: string;
-    pinToDashboard: boolean;
-    notificationEnabled: boolean;
-    reminderOffsetUnit: string;
-    reminderOffsetValue: number;
-    notificationDate: string;
-    notificationTime: string;
-    dayOfWeek: string;
-    dayOfMonth: string;
-    monthOfPeriod: string;
-    monthOfYear: string;
-};
 
-const emptyForm: HouseworkFormState = {
+const emptyForm = {
     title: '',
     description: '',
     isShared: false,
+    status: 'PLANNED',
     frequencyType: 'WEEKLY',
     nextDueDate: '',
+    showOnCalendar: false,
     pinToDashboard: false,
     ...emptyNotification,
     dayOfWeek: '1',
@@ -60,6 +45,10 @@ const emptyForm: HouseworkFormState = {
     monthOfPeriod: '1',
     monthOfYear: '1',
 };
+
+type HouseworkFormState = typeof emptyForm;
+type HouseworkDueDateFilter = 'ALL' | 'TODAY' | 'THIS_WEEK' | 'NEXT_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH';
+type HouseworkStatusFilter = 'ALL' | 'PLANNED' | 'IN_PROGRESS' | 'DONE';
 
 function getNormalizedFormByFrequency(form: HouseworkFormState, frequencyType: string): HouseworkFormState {
     const nextForm = { ...form, frequencyType };
@@ -86,6 +75,44 @@ function buildRecurrenceLabel(item: any): string | null {
     if (item.frequencyType === 'QUARTERLY' && item.monthOfPeriod && item.dayOfMonth) return `Every quarter: month ${item.monthOfPeriod}, day ${item.dayOfMonth}`;
     if (item.frequencyType === 'HALF_YEARLY' && item.monthOfPeriod && item.dayOfMonth) return `Every half-year: month ${item.monthOfPeriod}, day ${item.dayOfMonth}`;
     if (item.frequencyType === 'YEARLY' && item.monthOfYear && item.dayOfMonth) return `Every year: month ${item.monthOfYear}, day ${item.dayOfMonth}`;
+    return null;
+}
+
+function getStatusLabel(status: string) {
+    return status === 'PLANNED' ? 'Plan' : status.replace('_', ' ');
+}
+
+function getStatusTone(status: string) {
+    if (status === 'DONE') return 'bg-emerald-50 text-emerald-700';
+    if (status === 'IN_PROGRESS') return 'bg-amber-50 text-amber-700';
+    return 'bg-slate-100 text-slate-700';
+}
+
+function getDueBadge(item: any) {
+    if (!item.nextDueDate) return { label: 'No due date', tone: 'bg-slate-100 text-slate-700' };
+
+    const dueDate = new Date(item.nextDueDate);
+    const today = startOfToday();
+    const dueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+
+    if (dueDay < today && item.status !== 'DONE') {
+        return { label: `Overdue · ${format(dueDate, 'MMM d, yyyy')}`, tone: 'bg-red-50 text-red-700' };
+    }
+
+    if (dueDay.getTime() === today.getTime()) {
+        return { label: `Today · ${format(dueDate, 'MMM d')}`, tone: 'bg-amber-50 text-amber-700' };
+    }
+
+    return { label: format(dueDate, 'MMM d, yyyy'), tone: 'bg-emerald-50 text-emerald-700' };
+}
+
+function formatNotification(item: any): string | null {
+    if (!item.notificationEnabled) return null;
+    if (item.reminderOffsetUnit === 'ON_DATE' && item.notificationDate) {
+        return format(new Date(item.notificationDate), 'MMM dd, yyyy HH:mm');
+    }
+    if (item.reminderOffsetUnit === 'HOURS') return `${item.reminderOffsetValue} hour${item.reminderOffsetValue !== 1 ? 's' : ''} before`;
+    if (item.reminderOffsetUnit === 'DAYS') return `${item.reminderOffsetValue} day${item.reminderOffsetValue !== 1 ? 's' : ''} before`;
     return null;
 }
 
@@ -193,11 +220,8 @@ function HouseworkForm({
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
             <div><label className="label">Title <span className="text-red-500">*</span></label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
             <div><label className="label">Description</label><textarea className="input" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-            <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} />
-                Shared
-            </label>
-            <div className="grid grid-cols-2 gap-4">
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label className="label">Frequency <span className="text-red-500">*</span></label>
                     <select className="input" value={form.frequencyType} onChange={(e) => setForm((prev) => getNormalizedFormByFrequency(prev, e.target.value))}>
@@ -205,18 +229,56 @@ function HouseworkForm({
                     </select>
                 </div>
                 <div>
+                    <label className="label">Status</label>
+                    <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                        <option value="PLANNED">Plan</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="DONE">Done</option>
+                    </select>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
                     <label className="label">Next Due</label>
-                    <input type="date" className="input" value={form.nextDueDate} onChange={(e) => setForm({ ...form, nextDueDate: e.target.value })} />
+                    <input
+                        type="date"
+                        className="input"
+                        value={form.nextDueDate}
+                        onChange={(e) => setForm({ ...form, nextDueDate: e.target.value, showOnCalendar: e.target.value ? form.showOnCalendar : false })}
+                    />
                 </div>
             </div>
 
             <RecurrenceRuleFields form={form} setForm={setForm} />
 
-            <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} />
-                Pin to dashboard
-            </label>
             <NotificationFields form={form} setForm={setForm} />
+
+            <div className="grid grid-cols-2 gap-3">
+                <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} />
+                    Share with all users
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} />
+                    Pin to dashboard
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                    <input
+                        type="checkbox"
+                        checked={form.showOnCalendar}
+                        disabled={!form.nextDueDate}
+                        onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })}
+                    />
+                    Add to Calendar
+                </label>
+            </div>
+
+            {!form.nextDueDate && (
+                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                    Add to Calendar requires a due date.
+                </p>
+            )}
 
             <div className="flex items-center justify-between gap-3 pt-2">
                 <div>
@@ -243,21 +305,30 @@ export default function HouseworkPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [showCreate, setShowCreate] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
-    const [form, setForm] = useState({ ...emptyForm });
-    const [frequencyFilter, setFrequencyFilter] = useState<string>('ALL');
-    const [showCompleted, setShowCompleted] = useState(true);
+    const [form, setForm] = useState<HouseworkFormState>({ ...emptyForm });
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [filters, setFilters] = useState<{
+        dueDate: HouseworkDueDateFilter;
+        frequency: string;
+        status: HouseworkStatusFilter;
+    }>({
+        dueDate: 'ALL',
+        frequency: 'ALL',
+        status: 'ALL',
+    });
     const editIdParam = searchParams.get('editId');
 
     const { data, isLoading } = useQuery({
         queryKey: ['housework'],
-        queryFn: async () => (await api.get('/housework?limit=50')).data.data,
+        queryFn: async () => (await api.get('/housework?limit=200')).data.data,
     });
 
     const createMut = useMutation({
         mutationFn: (body: any) => api.post('/housework', body),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['housework'] });
+            qc.invalidateQueries({ queryKey: ['calendar'] });
+            qc.invalidateQueries({ queryKey: ['housework-calendar'] });
             setShowCreate(false);
             setForm({ ...emptyForm });
         },
@@ -267,6 +338,8 @@ export default function HouseworkPage() {
         mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/housework/${id}`, body),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['housework'] });
+            qc.invalidateQueries({ queryKey: ['calendar'] });
+            qc.invalidateQueries({ queryKey: ['housework-calendar'] });
             setEditingItem(null);
             setForm({ ...emptyForm });
         },
@@ -274,12 +347,20 @@ export default function HouseworkPage() {
 
     const deleteMut = useMutation({
         mutationFn: (id: string) => api.delete(`/housework/${id}`),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['housework'] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['housework'] });
+            qc.invalidateQueries({ queryKey: ['calendar'] });
+            qc.invalidateQueries({ queryKey: ['housework-calendar'] });
+        },
     });
 
     const completeMut = useMutation({
         mutationFn: (id: string) => api.post(`/housework/${id}/complete`),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['housework'] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['housework'] });
+            qc.invalidateQueries({ queryKey: ['calendar'] });
+            qc.invalidateQueries({ queryKey: ['housework-calendar'] });
+        },
     });
 
     const buildBody = () => {
@@ -287,12 +368,14 @@ export default function HouseworkPage() {
             title: form.title,
             description: form.description,
             isShared: form.isShared,
+            status: form.status,
             frequencyType: form.frequencyType,
+            pinToDashboard: form.pinToDashboard,
+            showOnCalendar: form.nextDueDate ? form.showOnCalendar : false,
+            ...buildNotificationPayload(form),
         };
 
         if (form.nextDueDate) body.nextDueDate = new Date(form.nextDueDate).toISOString();
-        body.pinToDashboard = form.pinToDashboard;
-        Object.assign(body, buildNotificationPayload(form));
 
         if (form.frequencyType === 'WEEKLY') body.dayOfWeek = Number(form.dayOfWeek);
         if (form.frequencyType === 'MONTHLY') body.dayOfMonth = Number(form.dayOfMonth);
@@ -308,13 +391,22 @@ export default function HouseworkPage() {
         return body;
     };
 
+    const openCreate = () => {
+        setEditingItem(null);
+        setForm({ ...emptyForm });
+        setShowCreate(true);
+    };
+
     const duplicateItem = (item: any) => {
+        setEditingItem(null);
         setForm(getNormalizedFormByFrequency({
             title: `${item.title} (copy)`,
             description: item.description || '',
             isShared: !!item.isShared,
+            status: 'PLANNED',
             frequencyType: item.frequencyType || 'WEEKLY',
-            nextDueDate: item.nextDueDate ? new Date(item.nextDueDate).toISOString().split('T')[0] : '',
+            nextDueDate: item.nextDueDate ? format(new Date(item.nextDueDate), 'yyyy-MM-dd') : '',
+            showOnCalendar: !!item.showOnCalendar,
             pinToDashboard: !!item.pinToDashboard,
             ...loadNotificationState(item),
             dayOfWeek: String(item.dayOfWeek || '1'),
@@ -326,13 +418,16 @@ export default function HouseworkPage() {
     };
 
     const openEdit = (item: any) => {
+        setShowCreate(false);
         setEditingItem(item);
         setForm(getNormalizedFormByFrequency({
             title: item.title || '',
             description: item.description || '',
             isShared: !!item.isShared,
+            status: item.status === 'ARCHIVED' ? 'PLANNED' : item.status || 'PLANNED',
             frequencyType: item.frequencyType || 'WEEKLY',
-            nextDueDate: item.nextDueDate ? new Date(item.nextDueDate).toISOString().split('T')[0] : '',
+            nextDueDate: item.nextDueDate ? format(new Date(item.nextDueDate), 'yyyy-MM-dd') : '',
+            showOnCalendar: !!item.showOnCalendar,
             pinToDashboard: !!item.pinToDashboard,
             ...loadNotificationState(item),
             dayOfWeek: String(item.dayOfWeek || '1'),
@@ -358,163 +453,198 @@ export default function HouseworkPage() {
         }
     }, [editingItem, showCreate, editIdParam, setSearchParams]);
 
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrowStart = new Date(todayStart);
-    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const items = data || [];
+    const today = startOfToday();
+    const endThisWeek = endOfWeek(today, { weekStartsOn: 1 });
+    const nextWeekStart = addWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1);
+    const nextWeekEnd = endOfWeek(nextWeekStart, { weekStartsOn: 1 });
+    const thisMonthStart = startOfMonth(today);
+    const thisMonthEnd = endOfMonth(today);
+    const nextMonthStart = addMonths(thisMonthStart, 1);
+    const nextMonthEnd = endOfMonth(nextMonthStart);
 
-    const getDueBucket = (nextDueDate?: string | null): 'overdue' | 'today' | 'upcoming' | 'unscheduled' => {
-        if (!nextDueDate) return 'unscheduled';
-        const due = new Date(nextDueDate);
-        if (due < todayStart) return 'overdue';
-        if (due < tomorrowStart) return 'today';
-        return 'upcoming';
-    };
+    const filteredItems = useMemo(() => {
+        return items.filter((item: any) => {
+            if (filters.frequency !== 'ALL' && item.frequencyType !== filters.frequency) return false;
+            const status = item.status === 'ARCHIVED' ? 'PLANNED' : item.status || 'PLANNED';
+            if (filters.status !== 'ALL' && status !== filters.status) return false;
 
-    const allItems = (data || []).filter((item: any) => frequencyFilter === 'ALL' || item.frequencyType === frequencyFilter);
-    const activeItems = allItems.filter((item: any) => item.active !== false);
-    const overdueItems = activeItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'overdue');
-    const todayItems = activeItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'today');
-    const upcomingItems = activeItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'upcoming');
-    const unscheduledItems = activeItems.filter((item: any) => getDueBucket(item.nextDueDate) === 'unscheduled');
-    const completedItems = allItems.filter((item: any) => !!item.lastCompletedDate);
+            if (filters.dueDate === 'ALL') return true;
+            if (!item.nextDueDate) return false;
 
-    const renderItem = (item: any, tone: 'normal' | 'overdue' = 'normal', options?: { completedView?: boolean }) => {
-        const overdue = tone === 'overdue';
-        const completedView = !!options?.completedView;
+            const dueDate = new Date(item.nextDueDate);
+            const dueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+
+            if (filters.dueDate === 'TODAY') return dueDay.getTime() === today.getTime();
+            if (filters.dueDate === 'THIS_WEEK') return isWithinInterval(dueDay, { start: today, end: endThisWeek });
+            if (filters.dueDate === 'NEXT_WEEK') return isWithinInterval(dueDay, { start: nextWeekStart, end: nextWeekEnd });
+            if (filters.dueDate === 'THIS_MONTH') return isWithinInterval(dueDay, { start: thisMonthStart, end: thisMonthEnd });
+            if (filters.dueDate === 'NEXT_MONTH') return isWithinInterval(dueDay, { start: nextMonthStart, end: nextMonthEnd });
+            return true;
+        });
+    }, [items, filters, today, endThisWeek, nextWeekStart, nextWeekEnd, thisMonthStart, thisMonthEnd, nextMonthStart, nextMonthEnd]);
+
+    const sortedItems = useMemo(() => {
+        return [...filteredItems].sort((a, b) => {
+            const left = a.nextDueDate ? new Date(a.nextDueDate).getTime() : Number.MAX_SAFE_INTEGER;
+            const right = b.nextDueDate ? new Date(b.nextDueDate).getTime() : Number.MAX_SAFE_INTEGER;
+            if (left !== right) return left - right;
+            return (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' });
+        });
+    }, [filteredItems]);
+
+    const renderActions = (item: any, canManage: boolean) => (
+        <div className="flex items-center gap-1">
+            {canManage && (
+                <>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } }); }}
+                        className={`p-2 rounded-lg transition-colors ${item.pinToDashboard ? 'text-amber-500 hover:bg-amber-50' : 'hover:bg-gray-100'}`}
+                        title="Pin item"
+                    >
+                        <Pin className="w-4 h-4" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); duplicateItem(item); }} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Duplicate">
+                        <Copy className="w-4 h-4" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Edit item">
+                        <Pencil className="w-4 h-4" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors" title="Delete item">
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </>
+            )}
+        </div>
+    );
+
+    const renderGridItem = (item: any) => {
+        const dueBadge = getDueBadge(item);
         const recurrenceLabel = buildRecurrenceLabel(item);
         const sharedOwnerName = getSharedOwnerName(item, user?.id);
         const canManage = !sharedOwnerName;
+        const notification = formatNotification(item);
 
-        if (viewMode === 'grid') {
-            return (
-                <div key={item.id} className={`card p-5 transition-all group hover:shadow-lg animate-slide-up ${overdue ? 'border-red-200' : ''}`}>
-                    <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <h3 className="font-bold text-lg truncate" style={{ color: 'var(--color-text)' }}>{item.title}</h3>
-                            {overdue && <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />}
-                        </div>
-                        {canManage && (
-                            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all flex-shrink-0">
-                                <button onClick={() => updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } })} className={`p-1 ${item.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin"><Pin className="w-4 h-4" /></button>
-                                <button onClick={() => duplicateItem(item)} className="p-1 hover:text-indigo-500" title="Duplicate"><Copy className="w-4 h-4" /></button>
-                                <button onClick={() => openEdit(item)} className="p-1 hover:text-indigo-500" title="Edit"><Pencil className="w-4 h-4" /></button>
-                                <button onClick={() => handleDelete(item.id)} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-4 h-4" /></button>
-                            </div>
-                        )}
-                    </div>
-                    <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-                        {item.description || 'No description provided.'}
-                    </p>
-                    {sharedOwnerName && <p className="text-[11px] mb-3" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
-                    <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
+        return (
+            <div
+                key={item.id}
+                className={`card p-5 transition-all group hover:shadow-lg animate-slide-up ${canManage ? 'cursor-pointer' : ''}`}
+                onClick={() => { if (canManage) openEdit(item); }}
+            >
+                <div className="flex justify-between items-start gap-3 mb-3">
+                    <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{freqLabels[item.frequencyType]}</span>
-                            {recurrenceLabel && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{recurrenceLabel}</span>}
-                            {item.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
-                            {item.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
-                            {item.nextDueDate && (
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: overdue ? '#fee2e2' : '#f0fdf4', color: overdue ? '#dc2626' : '#059669' }}>
-                                    Due {format(new Date(item.nextDueDate), 'MMM d')}
-                                </span>
-                            )}
-                            {completedView && item.lastCompletedDate && (
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
-                                    Completed {format(new Date(item.lastCompletedDate), 'MMM d')}
-                                </span>
-                            )}
+                            <h3 className="font-bold text-lg truncate" style={{ color: 'var(--color-text)' }}>{item.title}</h3>
+                            {item.nextDueDate && new Date(item.nextDueDate) < today && item.status !== 'DONE' && <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />}
                         </div>
-                        {!completedView && canManage && (
+                        {sharedOwnerName && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
+                    </div>
+                    {renderActions(item, canManage)}
+                </div>
+
+                <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                    {item.description || 'No description provided.'}
+                </p>
+
+                <div className="flex items-center gap-2 flex-wrap mb-4">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getStatusTone(item.status || 'PLANNED')}`}>{getStatusLabel(item.status || 'PLANNED')}</span>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{freqLabels[item.frequencyType]}</span>
+                    {recurrenceLabel && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{recurrenceLabel}</span>}
+                    {item.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
+                    {item.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
+                    {item.showOnCalendar && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700">Calendar</span>}
+                    {!item.active && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Disabled</span>}
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap mb-4">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${dueBadge.tone}`}>{dueBadge.label}</span>
+                    {notification && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700">
+                            Notify {notification}
+                        </span>
+                    )}
+                    {item.lastCompletedDate && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                            Completed {format(new Date(item.lastCompletedDate), 'MMM d')}
+                        </span>
+                    )}
+                </div>
+
+                <div className="flex items-center justify-end pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                    {canManage && item.status !== 'DONE' && item.active !== false && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); completeMut.mutate(item.id); }}
+                            disabled={completeMut.isPending}
+                            className="btn-primary text-xs flex-shrink-0"
+                        >
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Done
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    const renderListItem = (item: any) => {
+        const dueBadge = getDueBadge(item);
+        const notification = formatNotification(item);
+        const sharedOwnerName = getSharedOwnerName(item, user?.id);
+        const canManage = !sharedOwnerName;
+
+        return (
+            <tr
+                key={item.id}
+                className={`${canManage ? 'cursor-pointer hover:bg-slate-50' : ''} transition-colors`}
+                onClick={() => { if (canManage) openEdit(item); }}
+            >
+                <td className="py-3 px-4">
+                    <div className="min-w-[180px]">
+                        <p className="font-semibold" style={{ color: 'var(--color-text)' }}>{item.title}</p>
+                        {sharedOwnerName && <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
+                    </div>
+                </td>
+                <td className="py-3 px-4 max-w-[240px]">
+                    <p className="text-sm line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>{item.description || 'No description'}</p>
+                </td>
+                <td className="py-3 px-4">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{freqLabels[item.frequencyType]}</span>
+                </td>
+                <td className="py-3 px-4">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getStatusTone(item.status || 'PLANNED')}`}>{getStatusLabel(item.status || 'PLANNED')}</span>
+                </td>
+                <td className="py-3 px-4">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${dueBadge.tone}`}>{dueBadge.label}</span>
+                </td>
+                <td className="py-3 px-4">
+                    {notification ? (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700">Notify {notification}</span>
+                    ) : (
+                        <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>None</span>
+                    )}
+                </td>
+                <td className="py-3 px-4">
+                    <div className="flex items-center gap-1 flex-wrap">
+                        {item.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
+                        {item.showOnCalendar && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-700 font-semibold">Calendar</span>}
+                        {item.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                    </div>
+                </td>
+                <td className="py-3 px-4">
+                    <div className="flex items-center gap-1 justify-end">
+                        {canManage && item.status !== 'DONE' && item.active !== false && (
                             <button
-                                onClick={() => completeMut.mutate(item.id)}
-                                disabled={completeMut.isPending}
-                                className={`btn-primary text-xs flex-shrink-0 ${overdue ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                                onClick={(e) => { e.stopPropagation(); completeMut.mutate(item.id); }}
+                                className="px-2 py-1 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
                             >
-                                <CheckCircle2 className="w-3.5 h-3.5" /> Done
+                                Done
                             </button>
                         )}
+                        <div onClick={(e) => e.stopPropagation()}>
+                            {renderActions(item, canManage)}
+                        </div>
                     </div>
-                </div>
-            );
-        }
-
-        // List view
-        return (
-            <div key={item.id} className={`card p-4 flex items-center gap-4 group animate-slide-up ${overdue ? 'border-red-200' : ''}`}>
-                {!completedView && canManage && (
-                    <button
-                        onClick={() => completeMut.mutate(item.id)}
-                        disabled={completeMut.isPending}
-                        className={`btn-primary flex-shrink-0 text-xs ${overdue ? 'bg-red-600 hover:bg-red-700' : ''}`}
-                        title="Mark complete"
-                    >
-                        <CheckCircle2 className="w-4 h-4" /> Mark Complete
-                    </button>
-                )}
-
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                        <p className="font-medium truncate" style={{ color: 'var(--color-text)' }}>{item.title}</p>
-                        {overdue && <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />}
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 flex-wrap">
-                        <span className="badge-primary text-[10px]">{freqLabels[item.frequencyType]}</span>
-                        {item.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
-                        {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
-                        {item.nextDueDate && (
-                            <span className="text-xs" style={{ color: overdue ? '#dc2626' : 'var(--color-text-secondary)' }}>
-                                Due: {format(new Date(item.nextDueDate), 'MMM d, yyyy')}
-                            </span>
-                        )}
-                        {recurrenceLabel && (
-                            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{recurrenceLabel}</span>
-                        )}
-                        {item.assignee && (
-                            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>👤 {item.assignee.name}</span>
-                        )}
-                        {item.lastCompletedDate && (
-                            <span className="text-xs" style={{ color: '#059669' }}>Completed: {format(new Date(item.lastCompletedDate), 'MMM d, yyyy')}</span>
-                        )}
-                        {item.estimatedCost && (
-                            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>💰 ${item.estimatedCost}</span>
-                        )}
-                        {item.pinToDashboard && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>
-                        )}
-                    </div>
-                </div>
-
-                {canManage && (
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                            onClick={() => updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } })}
-                            className={`p-2 rounded-lg transition-colors ${item.pinToDashboard ? 'text-amber-500 hover:bg-amber-50' : 'hover:bg-gray-100'}`}
-                            title="Pin item"
-                        >
-                            <Pin className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => duplicateItem(item)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Duplicate">
-                            <Copy className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => openEdit(item)}
-                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                            title="Edit item"
-                        >
-                            <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => handleDelete(item.id)}
-                            className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
-                            title="Delete item"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                    </div>
-                )}
-
-                {!item.active && <span className="badge bg-gray-100 text-gray-500">Inactive</span>}
-            </div>
+                </td>
+            </tr>
         );
     };
 
@@ -526,63 +656,66 @@ export default function HouseworkPage() {
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Housework</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm whitespace-nowrap" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
-                        <input type="checkbox" checked={showCompleted} onChange={(e) => setShowCompleted(e.target.checked)} />
-                        Show completed
-                    </label>
-                    <select className="input" value={frequencyFilter} onChange={(e) => setFrequencyFilter(e.target.value)}>
-                        <option value="ALL">All</option>
-                        {frequencyOptions.map((k) => <option key={k} value={k}>{freqLabels[k]}</option>)}
-                    </select>
                     <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
                         <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
                         <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
                     </div>
-                    <button className="btn-primary whitespace-nowrap" onClick={() => { setForm({ ...emptyForm }); setShowCreate(true); }}>
+                    <button className="btn-primary whitespace-nowrap" onClick={openCreate}>
                         <Plus className="w-4 h-4" /> New Item
                     </button>
                 </div>
             </div>
 
-            {showCreate && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowCreate(false); }}>
-                    <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">New Housework</h3>
-                            <button onClick={() => setShowCreate(false)}><X className="w-5 h-5" /></button>
-                        </div>
-                        <HouseworkForm
-                            form={form}
-                            setForm={setForm}
-                            onSubmit={() => createMut.mutate(buildBody())}
-                            onCancel={() => setShowCreate(false)}
-                            loading={createMut.isPending}
-                            submitLabel="Create"
-                        />
-                    </div>
+            <div className="card p-5 space-y-4">
+                <div className="flex items-center gap-2">
+                    <Filter className="w-5 h-5" style={{ color: 'var(--color-text-secondary)' }} />
+                    <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Filters</h3>
                 </div>
-            )}
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+                    <select className="input" value={filters.dueDate} onChange={(e) => setFilters((prev) => ({ ...prev, dueDate: e.target.value as HouseworkDueDateFilter }))}>
+                        <option value="ALL">All Due Dates</option>
+                        <option value="TODAY">Today</option>
+                        <option value="THIS_WEEK">This Week</option>
+                        <option value="NEXT_WEEK">Next Week</option>
+                        <option value="THIS_MONTH">This Month</option>
+                        <option value="NEXT_MONTH">Next Month</option>
+                    </select>
+                    <select className="input" value={filters.frequency} onChange={(e) => setFilters((prev) => ({ ...prev, frequency: e.target.value }))}>
+                        <option value="ALL">All Frequencies</option>
+                        {frequencyOptions.map((k) => <option key={k} value={k}>{freqLabels[k]}</option>)}
+                    </select>
+                    <select className="input" value={filters.status} onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value as HouseworkStatusFilter }))}>
+                        <option value="ALL">All Statuses</option>
+                        <option value="PLANNED">Plan</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="DONE">Done</option>
+                    </select>
+                </div>
+            </div>
 
-            {editingItem && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingItem(null); }}>
-                    <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            {(showCreate || editingItem) && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreate(false); setEditingItem(null); } }}>
+                    <div className="card p-6 w-full max-w-xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">Edit Housework</h3>
-                            <button onClick={() => setEditingItem(null)}><X className="w-5 h-5" /></button>
+                            <h3 className="text-lg font-semibold">{editingItem ? 'Edit Housework' : 'New Housework'}</h3>
+                            <button onClick={() => { setShowCreate(false); setEditingItem(null); }}><X className="w-5 h-5" /></button>
                         </div>
                         <HouseworkForm
                             form={form}
                             setForm={setForm}
-                            onSubmit={() => updateMut.mutate({ id: editingItem.id, body: buildBody() })}
-                            onCancel={() => setEditingItem(null)}
-                            onDelete={() => {
+                            onSubmit={() => {
+                                if (editingItem) updateMut.mutate({ id: editingItem.id, body: buildBody() });
+                                else createMut.mutate(buildBody());
+                            }}
+                            onCancel={() => { setShowCreate(false); setEditingItem(null); }}
+                            onDelete={editingItem ? () => {
                                 if (window.confirm('Delete this housework item?')) {
                                     deleteMut.mutate(editingItem.id);
                                     setEditingItem(null);
                                 }
-                            }}
-                            loading={updateMut.isPending}
-                            submitLabel="Save"
+                            } : undefined}
+                            loading={createMut.isPending || updateMut.isPending}
+                            submitLabel={editingItem ? 'Save' : 'Create'}
                         />
                     </div>
                 </div>
@@ -590,51 +723,33 @@ export default function HouseworkPage() {
 
             {isLoading ? (
                 <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="card p-5 h-20 animate-pulse bg-gray-100" />)}</div>
+            ) : sortedItems.length === 0 ? (
+                <div className="card p-8 text-center">
+                    <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No housework items match the current filters.</p>
+                </div>
+            ) : viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {sortedItems.map((item: any) => renderGridItem(item))}
+                </div>
             ) : (
-                <div className="space-y-5">
-                    {(() => {
-                        const itemCls = viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3' : 'space-y-3';
-                        return (
-                            <>
-                                <div>
-                                    <h3 className="text-sm font-semibold mb-2 text-red-600">Overdue ({overdueItems.length})</h3>
-                                    {overdueItems.length === 0
-                                        ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No overdue housework</p>
-                                        : <div className={itemCls}>{overdueItems.map((item: any) => renderItem(item, 'overdue'))}</div>}
-                                </div>
-
-                                <div>
-                                    <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Due Today ({todayItems.length})</h3>
-                                    {todayItems.length === 0
-                                        ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No housework due today</p>
-                                        : <div className={itemCls}>{todayItems.map((item: any) => renderItem(item))}</div>}
-                                </div>
-
-                                <div>
-                                    <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Upcoming ({upcomingItems.length})</h3>
-                                    {upcomingItems.length === 0
-                                        ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No upcoming housework</p>
-                                        : <div className={itemCls}>{upcomingItems.map((item: any) => renderItem(item))}</div>}
-                                </div>
-
-                                {unscheduledItems.length > 0 && (
-                                    <div>
-                                        <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Unscheduled ({unscheduledItems.length})</h3>
-                                        <div className={itemCls}>{unscheduledItems.map((item: any) => renderItem(item))}</div>
-                                    </div>
-                                )}
-
-                                {showCompleted && (
-                                    <div>
-                                        <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Completed ({completedItems.length})</h3>
-                                        {completedItems.length === 0
-                                            ? <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No completed housework yet</p>
-                                            : <div className={itemCls}>{completedItems.map((item: any) => renderItem(item, 'normal', { completedView: true }))}</div>}
-                                    </div>
-                                )}
-                            </>
-                        );
-                    })()}
+                <div className="table-container">
+                    <table className="w-full">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Description</th>
+                                <th>Frequency</th>
+                                <th>Status</th>
+                                <th>Due Date</th>
+                                <th>Notification</th>
+                                <th>Options</th>
+                                <th className="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {sortedItems.map((item: any) => renderListItem(item))}
+                        </tbody>
+                    </table>
                 </div>
             )}
         </div>

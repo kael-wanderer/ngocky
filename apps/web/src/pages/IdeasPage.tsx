@@ -269,7 +269,7 @@ export default function IdeasPage() {
                                         const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
                                         const canManage = !sharedOwnerName;
                                         return (
-                                            <div key={log.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors group" onDoubleClick={() => canManage && openEditLog(log)}>
+                                            <div key={log.id} className={`flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors group ${canManage ? 'cursor-pointer' : ''}`} onClick={() => canManage && openEditLog(log)}>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{log.title}</span>
@@ -289,9 +289,9 @@ export default function IdeasPage() {
                                                 </div>
                                                 {canManage && (
                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                                        <button className={`p-1 ${log.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={() => togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1 hover:text-indigo-500" onClick={() => openEditLog(log)}><Pencil className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1 hover:text-red-500" onClick={() => { if (window.confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                        <button className={`p-1 ${log.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={(e) => { e.stopPropagation(); togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard }); }}><Pin className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 hover:text-indigo-500" onClick={(e) => { e.stopPropagation(); openEditLog(log); }}><Pencil className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 hover:text-red-500" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                                     </div>
                                                 )}
                                             </div>
@@ -309,7 +309,7 @@ export default function IdeasPage() {
                                     const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
                                     const canManage = !sharedOwnerName;
                                     return (
-                                    <div key={log.id} className="card p-5 group break-inside-avoid animate-fade-in hover:shadow-lg transition-all duration-300" onDoubleClick={() => canManage && openEditLog(log)}>
+                                    <div key={log.id} className={`card p-5 group break-inside-avoid animate-fade-in hover:shadow-lg transition-all duration-300 ${canManage ? 'cursor-pointer' : ''}`} onClick={() => canManage && openEditLog(log)}>
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 {log.category && <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-600">{log.category}</span>}
@@ -317,10 +317,10 @@ export default function IdeasPage() {
                                             </div>
                                             {canManage && (
                                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button className={`p-1 ${log.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={() => togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
-                                                    <button className="p-1 hover:text-indigo-500" onClick={() => duplicateLog(log)}><Copy className="w-3.5 h-3.5" /></button>
-                                                    <button className="p-1 hover:text-indigo-500" onClick={() => openEditLog(log)}><Pencil className="w-3.5 h-3.5" /></button>
-                                                    <button className="p-1 hover:text-red-500" onClick={() => { if (window.confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    <button className={`p-1 ${log.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={(e) => { e.stopPropagation(); togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard }); }}><Pin className="w-3.5 h-3.5" /></button>
+                                                    <button className="p-1 hover:text-indigo-500" onClick={(e) => { e.stopPropagation(); duplicateLog(log); }}><Copy className="w-3.5 h-3.5" /></button>
+                                                    <button className="p-1 hover:text-indigo-500" onClick={(e) => { e.stopPropagation(); openEditLog(log); }}><Pencil className="w-3.5 h-3.5" /></button>
+                                                    <button className="p-1 hover:text-red-500" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                                 </div>
                                             )}
                                         </div>

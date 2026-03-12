@@ -514,6 +514,7 @@ model HouseworkItem {
   assigneeId          String?
   createdById         String
   isShared            Boolean       @default(false)
+  status              ProjectStatus @default(PLANNED)
   frequencyType       FrequencyType @default(ONE_TIME)
   dayOfWeek           Int?
   dayOfMonth          Int?
@@ -523,6 +524,7 @@ model HouseworkItem {
   nextDueDate         DateTime?
   lastCompletedDate   DateTime?
   estimatedCost       Float?
+  showOnCalendar      Boolean       @default(false)
   notificationEnabled Boolean       @default(false)
   reminderOffsetValue Int?
   reminderOffsetUnit  ReminderUnit?

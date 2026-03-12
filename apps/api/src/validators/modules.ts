@@ -196,6 +196,7 @@ const houseworkSchemaBase = z.object({
     description: z.string().optional(),
     assigneeId: z.string().optional(),
     isShared: z.boolean().optional(),
+    status: z.enum(['PLANNED', 'IN_PROGRESS', 'DONE']).optional(),
     frequencyType: z.enum(['ONE_TIME', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY', 'CUSTOM']).optional(),
     dayOfWeek: z.number().int().min(1).max(7).optional(),
     dayOfMonth: z.number().int().min(1).max(31).optional(),
@@ -204,6 +205,7 @@ const houseworkSchemaBase = z.object({
     customIntervalDays: z.number().int().positive().optional(),
     nextDueDate: z.string().datetime().optional(),
     estimatedCost: z.number().optional(),
+    showOnCalendar: z.boolean().optional(),
     ...notificationFields,
     pinToDashboard: z.boolean().optional(),
 });

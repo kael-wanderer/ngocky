@@ -259,7 +259,7 @@ function TaskForm({
                         amount: e.target.value === 'PAYMENT' ? form.amount : '',
                         expenseCategory: e.target.value === 'PAYMENT' ? form.expenseCategory : DEFAULT_EXPENSE_PAY_CATEGORY,
                         scope: e.target.value === 'PAYMENT' ? form.scope : 'PERSONAL',
-                        createExpenseAutomatically: e.target.value === 'PAYMENT',
+                        createExpenseAutomatically: e.target.value === 'PAYMENT' ? form.createExpenseAutomatically : false,
                     })}>
                         <option value="TASK">Task</option>
                         <option value="PAYMENT">Payment</option>
@@ -372,11 +372,10 @@ function TaskForm({
                         <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} />
                         Pin to dashboard
                     </label>
-                    <label className={`flex items-center gap-2 text-sm ${form.taskType !== 'PAYMENT' ? 'opacity-60' : ''}`}>
+                    <label className="flex items-center gap-2 text-sm">
                         <input
                             type="checkbox"
                             checked={form.createExpenseAutomatically}
-                            disabled={form.taskType !== 'PAYMENT'}
                             onChange={(e) => setForm({ ...form, createExpenseAutomatically: e.target.checked })}
                         />
                         Add Expense Automatically
@@ -891,12 +890,19 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                     <div
                                         key={goal.id}
                                         className="card p-5 animate-slide-up transition-shadow hover:shadow-lg"
-                                        onDoubleClick={() => openEditGoal(goal)}
+                                        onClick={() => openEditGoal(goal)}
                                     >
                                         <div className="flex items-start justify-between mb-2 gap-3">
                                             <div className="flex-1 min-w-0 pr-2">
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <h4 className="font-semibold" style={{ color: 'var(--color-text)' }}>{goal.title}</h4>
+                                                    <button
+                                                        type="button"
+                                                        className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
+                                                        onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { active: !goal.active } }); }}
+                                                    >
+                                                        {goal.active ? 'ENABLED' : 'DISABLED'}
+                                                    </button>
                                                     {goal.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                                                     {goal.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                                                 </div>
@@ -910,11 +916,18 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-1 flex-shrink-0">
-                                                <button onClick={() => updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } })} className={`p-1 transition-colors ${goal.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
-                                                <button onClick={() => openEditGoal(goal)} className="p-1 hover:text-indigo-500 transition-colors" title="Edit goal"><Pencil className="w-3.5 h-3.5" /></button>
-                                                <button onClick={() => openDuplicateGoal(goal)} className="p-1 hover:text-sky-500 transition-colors" title="Duplicate goal"><Copy className="w-3.5 h-3.5" /></button>
-                                                <button onClick={() => { if (window.confirm('Recalculate count from actual check-in history?')) resetMut.mutate(goal.id); }} className="p-1 hover:text-blue-500 transition-colors" title="Fix/recalculate count" disabled={resetMut.isPending}><span className="text-xs leading-none">🔄</span></button>
-                                                <button onClick={() => { if (window.confirm('Delete this goal and ALL its check-ins? This cannot be undone.')) deleteGoalMut.mutate(goal.id); }} className="p-1 hover:text-red-500 transition-colors" title="Delete goal"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                <button
+                                                    type="button"
+                                                    className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
+                                                    onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { active: !goal.active } }); }}
+                                                >
+                                                    {goal.active ? 'ENABLED' : 'DISABLED'}
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } }); }} className={`p-1 transition-colors ${goal.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); openEditGoal(goal); }} className="p-1 hover:text-indigo-500 transition-colors" title="Edit goal"><Pencil className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); openDuplicateGoal(goal); }} className="p-1 hover:text-sky-500 transition-colors" title="Duplicate goal"><Copy className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Recalculate count from actual check-in history?')) resetMut.mutate(goal.id); }} className="p-1 hover:text-blue-500 transition-colors" title="Fix/recalculate count" disabled={resetMut.isPending}><span className="text-xs leading-none">🔄</span></button>
+                                                <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this goal and ALL its check-ins? This cannot be undone.')) deleteGoalMut.mutate(goal.id); }} className="p-1 hover:text-red-500 transition-colors" title="Delete goal"><Trash2 className="w-3.5 h-3.5" /></button>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 mb-3">
@@ -926,7 +939,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                         <div className="flex items-center justify-between gap-3">
                                             <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{goal.currentCount}/{goal.targetCount} {goal.unit}</p>
                                             <div className="flex items-center gap-2">
-                                                <button className="btn-primary text-xs py-1.5 px-3" onClick={() => openCheckIn(goal.id)} disabled={!goal.active}><Check className="w-3 h-3" /> Check-in</button>
+                                                <button className="btn-primary text-xs py-1.5 px-3" onClick={(e) => { e.stopPropagation(); openCheckIn(goal.id); }} disabled={!goal.active}><Check className="w-3 h-3" /> Check-in</button>
                                                 <span className="text-xs font-medium whitespace-nowrap" style={{ color: progressPct > 100 ? '#7c3aed' : progressPct === 100 ? '#059669' : progressPct >= 50 ? '#d97706' : '#dc2626' }}>
                                                     {progressPct > 100 ? 'Overachievement' : progressPct === 100 ? 'Done' : progressPct >= 50 ? 'Almost there' : 'Try hard'}
                                                 </span>
@@ -946,7 +959,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                 const overachieved = progressPct > 100;
                                 const notifText = formatNotification(goal);
                                 return (
-                                    <div key={goal.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors group" onDoubleClick={() => openEditGoal(goal)}>
+                                    <div key={goal.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => openEditGoal(goal)}>
                                         <div className="w-44 flex-shrink-0">
                                             <div className="flex items-center gap-1.5 flex-wrap">
                                                 <span className="font-medium text-sm truncate" style={{ color: 'var(--color-text)' }}>{goal.title}</span>
@@ -969,12 +982,19 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                         <div className="flex-1">
                                             {notifText && <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}><Bell className="w-3 h-3 flex-shrink-0" />{notifText}</span>}
                                         </div>
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                            <button onClick={() => openCheckIn(goal.id)} disabled={!goal.active} className="p-1.5 rounded-md hover:bg-emerald-50 hover:text-emerald-600 transition-colors" title="Check-in"><Check className="w-3.5 h-3.5" /></button>
-                                            <button onClick={() => updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } })} className={`p-1.5 rounded-md transition-colors ${goal.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
-                                            <button onClick={() => openEditGoal(goal)} className="p-1.5 rounded-md hover:text-indigo-500 transition-colors" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
-                                            <button onClick={() => openDuplicateGoal(goal)} className="p-1.5 rounded-md hover:text-sky-500 transition-colors" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
-                                            <button onClick={() => { if (window.confirm('Delete this goal and ALL its check-ins? This cannot be undone.')) deleteGoalMut.mutate(goal.id); }} className="p-1.5 rounded-md hover:text-red-500 transition-colors" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                                <button
+                                                    type="button"
+                                                    className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
+                                                    onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { active: !goal.active } }); }}
+                                                >
+                                                    {goal.active ? 'ENABLED' : 'DISABLED'}
+                                                </button>
+                                            <button onClick={(e) => { e.stopPropagation(); openCheckIn(goal.id); }} disabled={!goal.active} className="p-1.5 rounded-md hover:bg-emerald-50 hover:text-emerald-600 transition-colors" title="Check-in"><Check className="w-3.5 h-3.5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } }); }} className={`p-1.5 rounded-md transition-colors ${goal.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); openEditGoal(goal); }} className="p-1.5 rounded-md hover:text-indigo-500 transition-colors" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); openDuplicateGoal(goal); }} className="p-1.5 rounded-md hover:text-sky-500 transition-colors" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this goal and ALL its check-ins? This cannot be undone.')) deleteGoalMut.mutate(goal.id); }} className="p-1.5 rounded-md hover:text-red-500 transition-colors" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
                                         </div>
                                     </div>
                                 );
@@ -1085,11 +1105,11 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                         const dueBadge = getTaskDueBadge(task);
                                         const hasAutoExpense = task.taskType === 'PAYMENT' && task.createExpenseAutomatically;
                                         return (
-                                            <tr key={task.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors group" style={{ borderColor: 'var(--color-border)' }} onDoubleClick={() => canManage && openEditTask(task)}>
+                                            <tr key={task.id} className={`border-b last:border-0 hover:bg-gray-50 transition-colors group ${canManage ? 'cursor-pointer' : ''}`} style={{ borderColor: 'var(--color-border)' }} onClick={() => canManage && openEditTask(task)}>
                                                 <td className="px-4 py-2.5">
                                                     <div className="flex items-center gap-2">
                                                         {canManage && !isDone && !isArchived ? (
-                                                            <button onClick={() => completeTaskMut.mutate(task.id)} className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 hover:border-green-500 hover:bg-green-50" style={{ borderColor: 'var(--color-border)' }} title="Mark done" />
+                                                            <button onClick={(e) => { e.stopPropagation(); completeTaskMut.mutate(task.id); }} className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 hover:border-green-500 hover:bg-green-50" style={{ borderColor: 'var(--color-border)' }} title="Mark done" />
                                                         ) : (
                                                             <div className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center" style={{ background: isDone ? '#d1fae5' : 'var(--color-border)' }}>
                                                                 {isDone && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
@@ -1145,11 +1165,11 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                 <td className="px-3 py-2.5">
                                                     {canManage && (
                                                         <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button onClick={() => openEditTask(task)} className="p-1 hover:text-indigo-500" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); openEditTask(task); }} className="p-1 hover:text-indigo-500" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
                                                             {isDone || isArchived ? (
-                                                                <button className="p-1 hover:text-blue-500 text-xs" onClick={() => updateTaskMut.mutate({ id: task.id, body: { status: 'PLANNED' } })} title="Reopen"><RefreshCcw className="w-3.5 h-3.5" /></button>
+                                                                <button className="p-1 hover:text-blue-500 text-xs" onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: task.id, body: { status: 'PLANNED' } }); }} title="Reopen"><RefreshCcw className="w-3.5 h-3.5" /></button>
                                                             ) : null}
-                                                            <button onClick={() => { if (window.confirm('Delete this task?')) deleteTaskMut.mutate(task.id); }} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this task?')) deleteTaskMut.mutate(task.id); }} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
                                                         </div>
                                                     )}
                                                 </td>
@@ -1176,7 +1196,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                     <div
                                         key={task.id}
                                         className="card p-5 animate-slide-up transition-shadow hover:shadow-lg"
-                                        onDoubleClick={() => canManage && openEditTask(task)}
+                                        onClick={() => canManage && openEditTask(task)}
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
@@ -1211,10 +1231,10 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                             </div>
                                             {canManage && (
                                                 <div className="flex items-center gap-1 flex-shrink-0">
-                                                    <button onClick={() => updateTaskMut.mutate({ id: task.id, body: { pinToDashboard: !task.pinToDashboard } })} className={`p-1 ${task.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin task"><Pin className="w-3.5 h-3.5" /></button>
-                                                    <button onClick={() => openEditTask(task)} className="p-1 hover:text-indigo-500" title="Edit task"><Pencil className="w-3.5 h-3.5" /></button>
-                                                    <button onClick={() => openDuplicateTask(task)} className="p-1 hover:text-sky-500" title="Duplicate task"><Copy className="w-3.5 h-3.5" /></button>
-                                                    <button onClick={() => { if (window.confirm('Delete this task?')) deleteTaskMut.mutate(task.id); }} className="p-1 hover:text-red-500" title="Delete task"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: task.id, body: { pinToDashboard: !task.pinToDashboard } }); }} className={`p-1 ${task.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin task"><Pin className="w-3.5 h-3.5" /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); openEditTask(task); }} className="p-1 hover:text-indigo-500" title="Edit task"><Pencil className="w-3.5 h-3.5" /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); openDuplicateTask(task); }} className="p-1 hover:text-sky-500" title="Duplicate task"><Copy className="w-3.5 h-3.5" /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this task?')) deleteTaskMut.mutate(task.id); }} className="p-1 hover:text-red-500" title="Delete task"><Trash2 className="w-3.5 h-3.5" /></button>
                                                 </div>
                                             )}
                                         </div>
