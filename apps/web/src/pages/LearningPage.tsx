@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { BookOpen, CheckCircle2, Clock, Copy, GraduationCap, GripVertical, Pencil, Pin, Plus, Trash2, X } from 'lucide-react';
+import { BookOpen, CheckCircle2, Clock, Copy, GraduationCap, LayoutGrid, List, Pencil, Pin, Plus, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useAuthStore } from '../stores/auth';
@@ -44,10 +44,9 @@ export default function LearningPage() {
     const [editingTopic, setEditingTopic] = useState<any>(null);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [editingHistory, setEditingHistory] = useState<any>(null);
+    const [listView, setListView] = useState(false);
     const [topicForm, setTopicForm] = useState(emptyTopicForm());
     const [historyForm, setHistoryForm] = useState(emptyHistoryForm());
-    const [draggingTopicId, setDraggingTopicId] = useState<string | null>(null);
-    const [dragOverTopicId, setDragOverTopicId] = useState<string | null>(null);
 
     const { data: topics, isLoading } = useQuery({
         queryKey: ['learning_topics'],
@@ -78,11 +77,6 @@ export default function LearningPage() {
             qc.invalidateQueries({ queryKey: ['learning_topics'] });
             if (selectedTopicId === id) setSelectedTopicId(null);
         },
-    });
-
-    const reorderTopicsMut = useMutation({
-        mutationFn: (ids: string[]) => api.post('/learning/topics/reorder', { ids }),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['learning_topics'] }),
     });
 
     const createHistoryMut = useMutation({
@@ -207,30 +201,6 @@ export default function LearningPage() {
         createHistoryMut.mutate(body);
     }
 
-    function handleTopicDrop(targetId: string) {
-        if (!draggingTopicId || draggingTopicId === targetId) {
-            setDraggingTopicId(null);
-            setDragOverTopicId(null);
-            return;
-        }
-
-        const ids = topicList.map((topic: any) => topic.id);
-        const from = ids.indexOf(draggingTopicId);
-        const to = ids.indexOf(targetId);
-        if (from === -1 || to === -1) {
-            setDraggingTopicId(null);
-            setDragOverTopicId(null);
-            return;
-        }
-
-        const reordered = [...ids];
-        reordered.splice(from, 1);
-        reordered.splice(to, 0, draggingTopicId);
-        reorderTopicsMut.mutate(reordered);
-        setDraggingTopicId(null);
-        setDragOverTopicId(null);
-    }
-
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center justify-between">
@@ -247,7 +217,6 @@ export default function LearningPage() {
                 <div className="lg:col-span-1 space-y-4">
                     <div className="flex items-center justify-between gap-3">
                         <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Learning Topics</h3>
-                        <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>Drag to arrange</span>
                     </div>
                     {isLoading ? (
                         <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="card p-4 h-16 animate-pulse bg-gray-50" />)}</div>
@@ -260,31 +229,13 @@ export default function LearningPage() {
                                     return (
                                         <div
                                             key={topic.id}
-                                            draggable={canManage}
-                                            onDragStart={() => canManage && setDraggingTopicId(topic.id)}
-                                            onDragOver={(e) => {
-                                                e.preventDefault();
-                                                if (dragOverTopicId !== topic.id) setDragOverTopicId(topic.id);
-                                            }}
-                                            onDragLeave={() => {
-                                                if (dragOverTopicId === topic.id) setDragOverTopicId(null);
-                                            }}
-                                            onDrop={(e) => {
-                                                e.preventDefault();
-                                                handleTopicDrop(topic.id);
-                                            }}
-                                            onDragEnd={() => {
-                                                setDraggingTopicId(null);
-                                                setDragOverTopicId(null);
-                                            }}
-                                            className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''} ${draggingTopicId === topic.id ? 'opacity-60' : ''} ${dragOverTopicId === topic.id ? 'ring-2 ring-slate-300' : ''}`}
+                                            className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''}`}
                                             onClick={() => setSelectedTopicId(topic.id)}
                                             onDoubleClick={() => canManage && openEditTopic(topic)}
                                             style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex items-start gap-2">
-                                                    <GripVertical className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--color-text-secondary)' }} />
                                                     <div>
                                                         <div className="flex items-center gap-2 flex-wrap">
                                                             <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{topic.title}</h4>
@@ -338,9 +289,40 @@ export default function LearningPage() {
                             </div>
 
                             <div className="space-y-4">
-                                <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--color-text)' }}><BookOpen className="w-4 h-4" /> Topic Histories</h4>
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--color-text)' }}><BookOpen className="w-4 h-4" /> Topic Histories</h4>
+                                    <div className="flex items-center gap-1 p-0.5 bg-gray-100 rounded-lg">
+                                        <button className={`p-1 rounded-md transition-all ${!listView ? 'bg-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} onClick={() => setListView(false)} title="Grid view"><LayoutGrid className="w-3.5 h-3.5" /></button>
+                                        <button className={`p-1 rounded-md transition-all ${listView ? 'bg-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} onClick={() => setListView(true)} title="List view"><List className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                </div>
                                 {histories.length === 0 ? (
                                     <div className="text-center py-10 opacity-40"><p className="text-xs">No histories recorded for this topic.</p></div>
+                                ) : listView ? (
+                                    <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
+                                        {histories.map((history: any) => {
+                                            const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
+                                            const canManage = !sharedOwnerName;
+                                            return (
+                                            <div key={history.id} className="flex items-center gap-3 px-4 py-3 group hover:bg-gray-50 transition-colors" onDoubleClick={() => canManage && openEditHistory(history)}>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${getStatusColor(history.status)}`}>{history.status.replace('_', ' ')}</span>
+                                                <span className="font-medium text-sm flex-1 line-clamp-1" style={{ color: 'var(--color-text)' }}>{history.title}</span>
+                                                <div className="flex items-center gap-1.5 text-[11px] shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
+                                                    <Clock className="w-3 h-3" />
+                                                    {history.deadline ? new Date(history.deadline).toLocaleDateString() : 'No deadline'}
+                                                </div>
+                                                <span className="text-[11px] shrink-0 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{history.progress}%</span>
+                                                {canManage && (
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                                        <button className={`p-1 rounded ${history.pinToDashboard ? 'text-amber-500' : 'hover:bg-amber-50 hover:text-amber-500 text-gray-400'}`} onClick={() => togglePinHistoryMut.mutate({ id: history.id, pinToDashboard: !history.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 hover:bg-gray-100 rounded text-gray-400" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditHistory(history)}><Pencil className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 hover:bg-red-50 hover:text-red-500 rounded text-gray-400" onClick={() => { if (window.confirm('Delete this history?')) deleteHistoryMut.mutate(history.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )})}
+                                    </div>
                                 ) : (
                                     <div className="grid gap-4 md:grid-cols-2">
                                         {histories.map((history: any) => {

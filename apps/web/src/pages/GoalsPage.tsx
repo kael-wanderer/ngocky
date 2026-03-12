@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import {
     Trophy, Plus, X, Check, Trash2, AlertCircle, Pencil, Copy, Pin,
-    LayoutGrid, List, Bell, ClipboardList, CheckCircle2,
+    LayoutGrid, List, Bell, ClipboardList, CheckCircle2, RefreshCcw,
 } from 'lucide-react';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useSearchParams } from 'react-router-dom';
@@ -374,10 +374,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const [periodFilter, setPeriodFilter] = useState<'ALL' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY'>('ALL');
     const [taskFilter, setTaskFilter] = useState<'ALL' | 'OPEN' | 'DONE' | 'OVERDUE'>('ALL');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [draggingGoalId, setDraggingGoalId] = useState<string | null>(null);
-    const [dragOverGoalId, setDragOverGoalId] = useState<string | null>(null);
-    const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
-    const [dragOverTaskId, setDragOverTaskId] = useState<string | null>(null);
+    const [taskViewMode, setTaskViewMode] = useState<'grid' | 'list'>('list');
     const [goalForm, setGoalForm] = useState({ ...goalEmptyForm });
     const [taskForm, setTaskForm] = useState({ ...taskEmptyForm });
     const editIdParam = searchParams.get('editId');
@@ -419,11 +416,6 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
 
     const deleteGoalMut = useMutation({
         mutationFn: (id: string) => api.delete(`/goals/${id}`),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['goals'] }),
-    });
-
-    const reorderMut = useMutation({
-        mutationFn: (ids: string[]) => api.post('/goals/reorder', { ids }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['goals'] }),
     });
 
@@ -487,11 +479,6 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
         },
     });
 
-    const reorderTasksMut = useMutation({
-        mutationFn: (ids: string[]) => api.post('/tasks/reorder', { ids }),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
-    });
-
     const goals = goalsData || [];
     const tasks = tasksData || [];
     const selectedGoal = goals.find((g: any) => g.id === checkInGoalId);
@@ -514,43 +501,6 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const minDateObj = new Date();
     minDateObj.setDate(minDateObj.getDate() - 45);
     const minDate = minDateObj.toISOString().split('T')[0];
-
-    const handleGoalDrop = (targetId: string) => {
-        if (!draggingGoalId || draggingGoalId === targetId) { setDraggingGoalId(null); setDragOverGoalId(null); return; }
-        const ids = filteredGoals.map((g: any) => g.id);
-        const from = ids.indexOf(draggingGoalId);
-        const to = ids.indexOf(targetId);
-        const reordered = [...ids];
-        reordered.splice(from, 1);
-        reordered.splice(to, 0, draggingGoalId);
-        reorderMut.mutate(reordered);
-        setDraggingGoalId(null);
-        setDragOverGoalId(null);
-    };
-
-    const handleTaskDrop = (targetId: string) => {
-        if (!draggingTaskId || draggingTaskId === targetId) {
-            setDraggingTaskId(null);
-            setDragOverTaskId(null);
-            return;
-        }
-
-        const ids = tasks.map((task: any) => task.id);
-        const from = ids.indexOf(draggingTaskId);
-        const to = ids.indexOf(targetId);
-        if (from === -1 || to === -1) {
-            setDraggingTaskId(null);
-            setDragOverTaskId(null);
-            return;
-        }
-
-        const reordered = [...ids];
-        reordered.splice(from, 1);
-        reordered.splice(to, 0, draggingTaskId);
-        reorderTasksMut.mutate(reordered);
-        setDraggingTaskId(null);
-        setDragOverTaskId(null);
-    };
 
     const handleDateChange = (val: string) => {
         setDate(val);
@@ -759,15 +709,8 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                 return (
                                     <div
                                         key={goal.id}
-                                        className={`card p-5 animate-slide-up transition-shadow cursor-grab active:cursor-grabbing ${dragOverGoalId === goal.id ? 'ring-2 shadow-lg' : 'hover:shadow-lg'}`}
-                                        style={dragOverGoalId === goal.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
+                                        className="card p-5 animate-slide-up transition-shadow hover:shadow-lg"
                                         onDoubleClick={() => openEditGoal(goal)}
-                                        draggable
-                                        onDragStart={() => setDraggingGoalId(goal.id)}
-                                        onDragOver={(e) => { e.preventDefault(); setDragOverGoalId(goal.id); }}
-                                        onDragLeave={() => setDragOverGoalId(null)}
-                                        onDrop={() => handleGoalDrop(goal.id)}
-                                        onDragEnd={() => { setDraggingGoalId(null); setDragOverGoalId(null); }}
                                     >
                                         <div className="flex items-start justify-between mb-2 gap-3">
                                             <div className="flex-1 min-w-0 pr-2">
@@ -868,6 +811,10 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                 <option value="DONE">Done</option>
                                 <option value="OVERDUE">Overdue</option>
                             </select>
+                            <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
+                                <button onClick={() => setTaskViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
+                                <button onClick={() => setTaskViewMode('list')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
+                            </div>
                         </div>
                         <button className="btn-primary whitespace-nowrap" onClick={openCreateTask}>
                             <Plus className="w-4 h-4" /> Add Task
@@ -882,6 +829,70 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                             <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text-secondary)' }}>No tasks yet</h3>
                             <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>Create standalone tasks here without putting them into project boards.</p>
                         </div>
+                    ) : taskViewMode === 'list' ? (
+                        <div className="card overflow-hidden">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b text-left" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
+                                        <th className="px-4 py-2.5 font-semibold text-xs" style={{ color: 'var(--color-text-secondary)' }}>Title</th>
+                                        <th className="px-3 py-2.5 font-semibold text-xs hidden sm:table-cell" style={{ color: 'var(--color-text-secondary)' }}>Status</th>
+                                        <th className="px-3 py-2.5 font-semibold text-xs hidden md:table-cell" style={{ color: 'var(--color-text-secondary)' }}>Priority</th>
+                                        <th className="px-3 py-2.5 font-semibold text-xs hidden lg:table-cell" style={{ color: 'var(--color-text-secondary)' }}>Due</th>
+                                        <th className="px-3 py-2.5 font-semibold text-xs text-right" style={{ color: 'var(--color-text-secondary)' }}>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredTasks.map((task: any) => {
+                                        const canManage = !getSharedOwnerName(task, user?.id);
+                                        const isDone = task.status === 'DONE';
+                                        const isArchived = task.status === 'ARCHIVED';
+                                        const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+                                        const isOverdue = dueDate ? dueDate < new Date(new Date().setHours(0, 0, 0, 0)) && !isDone && !isArchived : false;
+                                        return (
+                                            <tr key={task.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors group" style={{ borderColor: 'var(--color-border)' }}>
+                                                <td className="px-4 py-2.5">
+                                                    <div className="flex items-center gap-2">
+                                                        {canManage && !isDone && !isArchived ? (
+                                                            <button onClick={() => completeTaskMut.mutate(task.id)} className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 hover:border-green-500 hover:bg-green-50" style={{ borderColor: 'var(--color-border)' }} title="Mark done" />
+                                                        ) : (
+                                                            <div className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center" style={{ background: isDone ? '#d1fae5' : 'var(--color-border)' }}>
+                                                                {isDone && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
+                                                            </div>
+                                                        )}
+                                                        <span className={`font-medium ${isDone || isArchived ? 'line-through opacity-50' : ''}`} style={{ color: 'var(--color-text)' }}>{task.title}</span>
+                                                        {task.pinToDashboard && <Pin className="w-3 h-3 text-amber-500 flex-shrink-0" />}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-2.5 hidden sm:table-cell">
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${isDone ? 'bg-emerald-50 text-emerald-700' : isArchived ? 'bg-gray-100 text-gray-600' : task.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}`}>
+                                                        {task.status.replace('_', ' ')}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-2.5 hidden md:table-cell">
+                                                    <span className="text-xs font-semibold" style={{ color: task.priority === 'URGENT' ? '#dc2626' : task.priority === 'HIGH' ? '#d97706' : 'var(--color-text-secondary)' }}>{task.priority}</span>
+                                                </td>
+                                                <td className="px-3 py-2.5 hidden lg:table-cell">
+                                                    <span className="text-xs" style={{ color: isOverdue ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                                                        {dueDate ? format(dueDate, 'MMM d, yyyy') : '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-2.5">
+                                                    {canManage && (
+                                                        <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button onClick={() => openEditTask(task)} className="p-1 hover:text-indigo-500" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                                            {isDone || isArchived ? (
+                                                                <button className="p-1 hover:text-blue-500 text-xs" onClick={() => updateTaskMut.mutate({ id: task.id, body: { status: 'PLANNED' } })} title="Reopen"><RefreshCcw className="w-3.5 h-3.5" /></button>
+                                                            ) : null}
+                                                            <button onClick={() => { if (window.confirm('Delete this task?')) deleteTaskMut.mutate(task.id); }} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2">
                             {filteredTasks.map((task: any) => {
@@ -893,25 +904,10 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                 const isArchived = task.status === 'ARCHIVED';
                                 const dueDate = task.dueDate ? new Date(task.dueDate) : null;
                                 const isOverdue = dueDate ? dueDate < new Date(new Date().setHours(0, 0, 0, 0)) && !isDone && !isArchived : false;
-                                const canReorderTasks = taskFilter === 'ALL' && canManage;
                                 return (
                                     <div
                                         key={task.id}
-                                        className={`card p-5 animate-slide-up transition-shadow ${canReorderTasks ? 'cursor-grab active:cursor-grabbing' : ''} ${dragOverTaskId === task.id ? 'ring-2 shadow-lg' : 'hover:shadow-lg'}`}
-                                        style={dragOverTaskId === task.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
-                                        draggable={canReorderTasks}
-                                        onDragStart={() => canReorderTasks && setDraggingTaskId(task.id)}
-                                        onDragOver={(e) => {
-                                            if (!canReorderTasks || !draggingTaskId) return;
-                                            e.preventDefault();
-                                            setDragOverTaskId(task.id);
-                                        }}
-                                        onDragLeave={() => canReorderTasks && setDragOverTaskId(null)}
-                                        onDrop={() => canReorderTasks && handleTaskDrop(task.id)}
-                                        onDragEnd={() => {
-                                            setDraggingTaskId(null);
-                                            setDragOverTaskId(null);
-                                        }}
+                                        className="card p-5 animate-slide-up transition-shadow hover:shadow-lg"
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">

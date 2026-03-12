@@ -21,6 +21,7 @@ interface AuthState {
     logout: () => void;
     setUser: (user: User) => void;
     initialize: () => void;
+    refreshUser: () => Promise<void>;
 }
 
 const applyTheme = (theme?: string) => {
@@ -83,5 +84,21 @@ export const useAuthStore = create<AuthState>((set) => ({
             }
         }
         set({ user: null, token: null, isAuthenticated: false, isInitialized: true });
+    },
+
+    refreshUser: async () => {
+        const token = localStorage.getItem('ngocky_token');
+        if (!token) return;
+        try {
+            const { default: api } = await import('../api/client');
+            const res = await api.get('/auth/me');
+            const fresh = res.data.data;
+            if (!fresh) return;
+            localStorage.setItem('ngocky_user', JSON.stringify(fresh));
+            set({ user: fresh });
+            applyTheme(fresh.theme);
+        } catch {
+            // silently ignore — stale localStorage data will be used
+        }
     },
 }));

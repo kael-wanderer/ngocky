@@ -22,6 +22,17 @@ const scopeOptions = [
     { value: 'KEO', label: 'Ca Keo' },
     { value: 'PROJECT', label: 'Project' },
 ];
+const scopeColors: Record<string, { color: string; bg: string }> = {
+    PERSONAL: { color: '#1d4ed8', bg: '#dbeafe' },
+    FAMILY: { color: '#15803d', bg: '#dcfce7' },
+    KEO: { color: '#b91c1c', bg: '#fee2e2' },
+    PROJECT: { color: '#6d28d9', bg: '#ede9fe' },
+};
+function ScopeBadge({ scope }: { scope: string }) {
+    const label = scopeOptions.find((o) => o.value === scope)?.label || scope;
+    const colors = scopeColors[scope] || { color: '#374151', bg: '#f3f4f6' };
+    return <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{ color: colors.color, backgroundColor: colors.bg }}>{label}</span>;
+}
 const paymentOptions = [
     { value: 'CASH', label: 'Cash' },
     { value: 'BANK_TRANSFER', label: 'Bank transfer' },
@@ -584,7 +595,7 @@ export default function ExpensesPage() {
                                                 <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(expense.date), 'MMM d, yyyy')}</td>
                                                 <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{expense.user?.name || '-'}</td>
                                                 <td><span className={`badge ${isReceive ? 'badge-success' : 'badge-danger'}`}>{isReceive ? 'Receive' : 'Pay'}</span></td>
-                                                <td><span className="badge badge-warning">{scopeOptions.find((option) => option.value === expense.scope)?.label || expense.scope}</span></td>
+                                                <td><ScopeBadge scope={expense.scope} /></td>
                                                 <td><span className="badge-primary">{expense.category || '-'}</span></td>
                                                 <td><span className="badge-primary">{paymentOptions.find((option) => option.value === expense.payment)?.label || expense.payment || '-'}</span></td>
                                                 <td>

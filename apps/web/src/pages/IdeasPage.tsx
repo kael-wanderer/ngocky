@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Calendar, Copy, GripVertical, Lightbulb, Pencil, Pin, Plus, Tag, Trash2, X } from 'lucide-react';
+import { Calendar, Copy, LayoutGrid, Lightbulb, List, Pencil, Pin, Plus, Tag, Trash2, X } from 'lucide-react';
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
 
@@ -20,8 +20,7 @@ export default function IdeasPage() {
     const [topicForm, setTopicForm] = useState(emptyTopicForm());
     const [logForm, setLogForm] = useState(emptyLogForm());
     const [tagInput, setTagInput] = useState('');
-    const [draggingTopicId, setDraggingTopicId] = useState<string | null>(null);
-    const [dragOverTopicId, setDragOverTopicId] = useState<string | null>(null);
+    const [logListView, setLogListView] = useState<'grid' | 'list'>('grid');
 
     const { data: topics, isLoading } = useQuery({
         queryKey: ['idea_topics'],
@@ -52,11 +51,6 @@ export default function IdeasPage() {
             qc.invalidateQueries({ queryKey: ['idea_topics'] });
             if (selectedTopicId === id) setSelectedTopicId(null);
         },
-    });
-
-    const reorderTopicsMut = useMutation({
-        mutationFn: (ids: string[]) => api.post('/ideas/topics/reorder', { ids }),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['idea_topics'] }),
     });
 
     const createLogMut = useMutation({
@@ -166,30 +160,6 @@ export default function IdeasPage() {
         setTagInput('');
     }
 
-    function handleTopicDrop(targetId: string) {
-        if (!draggingTopicId || draggingTopicId === targetId) {
-            setDraggingTopicId(null);
-            setDragOverTopicId(null);
-            return;
-        }
-
-        const ids = topicList.map((topic: any) => topic.id);
-        const from = ids.indexOf(draggingTopicId);
-        const to = ids.indexOf(targetId);
-        if (from === -1 || to === -1) {
-            setDraggingTopicId(null);
-            setDragOverTopicId(null);
-            return;
-        }
-
-        const reordered = [...ids];
-        reordered.splice(from, 1);
-        reordered.splice(to, 0, draggingTopicId);
-        reorderTopicsMut.mutate(reordered);
-        setDraggingTopicId(null);
-        setDragOverTopicId(null);
-    }
-
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center justify-between">
@@ -206,7 +176,6 @@ export default function IdeasPage() {
                 <div className="lg:col-span-1 space-y-4">
                     <div className="flex items-center justify-between gap-3">
                         <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Idea Topics</h3>
-                        <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>Drag to arrange</span>
                     </div>
                     {isLoading ? (
                         <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="card p-4 h-16 animate-pulse bg-gray-50" />)}</div>
@@ -219,31 +188,13 @@ export default function IdeasPage() {
                                     return (
                                         <div
                                             key={topic.id}
-                                            draggable={canManage}
-                                            onDragStart={() => canManage && setDraggingTopicId(topic.id)}
-                                            onDragOver={(e) => {
-                                                e.preventDefault();
-                                                if (dragOverTopicId !== topic.id) setDragOverTopicId(topic.id);
-                                            }}
-                                            onDragLeave={() => {
-                                                if (dragOverTopicId === topic.id) setDragOverTopicId(null);
-                                            }}
-                                            onDrop={(e) => {
-                                                e.preventDefault();
-                                                handleTopicDrop(topic.id);
-                                            }}
-                                            onDragEnd={() => {
-                                                setDraggingTopicId(null);
-                                                setDragOverTopicId(null);
-                                            }}
-                                            className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''} ${draggingTopicId === topic.id ? 'opacity-60' : ''} ${dragOverTopicId === topic.id ? 'ring-2 ring-slate-300' : ''}`}
+                                            className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''}`}
                                             onClick={() => setSelectedTopicId(topic.id)}
                                             onDoubleClick={() => canManage && openEditTopic(topic)}
                                             style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex items-start gap-2">
-                                                    <GripVertical className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--color-text-secondary)' }} />
                                                     <div>
                                                         <div className="flex items-center gap-2 flex-wrap">
                                                             <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{topic.title}</h4>
@@ -287,13 +238,72 @@ export default function IdeasPage() {
                                     {getSharedOwnerName(activeTopic, user?.id) && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {getSharedOwnerName(activeTopic, user?.id)}</p>}
                                     <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{activeTopic.description || 'No topic description yet.'}</p>
                                 </div>
-                                {!getSharedOwnerName(activeTopic, user?.id) && (
-                                    <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateLog}>
-                                        <Plus className="w-3.5 h-3.5" /> Add Log
-                                    </button>
-                                )}
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            className={`p-1.5 rounded-md transition-colors ${logListView === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                                            onClick={() => setLogListView('grid')}
+                                            title="Grid view"
+                                        >
+                                            <LayoutGrid className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
+                                        </button>
+                                        <button
+                                            className={`p-1.5 rounded-md transition-colors ${logListView === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                                            onClick={() => setLogListView('list')}
+                                            title="List view"
+                                        >
+                                            <List className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
+                                        </button>
+                                    </div>
+                                    {!getSharedOwnerName(activeTopic, user?.id) && (
+                                        <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateLog}>
+                                            <Plus className="w-3.5 h-3.5" /> Add Log
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
+                            {logListView === 'list' ? (
+                                <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
+                                    {logs.map((log: any) => {
+                                        const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
+                                        const canManage = !sharedOwnerName;
+                                        return (
+                                            <div key={log.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors group" onDoubleClick={() => canManage && openEditLog(log)}>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{log.title}</span>
+                                                        {log.category && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-purple-50 text-purple-600">{log.category}</span>}
+                                                        {log.field && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">{log.field}</span>}
+                                                        {log.pinToDashboard && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <span className="text-[9px] font-bold text-emerald-600 uppercase">{log.status}</span>
+                                                        <span className="text-[9px]" style={{ color: 'var(--color-text-secondary)' }}>{new Date(log.createdAt).toLocaleDateString()}</span>
+                                                        {(log.tags || []).length > 0 && (
+                                                            <span className="text-[9px] flex items-center gap-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                                                <Tag className="w-2 h-2" /> {log.tags.join(', ')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {canManage && (
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                                        <button className={`p-1 ${log.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={() => togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 hover:text-indigo-500" onClick={() => openEditLog(log)}><Pencil className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 hover:text-red-500" onClick={() => { if (window.confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                    {logs.length === 0 && (
+                                        <div className="text-center py-10">
+                                            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No idea logs yet</p>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
                             <div className="columns-1 md:columns-2 gap-4 space-y-4">
                                 {logs.map((log: any) => {
                                     const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
@@ -342,6 +352,7 @@ export default function IdeasPage() {
                                     </div>
                                 )}
                             </div>
+                            )}
                         </div>
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center card p-12 text-center border-dashed border-2">

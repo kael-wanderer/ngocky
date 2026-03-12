@@ -335,7 +335,7 @@ export default function CaKeoPage() {
                                 </div>
                                 <div>
                                     <label className="label">Start Time</label>
-                                    <input type="time" className="input" value={form.startTime} disabled={!form.startDate || form.allDay} onChange={(e) => setForm({ ...form, startTime: e.target.value })} />
+                                    <input type="time" className="input" value={form.startTime} disabled={form.allDay} onChange={(e) => setForm({ ...form, startTime: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="label">End Date</label>
@@ -343,7 +343,7 @@ export default function CaKeoPage() {
                                 </div>
                                 <div>
                                     <label className="label">End Time</label>
-                                    <input type="time" className="input" value={form.endTime} disabled={!form.endDate || form.allDay} onChange={(e) => setForm({ ...form, endTime: e.target.value })} />
+                                    <input type="time" className="input" value={form.endTime} disabled={form.allDay} onChange={(e) => setForm({ ...form, endTime: e.target.value })} />
                                 </div>
                             </div>
                             <div>

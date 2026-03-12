@@ -6,17 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import {
     FolderKanban, Home, Calendar, Wallet,
     AlertTriangle, Target, CheckCircle2, Pin, Package, ChevronDown,
-    Lightbulb, Trophy, Microwave, GraduationCap, GripVertical,
+    Lightbulb, Trophy, Microwave, GraduationCap,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import {
-    DndContext, closestCenter, DragEndEvent,
-    PointerSensor, useSensor, useSensors,
-} from '@dnd-kit/core';
-import {
-    SortableContext, useSortable, arrayMove, rectSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 const CATEGORY_OPTIONS = ['goal', 'task', 'project', 'housework', 'calendar', 'expense', 'assets', 'learning', 'idea'] as const;
 type Category = typeof CATEGORY_OPTIONS[number];
@@ -82,26 +74,6 @@ const getHouseworkStatus = (nextDueDate?: string | null) => {
     return { label: 'Upcoming', color: '#065f46', bg: '#d1fae5' };
 };
 
-// Sortable section wrapper
-function SortableSection({ id, children }: { id: string; children: React.ReactNode }) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-    return (
-        <div
-            ref={setNodeRef}
-            style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, position: 'relative' }}
-        >
-            <button
-                className="absolute top-3 right-3 z-10 p-1 rounded cursor-grab active:cursor-grabbing hover:bg-gray-100 transition-colors"
-                {...attributes} {...listeners}
-                title="Drag to reorder"
-                type="button"
-            >
-                <GripVertical className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
-            </button>
-            {children}
-        </div>
-    );
-}
 
 export default function DashboardPage() {
     const { user } = useAuthStore();
@@ -122,21 +94,6 @@ export default function DashboardPage() {
         } catch { /* ignore */ }
         return DEFAULT_SECTION_ORDER;
     });
-
-    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-
-    function handleDragEnd(event: DragEndEvent) {
-        const { active, over } = event;
-        if (over && active.id !== over.id) {
-            setSectionOrder(prev => {
-                const oldIdx = prev.indexOf(active.id as SectionId);
-                const newIdx = prev.indexOf(over.id as SectionId);
-                const next = arrayMove(prev, oldIdx, newIdx);
-                localStorage.setItem(SECTION_STORAGE_KEY, JSON.stringify(next));
-                return next;
-            });
-        }
-    }
 
     const { data, isLoading } = useQuery({
         queryKey: ['dashboard', timeRange, statusFilter],
@@ -606,22 +563,13 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Draggable sections */}
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={visibleSections} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {visibleSections.map(id => {
-                            const content = renderSection(id);
-                            if (!content) return null;
-                            return (
-                                <SortableSection key={id} id={id}>
-                                    {content}
-                                </SortableSection>
-                            );
-                        })}
-                    </div>
-                </SortableContext>
-            </DndContext>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {visibleSections.map(id => {
+                    const content = renderSection(id);
+                    if (!content) return null;
+                    return <div key={id}>{content}</div>;
+                })}
+            </div>
         </div>
     );
 }

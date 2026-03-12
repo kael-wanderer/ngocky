@@ -51,10 +51,11 @@ function FeatureRoute({ route, children }: { route: string; children: React.Reac
 }
 
 export default function App() {
-    const { initialize, isAuthenticated, isInitialized } = useAuthStore();
+    const { initialize, refreshUser, isAuthenticated, isInitialized } = useAuthStore();
 
     useEffect(() => {
         initialize();
+        refreshUser();
     }, []);
 
     return (

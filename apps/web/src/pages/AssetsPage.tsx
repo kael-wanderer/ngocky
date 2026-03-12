@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Calendar, Copy, GripVertical, Microwave, Pencil, Pin, Plus, Trash2, Wrench, X } from 'lucide-react';
+import { Calendar, Copy, LayoutGrid, List, Microwave, Pencil, Pin, Plus, Trash2, Wrench, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
@@ -50,8 +50,7 @@ export default function AssetsPage() {
     const [recordForm, setRecordForm] = useState(emptyRecordForm());
     const [recordSortBy, setRecordSortBy] = useState<'time' | 'cost'>('time');
     const [recordSortOrder, setRecordSortOrder] = useState<'asc' | 'desc'>('desc');
-    const [draggingAssetId, setDraggingAssetId] = useState<string | null>(null);
-    const [dragOverAssetId, setDragOverAssetId] = useState<string | null>(null);
+    const [assetListView, setAssetListView] = useState<'grid' | 'list'>('grid');
     const assetIdParam = searchParams.get('assetId');
 
     const { data: assets, isLoading: assetsLoading } = useQuery({
@@ -92,11 +91,6 @@ export default function AssetsPage() {
                 setSearchParams({});
             }
         },
-    });
-
-    const reorderAssetsMut = useMutation({
-        mutationFn: (ids: string[]) => api.post('/assets/reorder', { ids }),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['assets'] }),
     });
 
     const createRecordMut = useMutation({
@@ -287,30 +281,6 @@ export default function AssetsPage() {
         }
     }
 
-    function handleAssetDrop(targetId: string) {
-        if (!draggingAssetId || draggingAssetId === targetId) {
-            setDraggingAssetId(null);
-            setDragOverAssetId(null);
-            return;
-        }
-
-        const ids = (assets || []).map((asset: any) => asset.id);
-        const from = ids.indexOf(draggingAssetId);
-        const to = ids.indexOf(targetId);
-        if (from === -1 || to === -1) {
-            setDraggingAssetId(null);
-            setDragOverAssetId(null);
-            return;
-        }
-
-        const reordered = [...ids];
-        reordered.splice(from, 1);
-        reordered.splice(to, 0, draggingAssetId);
-        reorderAssetsMut.mutate(reordered);
-        setDraggingAssetId(null);
-        setDragOverAssetId(null);
-    }
-
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center justify-between">
@@ -327,10 +297,65 @@ export default function AssetsPage() {
                 <div className="lg:col-span-1 space-y-4">
                     <div className="flex items-center justify-between gap-3">
                         <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>My Assets</h3>
-                        <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>Drag to arrange</span>
+                        <div className="flex items-center gap-1">
+                            <button
+                                className={`p-1.5 rounded-md transition-colors ${assetListView === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                                onClick={() => setAssetListView('grid')}
+                                title="Grid view"
+                            >
+                                <LayoutGrid className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
+                            </button>
+                            <button
+                                className={`p-1.5 rounded-md transition-colors ${assetListView === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                                onClick={() => setAssetListView('list')}
+                                title="List view"
+                            >
+                                <List className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
+                            </button>
+                        </div>
                     </div>
                     {assetsLoading ? (
                         <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="card p-4 h-16 animate-pulse bg-gray-50" />)}</div>
+                    ) : assetListView === 'list' ? (
+                        <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
+                            {(assets || []).map((asset: any) => {
+                                const sharedOwnerName = getSharedOwnerName(asset, user?.id);
+                                const canManage = !sharedOwnerName;
+                                return (
+                                    <div
+                                        key={asset.id}
+                                        className={`flex items-center justify-between gap-2 px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors ${selectedAsset?.id === asset.id ? 'bg-primary/5' : ''}`}
+                                        onClick={() => setSelectedAsset(asset)}
+                                        onDoubleClick={() => canManage && openEditAsset(asset)}
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <span className="text-sm font-medium truncate block" style={{ color: selectedAsset?.id === asset.id ? 'var(--color-primary)' : 'var(--color-text)' }}>{asset.name}</span>
+                                            <span className="text-[10px] uppercase font-bold" style={{ color: 'var(--color-text-secondary)' }}>
+                                                {asset.type || [asset.brand, asset.model].filter(Boolean).join(' ') || '—'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            {asset.isShared && <span className="text-[9px] px-1 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                            {canManage && (
+                                                <>
+                                                    <button className="p-1 rounded hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditAsset(asset); }}>
+                                                        <Pencil className="w-3 h-3" style={{ color: 'var(--color-text-secondary)' }} />
+                                                    </button>
+                                                    <button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-red-500" onClick={(e) => { e.stopPropagation(); handleDeleteAsset(asset.id); }}>
+                                                        <Trash2 className="w-3 h-3" />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {assets?.length === 0 && (
+                                <div className="text-center py-8">
+                                    <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>No appliances or devices yet</p>
+                                </div>
+                            )}
+                        </div>
                     ) : (
                         <div className="space-y-3">
                             {(assets || []).map((asset: any) => (
@@ -340,31 +365,13 @@ export default function AssetsPage() {
                                     return (
                                 <div
                                     key={asset.id}
-                                    draggable
-                                    onDragStart={() => setDraggingAssetId(asset.id)}
-                                    onDragOver={(e) => {
-                                        e.preventDefault();
-                                        if (dragOverAssetId !== asset.id) setDragOverAssetId(asset.id);
-                                    }}
-                                    onDragLeave={() => {
-                                        if (dragOverAssetId === asset.id) setDragOverAssetId(null);
-                                    }}
-                                    onDrop={(e) => {
-                                        e.preventDefault();
-                                        handleAssetDrop(asset.id);
-                                    }}
-                                    onDragEnd={() => {
-                                        setDraggingAssetId(null);
-                                        setDragOverAssetId(null);
-                                    }}
-                                    className={`card p-4 cursor-pointer transition-all hover:shadow-md ${selectedAsset?.id === asset.id ? 'ring-2 ring-primary border-transparent' : ''} ${draggingAssetId === asset.id ? 'opacity-60' : ''} ${dragOverAssetId === asset.id ? 'ring-2 ring-slate-300' : ''}`}
+                                    className={`card p-4 cursor-pointer transition-all hover:shadow-md ${selectedAsset?.id === asset.id ? 'ring-2 ring-primary border-transparent' : ''}`}
                                     onClick={() => setSelectedAsset(asset)}
                                     onDoubleClick={() => canManage && openEditAsset(asset)}
                                     style={selectedAsset?.id === asset.id ? { borderColor: 'var(--color-primary)' } : {}}
                                 >
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0 flex items-start gap-2">
-                                            <GripVertical className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--color-text-secondary)' }} />
                                             <div className="min-w-0">
                                                 <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{asset.name}</h4>
                                                 <div className="flex items-center gap-2 mt-1 flex-wrap">

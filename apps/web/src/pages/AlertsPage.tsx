@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Bell, BellRing, Copy, FileText, Info, Mail, Pencil, Plus, Send, Trash2, X } from 'lucide-react';
+import { Bell, BellRing, Copy, FileText, Info, LayoutGrid, List, Mail, Pencil, Plus, Send, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const CONDITIONS_BY_MODULE: Record<string, { value: string; label: string; hasThreshold?: boolean }[]> = {
@@ -124,11 +124,9 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
     const [editingReport, setEditingReport] = useState<any>(null);
     const [ruleForm, setRuleForm] = useState(emptyRuleForm());
     const [reportForm, setReportForm] = useState(emptyReportForm());
-    const [draggingRuleId, setDraggingRuleId] = useState<string | null>(null);
-    const [dragOverRuleId, setDragOverRuleId] = useState<string | null>(null);
-    const [draggingReportId, setDraggingReportId] = useState<string | null>(null);
-    const [dragOverReportId, setDragOverReportId] = useState<string | null>(null);
     const showTabSwitcher = !forcedTab;
+    const [rulesListView, setRulesListView] = useState(false);
+    const [reportsListView, setReportsListView] = useState(false);
 
     React.useEffect(() => {
         if (forcedTab && activeTab !== forcedTab) {
@@ -161,11 +159,6 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
         onSuccess: () => qc.invalidateQueries({ queryKey: ['alert-rules'] }),
     });
 
-    const reorderRuleMut = useMutation({
-        mutationFn: (ids: string[]) => api.post('/alerts/reorder', { ids }),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['alert-rules'] }),
-    });
-
     const { data: reports, isLoading: reportsLoading } = useQuery({
         queryKey: ['scheduled-reports'],
         queryFn: async () => (await api.get('/scheduled-reports')).data.data,
@@ -192,11 +185,6 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
 
     const deleteReportMut = useMutation({
         mutationFn: (id: string) => api.delete(`/scheduled-reports/${id}`),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduled-reports'] }),
-    });
-
-    const reorderReportMut = useMutation({
-        mutationFn: (ids: string[]) => api.post('/scheduled-reports/reorder', { ids }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduled-reports'] }),
     });
 
@@ -283,46 +271,6 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
         setReportForm(emptyReportForm());
     }
 
-    function handleRuleDrop(targetId: string) {
-        if (!draggingRuleId || draggingRuleId === targetId) {
-            setDraggingRuleId(null);
-            setDragOverRuleId(null);
-            return;
-        }
-
-        const ids = (rules || []).map((rule: any) => rule.id);
-        const from = ids.indexOf(draggingRuleId);
-        const to = ids.indexOf(targetId);
-        if (from === -1 || to === -1) return;
-
-        const reordered = [...ids];
-        reordered.splice(from, 1);
-        reordered.splice(to, 0, draggingRuleId);
-        reorderRuleMut.mutate(reordered);
-        setDraggingRuleId(null);
-        setDragOverRuleId(null);
-    }
-
-    function handleReportDrop(targetId: string) {
-        if (!draggingReportId || draggingReportId === targetId) {
-            setDraggingReportId(null);
-            setDragOverReportId(null);
-            return;
-        }
-
-        const ids = (reports || []).map((report: any) => report.id);
-        const from = ids.indexOf(draggingReportId);
-        const to = ids.indexOf(targetId);
-        if (from === -1 || to === -1) return;
-
-        const reordered = [...ids];
-        reordered.splice(from, 1);
-        reordered.splice(to, 0, draggingReportId);
-        reorderReportMut.mutate(reordered);
-        setDraggingReportId(null);
-        setDragOverReportId(null);
-    }
-
     function openNotificationSettings() {
         navigate('/settings?tab=notifications');
     }
@@ -377,25 +325,49 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Notification Rules</h3>
-                        <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateRule}><Plus className="w-3.5 h-3.5" /> New Notification</button>
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 p-0.5 bg-gray-100 rounded-lg">
+                                <button className={`p-1 rounded-md transition-all ${!rulesListView ? 'bg-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} onClick={() => setRulesListView(false)} title="Grid view"><LayoutGrid className="w-3.5 h-3.5" /></button>
+                                <button className={`p-1 rounded-md transition-all ${rulesListView ? 'bg-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} onClick={() => setRulesListView(true)} title="List view"><List className="w-3.5 h-3.5" /></button>
+                            </div>
+                            <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateRule}><Plus className="w-3.5 h-3.5" /> New Notification</button>
+                        </div>
                     </div>
 
                     {rulesLoading ? (
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[...Array(3)].map((_, i) => <div key={i} className="card h-40 animate-pulse bg-gray-50" />)}</div>
+                    ) : rulesListView ? (
+                        <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
+                            {(rules || []).map((rule: any) => (
+                                <div key={rule.id} className={`flex items-center gap-3 px-4 py-3 group hover:bg-gray-50 transition-colors ${!rule.active ? 'opacity-60' : ''}`} onDoubleClick={() => openEditRule(rule)}>
+                                    <Bell className="w-3.5 h-3.5 shrink-0" style={{ color: rule.active ? 'var(--color-primary)' : undefined }} />
+                                    <span className="font-medium text-sm flex-1 line-clamp-1" style={{ color: 'var(--color-text)' }}>{rule.name}</span>
+                                    <span className="text-[10px] font-medium uppercase shrink-0" style={{ color: 'var(--color-primary)' }}>{rule.moduleType}</span>
+                                    <button className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 transition-colors ${rule.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`} onClick={() => toggleRuleMut.mutate({ id: rule.id, active: !rule.active })}>
+                                        {rule.active ? 'ENABLED' : 'DISABLED'}
+                                    </button>
+                                    <span className="text-[11px] shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
+                                        {rule.frequency === 'WEEKLY'
+                                            ? `Every ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][rule.dayOfWeek ?? 1]} at ${rule.time || '08:00'}`
+                                            : rule.frequency === 'MONTHLY'
+                                            ? `Monthly day ${rule.dayOfMonth ?? 1} at ${rule.time || '08:00'}`
+                                            : `Daily at ${rule.time || '08:00'}`}
+                                    </span>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                        <button className="p-1 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditRule(rule)}><Pencil className="w-3.5 h-3.5" /></button>
+                                        <button className="p-1 hover:bg-gray-100 rounded text-gray-400" onClick={() => duplicateRule(rule)}><Copy className="w-3.5 h-3.5" /></button>
+                                        <button className="p-1 hover:bg-red-50 hover:text-red-500 rounded text-gray-400" onClick={() => { if (confirm('Delete rule?')) deleteRuleMut.mutate(rule.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     ) : (
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {(rules || []).map((rule: any) => (
                                 <div
                                     key={rule.id}
-                                    className={`card p-5 group transition-all cursor-grab active:cursor-grabbing ${dragOverRuleId === rule.id ? 'ring-2 shadow-lg' : ''} ${!rule.active ? 'opacity-60 bg-gray-50' : ''}`}
-                                    style={dragOverRuleId === rule.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
-                                    draggable
+                                    className={`card p-5 group transition-all ${!rule.active ? 'opacity-60 bg-gray-50' : ''}`}
                                     onDoubleClick={() => openEditRule(rule)}
-                                    onDragStart={() => setDraggingRuleId(rule.id)}
-                                    onDragOver={(e) => { e.preventDefault(); setDragOverRuleId(rule.id); }}
-                                    onDragLeave={() => setDragOverRuleId(null)}
-                                    onDrop={() => handleRuleDrop(rule.id)}
-                                    onDragEnd={() => { setDraggingRuleId(null); setDragOverRuleId(null); }}
                                 >
                                     <div className="flex items-start justify-between mb-4">
                                         <div className={`p-2 rounded-lg ${!rule.active ? 'bg-gray-200' : 'bg-primary/10'}`}>
@@ -441,25 +413,53 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Actions</h3>
-                        <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateReport}><Plus className="w-3.5 h-3.5" /> New Action</button>
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 p-0.5 bg-gray-100 rounded-lg">
+                                <button className={`p-1 rounded-md transition-all ${!reportsListView ? 'bg-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} onClick={() => setReportsListView(false)} title="Grid view"><LayoutGrid className="w-3.5 h-3.5" /></button>
+                                <button className={`p-1 rounded-md transition-all ${reportsListView ? 'bg-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} onClick={() => setReportsListView(true)} title="List view"><List className="w-3.5 h-3.5" /></button>
+                            </div>
+                            <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateReport}><Plus className="w-3.5 h-3.5" /> New Action</button>
+                        </div>
                     </div>
 
                     {reportsLoading ? (
                         <div className="space-y-3">{[...Array(2)].map((_, i) => <div key={i} className="card h-24 animate-pulse bg-gray-50" />)}</div>
+                    ) : reportsListView ? (
+                        <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
+                            {(reports || []).map((report: any) => (
+                                <div key={report.id} className={`flex items-center gap-3 px-4 py-3 group hover:bg-gray-50 transition-colors ${!report.active ? 'opacity-60' : ''}`} onDoubleClick={() => openEditReport(report)}>
+                                    <FileText className={`w-3.5 h-3.5 shrink-0 ${!report.active ? 'text-gray-400' : 'text-purple-600'}`} />
+                                    <span className="font-medium text-sm flex-1 line-clamp-1" style={{ color: 'var(--color-text)' }}>{report.name}</span>
+                                    <span className="text-[10px] font-medium uppercase shrink-0" style={{ color: 'var(--color-primary)' }}>{REPORT_TYPE_LABELS[report.reportType] || report.reportType}</span>
+                                    <span className="text-[11px] shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
+                                        {normalizeReportFrequency(report.frequency) === 'ONE_TIME'
+                                            ? `One time at ${report.time}`
+                                            : normalizeReportFrequency(report.frequency) === 'WEEKLY'
+                                            ? `Every ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][report.dayOfWeek ?? 1]} at ${report.time}`
+                                            : normalizeReportFrequency(report.frequency) === 'MONTHLY'
+                                            ? `Monthly on day ${report.dayOfMonth ?? 1} at ${report.time}`
+                                            : normalizeReportFrequency(report.frequency) === 'QUARTERLY'
+                                            ? `Quarterly on day ${report.dayOfMonth ?? 1} at ${report.time}`
+                                            : `Daily at ${report.time}`}
+                                    </span>
+                                    <button className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 transition-colors ${report.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`} onClick={() => toggleReportMut.mutate({ id: report.id, active: !report.active })}>
+                                        {report.active ? 'ENABLED' : 'DISABLED'}
+                                    </button>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                        <button className="p-1 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditReport(report)}><Pencil className="w-3.5 h-3.5" /></button>
+                                        <button className="p-1 hover:bg-gray-100 rounded text-gray-400" onClick={() => duplicateReport(report)}><Copy className="w-3.5 h-3.5" /></button>
+                                        <button className="p-1 hover:bg-red-50 hover:text-red-500 rounded text-gray-400" onClick={() => { if (confirm('Delete schedule?')) deleteReportMut.mutate(report.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     ) : (
                         <div className="grid gap-4">
                             {(reports || []).map((report: any) => (
                                 <div
                                     key={report.id}
-                                    className={`card p-5 group flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all cursor-grab active:cursor-grabbing ${dragOverReportId === report.id ? 'ring-2 shadow-lg' : ''} ${!report.active ? 'opacity-60 bg-gray-50' : ''}`}
-                                    style={dragOverReportId === report.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
-                                    draggable
+                                    className={`card p-5 group flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${!report.active ? 'opacity-60 bg-gray-50' : ''}`}
                                     onDoubleClick={() => openEditReport(report)}
-                                    onDragStart={() => setDraggingReportId(report.id)}
-                                    onDragOver={(e) => { e.preventDefault(); setDragOverReportId(report.id); }}
-                                    onDragLeave={() => setDragOverReportId(null)}
-                                    onDrop={() => handleReportDrop(report.id)}
-                                    onDragEnd={() => { setDraggingReportId(null); setDragOverReportId(null); }}
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className={`p-3 rounded-xl ${!report.active ? 'bg-gray-200' : 'bg-purple-50'}`}>

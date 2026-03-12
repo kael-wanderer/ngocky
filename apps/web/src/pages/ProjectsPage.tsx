@@ -40,12 +40,10 @@ export default function ProjectsPage() {
     const [editingBoard, setEditingBoard] = useState<any>(null);
     const [showCreateTask, setShowCreateTask] = useState(false);
     const [editingTask, setEditingTask] = useState<any>(null);
-    const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
 
     const [boardStatusFilter, setBoardStatusFilter] = useState<'ALL' | 'PLAN' | 'WORKING' | 'COMPLETED'>('ALL');
+    const [boardSort, setBoardSort] = useState<'default' | 'name_asc' | 'updated_desc'>('default');
     const [boardForm, setBoardForm] = useState({ name: '', description: '', type: 'PERSONAL', boardStatus: 'PLAN', isShared: false, pinToDashboard: false });
-    const [draggingBoardId, setDraggingBoardId] = useState<string | null>(null);
-    const [dragOverBoardId, setDragOverBoardId] = useState<string | null>(null);
     const [taskForm, setTaskForm] = useState({ ...emptyTaskForm });
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -113,7 +111,7 @@ export default function ProjectsPage() {
 
     const moveTaskMut = useMutation({
         mutationFn: ({ id, status }: { id: string; status: string }) =>
-            api.patch(`/projects/tasks/${id}/reorder`, { status, kanbanOrder: 0 }),
+            api.patch(`/projects/tasks/${id}`, { status }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
             qc.invalidateQueries({ queryKey: ['project_boards'] });
@@ -134,41 +132,18 @@ export default function ProjectsPage() {
         setEditingBoard(activeBoard);
     };
 
-    const reorderBoardsMut = useMutation({
-        mutationFn: (ids: string[]) => api.post('/projects/reorder', { ids }),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['project_boards'] }),
-    });
 
-    const visibleBoards = boardStatusFilter === 'ALL' ? boards : boards?.filter((b: any) => b.boardStatus === boardStatusFilter);
-
-    const handleBoardDrop = (targetId: string) => {
-        if (!draggingBoardId || draggingBoardId === targetId) { setDraggingBoardId(null); setDragOverBoardId(null); return; }
-        const ids = (visibleBoards || []).map((b: any) => b.id);
-        const from = ids.indexOf(draggingBoardId);
-        const to = ids.indexOf(targetId);
-        const reordered = [...ids];
-        reordered.splice(from, 1);
-        reordered.splice(to, 0, draggingBoardId);
-        reorderBoardsMut.mutate(reordered);
-        setDraggingBoardId(null);
-        setDragOverBoardId(null);
-    };
+    const visibleBoards = (() => {
+        const filtered = boardStatusFilter === 'ALL' ? (boards || []) : (boards || []).filter((b: any) => b.boardStatus === boardStatusFilter);
+        if (boardSort === 'name_asc') return [...filtered].sort((a: any, b: any) => a.name.localeCompare(b.name));
+        if (boardSort === 'updated_desc') return [...filtered].sort((a: any, b: any) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime());
+        return filtered;
+    })();
 
     const refreshBoard = () => {
         if (!selectedBoardId) return;
         qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
         qc.invalidateQueries({ queryKey: ['project_boards'] });
-    };
-
-    const handleDropStatus = (status: string) => {
-        if (!draggingTaskId) return;
-        const dragged = tasks.find((t: any) => t.id === draggingTaskId);
-        if (!dragged || dragged.status === status) {
-            setDraggingTaskId(null);
-            return;
-        }
-        moveTaskMut.mutate({ id: draggingTaskId, status });
-        setDraggingTaskId(null);
     };
 
     const duplicateTask = (task: any) => {
@@ -228,6 +203,11 @@ export default function ProjectsPage() {
                             <option value="WORKING">Working</option>
                             <option value="COMPLETED">Completed</option>
                         </select>
+                        <select className="input" value={boardSort} onChange={(e) => setBoardSort(e.target.value as any)}>
+                            <option value="default">Default order</option>
+                            <option value="name_asc">Name A–Z</option>
+                            <option value="updated_desc">Last updated</option>
+                        </select>
                         <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
                             <button onClick={() => setBoardListView('grid')} className={`p-1.5 rounded-md transition-colors ${boardListView === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
                             <button onClick={() => setBoardListView('list')} className={`p-1.5 rounded-md transition-colors ${boardListView === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
@@ -250,14 +230,7 @@ export default function ProjectsPage() {
                                     return (
                                         <div
                                             key={b.id}
-                                            className={`card p-5 transition-all group cursor-grab active:cursor-grabbing ${dragOverBoardId === b.id ? 'ring-2 shadow-lg' : 'hover:shadow-lg'}`}
-                                            style={dragOverBoardId === b.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
-                                            draggable
-                                            onDragStart={() => setDraggingBoardId(b.id)}
-                                            onDragOver={(e) => { e.preventDefault(); setDragOverBoardId(b.id); }}
-                                            onDragLeave={() => setDragOverBoardId(null)}
-                                            onDrop={() => handleBoardDrop(b.id)}
-                                            onDragEnd={() => { setDraggingBoardId(null); setDragOverBoardId(null); }}
+                                            className="card p-5 transition-all group hover:shadow-lg cursor-pointer"
                                             onClick={() => setSelectedBoardId(b.id)}
                                         >
                                             <div className="flex justify-between items-start mb-2">
@@ -478,7 +451,7 @@ export default function ProjectsPage() {
                         <Pencil className="w-4 h-4" />
                     </button>
                     <button className="p-2 rounded-lg border hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--color-border)' }} onClick={refreshBoard} title="Refresh board">
-                        <RefreshCw className={`w-4 h-4 ${activeBoardLoading || moveTaskMut.isPending ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`w-4 h-4 ${activeBoardLoading ? 'animate-spin' : ''}`} />
                     </button>
                     <button className="btn-primary" onClick={() => { setEditingTask(null); setTaskForm({ ...emptyTaskForm }); setShowCreateTask(true); }}><Plus className="w-4 h-4" /> New Project Task</button>
                 </div>
@@ -678,15 +651,11 @@ export default function ProjectsPage() {
                             <div
                                 className="space-y-2 min-h-[200px] p-2 rounded-xl bg-gray-50/50 border border-dashed"
                                 style={{ borderColor: 'var(--color-border)' }}
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={() => handleDropStatus(status)}
                             >
                                 {tasks.filter((t: any) => t.status === status).map((t: any) => (
                                     <div
                                         key={t.id}
                                         className="card p-3 cursor-pointer hover:shadow-md transition-shadow relative group"
-                                        draggable
-                                        onDragStart={() => setDraggingTaskId(t.id)}
                                         onClick={() => {
                                             setEditingTask(t);
                                             setTaskForm({

@@ -4,8 +4,8 @@ import { useAuthStore } from '../stores/auth';
 import { getFeatureFlags, getMobileNavItems, isFeatureRouteEnabled } from '../config/features';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
-    Wallet, BarChart3, Settings, Users, LogOut, Menu, X,
-    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, GripVertical, Coins, Keyboard, Baby
+    Wallet, BarChart3, Settings, Users, Menu, X,
+    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, Coins, Keyboard, Baby
 } from 'lucide-react';
 
 const navItems = [
@@ -54,7 +54,6 @@ const GROUP_STORAGE_KEY = 'ngocky-sidebar-groups';
 const GROUP_ORDER_STORAGE_KEY = 'ngocky-sidebar-group-order';
 const GROUP_ORDER_VERSION_KEY = 'ngocky-sidebar-group-order-version';
 const GROUP_ORDER_VERSION = 2;
-const CUSTOMIZABLE_GROUP_IDS = navGroups.filter((group) => group.id !== 'admin').map((group) => group.id);
 const CUSTOMIZABLE_NAV_PATHS = navItems.map((item) => item.to);
 
 function migrateLegacyGroupOrder(order: Record<string, string[]>) {
@@ -131,9 +130,6 @@ export default function AppLayout() {
             return normalizeGroupOrder({}, false);
         }
     });
-    const [draggedItem, setDraggedItem] = useState<{ groupId: string; to: string } | null>(null);
-    const [dragOverItem, setDragOverItem] = useState<{ groupId: string; to: string } | null>(null);
-    const [dragOverGroup, setDragOverGroup] = useState<string | null>(null);
     const [showNotificationMenu, setShowNotificationMenu] = useState(false);
     const [showAccountMenu, setShowAccountMenu] = useState(false);
     const notificationMenuRef = useRef<HTMLDivElement | null>(null);
@@ -214,53 +210,6 @@ export default function AppLayout() {
         .map((to) => resolveNavItem(to))
         .filter(Boolean) as Array<(typeof navItems)[number]>;
 
-    const moveItemWithinGroup = (groupId: string, fromTo: string, targetTo: string) => {
-        if (fromTo === targetTo) return;
-
-        setGroupOrder((current) => {
-            const currentOrder = current[groupId] || [];
-            const nextOrder = [...currentOrder];
-            const fromIndex = nextOrder.indexOf(fromTo);
-            const targetIndex = nextOrder.indexOf(targetTo);
-
-            if (fromIndex === -1 || targetIndex === -1) return current;
-
-            nextOrder.splice(fromIndex, 1);
-            nextOrder.splice(targetIndex, 0, fromTo);
-
-            return {
-                ...current,
-                [groupId]: nextOrder,
-            };
-        });
-    };
-
-    const moveItemToGroup = (fromGroupId: string, toGroupId: string, itemTo: string, targetTo?: string) => {
-        if (fromGroupId === 'admin' || toGroupId === 'admin') return;
-
-        setGroupOrder((current) => {
-            const source = [...(current[fromGroupId] || [])];
-            const destination = fromGroupId === toGroupId ? source : [...(current[toGroupId] || [])];
-            const fromIndex = source.indexOf(itemTo);
-
-            if (fromIndex === -1) return current;
-
-            source.splice(fromIndex, 1);
-
-            const nextDestination = fromGroupId === toGroupId ? source : destination.filter((to) => to !== itemTo);
-            const targetIndex = targetTo ? nextDestination.indexOf(targetTo) : -1;
-
-            if (targetIndex === -1) nextDestination.push(itemTo);
-            else nextDestination.splice(targetIndex, 0, itemTo);
-
-            return {
-                ...current,
-                [fromGroupId]: source,
-                [toGroupId]: nextDestination,
-            };
-        });
-    };
-
     return (
         <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--color-bg)' }}>
             {/* Sidebar */}
@@ -326,26 +275,7 @@ export default function AppLayout() {
                         }
 
                         return (
-                            <div
-                                key={group.id}
-                                className={`space-y-1 rounded-xl transition-all ${dragOverGroup === group.id ? 'bg-slate-50' : ''}`}
-                                onDragOver={(e) => {
-                                    if (!draggedItem || group.id === 'admin') return;
-                                    e.preventDefault();
-                                    setDragOverGroup(group.id);
-                                }}
-                                onDragLeave={() => {
-                                    if (dragOverGroup === group.id) setDragOverGroup(null);
-                                }}
-                                onDrop={(e) => {
-                                    e.preventDefault();
-                                    if (!draggedItem || group.id === 'admin') return;
-                                    moveItemToGroup(draggedItem.groupId, group.id, draggedItem.to);
-                                    setDraggedItem(null);
-                                    setDragOverItem(null);
-                                    setDragOverGroup(null);
-                                }}
-                            >
+                            <div key={group.id} className="space-y-1 rounded-xl">
                                 <button
                                     type="button"
                                     onClick={() => toggleGroup(group.id)}
@@ -363,58 +293,26 @@ export default function AppLayout() {
                                 {groupOpen[group.id] && (
                                     <div className="space-y-1 pl-2">
                                         {items.map((item) => (
-                                            <div
+                                            <NavLink
                                                 key={item.to}
-                                                draggable
-                                                onDragStart={() => setDraggedItem({ groupId: group.id, to: item.to })}
-                                                onDragOver={(e) => {
-                                                    if (!draggedItem || draggedItem.to === item.to || group.id === 'admin') return;
-                                                    e.preventDefault();
-                                                    setDragOverGroup(group.id);
-                                                    setDragOverItem({ groupId: group.id, to: item.to });
-                                                }}
-                                                onDragLeave={() => {
-                                                    if (dragOverItem?.groupId === group.id && dragOverItem.to === item.to) {
-                                                        setDragOverItem(null);
-                                                    }
-                                                }}
-                                                onDrop={(e) => {
-                                                    e.preventDefault();
-                                                    if (!draggedItem || group.id === 'admin') return;
-                                                    if (draggedItem.groupId === group.id) moveItemWithinGroup(group.id, draggedItem.to, item.to);
-                                                    else moveItemToGroup(draggedItem.groupId, group.id, draggedItem.to, item.to);
-                                                    setDraggedItem(null);
-                                                    setDragOverItem(null);
-                                                    setDragOverGroup(null);
-                                                }}
-                                                onDragEnd={() => {
-                                                    setDraggedItem(null);
-                                                    setDragOverItem(null);
-                                                    setDragOverGroup(null);
-                                                }}
-                                                className={`rounded-lg transition-all ${dragOverItem?.groupId === group.id && dragOverItem.to === item.to ? 'ring-2 ring-slate-300' : ''} ${draggedItem?.groupId === group.id && draggedItem.to === item.to ? 'opacity-60' : ''}`}
+                                                to={item.to}
+                                                end={item.to === '/'}
+                                                onClick={() => setSidebarOpen(false)}
+                                                className={({ isActive }) =>
+                                                    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive
+                                                        ? 'text-white shadow-sm'
+                                                        : 'hover:bg-gray-50'
+                                                    }`
+                                                }
+                                                style={({ isActive }) =>
+                                                    isActive
+                                                        ? { backgroundColor: 'var(--color-primary)' }
+                                                        : { color: 'var(--color-text-secondary)' }
+                                                }
                                             >
-                                                <NavLink
-                                                    to={item.to}
-                                                    end={item.to === '/'}
-                                                    onClick={() => setSidebarOpen(false)}
-                                                    className={({ isActive }) =>
-                                                        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive
-                                                            ? 'text-white shadow-sm'
-                                                            : 'hover:bg-gray-50'
-                                                        }`
-                                                    }
-                                                    style={({ isActive }) =>
-                                                        isActive
-                                                            ? { backgroundColor: 'var(--color-primary)' }
-                                                            : { color: 'var(--color-text-secondary)' }
-                                                    }
-                                                >
-                                                    <GripVertical className="w-4 h-4 flex-shrink-0 opacity-50" />
-                                                    <item.icon className="w-5 h-5 flex-shrink-0" />
-                                                    <span>{item.label}</span>
-                                                </NavLink>
-                                            </div>
+                                                <item.icon className="w-5 h-5 flex-shrink-0" />
+                                                <span>{item.label}</span>
+                                            </NavLink>
                                         ))}
                                     </div>
                                 )}

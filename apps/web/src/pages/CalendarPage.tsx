@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { Calendar as CalIcon, Plus, X, ChevronLeft, ChevronRight, Pencil, Trash2, Pin } from 'lucide-react';
@@ -7,6 +7,37 @@ import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 
 type CalendarView = 'today' | 'week' | 'month';
+
+const HOUR_HEIGHT = 64; // px per hour
+const PX_PER_MIN = HOUR_HEIGHT / 60;
+const GRID_HOURS = Array.from({ length: 24 }, (_, i) => i);
+
+function layoutDayEvents(dayEvents: any[]) {
+    const timed = dayEvents.filter((e) => !e.allDay);
+    const sorted = [...timed].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    const cols: any[][] = [];
+    const layout: { event: any; col: number }[] = [];
+    for (const event of sorted) {
+        const eStart = new Date(event.startDate).getTime();
+        let placed = false;
+        for (let c = 0; c < cols.length; c++) {
+            const last = cols[c][cols[c].length - 1];
+            const lastEnd = last.endDate ? new Date(last.endDate).getTime() : new Date(last.startDate).getTime() + 3600000;
+            if (eStart >= lastEnd) {
+                cols[c].push(event);
+                layout.push({ event, col: c });
+                placed = true;
+                break;
+            }
+        }
+        if (!placed) {
+            cols.push([event]);
+            layout.push({ event, col: cols.length - 1 });
+        }
+    }
+    const totalCols = Math.max(cols.length, 1);
+    return layout.map((l) => ({ ...l, totalCols }));
+}
 
 const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
     const h = Math.floor(i / 4);
@@ -110,6 +141,9 @@ export default function CalendarPage() {
     const getEventsForDay = (day: Date) => events.filter((e: any) => isSameDay(new Date(e.startDate), day));
     const selectedEvents = selectedDate ? getEventsForDay(selectedDate) : [];
     const weekDays = eachDayOfInterval({ start: startOfWeek(currentDate, { weekStartsOn: 1 }), end: endOfWeek(currentDate, { weekStartsOn: 1 }) });
+    const viewDays = view === 'today' ? [currentDate] : weekDays;
+    const currentTimePx = (() => { const n = new Date(); return (n.getHours() * 60 + n.getMinutes()) * PX_PER_MIN; })();
+    const timeGridRef = useRef<HTMLDivElement>(null);
 
     const openCreate = () => {
         setEditingEvent(null);
@@ -190,6 +224,14 @@ export default function CalendarPage() {
             setSearchParams({});
         }
     }, [showCreate, editingEvent, eventIdParam, dateParam, setSearchParams]);
+
+    useEffect(() => {
+        if ((view === 'today' || view === 'week') && timeGridRef.current) {
+            const n = new Date();
+            const scrollTo = Math.max((n.getHours() * 60 + n.getMinutes()) * PX_PER_MIN - 150, 7 * HOUR_HEIGHT);
+            setTimeout(() => { if (timeGridRef.current) timeGridRef.current.scrollTop = scrollTo; }, 0);
+        }
+    }, [view]);
 
     const headerLabel = view === 'today'
         ? format(currentDate, 'EEEE, MMMM d, yyyy')
@@ -420,38 +462,126 @@ export default function CalendarPage() {
             )}
 
             {(view === 'today' || view === 'week') && (
-                <div className="card p-5 space-y-4">
-                    {(view === 'today' ? [currentDate] : weekDays).map((day) => {
-                        const items = getEventsForDay(day);
-                        return (
-                            <div key={day.toISOString()} className="space-y-2">
-                                <h4 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{format(day, view === 'today' ? 'EEEE, MMMM d' : 'EEE, MMM d')}</h4>
-                                {items.length === 0 ? (
-                                    <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No events</p>
-                                ) : items.map((e: any) => (
-                                    <div key={e.id} className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-border)' }} onDoubleClick={() => openEdit(e)}>
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{e.title}</p>
-                                                    {e.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
-                                                </div>
-                                                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{e.allDay ? 'All day' : format(new Date(e.startDate), 'h:mm a')}{e.endDate && !e.allDay ? ` - ${format(new Date(e.endDate), 'h:mm a')}` : ''}</p>
-                                                {e.createdBy?.name && <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Owner: {e.createdBy.name}</p>}
-                                                {e.location && <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Location: {e.location}</p>}
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <button className={`p-1 ${e.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={() => togglePin(e)}><Pin className="w-3.5 h-3.5" /></button>
-                                                <button className="p-1 hover:text-indigo-500" onClick={() => openEdit(e)}><Pencil className="w-3.5 h-3.5" /></button>
-                                                <button className="p-1 hover:text-red-500" onClick={() => handleDelete(getSourceId(e))}><Trash2 className="w-3.5 h-3.5" /></button>
-                                            </div>
-                                        </div>
-                                        {e.repeatFrequency && <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Repeats: {e.repeatFrequency.toLowerCase()}</p>}
+                <div className="card overflow-hidden">
+                    {/* Day headers */}
+                    <div className="flex border-b" style={{ borderColor: 'var(--color-border)' }}>
+                        <div className="w-14 flex-shrink-0" />
+                        {viewDays.map((day) => {
+                            const isDayToday = isSameDay(day, today);
+                            return (
+                                <div key={day.toISOString()} className="flex-1 text-center py-2 border-l" style={{ borderColor: 'var(--color-border)' }}>
+                                    <div className="text-[11px] font-medium uppercase tracking-wide mb-0.5" style={{ color: 'var(--color-text-secondary)' }}>{format(day, 'EEE')}</div>
+                                    <div className="inline-flex items-center justify-center w-9 h-9 rounded-full text-lg font-bold" style={isDayToday ? { backgroundColor: 'var(--color-primary)', color: 'white' } : { color: 'var(--color-text)' }}>
+                                        {format(day, 'd')}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    {/* Scrollable time grid */}
+                    <div ref={timeGridRef} className="overflow-y-auto" style={{ maxHeight: '65vh' }}>
+                        <div className="relative flex">
+                            {/* Hour labels */}
+                            <div className="w-14 flex-shrink-0 relative select-none">
+                                {GRID_HOURS.map((h) => (
+                                    <div key={h} style={{ height: HOUR_HEIGHT }}>
+                                        {h > 0 && (
+                                            <span className="block text-right pr-2 -mt-2.5 text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>
+                                                {h === 12 ? '12 PM' : h < 12 ? `${h} AM` : `${h - 12} PM`}
+                                            </span>
+                                        )}
                                     </div>
                                 ))}
                             </div>
-                        );
-                    })}
+                            {/* Day columns */}
+                            {viewDays.map((day) => {
+                                const dayEvts = getEventsForDay(day);
+                                const isDayToday = isSameDay(day, today);
+                                const laid = layoutDayEvents(dayEvts);
+                                return (
+                                    <div
+                                        key={day.toISOString()}
+                                        className="flex-1 relative border-l"
+                                        style={{ borderColor: 'var(--color-border)' }}
+                                        onClick={(e) => {
+                                            if ((e.target as HTMLElement).closest('[data-event="1"]')) return;
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            const y = e.clientY - rect.top;
+                                            const rawMin = Math.floor(y / PX_PER_MIN);
+                                            const snapped = Math.floor(rawMin / 15) * 15;
+                                            const h = Math.min(Math.floor(snapped / 60), 23);
+                                            const m = snapped % 60;
+                                            const startTime = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                                            const endH = h + 1 > 23 ? 23 : h + 1;
+                                            const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                                            setEditingEvent(null);
+                                            setFormError('');
+                                            setSelectedDate(day);
+                                            setForm({ ...emptyForm, startDate: format(day, 'yyyy-MM-dd'), startTime, endDate: format(day, 'yyyy-MM-dd'), endTime });
+                                            setShowCreate(true);
+                                        }}
+                                    >
+                                        {/* Hour lines */}
+                                        {GRID_HOURS.map((h) => (
+                                            <div key={h} className={h > 0 ? 'border-t' : ''} style={{ height: HOUR_HEIGHT, borderColor: 'var(--color-border)' }} />
+                                        ))}
+                                        {/* Current time indicator */}
+                                        {isDayToday && (
+                                            <div className="absolute left-0 right-0 z-20 pointer-events-none flex items-center" style={{ top: currentTimePx }}>
+                                                <div className="w-2.5 h-2.5 rounded-full bg-red-500 -ml-1.5 flex-shrink-0" />
+                                                <div className="flex-1 h-px bg-red-500" />
+                                            </div>
+                                        )}
+                                        {/* Timed events */}
+                                        {laid.map(({ event: e, col, totalCols }) => {
+                                            const start = new Date(e.startDate);
+                                            const startMin = start.getHours() * 60 + start.getMinutes();
+                                            const end = e.endDate ? new Date(e.endDate) : new Date(start.getTime() + 3600000);
+                                            const endMin = end.getHours() * 60 + end.getMinutes();
+                                            const duration = Math.max(endMin - startMin, 30);
+                                            const top = startMin * PX_PER_MIN;
+                                            const height = duration * PX_PER_MIN;
+                                            const colPct = 100 / totalCols;
+                                            return (
+                                                <div
+                                                    key={e.id}
+                                                    data-event="1"
+                                                    className="absolute rounded overflow-hidden cursor-pointer z-10 hover:opacity-90 transition-opacity"
+                                                    style={{
+                                                        top: top + 1,
+                                                        height: Math.max(height - 2, 20),
+                                                        left: `calc(${col * colPct}% + 2px)`,
+                                                        width: `calc(${colPct}% - 4px)`,
+                                                        backgroundColor: e.color || 'var(--color-primary)',
+                                                    }}
+                                                    onClick={(ev) => { ev.stopPropagation(); if (!e._source) openEdit(e); }}
+                                                >
+                                                    <div className="px-1 py-0.5 overflow-hidden h-full">
+                                                        <p className="text-[11px] font-semibold text-white leading-tight truncate">{e.title}</p>
+                                                        {height > 30 && (
+                                                            <p className="text-[10px] text-white/80 leading-tight">{format(start, 'h:mm a')}{e.endDate ? ` – ${format(end, 'h:mm a')}` : ''}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        {/* All-day events (pinned at top of column) */}
+                                        {dayEvts.filter((e: any) => e.allDay).map((e: any) => (
+                                            <div
+                                                key={`allday-${e.id}`}
+                                                data-event="1"
+                                                className="absolute left-0.5 right-0.5 z-10 rounded cursor-pointer hover:opacity-90 px-1 py-0.5"
+                                                style={{ top: 2, backgroundColor: e.color || 'var(--color-primary)' }}
+                                                onClick={(ev) => { ev.stopPropagation(); if (!e._source) openEdit(e); }}
+                                            >
+                                                <p className="text-[11px] font-semibold text-white leading-tight truncate">{e.title}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

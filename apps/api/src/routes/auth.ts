@@ -115,6 +115,7 @@ router.get('/me', authenticate, async (req: Request, res: Response, next: NextFu
                 notificationEmail: true,
                 telegramChatId: true,
                 avatarUrl: true,
+                mobileNavItems: true,
                 featureGoals: true,
                 featureProjects: true,
                 featureIdeas: true,
