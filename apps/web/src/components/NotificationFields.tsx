@@ -106,17 +106,12 @@ export default function NotificationFields<T extends NotificationState>({
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className="label">Date</label>
-                                <label className="relative block cursor-pointer">
-                                    <span className="input block text-sm">
-                                        {form.notificationDate ? format(new Date(`${form.notificationDate}T00:00`), 'MMM dd, yyyy') : 'Select date'}
-                                    </span>
-                                    <input
-                                        type="date"
-                                        className="absolute inset-0 opacity-0 w-full cursor-pointer"
-                                        value={form.notificationDate}
-                                        onChange={(e) => setForm({ ...form, notificationDate: e.target.value })}
-                                    />
-                                </label>
+                                <input
+                                    type="date"
+                                    className="input"
+                                    value={form.notificationDate}
+                                    onChange={(e) => setForm({ ...form, notificationDate: e.target.value })}
+                                />
                             </div>
                             <div>
                                 <label className="label">Time</label>

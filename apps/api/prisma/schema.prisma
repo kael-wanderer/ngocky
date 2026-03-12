@@ -341,6 +341,7 @@ model Task {
   userId              String
   isShared            Boolean          @default(false)
   dueDate             DateTime?
+  showOnCalendar      Boolean          @default(false)
   priority            Priority         @default(MEDIUM)
   status              ProjectStatus    @default(PLANNED)
   notificationEnabled Boolean          @default(false)

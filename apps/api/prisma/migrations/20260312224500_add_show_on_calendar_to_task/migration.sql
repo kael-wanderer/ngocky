@@ -1,0 +1,2 @@
+ALTER TABLE "Task"
+ADD COLUMN "showOnCalendar" BOOLEAN NOT NULL DEFAULT false;

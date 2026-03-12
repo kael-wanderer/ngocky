@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import {
     Trophy, Plus, X, Check, Trash2, AlertCircle, Pencil, Copy, Pin,
-    LayoutGrid, List, Bell, ClipboardList, CheckCircle2, RefreshCcw,
+    LayoutGrid, List, Bell, ClipboardList, CheckCircle2, RefreshCcw, ArrowUp, ArrowDown,
 } from 'lucide-react';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useSearchParams } from 'react-router-dom';
@@ -49,6 +49,7 @@ const taskEmptyForm = {
     pinToDashboard: false,
     dueDate: '',
     dueTime: '09:00',
+    showOnCalendar: false,
     priority: 'MEDIUM',
     status: 'PLANNED',
     repeatFrequency: '',
@@ -59,6 +60,8 @@ const taskEmptyForm = {
 
 type GoalFormState = typeof goalEmptyForm;
 type TaskFormState = typeof taskEmptyForm;
+type TaskSortKey = 'title' | 'taskType' | 'status' | 'priority' | 'dueDate' | 'showOnCalendar';
+type TaskGridSortOption = 'TITLE_ASC' | 'TITLE_DESC' | 'DUE_ASC' | 'DUE_DESC';
 
 function formatNotification(item: any): string | null {
     if (!item.notificationEnabled) return null;
@@ -196,6 +199,7 @@ function TaskForm({
                 scope: form.taskType === 'PAYMENT' ? form.scope : 'PERSONAL',
                 isShared: form.isShared,
                 pinToDashboard: form.pinToDashboard,
+                showOnCalendar: !!form.showOnCalendar && !!form.dueDate,
                 priority: form.priority,
                 status: form.status,
                 repeatFrequency: form.repeatFrequency || null,
@@ -261,7 +265,12 @@ function TaskForm({
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="label">Due Date</label>
-                    <input type="date" className="input" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
+                    <input
+                        type="date"
+                        className="input"
+                        value={form.dueDate}
+                        onChange={(e) => setForm({ ...form, dueDate: e.target.value, showOnCalendar: e.target.value ? form.showOnCalendar : false })}
+                    />
                 </div>
                 <div>
                     <label className="label">Due Time</label>
@@ -327,6 +336,16 @@ function TaskForm({
                     <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} />
                     Pin to dashboard
                 </label>
+                <label className="flex items-center gap-2 text-sm">
+                    <input
+                        type="checkbox"
+                        checked={form.showOnCalendar}
+                        disabled={!form.dueDate}
+                        onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })}
+                    />
+                    Add to Calendar
+                    {!form.dueDate && <span style={{ color: 'var(--color-text-secondary)' }}>(requires due date)</span>}
+                </label>
             </div>
             <div className="flex items-center justify-between gap-3 pt-2">
                 <div>
@@ -375,6 +394,9 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const [taskFilter, setTaskFilter] = useState<'ALL' | 'OPEN' | 'DONE' | 'OVERDUE'>('ALL');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [taskViewMode, setTaskViewMode] = useState<'grid' | 'list'>('list');
+    const [taskSortBy, setTaskSortBy] = useState<TaskSortKey>('dueDate');
+    const [taskSortOrder, setTaskSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [taskGridSort, setTaskGridSort] = useState<TaskGridSortOption>('DUE_ASC');
     const [goalForm, setGoalForm] = useState({ ...goalEmptyForm });
     const [taskForm, setTaskForm] = useState({ ...taskEmptyForm });
     const editIdParam = searchParams.get('editId');
@@ -497,6 +519,52 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
         return tasks.filter((task: any) => task.dueDate && new Date(task.dueDate) < todayStart && !['DONE', 'ARCHIVED'].includes(task.status));
     }, [tasks, taskFilter]);
 
+    const sortedTasks = useMemo(() => {
+        const getValue = (task: any, key: TaskSortKey) => {
+            switch (key) {
+                case 'title':
+                    return task.title?.toLowerCase() || '';
+                case 'taskType':
+                    return task.taskType || '';
+                case 'status':
+                    return task.status || '';
+                case 'priority': {
+                    const priorityWeights: Record<string, number> = { LOW: 0, MEDIUM: 1, HIGH: 2, URGENT: 3 };
+                    return priorityWeights[task.priority || 'MEDIUM'] ?? 1;
+                }
+                case 'dueDate':
+                    return task.dueDate ? new Date(task.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+                case 'showOnCalendar':
+                    return task.showOnCalendar ? 1 : 0;
+                default:
+                    return '';
+            }
+        };
+
+        return [...filteredTasks].sort((a, b) => {
+            const left = getValue(a, taskSortBy);
+            const right = getValue(b, taskSortBy);
+            const result = typeof left === 'number' && typeof right === 'number'
+                ? left - right
+                : String(left).localeCompare(String(right));
+            return taskSortOrder === 'asc' ? result : -result;
+        });
+    }, [filteredTasks, taskSortBy, taskSortOrder]);
+
+    const gridSortedTasks = useMemo(() => {
+        return [...filteredTasks].sort((a, b) => {
+            if (taskGridSort === 'TITLE_ASC' || taskGridSort === 'TITLE_DESC') {
+                const result = (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' });
+                return taskGridSort === 'TITLE_ASC' ? result : -result;
+            }
+
+            const left = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+            const right = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+            const result = left - right;
+            return taskGridSort === 'DUE_ASC' ? result : -result;
+        });
+    }, [filteredTasks, taskGridSort]);
+
     const today = new Date().toISOString().split('T')[0];
     const minDateObj = new Date();
     minDateObj.setDate(minDateObj.getDate() - 45);
@@ -561,6 +629,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             pinToDashboard: !!task.pinToDashboard,
             dueDate: task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : '',
             dueTime: task.dueDate ? format(new Date(task.dueDate), 'HH:mm') : '09:00',
+            showOnCalendar: !!task.showOnCalendar,
             priority: task.priority || 'MEDIUM',
             status: task.status || 'PLANNED',
             repeatFrequency: task.repeatFrequency || '',
@@ -583,6 +652,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             pinToDashboard: !!task.pinToDashboard,
             dueDate: task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : '',
             dueTime: task.dueDate ? format(new Date(task.dueDate), 'HH:mm') : '09:00',
+            showOnCalendar: !!task.showOnCalendar,
             priority: task.priority || 'MEDIUM',
             status: 'PLANNED',
             repeatFrequency: task.repeatFrequency || '',
@@ -620,6 +690,21 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
         if (noteText) payload.note = noteText;
         checkInMut.mutate(payload);
     };
+
+    function toggleTaskSort(column: TaskSortKey) {
+        if (taskSortBy === column) {
+            setTaskSortOrder(taskSortOrder === 'asc' ? 'desc' : 'asc');
+            return;
+        }
+
+        setTaskSortBy(column);
+        setTaskSortOrder(column === 'dueDate' ? 'asc' : 'desc');
+    }
+
+    function renderTaskSortIcon(column: TaskSortKey) {
+        if (taskSortBy !== column) return <ArrowUp className="w-3.5 h-3.5 opacity-30" />;
+        return taskSortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />;
+    }
 
     useEffect(() => {
         if (!goals.length) return;
@@ -811,6 +896,14 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                 <option value="DONE">Done</option>
                                 <option value="OVERDUE">Overdue</option>
                             </select>
+                            {taskViewMode === 'grid' && (
+                                <select className="input" value={taskGridSort} onChange={(e) => setTaskGridSort(e.target.value as TaskGridSortOption)}>
+                                    <option value="TITLE_ASC">Name (A-Z)</option>
+                                    <option value="TITLE_DESC">Name (Z-A)</option>
+                                    <option value="DUE_ASC">Due Date ASC</option>
+                                    <option value="DUE_DESC">Due Date DESC</option>
+                                </select>
+                            )}
                             <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
                                 <button onClick={() => setTaskViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
                                 <button onClick={() => setTaskViewMode('list')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
@@ -823,7 +916,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
 
                     {tasksLoading ? (
                         <div className="space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="card p-5 h-28 animate-pulse bg-gray-100" />)}</div>
-                    ) : filteredTasks.length === 0 ? (
+                    ) : sortedTasks.length === 0 ? (
                         <div className="card p-12 flex flex-col items-center border-dashed border-2">
                             <ClipboardList className="w-12 h-12 mb-4 opacity-10" />
                             <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text-secondary)' }}>No tasks yet</h3>
@@ -834,22 +927,48 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b text-left" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
-                                        <th className="px-4 py-2.5 font-semibold text-xs" style={{ color: 'var(--color-text-secondary)' }}>Title</th>
-                                        <th className="px-3 py-2.5 font-semibold text-xs hidden sm:table-cell" style={{ color: 'var(--color-text-secondary)' }}>Status</th>
-                                        <th className="px-3 py-2.5 font-semibold text-xs hidden md:table-cell" style={{ color: 'var(--color-text-secondary)' }}>Priority</th>
-                                        <th className="px-3 py-2.5 font-semibold text-xs hidden lg:table-cell" style={{ color: 'var(--color-text-secondary)' }}>Due</th>
+                                        <th className="px-4 py-2.5 font-semibold text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                            <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleTaskSort('title')}>
+                                                Title {renderTaskSortIcon('title')}
+                                            </button>
+                                        </th>
+                                        <th className="px-3 py-2.5 font-semibold text-xs hidden sm:table-cell" style={{ color: 'var(--color-text-secondary)' }}>
+                                            <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleTaskSort('taskType')}>
+                                                Type {renderTaskSortIcon('taskType')}
+                                            </button>
+                                        </th>
+                                        <th className="px-3 py-2.5 font-semibold text-xs hidden sm:table-cell" style={{ color: 'var(--color-text-secondary)' }}>
+                                            <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleTaskSort('status')}>
+                                                Status {renderTaskSortIcon('status')}
+                                            </button>
+                                        </th>
+                                        <th className="px-3 py-2.5 font-semibold text-xs hidden md:table-cell" style={{ color: 'var(--color-text-secondary)' }}>
+                                            <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleTaskSort('priority')}>
+                                                Priority {renderTaskSortIcon('priority')}
+                                            </button>
+                                        </th>
+                                        <th className="px-3 py-2.5 font-semibold text-xs hidden lg:table-cell" style={{ color: 'var(--color-text-secondary)' }}>
+                                            <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleTaskSort('dueDate')}>
+                                                Due {renderTaskSortIcon('dueDate')}
+                                            </button>
+                                        </th>
+                                        <th className="px-3 py-2.5 font-semibold text-xs hidden xl:table-cell" style={{ color: 'var(--color-text-secondary)' }}>
+                                            <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleTaskSort('showOnCalendar')}>
+                                                Calendar {renderTaskSortIcon('showOnCalendar')}
+                                            </button>
+                                        </th>
                                         <th className="px-3 py-2.5 font-semibold text-xs text-right" style={{ color: 'var(--color-text-secondary)' }}>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredTasks.map((task: any) => {
+                                    {sortedTasks.map((task: any) => {
                                         const canManage = !getSharedOwnerName(task, user?.id);
                                         const isDone = task.status === 'DONE';
                                         const isArchived = task.status === 'ARCHIVED';
                                         const dueDate = task.dueDate ? new Date(task.dueDate) : null;
                                         const isOverdue = dueDate ? dueDate < new Date(new Date().setHours(0, 0, 0, 0)) && !isDone && !isArchived : false;
                                         return (
-                                            <tr key={task.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors group" style={{ borderColor: 'var(--color-border)' }}>
+                                            <tr key={task.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors group" style={{ borderColor: 'var(--color-border)' }} onDoubleClick={() => canManage && openEditTask(task)}>
                                                 <td className="px-4 py-2.5">
                                                     <div className="flex items-center gap-2">
                                                         {canManage && !isDone && !isArchived ? (
@@ -864,6 +983,11 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                     </div>
                                                 </td>
                                                 <td className="px-3 py-2.5 hidden sm:table-cell">
+                                                    <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                                        {task.taskType === 'PAYMENT' ? 'Payment' : 'Task'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-2.5 hidden sm:table-cell">
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${isDone ? 'bg-emerald-50 text-emerald-700' : isArchived ? 'bg-gray-100 text-gray-600' : task.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}`}>
                                                         {task.status.replace('_', ' ')}
                                                     </span>
@@ -874,6 +998,11 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                 <td className="px-3 py-2.5 hidden lg:table-cell">
                                                     <span className="text-xs" style={{ color: isOverdue ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
                                                         {dueDate ? format(dueDate, 'MMM d, yyyy') : '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-2.5 hidden xl:table-cell">
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.showOnCalendar ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                        {task.showOnCalendar ? 'Shown' : 'Hidden'}
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2.5">
@@ -895,7 +1024,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                         </div>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2">
-                            {filteredTasks.map((task: any) => {
+                            {gridSortedTasks.map((task: any) => {
                                 const sharedOwnerName = getSharedOwnerName(task, user?.id);
                                 const canManage = !sharedOwnerName;
                                 const notifText = formatNotification(task);
@@ -908,6 +1037,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                     <div
                                         key={task.id}
                                         className="card p-5 animate-slide-up transition-shadow hover:shadow-lg"
+                                        onDoubleClick={() => canManage && openEditTask(task)}
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
@@ -963,6 +1093,12 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                 <span style={{ color: 'var(--color-text-secondary)' }}>Due</span>
                                                 <span className="font-semibold" style={{ color: isOverdue ? 'var(--color-danger)' : 'var(--color-text)' }}>
                                                     {dueDate ? format(dueDate, 'MMM d, yyyy · HH:mm') : 'No due date'}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span style={{ color: 'var(--color-text-secondary)' }}>Calendar</span>
+                                                <span className="font-semibold" style={{ color: task.showOnCalendar ? '#4f46e5' : 'var(--color-text)' }}>
+                                                    {task.showOnCalendar ? 'Shown' : 'Hidden'}
                                                 </span>
                                             </div>
                                             {repeatText && (
