@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -31,6 +32,30 @@ function endOfDay(date: Date) {
     const next = new Date(date);
     next.setHours(23, 59, 59, 999);
     return next;
+}
+
+async function createExpenseFromTask(tx: Prisma.TransactionClient, task: {
+    title: string;
+    amount?: number | null;
+    expenseCategory?: string | null;
+    scope?: 'PERSONAL' | 'FAMILY' | 'KEO' | 'PROJECT' | null;
+    userId: string;
+}, completedAt: Date) {
+    if (!task.amount || !task.expenseCategory) return;
+
+    await tx.expense.create({
+        data: {
+            description: task.title,
+            type: 'PAY',
+            category: task.expenseCategory,
+            date: completedAt,
+            amount: task.amount,
+            note: 'Automated task item',
+            scope: task.scope || 'PERSONAL',
+            isShared: false,
+            userId: task.userId,
+        },
+    });
 }
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -73,7 +98,7 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
             where: { id: { in: ids }, userId: req.user!.userId },
             select: { id: true },
         });
-        const ownedIds = new Set(owned.map((task) => task.id));
+        const ownedIds = new Set(owned.map((task: { id: string }) => task.id));
         const orderedIds = ids.filter((id: string) => ownedIds.has(id));
 
         await Promise.all(orderedIds.map((id: string, index: number) => prisma.task.update({
@@ -123,19 +148,39 @@ router.patch('/:id', validate(updateStandaloneTaskSchema), async (req: Request, 
             },
         );
 
-        const task = await prisma.task.update({
-            where: { id: req.params.id },
-            data: {
-                ...req.body,
-                ...reminderFields,
-                amount: req.body.amount === null ? null : req.body.amount ?? undefined,
-                expenseCategory: req.body.expenseCategory === null ? null : req.body.expenseCategory ?? undefined,
-                scope: req.body.scope ?? undefined,
-                dueDate: req.body.dueDate === null ? null : req.body.dueDate ? new Date(req.body.dueDate) : undefined,
-                repeatUntil: req.body.repeatUntil === null ? null : req.body.repeatUntil ? new Date(req.body.repeatUntil) : undefined,
-                completedAt: req.body.status && req.body.status !== 'DONE' ? null : undefined,
-            },
-            include: { user: { select: { id: true, name: true } } },
+        const nextStatus = req.body.status ?? existing.status;
+        const markingDoneNow = nextStatus === 'DONE' && existing.status !== 'DONE';
+        const completedAt = markingDoneNow ? new Date() : req.body.status && req.body.status !== 'DONE' ? null : undefined;
+        const nextTaskType = req.body.taskType ?? existing.taskType;
+        const shouldCreateExpense = markingDoneNow
+            && nextTaskType === 'PAYMENT'
+            && (req.body.createExpenseAutomatically ?? existing.createExpenseAutomatically);
+
+        const task = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+            if (shouldCreateExpense) {
+                await createExpenseFromTask(tx, {
+                    title: req.body.title ?? existing.title,
+                    amount: req.body.amount === null ? null : req.body.amount ?? existing.amount,
+                    expenseCategory: req.body.expenseCategory === null ? null : req.body.expenseCategory ?? existing.expenseCategory,
+                    scope: req.body.scope ?? existing.scope,
+                    userId: existing.userId,
+                }, completedAt as Date);
+            }
+
+            return tx.task.update({
+                where: { id: req.params.id },
+                data: {
+                    ...req.body,
+                    ...reminderFields,
+                    amount: req.body.amount === null ? null : req.body.amount ?? undefined,
+                    expenseCategory: req.body.expenseCategory === null ? null : req.body.expenseCategory ?? undefined,
+                    scope: req.body.scope ?? undefined,
+                    dueDate: req.body.dueDate === null ? null : req.body.dueDate ? new Date(req.body.dueDate) : undefined,
+                    repeatUntil: req.body.repeatUntil === null ? null : req.body.repeatUntil ? new Date(req.body.repeatUntil) : undefined,
+                    completedAt,
+                },
+                include: { user: { select: { id: true, name: true } } },
+            });
         });
         sendSuccess(res, task);
     } catch (err) { next(err); }
@@ -152,24 +197,13 @@ router.post('/:id/complete', async (req: Request, res: Response, next: NextFunct
             amount?: number | null;
             expenseCategory?: string | null;
             scope?: 'PERSONAL' | 'FAMILY' | 'KEO' | 'PROJECT' | null;
+            createExpenseAutomatically?: boolean;
         };
 
         const completedAt = new Date();
-        const updated = await prisma.$transaction(async (tx) => {
-            if (paymentTask.taskType === 'PAYMENT' && paymentTask.amount && paymentTask.expenseCategory) {
-                await tx.expense.create({
-                    data: {
-                        description: paymentTask.title,
-                        type: 'PAY',
-                        category: paymentTask.expenseCategory,
-                        date: completedAt,
-                        amount: paymentTask.amount,
-                        note: 'Automated task item',
-                        scope: paymentTask.scope || 'PERSONAL',
-                        isShared: false,
-                        userId: paymentTask.userId,
-                    },
-                });
+        const updated = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+            if (paymentTask.taskType === 'PAYMENT' && paymentTask.createExpenseAutomatically) {
+                await createExpenseFromTask(tx, paymentTask, completedAt);
             }
 
             if (existing.repeatFrequency && existing.dueDate) {

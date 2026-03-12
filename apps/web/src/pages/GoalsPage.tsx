@@ -3,11 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import {
     Trophy, Plus, X, Check, Trash2, AlertCircle, Pencil, Copy, Pin,
-    LayoutGrid, List, Bell, ClipboardList, CheckCircle2, RefreshCcw, ArrowUp, ArrowDown,
+    LayoutGrid, List, Bell, ClipboardList, CheckCircle2, RefreshCcw, ArrowUp, ArrowDown, Filter,
 } from 'lucide-react';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useSearchParams } from 'react-router-dom';
-import { format } from 'date-fns';
+import { addMonths, addWeeks, endOfMonth, endOfWeek, format, isWithinInterval, startOfMonth, startOfToday, startOfWeek } from 'date-fns';
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
 import { parseCompactAmountInput } from '../utils/amount';
@@ -50,6 +50,7 @@ const taskEmptyForm = {
     dueDate: '',
     dueTime: '09:00',
     showOnCalendar: false,
+    createExpenseAutomatically: false,
     priority: 'MEDIUM',
     status: 'PLANNED',
     repeatFrequency: '',
@@ -62,6 +63,34 @@ type GoalFormState = typeof goalEmptyForm;
 type TaskFormState = typeof taskEmptyForm;
 type TaskSortKey = 'title' | 'taskType' | 'status' | 'priority' | 'dueDate' | 'showOnCalendar';
 type TaskGridSortOption = 'TITLE_ASC' | 'TITLE_DESC' | 'DUE_ASC' | 'DUE_DESC';
+type TaskDueDateFilter = 'ALL' | 'TODAY' | 'THIS_WEEK' | 'NEXT_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH';
+type TaskTypeFilter = 'ALL' | 'TASK' | 'PAYMENT';
+type TaskPriorityFilter = 'ALL' | 'LOW' | 'MEDIUM' | 'HIGH';
+type TaskStatusFilter = 'ALL' | 'PLANNED' | 'IN_PROGRESS' | 'DONE';
+
+function getTaskDueBadge(task: any) {
+    if (!task.dueDate) {
+        return { label: 'No due date', tone: 'neutral' as const };
+    }
+
+    const dueDate = new Date(task.dueDate);
+    const today = startOfToday();
+    const dueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+
+    if (dueDay < today && task.status !== 'DONE') {
+        return { label: `Overdue · ${format(dueDate, 'MMM d, yyyy · HH:mm')}`, tone: 'danger' as const };
+    }
+
+    if (dueDay.getTime() === today.getTime()) {
+        return { label: `Today · ${format(dueDate, 'HH:mm')}`, tone: 'warning' as const };
+    }
+
+    return { label: format(dueDate, 'MMM d, yyyy · HH:mm'), tone: 'neutral' as const };
+}
+
+function getTaskStatusLabel(status: string) {
+    return status === 'PLANNED' ? 'Plan' : status.replace('_', ' ');
+}
 
 function formatNotification(item: any): string | null {
     if (!item.notificationEnabled) return null;
@@ -200,6 +229,7 @@ function TaskForm({
                 isShared: form.isShared,
                 pinToDashboard: form.pinToDashboard,
                 showOnCalendar: !!form.showOnCalendar && !!form.dueDate,
+                createExpenseAutomatically: form.taskType === 'PAYMENT' ? form.createExpenseAutomatically : false,
                 priority: form.priority,
                 status: form.status,
                 repeatFrequency: form.repeatFrequency || null,
@@ -229,7 +259,7 @@ function TaskForm({
                         amount: e.target.value === 'PAYMENT' ? form.amount : '',
                         expenseCategory: e.target.value === 'PAYMENT' ? form.expenseCategory : DEFAULT_EXPENSE_PAY_CATEGORY,
                         scope: e.target.value === 'PAYMENT' ? form.scope : 'PERSONAL',
-                        status: e.target.value === 'PAYMENT' ? 'PLANNED' : form.status,
+                        createExpenseAutomatically: e.target.value === 'PAYMENT',
                     })}>
                         <option value="TASK">Task</option>
                         <option value="PAYMENT">Payment</option>
@@ -277,27 +307,23 @@ function TaskForm({
                     <input type="time" className="input" value={form.dueTime} disabled={!form.dueDate} onChange={(e) => setForm({ ...form, dueTime: e.target.value })} />
                 </div>
             </div>
-            <div className={`grid gap-4 ${form.taskType === 'PAYMENT' ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="label">Priority</label>
                     <select className="input" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
                         <option value="LOW">Low</option>
                         <option value="MEDIUM">Medium</option>
                         <option value="HIGH">High</option>
-                        <option value="URGENT">Urgent</option>
                     </select>
                 </div>
-                {form.taskType !== 'PAYMENT' && (
-                    <div>
-                        <label className="label">Status</label>
-                        <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                            <option value="PLANNED">Planned</option>
-                            <option value="IN_PROGRESS">In Progress</option>
-                            <option value="DONE">Done</option>
-                            <option value="ARCHIVED">Archived</option>
-                        </select>
-                    </div>
-                )}
+                <div>
+                    <label className="label">Status</label>
+                    <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                        <option value="PLANNED">Plan</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="DONE">Done</option>
+                    </select>
+                </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -326,26 +352,41 @@ function TaskForm({
                     <input type="date" min={form.dueDate || format(new Date(), 'yyyy-MM-dd')} className="input" value={form.repeatUntil} onChange={(e) => setForm({ ...form, repeatUntil: e.target.value })} />
                 </div>
             )}
-            <div className="space-y-2">
+            <div className="space-y-3">
                 <NotificationFields form={form} setForm={setForm} />
-                <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} />
-                    Share with all users
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} />
-                    Pin to dashboard
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                    <input
-                        type="checkbox"
-                        checked={form.showOnCalendar}
-                        disabled={!form.dueDate}
-                        onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })}
-                    />
-                    Add to Calendar
-                    {!form.dueDate && <span style={{ color: 'var(--color-text-secondary)' }}>(requires due date)</span>}
-                </label>
+                <div className="grid grid-cols-2 gap-3">
+                    <label className="flex items-center gap-2 text-sm">
+                        <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} />
+                        Share with all users
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                        <input
+                            type="checkbox"
+                            checked={form.showOnCalendar}
+                            disabled={!form.dueDate}
+                            onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })}
+                        />
+                        Add to Calendar
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                        <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} />
+                        Pin to dashboard
+                    </label>
+                    <label className={`flex items-center gap-2 text-sm ${form.taskType !== 'PAYMENT' ? 'opacity-60' : ''}`}>
+                        <input
+                            type="checkbox"
+                            checked={form.createExpenseAutomatically}
+                            disabled={form.taskType !== 'PAYMENT'}
+                            onChange={(e) => setForm({ ...form, createExpenseAutomatically: e.target.checked })}
+                        />
+                        Add Expense Automatically
+                    </label>
+                </div>
+                {!form.dueDate && (
+                    <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                        Add to Calendar requires a due date.
+                    </p>
+                )}
             </div>
             <div className="flex items-center justify-between gap-3 pt-2">
                 <div>
@@ -391,7 +432,17 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const [duration, setDuration] = useState<number | ''>('');
     const [quantity, setQuantity] = useState(1);
     const [periodFilter, setPeriodFilter] = useState<'ALL' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY'>('ALL');
-    const [taskFilter, setTaskFilter] = useState<'ALL' | 'OPEN' | 'DONE' | 'OVERDUE'>('ALL');
+    const [taskFilters, setTaskFilters] = useState<{
+        dueDate: TaskDueDateFilter;
+        type: TaskTypeFilter;
+        priority: TaskPriorityFilter;
+        status: TaskStatusFilter;
+    }>({
+        dueDate: 'ALL',
+        type: 'ALL',
+        priority: 'ALL',
+        status: 'ALL',
+    });
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [taskViewMode, setTaskViewMode] = useState<'grid' | 'list'>('list');
     const [taskSortBy, setTaskSortBy] = useState<TaskSortKey>('dueDate');
@@ -511,13 +562,43 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     }, [goals, periodFilter]);
 
     const filteredTasks = useMemo(() => {
-        const now = new Date();
-        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        if (taskFilter === 'ALL') return tasks;
-        if (taskFilter === 'OPEN') return tasks.filter((task: any) => !['DONE', 'ARCHIVED'].includes(task.status));
-        if (taskFilter === 'DONE') return tasks.filter((task: any) => task.status === 'DONE');
-        return tasks.filter((task: any) => task.dueDate && new Date(task.dueDate) < todayStart && !['DONE', 'ARCHIVED'].includes(task.status));
-    }, [tasks, taskFilter]);
+        const today = startOfToday();
+        const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+        const thisWeekEnd = endOfWeek(today, { weekStartsOn: 1 });
+        const nextWeekStart = addWeeks(thisWeekStart, 1);
+        const nextWeekEnd = endOfWeek(nextWeekStart, { weekStartsOn: 1 });
+        const thisMonthStart = startOfMonth(today);
+        const thisMonthEnd = endOfMonth(today);
+        const nextMonthStart = startOfMonth(addMonths(today, 1));
+        const nextMonthEnd = endOfMonth(addMonths(today, 1));
+
+        return tasks.filter((task: any) => {
+            if (taskFilters.type !== 'ALL' && task.taskType !== taskFilters.type) return false;
+            if (taskFilters.priority !== 'ALL' && task.priority !== taskFilters.priority) return false;
+            if (taskFilters.status !== 'ALL' && task.status !== taskFilters.status) return false;
+
+            if (taskFilters.dueDate === 'ALL') return true;
+            if (!task.dueDate) return false;
+
+            const dueDate = new Date(task.dueDate);
+            const dueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+
+            switch (taskFilters.dueDate) {
+                case 'TODAY':
+                    return dueDay.getTime() === today.getTime();
+                case 'THIS_WEEK':
+                    return isWithinInterval(dueDate, { start: thisWeekStart, end: thisWeekEnd });
+                case 'NEXT_WEEK':
+                    return isWithinInterval(dueDate, { start: nextWeekStart, end: nextWeekEnd });
+                case 'THIS_MONTH':
+                    return isWithinInterval(dueDate, { start: thisMonthStart, end: thisMonthEnd });
+                case 'NEXT_MONTH':
+                    return isWithinInterval(dueDate, { start: nextMonthStart, end: nextMonthEnd });
+                default:
+                    return true;
+            }
+        });
+    }, [tasks, taskFilters]);
 
     const sortedTasks = useMemo(() => {
         const getValue = (task: any, key: TaskSortKey) => {
@@ -630,8 +711,9 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             dueDate: task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : '',
             dueTime: task.dueDate ? format(new Date(task.dueDate), 'HH:mm') : '09:00',
             showOnCalendar: !!task.showOnCalendar,
+            createExpenseAutomatically: task.createExpenseAutomatically !== false,
             priority: task.priority || 'MEDIUM',
-            status: task.status || 'PLANNED',
+            status: task.status === 'ARCHIVED' ? 'PLANNED' : task.status || 'PLANNED',
             repeatFrequency: task.repeatFrequency || '',
             repeatEndType: task.repeatEndType || '',
             repeatUntil: task.repeatUntil ? format(new Date(task.repeatUntil), 'yyyy-MM-dd') : '',
@@ -653,6 +735,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             dueDate: task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : '',
             dueTime: task.dueDate ? format(new Date(task.dueDate), 'HH:mm') : '09:00',
             showOnCalendar: !!task.showOnCalendar,
+            createExpenseAutomatically: task.createExpenseAutomatically !== false,
             priority: task.priority || 'MEDIUM',
             status: 'PLANNED',
             repeatFrequency: task.repeatFrequency || '',
@@ -747,12 +830,25 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                     <Trophy className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTab === 'GOALS' ? 'Goals' : 'Tasks'}</h2>
                 </div>
-                {showTabSwitcher && (
-                    <div className="flex bg-gray-100 p-1 rounded-lg self-start sm:self-auto">
-                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'GOALS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('GOALS')} style={activeTab === 'GOALS' ? { color: 'var(--color-primary)' } : {}}>Goals</button>
-                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'TASKS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('TASKS')} style={activeTab === 'TASKS' ? { color: 'var(--color-primary)' } : {}}>Tasks</button>
-                    </div>
-                )}
+                <div className="flex items-center gap-3 flex-wrap self-start sm:self-auto sm:justify-end">
+                    {activeTab === 'TASKS' && (
+                        <>
+                            <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
+                                <button onClick={() => setTaskViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
+                                <button onClick={() => setTaskViewMode('list')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
+                            </div>
+                            <button className="btn-primary whitespace-nowrap" onClick={openCreateTask}>
+                                <Plus className="w-4 h-4" /> Add Task
+                            </button>
+                        </>
+                    )}
+                    {showTabSwitcher && (
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'GOALS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('GOALS')} style={activeTab === 'GOALS' ? { color: 'var(--color-primary)' } : {}}>Goals</button>
+                            <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'TASKS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('TASKS')} style={activeTab === 'TASKS' ? { color: 'var(--color-primary)' } : {}}>Tasks</button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {activeTab === 'GOALS' ? (
@@ -888,30 +984,46 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                 </>
             ) : (
                 <>
-                    <div className="flex items-center justify-between flex-wrap gap-3">
-                        <div className="flex items-center gap-2">
-                            <select className="input" value={taskFilter} onChange={(e) => setTaskFilter(e.target.value as any)}>
-                                <option value="ALL">All</option>
-                                <option value="OPEN">Open</option>
-                                <option value="DONE">Done</option>
-                                <option value="OVERDUE">Overdue</option>
+                    <div className="card p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                            <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
+                            <select className="input text-sm min-w-[180px]" value={taskFilters.dueDate} onChange={(e) => setTaskFilters((current) => ({ ...current, dueDate: e.target.value as TaskDueDateFilter }))}>
+                                <option value="ALL">Due Date: All</option>
+                                <option value="TODAY">Due Date: Today</option>
+                                <option value="THIS_WEEK">Due Date: This Week</option>
+                                <option value="NEXT_WEEK">Due Date: Next Week</option>
+                                <option value="THIS_MONTH">Due Date: This Month</option>
+                                <option value="NEXT_MONTH">Due Date: Next Month</option>
+                            </select>
+                            <select className="input text-sm min-w-[180px]" value={taskFilters.type} onChange={(e) => setTaskFilters((current) => ({ ...current, type: e.target.value as TaskTypeFilter }))}>
+                                <option value="ALL">Type: All</option>
+                                <option value="TASK">Type: Task</option>
+                                <option value="PAYMENT">Type: Payment</option>
+                            </select>
+                            <select className="input text-sm min-w-[180px]" value={taskFilters.priority} onChange={(e) => setTaskFilters((current) => ({ ...current, priority: e.target.value as TaskPriorityFilter }))}>
+                                <option value="ALL">Priority: All</option>
+                                <option value="LOW">Priority: Low</option>
+                                <option value="MEDIUM">Priority: Medium</option>
+                                <option value="HIGH">Priority: High</option>
+                            </select>
+                            <select className="input text-sm min-w-[180px]" value={taskFilters.status} onChange={(e) => setTaskFilters((current) => ({ ...current, status: e.target.value as TaskStatusFilter }))}>
+                                <option value="ALL">Status: All</option>
+                                <option value="PLANNED">Status: Plan</option>
+                                <option value="IN_PROGRESS">Status: In Progress</option>
+                                <option value="DONE">Status: Done</option>
                             </select>
                             {taskViewMode === 'grid' && (
-                                <select className="input" value={taskGridSort} onChange={(e) => setTaskGridSort(e.target.value as TaskGridSortOption)}>
-                                    <option value="TITLE_ASC">Name (A-Z)</option>
-                                    <option value="TITLE_DESC">Name (Z-A)</option>
-                                    <option value="DUE_ASC">Due Date ASC</option>
-                                    <option value="DUE_DESC">Due Date DESC</option>
+                                <select className="input text-sm min-w-[180px]" value={taskGridSort} onChange={(e) => setTaskGridSort(e.target.value as TaskGridSortOption)}>
+                                    <option value="TITLE_ASC">Sort: Name (A-Z)</option>
+                                    <option value="TITLE_DESC">Sort: Name (Z-A)</option>
+                                    <option value="DUE_ASC">Sort: Due Date ASC</option>
+                                    <option value="DUE_DESC">Sort: Due Date DESC</option>
                                 </select>
                             )}
-                            <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
-                                <button onClick={() => setTaskViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
-                                <button onClick={() => setTaskViewMode('list')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
-                            </div>
                         </div>
-                        <button className="btn-primary whitespace-nowrap" onClick={openCreateTask}>
-                            <Plus className="w-4 h-4" /> Add Task
-                        </button>
                     </div>
 
                     {tasksLoading ? (
@@ -931,6 +1043,9 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                             <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleTaskSort('title')}>
                                                 Title {renderTaskSortIcon('title')}
                                             </button>
+                                        </th>
+                                        <th className="px-3 py-2.5 font-semibold text-xs hidden sm:table-cell" style={{ color: 'var(--color-text-secondary)' }}>
+                                            Description
                                         </th>
                                         <th className="px-3 py-2.5 font-semibold text-xs hidden sm:table-cell" style={{ color: 'var(--color-text-secondary)' }}>
                                             <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleTaskSort('taskType')}>
@@ -967,6 +1082,8 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                         const isArchived = task.status === 'ARCHIVED';
                                         const dueDate = task.dueDate ? new Date(task.dueDate) : null;
                                         const isOverdue = dueDate ? dueDate < new Date(new Date().setHours(0, 0, 0, 0)) && !isDone && !isArchived : false;
+                                        const dueBadge = getTaskDueBadge(task);
+                                        const hasAutoExpense = task.taskType === 'PAYMENT' && task.createExpenseAutomatically;
                                         return (
                                             <tr key={task.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors group" style={{ borderColor: 'var(--color-border)' }} onDoubleClick={() => canManage && openEditTask(task)}>
                                                 <td className="px-4 py-2.5">
@@ -981,6 +1098,26 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                         <span className={`font-medium ${isDone || isArchived ? 'line-through opacity-50' : ''}`} style={{ color: 'var(--color-text)' }}>{task.title}</span>
                                                         {task.pinToDashboard && <Pin className="w-3 h-3 text-amber-500 flex-shrink-0" />}
                                                     </div>
+                                                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${dueBadge.tone === 'danger' ? 'bg-red-50 text-red-600' : dueBadge.tone === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
+                                                            {dueBadge.label}
+                                                        </span>
+                                                        {formatNotification(task) && (
+                                                            <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-purple-50 text-purple-600">
+                                                                {formatNotification(task)}
+                                                            </span>
+                                                        )}
+                                                        {hasAutoExpense && (
+                                                            <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-600">
+                                                                Add Expense
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-2.5 hidden sm:table-cell">
+                                                    <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                                        {task.description || '—'}
+                                                    </span>
                                                 </td>
                                                 <td className="px-3 py-2.5 hidden sm:table-cell">
                                                     <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -989,11 +1126,11 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                 </td>
                                                 <td className="px-3 py-2.5 hidden sm:table-cell">
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${isDone ? 'bg-emerald-50 text-emerald-700' : isArchived ? 'bg-gray-100 text-gray-600' : task.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}`}>
-                                                        {task.status.replace('_', ' ')}
+                                                        {task.status === 'PLANNED' ? 'Plan' : task.status.replace('_', ' ')}
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2.5 hidden md:table-cell">
-                                                    <span className="text-xs font-semibold" style={{ color: task.priority === 'URGENT' ? '#dc2626' : task.priority === 'HIGH' ? '#d97706' : 'var(--color-text-secondary)' }}>{task.priority}</span>
+                                                    <span className="text-xs font-semibold" style={{ color: task.priority === 'HIGH' ? '#d97706' : 'var(--color-text-secondary)' }}>{task.priority}</span>
                                                 </td>
                                                 <td className="px-3 py-2.5 hidden lg:table-cell">
                                                     <span className="text-xs" style={{ color: isOverdue ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
@@ -1033,6 +1170,8 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                 const isArchived = task.status === 'ARCHIVED';
                                 const dueDate = task.dueDate ? new Date(task.dueDate) : null;
                                 const isOverdue = dueDate ? dueDate < new Date(new Date().setHours(0, 0, 0, 0)) && !isDone && !isArchived : false;
+                                const dueBadge = getTaskDueBadge(task);
+                                const hasAutoExpense = task.taskType === 'PAYMENT' && task.createExpenseAutomatically;
                                 return (
                                     <div
                                         key={task.id}
@@ -1046,14 +1185,29 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.taskType === 'PAYMENT' ? 'bg-orange-50 text-orange-700' : 'bg-slate-100 text-slate-700'}`}>
                                                         {task.taskType === 'PAYMENT' ? 'Payment' : 'Task'}
                                                     </span>
-                                                    {task.taskType !== 'PAYMENT' && (
-                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.status === 'DONE' ? 'bg-emerald-50 text-emerald-700' : task.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700' : task.status === 'ARCHIVED' ? 'bg-gray-100 text-gray-600' : 'bg-blue-50 text-blue-700'}`}>{task.status.replace('_', ' ')}</span>
-                                                    )}
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.status === 'DONE' ? 'bg-emerald-50 text-emerald-700' : task.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700' : task.status === 'ARCHIVED' ? 'bg-gray-100 text-gray-600' : 'bg-blue-50 text-blue-700'}`}>
+                                                        {task.status === 'PLANNED' ? 'Plan' : task.status.replace('_', ' ')}
+                                                    </span>
                                                     {task.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                                                     {task.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                                                 </div>
                                                 {task.description && <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>{task.description}</p>}
                                                 {sharedOwnerName && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
+                                                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                                                    <span className={`text-[10px] font-bold px-2 py-1 rounded ${dueBadge.tone === 'danger' ? 'bg-red-50 text-red-600' : dueBadge.tone === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
+                                                        {dueBadge.label}
+                                                    </span>
+                                                    {notifText && (
+                                                        <span className="text-[10px] font-medium px-2 py-1 rounded bg-purple-50 text-purple-600">
+                                                            {notifText}
+                                                        </span>
+                                                    )}
+                                                    {hasAutoExpense && (
+                                                        <span className="text-[10px] font-medium px-2 py-1 rounded bg-emerald-50 text-emerald-600">
+                                                            Add Expense
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                             {canManage && (
                                                 <div className="flex items-center gap-1 flex-shrink-0">
@@ -1066,8 +1220,14 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                         </div>
                                         <div className="mt-4 space-y-2">
                                             <div className="flex items-center justify-between text-xs">
+                                                <span style={{ color: 'var(--color-text-secondary)' }}>Status</span>
+                                                <span className="font-semibold" style={{ color: task.status === 'DONE' ? '#059669' : task.status === 'IN_PROGRESS' ? '#d97706' : 'var(--color-text)' }}>
+                                                    {task.status === 'PLANNED' ? 'Plan' : task.status.replace('_', ' ')}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-xs">
                                                 <span style={{ color: 'var(--color-text-secondary)' }}>Priority</span>
-                                                <span className="font-semibold" style={{ color: task.priority === 'URGENT' ? '#dc2626' : task.priority === 'HIGH' ? '#d97706' : 'var(--color-text)' }}>{task.priority}</span>
+                                                <span className="font-semibold" style={{ color: task.priority === 'HIGH' ? '#d97706' : 'var(--color-text)' }}>{task.priority}</span>
                                             </div>
                                             {task.taskType === 'PAYMENT' && (
                                                 <>
@@ -1090,12 +1250,6 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                 </>
                                             )}
                                             <div className="flex items-center justify-between text-xs">
-                                                <span style={{ color: 'var(--color-text-secondary)' }}>Due</span>
-                                                <span className="font-semibold" style={{ color: isOverdue ? 'var(--color-danger)' : 'var(--color-text)' }}>
-                                                    {dueDate ? format(dueDate, 'MMM d, yyyy · HH:mm') : 'No due date'}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-xs">
                                                 <span style={{ color: 'var(--color-text-secondary)' }}>Calendar</span>
                                                 <span className="font-semibold" style={{ color: task.showOnCalendar ? '#4f46e5' : 'var(--color-text)' }}>
                                                     {task.showOnCalendar ? 'Shown' : 'Hidden'}
@@ -1105,11 +1259,6 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                 <div className="flex items-center justify-between text-xs">
                                                     <span style={{ color: 'var(--color-text-secondary)' }}>Repeat</span>
                                                     <span className="font-semibold" style={{ color: 'var(--color-text)' }}>{repeatText}</span>
-                                                </div>
-                                            )}
-                                            {notifText && (
-                                                <div className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
-                                                    <Bell className="w-3 h-3 flex-shrink-0" /> {notifText}
                                                 </div>
                                             )}
                                         </div>
@@ -1137,7 +1286,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
 
             {showCreate && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowCreate(false); }}>
-                    <div className="card p-6 w-full max-w-md animate-slide-up overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                    <div className="card p-6 w-full max-w-xl animate-slide-up overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Create New Goal</h3>
                             <button onClick={() => setShowCreate(false)}><X className="w-5 h-5" /></button>
@@ -1149,7 +1298,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
 
             {editGoal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setEditGoal(null); }}>
-                    <div className="card p-6 w-full max-w-md animate-slide-up overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                    <div className="card p-6 w-full max-w-xl animate-slide-up overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Edit Goal</h3>
                             <button onClick={() => setEditGoal(null)}><X className="w-5 h-5" /></button>
@@ -1174,7 +1323,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
 
             {(showTaskModal || editTask) && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowTaskModal(false); setEditTask(null); } }}>
-                    <div className="card p-6 w-full max-w-md animate-slide-up overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                    <div className="card p-6 w-full max-w-xl animate-slide-up overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editTask ? 'Edit Task' : 'Add Task'}</h3>
                             <button onClick={() => { setShowTaskModal(false); setEditTask(null); }}><X className="w-5 h-5" /></button>

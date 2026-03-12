@@ -87,6 +87,7 @@ const standaloneTaskSchemaBase = z.object({
     isShared: z.boolean().optional(),
     dueDate: z.string().datetime().nullable().optional(),
     showOnCalendar: z.boolean().optional(),
+    createExpenseAutomatically: z.boolean().optional(),
     priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
     status: z.enum(['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED']).optional(),
     ...notificationFields,

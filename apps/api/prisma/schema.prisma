@@ -342,6 +342,7 @@ model Task {
   isShared            Boolean          @default(false)
   dueDate             DateTime?
   showOnCalendar      Boolean          @default(false)
+  createExpenseAutomatically Boolean   @default(true)
   priority            Priority         @default(MEDIUM)
   status              ProjectStatus    @default(PLANNED)
   notificationEnabled Boolean          @default(false)
