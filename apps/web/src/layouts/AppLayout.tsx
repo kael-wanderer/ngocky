@@ -62,7 +62,7 @@ function migrateLegacyGroupOrder(order: Record<string, string[]>) {
         next[groupId] = Array.isArray(items) ? [...items] : [];
     }
 
-    const hobbyRoutes = ['/learning', '/keyboard', '/funds'];
+    const hobbyRoutes = ['/keyboard', '/funds', '/learning'];
     for (const groupId of Object.keys(next)) {
         next[groupId] = next[groupId].filter((to) => !hobbyRoutes.includes(to));
     }
@@ -451,7 +451,7 @@ export default function AppLayout() {
 
                 {/* Content */}
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-                    <div className="animate-fade-in">
+                    <div className="max-w-[1600px] mx-auto animate-fade-in">
                         <Outlet />
                     </div>
                 </main>

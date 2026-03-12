@@ -818,6 +818,7 @@ model Keyboard {
   stab        String?
   switchAlpha String?
   switchMod   String?
+  assembler   String?
   isShared    Boolean  @default(false)
   ownerId     String
   sortOrder   Int      @default(0)

@@ -13,6 +13,22 @@ const EXTRAS = ['Hotswap', 'Solder', 'Plate Alu', 'Plate CF', 'Plate PC', 'Plate
 const STABS = ['V2.0', 'V2.1', 'V2.2'];
 const SWITCH_ALPHAS = ['VB 3 pin', 'VB 5 pin'];
 const SWITCH_MODS = ['VB 3 pin', 'VB 5 pin', 'HB', 'Cherry Black'];
+const COLOR_TEXT_MAP: Record<string, string> = {
+    Blue: '#2563eb',
+    PC: '#6b7280',
+    Purple: '#7c3aed',
+    Red: '#dc2626',
+    Gray: '#6b7280',
+    Green: '#16a34a',
+    Black: '#111827',
+    Silver: '#94a3b8',
+    Copper: '#b45309',
+    Brown: '#92400e',
+    'Rose Gold': '#c2410c',
+    Orange: '#ea580c',
+    Beige: '#a16207',
+    Colorful: '#db2777',
+};
 
 // ─── Types ───────────────────────────────────────────
 
@@ -30,6 +46,7 @@ interface KeyboardItem {
     stab: string | null;
     switchAlpha: string | null;
     switchMod: string | null;
+    assembler: string | null;
     isShared: boolean;
     ownerId: string;
     sortOrder: number;
@@ -48,6 +65,7 @@ type FormState = {
     stab: string;
     switchAlpha: string;
     switchMod: string;
+    assembler: string;
     isShared: boolean;
 };
 
@@ -56,7 +74,7 @@ type FormState = {
 const formatVND = (n: number) => `${new Intl.NumberFormat('vi-VN').format(n)} ₫`;
 
 function emptyForm(): FormState {
-    return { name: '', price: '', category: '', tag: '', color: '', spec: [], extras: [], description: '', note: '', stab: '', switchAlpha: '', switchMod: '', isShared: false };
+    return { name: '', price: '', category: '', tag: '', color: '', spec: [], extras: [], description: '', note: '', stab: '', switchAlpha: '', switchMod: '', assembler: '', isShared: false };
 }
 
 function formFromItem(item: KeyboardItem): FormState {
@@ -73,6 +91,7 @@ function formFromItem(item: KeyboardItem): FormState {
         stab: item.stab ?? '',
         switchAlpha: item.switchAlpha ?? '',
         switchMod: item.switchMod ?? '',
+        assembler: item.assembler ?? '',
         isShared: item.isShared,
     };
 }
@@ -91,6 +110,7 @@ function formToBody(f: FormState) {
         stab: f.stab || null,
         switchAlpha: f.switchAlpha || null,
         switchMod: f.switchMod || null,
+        assembler: f.assembler || null,
         isShared: f.isShared,
     };
 }
@@ -142,6 +162,7 @@ const CSV_HEADER_MAP: Record<string, string> = {
     stab: 'stab',
     'switch alpha': 'switchAlpha', switchalpha: 'switchAlpha', alpha: 'switchAlpha',
     'switch mod': 'switchMod', switchmod: 'switchMod', mod: 'switchMod',
+    assembler: 'assembler',
 };
 
 // ─── Main Page ───────────────────────────────────────
@@ -290,38 +311,36 @@ export default function KeyboardPage() {
                         <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                             <tr>
                                 <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[160px]">Name</th>
-                                <th className="text-right px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">Price</th>
                                 <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">Category</th>
                                 <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">Tag</th>
                                 <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-20">Color</th>
                                 <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[140px]">Spec</th>
                                 <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">Extras</th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">Description</th>
+                                <th className="text-right px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">Price</th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">Condition</th>
                                 <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">Note</th>
                                 <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-20">Stab</th>
                                 <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">Switch Alpha</th>
                                 <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">Switch Mod</th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">Assembler</th>
                                 <th className="w-16" />
                             </tr>
                         </thead>
                         <tbody>
                             {filtered.length === 0 && (
                                 <tr>
-                                    <td colSpan={13} className="text-center py-12 text-gray-400">No keyboards found</td>
+                                    <td colSpan={14} className="text-center py-12 text-gray-400">No keyboards found</td>
                                 </tr>
                             )}
                             {filtered.map(item => (
-                                <tr key={item.id} className="group border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                <tr key={item.id} onDoubleClick={() => openEdit(item)} className="group border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
                                     <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{item.name}</td>
-                                    <td className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
-                                        {item.price != null ? formatVND(item.price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
-                                    </td>
                                     <td className="px-3 py-2">
                                         {item.category ? <span className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">{item.category}</span> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
                                     </td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{item.tag ?? <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2">
-                                        {item.color ? <span className="px-1.5 py-0.5 rounded text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">{item.color}</span> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
+                                        {item.color ? <span className="text-xs font-semibold" style={{ color: COLOR_TEXT_MAP[item.color] || 'var(--color-text)' }}>{item.color}</span> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
                                     </td>
                                     <td className="px-3 py-2">
                                         <div className="flex flex-wrap gap-0.5">
@@ -333,17 +352,21 @@ export default function KeyboardPage() {
                                             {item.extras?.length ? item.extras.map(e => <span key={e} className="px-1.5 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">{e}</span>) : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
                                         </div>
                                     </td>
+                                    <td className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
+                                        {item.price != null ? formatVND(item.price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                                    </td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.description ?? ''}>{item.description || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.note ?? ''}>{item.note || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{item.stab || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{item.switchAlpha || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{item.switchMod || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{item.assembler || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2">
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
-                                            <button onClick={() => openEdit(item)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
+                                            <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
                                                 <Pencil className="w-3.5 h-3.5 text-gray-400" />
                                             </button>
-                                            <button onClick={() => { if (confirm('Delete this keyboard?')) deleteMut.mutate(item.id); }} className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20">
+                                            <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this keyboard?')) deleteMut.mutate(item.id); }} className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20">
                                                 <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
                                             </button>
                                         </div>
@@ -462,10 +485,10 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, saving }: {
                             </div>
                         </div>
 
-                        {/* Description */}
+                        {/* Condition */}
                         <div className="col-span-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
-                            <input value={form.description} onChange={e => set('description', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm" />
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Condition</label>
+                            <input value={form.description} onChange={e => set('description', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm" placeholder="e.g. Used, BNIB, Built" />
                         </div>
 
                         {/* Note */}
@@ -499,6 +522,12 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, saving }: {
                                 <option value="">—</option>
                                 {SWITCH_MODS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
+                        </div>
+
+                        {/* Assembler */}
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Assembler</label>
+                            <input value={form.assembler} onChange={e => set('assembler', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm" placeholder="e.g. Hieu" />
                         </div>
 
                         {/* Shared */}
@@ -542,11 +571,12 @@ function CsvImportModal({ onImport, onClose, loading }: {
         { key: 'color', label: 'Color' },
         { key: 'spec', label: 'Spec (multi)' },
         { key: 'extras', label: 'Extras (multi)' },
-        { key: 'description', label: 'Description' },
+        { key: 'description', label: 'Condition' },
         { key: 'note', label: 'Note' },
         { key: 'stab', label: 'Stab' },
         { key: 'switchAlpha', label: 'Switch Alpha' },
         { key: 'switchMod', label: 'Switch Mod' },
+        { key: 'assembler', label: 'Assembler' },
     ];
 
     function handleFile(e: React.ChangeEvent<HTMLInputElement>) {

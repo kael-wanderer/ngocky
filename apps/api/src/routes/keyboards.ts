@@ -21,7 +21,7 @@ router.get('/', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
     try {
         const userId = req.user!.userId;
-        const { name, price, category, tag, color, spec, extras, description, note, stab, switchAlpha, switchMod, isShared } = req.body;
+        const { name, price, category, tag, color, spec, extras, description, note, stab, switchAlpha, switchMod, assembler, isShared } = req.body;
         const last = await prisma.keyboard.aggregate({ where: { ownerId: userId }, _max: { sortOrder: true } });
         const keyboard = await prisma.keyboard.create({
             data: {
@@ -37,6 +37,7 @@ router.post('/', async (req, res, next) => {
                 stab: stab ?? null,
                 switchAlpha: switchAlpha ?? null,
                 switchMod: switchMod ?? null,
+                assembler: assembler ?? null,
                 isShared: !!isShared,
                 ownerId: userId,
                 sortOrder: (last._max.sortOrder ?? -1) + 1,
@@ -53,7 +54,7 @@ router.patch('/:id', async (req, res, next) => {
             where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
         });
         if (!kb) throw new NotFoundError('Keyboard not found');
-        const { name, price, category, tag, color, spec, extras, description, note, stab, switchAlpha, switchMod, isShared } = req.body;
+        const { name, price, category, tag, color, spec, extras, description, note, stab, switchAlpha, switchMod, assembler, isShared } = req.body;
         const updated = await prisma.keyboard.update({
             where: { id: kb.id },
             data: {
@@ -69,6 +70,7 @@ router.patch('/:id', async (req, res, next) => {
                 ...(stab !== undefined && { stab }),
                 ...(switchAlpha !== undefined && { switchAlpha }),
                 ...(switchMod !== undefined && { switchMod }),
+                ...(assembler !== undefined && { assembler }),
                 ...(isShared !== undefined && { isShared }),
             },
         });
@@ -109,6 +111,7 @@ router.post('/import', async (req, res, next) => {
                 stab: r.stab ?? null,
                 switchAlpha: r.switchAlpha ?? null,
                 switchMod: r.switchMod ?? null,
+                assembler: r.assembler ?? null,
                 isShared: false,
                 ownerId: userId,
                 sortOrder: order++,
