@@ -130,6 +130,8 @@ NgocKy/
 | Expenses | `GET/POST /api/expenses` | Expense CRUD |
 | Funds | `GET/POST /api/funds` | Hobby fund transaction CRUD |
 | Keyboard | `GET/POST /api/keyboards` | Keyboard collection CRUD |
+| Ca Keo | `GET/POST /api/cakeos` | Ca Keo task CRUD |
+| Ca Keo | `GET /api/cakeos/users` | List all users for assigner dropdown |
 | Analytics | `GET /api/reports/*` | Analytics chart data + CSV |
 | Alerts | `GET/POST /api/alerts` | Notification rule CRUD |
 | Scheduled Reports | `GET/POST /api/scheduled-reports` | Scheduled report CRUD |
@@ -222,6 +224,7 @@ Account linking:
 - **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, running totals in `VND`, shorthand amount input such as `600k` and `82M`, and pagination with page size options `25`, `50`, `100`
 - **Learning** – Topic-first learning management with shared topics, topic categories (`Soft-skill`, `Expertise`, `AI`, `Other`), shared ownership display on histories, duplicate actions, and progress/deadline tracking
 - **Ideas** – Topic-first idea capture with shared topics, shared ownership display on logs, duplicate actions, and category/status tracking
+- **Ca Keo** – Kid task/calendar tracker with three views: Calendar (monthly grid), List (table with per-person pending/done stats), and Kanban (columns: Todo, In Progress, Done, Cancelled); fields include Title, Category (School/Activity/Medical/Entertainment/Home/Other), Status, Assigner (dynamic from DB users), Start/End date+time, Description, Color, Show on main Calendar flag, and optional notifications; Ca Keo items marked "Show on main Calendar" appear on the main Calendar page with a pink Ca Keo badge
 - **Keyboard** – Keyboard collection table with category/tag/color/spec/extras/condition/price metadata, alternating row striping, sortable columns, always-visible filters, CSV import, pagination, and double-click edit
 - **Funds** – Hobby transaction ledger with fields `Description`, `Type` (`Buy`, `Sell`, `Top-up`), `Scope` (`Mechanical keyboard`, `Play Station`), `Category` (`Keycap`, `Kit`, `Shipping`, `Accessories`, `Other`), `Condition`, `Date`, and `Amount`; supports CSV import, pagination, shorthand amount input such as `600k` and `82M`, and keyboard-linked `Buy`/`Sell` automation
 - **Assistant** – Telegram-based assistant for quick task actions, calendar queries, expense logging, goal check-ins, housework updates, and project/project-task lookup with confirmation/disambiguation for ambiguous writes
@@ -288,7 +291,7 @@ Current shared modules include:
 Navigation visibility is user-configurable from `User Settings > Features`.
 
 - **Personal**: Tasks, Projects, Goals, Expenses, Ideas
-- **Family**: Housework, Assets, Calendar
+- **Family**: Calendar, Ca Keo, Housework, Assets
 - **Hobby**: Keyboard, Funds, Learning
 
 Behavior:

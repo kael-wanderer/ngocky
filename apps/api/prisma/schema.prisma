@@ -207,6 +207,7 @@ model User {
   featureCalendar     Boolean             @default(true)
   featureKeyboard     Boolean             @default(true)
   featureFunds        Boolean             @default(true)
+  featureCaKeo        Boolean             @default(true)
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
@@ -238,6 +239,8 @@ model User {
   assistantActionLogs     AssistantActionLog[]
   assistantPendingActions AssistantPendingAction[]
   keyboards               Keyboard[]
+  cakeos                  CaKeo[]                  @relation("CaKeoOwner")
+  assignedCaKeos          CaKeo[]                  @relation("CaKeoAssigner")
 }
 
 
@@ -842,4 +845,40 @@ model Keyboard {
 
   @@index([ownerId])
   @@index([name])
+}
+
+// ─── Ca Keo ──────────────────────────────────────────
+
+model CaKeo {
+  id                      String        @id @default(cuid())
+  title                   String
+  description             String?
+  category                String?
+  status                  String        @default("TODO")
+  assignerId              String?
+  startDate               DateTime?
+  endDate                 DateTime?
+  allDay                  Boolean       @default(false)
+  color                   String?
+  showOnCalendar          Boolean       @default(true)
+  notificationEnabled     Boolean       @default(false)
+  reminderOffsetValue     Int?
+  reminderOffsetUnit      ReminderUnit?
+  notificationDate        DateTime?
+  notificationTime        String?
+  lastNotificationSentAt  DateTime?
+  notificationCooldownHours Int         @default(24)
+  isShared                Boolean       @default(true)
+  ownerId                 String
+  sortOrder               Int           @default(0)
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  owner    User  @relation("CaKeoOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  assigner User? @relation("CaKeoAssigner", fields: [assignerId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId])
+  @@index([assignerId])
+  @@index([startDate])
+  @@index([status])
 }

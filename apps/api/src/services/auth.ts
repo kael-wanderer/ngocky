@@ -40,6 +40,7 @@ export class AuthService {
                     featureCalendar: !!user.featureCalendar,
                     featureKeyboard: !!user.featureKeyboard,
                     featureFunds: !!user.featureFunds,
+                    featureCaKeo: !!user.featureCaKeo,
                 },
             };
         }
@@ -70,6 +71,7 @@ export class AuthService {
                 featureCalendar: !!user.featureCalendar,
                 featureKeyboard: !!user.featureKeyboard,
                 featureFunds: !!user.featureFunds,
+                featureCaKeo: !!user.featureCaKeo,
             },
         };
     }
@@ -106,6 +108,7 @@ export class AuthService {
                 featureCalendar: !!user.featureCalendar,
                 featureKeyboard: !!user.featureKeyboard,
                 featureFunds: !!user.featureFunds,
+                featureCaKeo: !!user.featureCaKeo,
             },
         };
     }
@@ -151,6 +154,7 @@ export class AuthService {
                 featureCalendar: !!stored.user.featureCalendar,
                 featureKeyboard: !!stored.user.featureKeyboard,
                 featureFunds: !!stored.user.featureFunds,
+                featureCaKeo: !!stored.user.featureCaKeo,
             },
         };
     }

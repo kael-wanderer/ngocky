@@ -10,6 +10,7 @@ export const FEATURE_FLAGS = {
     featureCalendar: true,
     featureKeyboard: true,
     featureFunds: true,
+    featureCaKeo: true,
 } as const;
 
 export type FeatureFlagKey = keyof typeof FEATURE_FLAGS;
@@ -42,6 +43,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         label: 'Family',
         items: [
             { key: 'featureCalendar', label: 'Calendar', route: '/calendar' },
+            { key: 'featureCaKeo', label: 'Ca Keo', route: '/cakeo' },
             { key: 'featureHousework', label: 'Housework', route: '/housework' },
             { key: 'featureAssets', label: 'Assets', route: '/assets' },
         ],

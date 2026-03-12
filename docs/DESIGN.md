@@ -305,7 +305,7 @@ Fixed groups:
 
 - `Dashboard`: Dashboard, Analytics
 - `Personal`: Tasks, Projects, Goals, Expenses, Ideas
-- `Family`: Housework, Assets, Calendar
+- `Family`: Calendar, Ca Keo, Housework, Assets
 - `Hobby`: Keyboard, Funds, Learning
 - `Settings`: Reports, Notifications, User Settings
 - `Admin`: User Management
@@ -328,10 +328,21 @@ Settings behavior is intentionally mixed based on action type:
 - **Profile** fields (`name`, `email`, `timezone`) now use local draft state and require explicit `Save`
 - **Features** fields control module visibility per user and require explicit `Save`
   - `Personal`: Tasks, Projects, Goals, Expenses, Ideas
-  - `Family`: Housework, Assets, Calendar
+  - `Family`: Calendar, Ca Keo, Housework, Assets
   - `Hobby`: Keyboard, Funds, Learning
 
-### 15. Keyboard Module
+### 15. Ca Keo Module
+
+Ca Keo is a kid task and calendar tracker for family scheduling.
+
+- **Views**: Calendar (monthly grid), List (flat table), Kanban (status columns)
+- **Fields**: `Title`, `Description`, `Category` (School / Activity / Medical / Entertainment / Home / Other), `Status` (TODO / IN_PROGRESS / DONE / CANCELLED), `Assigner` (FK → User, display name auto-updates when user changes their profile name), `Start Date`, `End Date`, `All Day`, `Color`, `Show on main Calendar`
+- **Assigner model**: stored as `assignerId` FK to User; assigner dropdown is populated live from all active DB users so display names stay in sync with profile updates
+- **Main Calendar integration**: items with `showOnCalendar = true` appear in the main Calendar page with a pink "Ca Keo" badge; they are read-only in the main Calendar and must be edited from the Ca Keo page
+- **Notification support**: follows the shared `NotificationFields` pattern (Hours / Days Before / On Date)
+- **Feature flag**: `featureCaKeo`, under the `Family` sidebar group
+
+### 16. Keyboard Module
 
 Keyboard is a table-first hobby collection module.
 

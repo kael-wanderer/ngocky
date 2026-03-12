@@ -20,6 +20,9 @@ import { resolveGoalCheckin } from './resolvers/goalCheckin';
 import { resolveGoalQuery } from './resolvers/goalQuery';
 import { resolveHouseworkQuery } from './resolvers/houseworkQuery';
 import { resolveHouseworkStatus } from './resolvers/houseworkStatus';
+import { resolveCaKeoCreate } from './resolvers/caKeoCreate';
+import { resolveCaKeoQuery } from './resolvers/caKeoQuery';
+import { resolveCaKeoStatus } from './resolvers/caKeoStatus';
 
 // ─── Main executor ────────────────────────────────────────────────────────────
 
@@ -104,6 +107,15 @@ export async function dispatchIntent(
 
         case 'update_housework_status':
             return resolveHouseworkStatus(entities, ctx);
+
+        case 'create_cakeo':
+            return resolveCaKeoCreate(entities, ctx);
+
+        case 'query_cakeos':
+            return resolveCaKeoQuery(entities, ctx);
+
+        case 'update_cakeo_status':
+            return resolveCaKeoStatus(entities, ctx);
 
         case 'help':
             return { reply: HELP_TEXT, requiresConfirmation: false };

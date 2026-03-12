@@ -98,6 +98,18 @@ update_housework_status:
   entities: { "itemTitle": "string (required)" }
   examples: "mark dishes done", "đánh dấu hoàn thành rửa bát", "complete vacuuming", "done with sweeping"
 
+create_cakeo:
+  entities: { "title": "string (required)", "category": "School|Activity|Medical|Entertainment|Home|Other (optional)", "assignerName": "string (optional, name of person assigned)", "startDate": "YYYY-MM-DD (optional)", "status": "TODO|IN_PROGRESS|DONE|CANCELLED (optional, default TODO)" }
+  examples: "add ca keo school trip tomorrow", "tạo ca keo y tế thứ 5", "thêm lịch học cho bé hoạt động ngoại khóa", "new ca keo doctor appointment Friday"
+
+query_cakeos:
+  entities: { "dateRange": { "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" } (optional), "status": "TODO|IN_PROGRESS|DONE|CANCELLED (optional)", "category": "string (optional)" }
+  examples: "show ca keo this week", "list ca keo today", "ca keo hôm nay", "lịch ca keo tháng này", "what ca keo do we have tomorrow", "show pending ca keo"
+
+update_cakeo_status:
+  entities: { "itemTitle": "string (required)", "status": "TODO|IN_PROGRESS|DONE|CANCELLED (required)" }
+  examples: "mark school trip done", "đánh dấu ca keo khám bệnh xong", "complete ca keo activity", "cancel ca keo medical appointment"
+
 help:
   entities: {}
   examples: "/help", "what can you do", "help me", "hướng dẫn"
@@ -125,6 +137,7 @@ Vietnamese action keywords:
 - task / việc cần làm = query_tasks or create_task (context-dependent)
 - việc nhà / chores / dọn = housework
 - goal / mục tiêu / chạy bộ / tập gym / đăng ký = goal_checkin
+- ca keo / cakeo / lịch bé / lịch con = create_cakeo or query_cakeos or update_cakeo_status depending on context
 
 Return ONLY the JSON object.`;
 }
@@ -194,6 +207,22 @@ function regexFallback(text: string, today: string): ParsedIntent {
 
     if (/\b(việc nhà|chores|housework)\b/i.test(t)) {
         return { intent: 'query_housework', confidence: 0.6, entities: {} };
+    }
+
+    if (/\b(add|create|new|tạo|thêm)\b.+\b(ca keo|cakeo)\b/i.test(t) ||
+        /\b(ca keo|cakeo)\b.+\b(add|create|new|tạo|thêm)\b/i.test(t)) {
+        return { intent: 'create_cakeo', confidence: 0.65, entities: {} };
+    }
+
+    if (/\b(show|list|query|what|lịch)\b.+\b(ca keo|cakeo)\b/i.test(t) ||
+        /\b(ca keo|cakeo)\b.+\b(today|hôm nay|this week|tuần này|tomorrow)\b/i.test(t) ||
+        /\bca keo\b/i.test(t)) {
+        return { intent: 'query_cakeos', confidence: 0.6, entities: {} };
+    }
+
+    if (/\b(mark|complete|done|cancel|đánh dấu)\b.+\b(ca keo|cakeo)\b/i.test(t) ||
+        /\b(ca keo|cakeo)\b.+\b(done|xong|cancel|hoàn thành)\b/i.test(t)) {
+        return { intent: 'update_cakeo_status', confidence: 0.6, entities: {} };
     }
 
     return { intent: 'fallback', confidence: 1.0, entities: {} };

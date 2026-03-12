@@ -71,6 +71,11 @@ export default function CalendarPage() {
         queryFn: async () => (await api.get(`/calendar?startFrom=${range.start.toISOString()}&startTo=${range.end.toISOString()}&limit=200`)).data.data,
     });
 
+    const { data: cakeoData } = useQuery({
+        queryKey: ['cakeos-calendar', format(range.start, 'yyyy-MM-dd'), format(range.end, 'yyyy-MM-dd')],
+        queryFn: async () => (await api.get(`/cakeos?startFrom=${range.start.toISOString()}&startTo=${range.end.toISOString()}`)).data.data,
+    });
+
     const createMut = useMutation({
         mutationFn: (body: any) => api.post('/calendar', body),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['calendar'] }); setShowCreate(false); setForm({ ...emptyForm }); },
@@ -90,7 +95,11 @@ export default function CalendarPage() {
         onSuccess: () => qc.invalidateQueries({ queryKey: ['calendar'] }),
     });
 
-    const events = data || [];
+    const calendarEvents = data || [];
+    const cakeoEvents = (cakeoData || [])
+        .filter((item: any) => item.showOnCalendar && item.startDate)
+        .map((item: any) => ({ ...item, _source: 'cakeo', color: item.color || '#ec4899' }));
+    const events = [...calendarEvents, ...cakeoEvents];
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
     const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -382,20 +391,23 @@ export default function CalendarPage() {
                         {selectedDate && selectedEvents.length === 0 && <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No events</p>}
                         <div className="space-y-2">
                             {selectedEvents.map((e: any) => (
-                                <div key={e.id} className="p-3 rounded-lg border-l-4" style={{ borderColor: e.color || 'var(--color-primary)', backgroundColor: 'var(--color-bg)' }} onDoubleClick={() => openEdit(e)}>
+                                <div key={e.id} className="p-3 rounded-lg border-l-4" style={{ borderColor: e.color || 'var(--color-primary)', backgroundColor: 'var(--color-bg)' }} onDoubleClick={() => { if (!e._source) openEdit(e); }}>
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{e.title}</p>
                                                 {e.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                                             </div>
+                                            {e._source === 'cakeo' && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#fce7f3', color: '#ec4899' }}>Ca Keo</span>}
                                             {e.createdBy?.name && <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Owner: {e.createdBy.name}</p>}
                                         </div>
-                                        <div className="flex items-center gap-1">
-                                            <button className={`p-1 ${e.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin event" onClick={() => togglePin(e)}><Pin className="w-3.5 h-3.5" /></button>
-                                            <button className="p-1 hover:text-indigo-500" title="Edit event" onClick={() => openEdit(e)}><Pencil className="w-3.5 h-3.5" /></button>
-                                            <button className="p-1 hover:text-red-500" title="Delete event" onClick={() => handleDelete(getSourceId(e))}><Trash2 className="w-3.5 h-3.5" /></button>
-                                        </div>
+                                        {!e._source && (
+                                            <div className="flex items-center gap-1">
+                                                <button className={`p-1 ${e.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin event" onClick={() => togglePin(e)}><Pin className="w-3.5 h-3.5" /></button>
+                                                <button className="p-1 hover:text-indigo-500" title="Edit event" onClick={() => openEdit(e)}><Pencil className="w-3.5 h-3.5" /></button>
+                                                <button className="p-1 hover:text-red-500" title="Delete event" onClick={() => handleDelete(getSourceId(e))}><Trash2 className="w-3.5 h-3.5" /></button>
+                                            </div>
+                                        )}
                                     </div>
                                     <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>{e.allDay ? 'All day' : format(new Date(e.startDate), 'h:mm a')}{e.endDate && !e.allDay && ` - ${format(new Date(e.endDate), 'h:mm a')}`}</p>
                                     {e.repeatFrequency && <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Repeats: {e.repeatFrequency.toLowerCase()}</p>}

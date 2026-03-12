@@ -173,6 +173,7 @@ export default function SettingsPage() {
             featureCalendar: profile.featureCalendar ?? true,
             featureKeyboard: profile.featureKeyboard ?? true,
             featureFunds: profile.featureFunds ?? true,
+            featureCaKeo: profile.featureCaKeo ?? true,
         });
     }, [profile]);
 

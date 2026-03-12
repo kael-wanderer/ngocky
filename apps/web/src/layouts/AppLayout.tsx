@@ -5,7 +5,7 @@ import { getFeatureFlags, isFeatureRouteEnabled } from '../config/features';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, LogOut, Menu, X,
-    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, GripVertical, Coins, Keyboard
+    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, GripVertical, Coins, Keyboard, Baby
 } from 'lucide-react';
 
 const navItems = [
@@ -17,6 +17,7 @@ const navItems = [
     { to: '/goals', icon: Trophy, label: 'Goals' },
     { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
     { to: '/calendar', icon: Calendar, label: 'Calendar' },
+    { to: '/cakeo', icon: Baby, label: 'Ca Keo' },
     { to: '/housework', icon: Home, label: 'Housework' },
     { to: '/assets', icon: Microwave, label: 'Assets' },
     { to: '/keyboard', icon: Keyboard, label: 'Keyboard' },
@@ -34,7 +35,7 @@ const adminItems = [
 const navGroups = [
     { id: 'dashboard', label: 'Dashboard', items: ['/', '/reports'] },
     { id: 'personal', label: 'Personal', items: ['/tasks', '/projects', '/expenses', '/goals', '/ideas'] },
-    { id: 'family', label: 'Family', items: ['/calendar', '/housework', '/assets'] },
+    { id: 'family', label: 'Family', items: ['/calendar', '/cakeo', '/housework', '/assets'] },
     { id: 'hobby', label: 'Hobby', items: ['/keyboard', '/funds', '/learning'] },
     { id: 'settings', label: 'Settings', items: ['/scheduled-reports', '/notifications', '/settings'] },
     { id: 'admin', label: 'Admin', items: ['/users'] },

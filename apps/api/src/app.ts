@@ -26,6 +26,7 @@ import scheduledReportRoutes from './routes/scheduled-reports';
 import serviceRoutes from './routes/service';
 import assistantRoutes from './routes/assistant';
 import keyboardRoutes from './routes/keyboards';
+import cakeoRoutes from './routes/cakeos';
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.use('/api/scheduled-reports', scheduledReportRoutes);
 app.use('/api/service', serviceRoutes);
 app.use('/api/assistant', assistantRoutes);
 app.use('/api/keyboards', keyboardRoutes);
+app.use('/api/cakeos', cakeoRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);

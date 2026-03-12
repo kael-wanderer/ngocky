@@ -6,6 +6,22 @@ This document tracks the next product expansion centered on the Goals area becom
 
 ## 🏗 Features & Refinements
 
+### 0. Ca Keo Module ✅
+
+Kid task and calendar tracker under the Family sidebar group.
+
+- [x] **Schema**: `CaKeo` model with title, description, category, status, assignerId (FK → User), startDate, endDate, allDay, color, showOnCalendar, notification fields, isShared, ownerId
+- [x] **Feature flag**: `featureCaKeo` on User, under Family feature group in Settings > Features
+- [x] **API**: CRUD at `/api/cakeos`, plus `/api/cakeos/users` for live assigner dropdown
+- [x] **Calendar view**: monthly grid identical to main Calendar, colored dots, day panel with tasks + quick-add
+- [x] **List view**: flat table with per-person pending/done stat cards (dynamic from DB users), filter by status/assignee/category
+- [x] **Kanban view**: 4 columns (Todo / In Progress / Done / Cancelled), quick-add per column
+- [x] **Main Calendar integration**: items with `showOnCalendar = true` appear in main Calendar with pink "Ca Keo" badge; read-only in that context
+- [x] **Notification support**: uses shared `NotificationFields` component
+- [x] **Migration**: `20260313000000_add_cakeo_module`
+
+---
+
 ### 1. Goals Workspace Refactor
 
 Goal: keep the current Goals experience intact while refactoring the page into a two-tab workspace.

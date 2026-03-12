@@ -40,6 +40,9 @@ export const ASSISTANT_INTENTS = [
     'query_goals',
     'query_housework',
     'update_housework_status',
+    'create_cakeo',
+    'query_cakeos',
+    'update_cakeo_status',
     'link_telegram',
     'help',
     'fallback',
@@ -56,6 +59,8 @@ export const WRITE_INTENTS: ReadonlySet<AssistantIntent> = new Set([
     'create_keyboard',
     'goal_checkin',
     'update_housework_status',
+    'create_cakeo',
+    'update_cakeo_status',
 ]);
 
 export const HELP_TEXT = `NgocKy Assistant - available commands:
@@ -97,6 +102,11 @@ Goals
 Housework
 - what chores are due today
 - mark dishes done
+
+Ca Keo
+- add ca keo school trip tomorrow
+- show ca keo this week
+- mark school trip done
 
 Send /link [code] to connect your NgocKy account.`;
 

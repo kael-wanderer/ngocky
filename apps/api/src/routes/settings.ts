@@ -33,6 +33,7 @@ const profileSelect: any = {
     featureCalendar: true,
     featureKeyboard: true,
     featureFunds: true,
+    featureCaKeo: true,
 } as const;
 
 // Get profile/settings
@@ -70,6 +71,7 @@ router.patch('/profile', async (req: Request, res: Response, next: NextFunction)
             'featureCalendar',
             'featureKeyboard',
             'featureFunds',
+            'featureCaKeo',
         ];
         const data: any = {};
         allowedFields.forEach((f) => { if (req.body[f] !== undefined) data[f] = req.body[f]; });

@@ -126,6 +126,7 @@ router.get('/me', authenticate, async (req: Request, res: Response, next: NextFu
                 featureCalendar: true,
                 featureKeyboard: true,
                 featureFunds: true,
+                featureCaKeo: true,
             } as any,
         });
         sendSuccess(res, user);
