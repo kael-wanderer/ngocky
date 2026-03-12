@@ -317,7 +317,7 @@ Behavior:
 - non-admin pages can be drag-reordered within a group
 - non-admin pages can also be dragged across groups
 - admin navigation remains fixed to avoid role/permission ambiguity
-- page visibility is controlled per user in `Settings > Features`
+- page visibility is controlled per user in `Settings > Desktop Features`
 - if all child pages in a feature group are disabled, that whole group disappears from the sidebar
 - hidden pages are also blocked at the route level and redirect to dashboard if opened directly
 
@@ -326,10 +326,19 @@ Behavior:
 Settings behavior is intentionally mixed based on action type:
 
 - **Profile** fields (`name`, `email`, `timezone`) now use local draft state and require explicit `Save`
-- **Features** fields control module visibility per user and require explicit `Save`
+- **Desktop Features** fields control module visibility per user and require explicit `Save`
   - `Personal`: Tasks, Projects, Goals, Expenses, Ideas
   - `Family`: Calendar, Ca Keo, Housework, Assets
   - `Hobby`: Keyboard, Funds, Learning
+- **Phone View** controls the bottom mobile navigation per user and requires explicit `Save`
+  - supports between `3` and `6` selected modules
+  - saved order is the rendered order on mobile
+  - default set remains `Dashboard`, `Goals`, `Tasks`, `Calendar`, `User Settings`
+- **Color Settings** stores shared module color options with explicit `Save`
+  - colors are shared from the database, not browser local storage
+  - user color choices must remain unique within the same module
+  - each module supports reset-to-default
+  - Calendar is planned to use the same color option logic as Ca Keo
 
 ### 15. Ca Keo Module
 
@@ -341,6 +350,29 @@ Ca Keo is a kid task and calendar tracker for family scheduling.
 - **Main Calendar integration**: items with `showOnCalendar = true` appear in the main Calendar page with a pink "Ca Keo" badge; they are read-only in the main Calendar and must be edited from the Ca Keo page
 - **Notification support**: follows the shared `NotificationFields` pattern (Hours / Days Before / On Date)
 - **Feature flag**: `featureCaKeo`, under the `Family` sidebar group
+- **Permissions**:
+  - `cong.buithanh@gmail.com` and `kist.t1108@gmail.com` can create/edit/update Ca Keo items
+  - delete remains owner-only
+
+### 15A. Planned Module Updates
+
+- **Tasks**:
+  - add double-click to edit
+  - add a List view so the module supports two views
+- **Calendar**:
+  - refine `Today` into a timeline view inspired by Google Calendar
+  - refine `Week` into a calendar-grid week view instead of a list
+  - add shared Calendar user colors under `Settings > Color Settings` using the same color option logic as Ca Keo
+- **Assets**:
+  - add a List view
+- **Analytics**:
+  - add Ca Keo, Keyboard, and Funds
+  - module visibility should follow `Settings > Desktop Features`
+
+### 15B. Navigation Simplification
+
+- desktop sidebar drag-and-drop arrangement is being reconsidered and may be removed
+- if removed, group collapse/expand remains and mobile ordering continues to live in `Settings > Phone View`
 
 ### 16. Keyboard Module
 

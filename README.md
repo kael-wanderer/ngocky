@@ -216,24 +216,24 @@ Account linking:
 
 - **Dashboard** – Summary cards, filters (`Today`, `This week`, `Next week`, `This month`, `Next month`, `Status`, `Category`), overdue feed for true due items, pinned items, and category-based panels (`Goal`, `Project`, `Task`, `Housework`, `Calendar`, `Expense`, `Assets`, `Learning`, `Ideas`)
 - **Goals** – Recurring goals with check-in tracking, progress bars, reset periods (`Weekly`, `Monthly`, `Quarterly`), sharing, dashboard pinning, drag reorder, and optional reminders
-- **Tasks** – Standalone tasks with repeat rules (`Daily`, `Weekly`, `Monthly`, `Quarterly`), payment-task support, sharing, dashboard pinning, drag reorder, and optional reminders
+- **Tasks** – Standalone tasks with repeat rules (`Daily`, `Weekly`, `Monthly`, `Quarterly`), payment-task support, sharing, dashboard pinning, drag reorder, optional reminders, double-click edit, and a planned List view alongside the existing board-style view
 - **Projects** – Shared boards with kanban + list view, project task types (`Task`, `Bug`, `Feature`, `Story`, `Epic`), priorities, deadlines, assignees, drag-and-drop status updates, and per-item sharing
 - **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete`, grouped operational states, sharing, and optional reminders
-- **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`, `Quarterly`), shared visibility, participants, and optional pre-start reminders
-- **Assets** – Home appliance/device registry with sharing, warranty tracking, maintenance records, linked maintenance calendar events, reminder support, and automatic expense creation when a maintenance log includes cost
+- **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`, `Quarterly`), shared visibility, participants, and optional pre-start reminders; planned updates align `Today` with a Google Calendar-style timeline and `Week` with a full week grid instead of a list
+- **Assets** – Home appliance/device registry with sharing, warranty tracking, maintenance records, linked maintenance calendar events, reminder support, and automatic expense creation when a maintenance log includes cost; a List view is planned in addition to the current card/table-first workflows
 - **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, running totals in `VND`, shorthand amount input such as `600k` and `82M`, and pagination with page size options `25`, `50`, `100`
 - **Learning** – Topic-first learning management with shared topics, topic categories (`Soft-skill`, `Expertise`, `AI`, `Other`), shared ownership display on histories, duplicate actions, and progress/deadline tracking
 - **Ideas** – Topic-first idea capture with shared topics, shared ownership display on logs, duplicate actions, and category/status tracking
-- **Ca Keo** – Kid task/calendar tracker with three views: Calendar (monthly grid), List (table with per-person pending/done stats), and Kanban (columns: Todo, In Progress, Done, Cancelled); fields include Title, Category (School/Activity/Medical/Entertainment/Home/Other), Status, Assigner (dynamic from DB users), Start/End date+time, Description, Color, Show on main Calendar flag, and optional notifications; Ca Keo items marked "Show on main Calendar" appear on the main Calendar page with a pink Ca Keo badge
+- **Ca Keo** – Kid task/calendar tracker with three views: Calendar (monthly grid), List (table with per-person pending/done stats), and Kanban (columns: Todo, In Progress, Done, Cancelled); fields include Title, Category (School/Activity/Medical/Entertainment/Home/Other), Status, Assigner (dynamic from DB users), Start/End date+time, Description, Color, Show on main Calendar flag, and optional notifications; Ca Keo items marked "Show on main Calendar" appear on the main Calendar page with a pink Ca Keo badge. Editing is collaborative for `cong.buithanh@gmail.com` and `kist.t1108@gmail.com`, while delete remains owner-only.
 - **Keyboard** – Keyboard collection table with category/tag/color/spec/extras/condition/price metadata, alternating row striping, sortable columns, always-visible filters, CSV import, pagination, and double-click edit
 - **Funds** – Hobby transaction ledger with fields `Description`, `Type` (`Buy`, `Sell`, `Top-up`), `Scope` (`Mechanical keyboard`, `Play Station`), `Category` (`Keycap`, `Kit`, `Shipping`, `Accessories`, `Other`), `Condition`, `Date`, and `Amount`; supports CSV import, pagination, shorthand amount input such as `600k` and `82M`, and keyboard-linked `Buy`/`Sell` automation
 - **Assistant** – Telegram-based assistant for quick task actions, calendar queries, expense logging, goal check-ins, housework updates, and project/project-task lookup with confirmation/disambiguation for ambiguous writes
-- **Analytics** – Charts and summaries for project items, standalone tasks, goals, calendar, housework, expenses, assets, learning, and ideas with time-aware filters
+- **Analytics** – Charts and summaries for project items, standalone tasks, goals, calendar, housework, expenses, assets, learning, and ideas with time-aware filters; planned expansion adds Ca Keo, Keyboard, and Funds, and Analytics visibility should follow `User Settings > Desktop Features`
 - **Notifications** – Rule-based notification settings with drag reorder, double-click-to-edit, and schedule-time based due logic
 - **Scheduled Reports** – Scheduled report management with drag reorder, double-click-to-edit, report types `Weekly Summary`, `Next Week Tasks`, `Today Tasks`, and `Tomorrow Tasks`, and schedule frequencies including `One Time`, `Daily`, `Weekly`, `Monthly`, and `Quarterly`
-- **Settings** – Profile, Features, notifications, Assistant link management, password change, TOTP MFA enrollment, and theme picker with immediate apply (`Blue Purple`, `Grey Black`, `Red Accent`, `Dark`, `Modern Green`, `Multi Color Block`); profile/notification fields use explicit Save buttons
+- **Settings** – Profile, Desktop Features, Phone View, Color Settings, notifications, Assistant link management, password change, TOTP MFA enrollment, and theme picker with immediate apply (`Blue Purple`, `Grey Black`, `Red Accent`, `Dark`, `Modern Green`, `Multi Color Block`); profile/notification fields use explicit Save buttons
 - **User Management** – Admin-only user creation, role assignment, activate/deactivate
-- **Navigation** – Grouped, collapsible sidebar with customizable cross-group drag arrangement for non-admin pages and per-user visibility controlled by the `Features` settings tab
+- **Navigation** – Grouped, collapsible sidebar with per-user visibility controlled by the `Desktop Features` settings tab; desktop drag-and-drop arrangement is under review for possible removal to simplify navigation behavior
 
 ## Dashboard Filters
 
@@ -288,7 +288,7 @@ Current shared modules include:
 
 ## Feature Visibility
 
-Navigation visibility is user-configurable from `User Settings > Features`.
+Navigation visibility is user-configurable from `User Settings > Desktop Features`.
 
 - **Personal**: Tasks, Projects, Goals, Expenses, Ideas
 - **Family**: Calendar, Ca Keo, Housework, Assets
@@ -301,6 +301,27 @@ Behavior:
 - hidden pages also redirect away if visited directly by URL
 - if all child items inside a group are unchecked, that group disappears from the sidebar
 - dashboard, analytics, settings, and admin pages are not controlled by these feature toggles
+
+## Phone View
+
+Bottom mobile navigation is configurable from `User Settings > Phone View`.
+
+- each user can choose between `3` and `6` modules
+- selected modules appear in saved order on the phone bottom navigation
+- `Dashboard`, `Goals`, `Tasks`, `Calendar`, and `User Settings` remain the default set until changed
+
+## Color Option Logic
+
+Shared module color options are managed from `User Settings > Color Settings`.
+
+- colors are stored centrally in the database for system-wide consistency
+- per-module user colors must be unique within that module
+- each module supports reset-to-default
+- Ca Keo uses default assignee colors:
+  - `Unassigned`: grey
+  - `cong.buithanh@gmail.com`: blue
+  - `kist.t1108@gmail.com`: green
+- Calendar is planned to use the same color option logic and default user colors as Ca Keo
 
 Shared child records follow the shared state of their parent container:
 
