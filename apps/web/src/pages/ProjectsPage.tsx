@@ -370,9 +370,28 @@ export default function ProjectsPage() {
                                     <input type="checkbox" checked={boardForm.pinToDashboard} onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })} />
                                     Pin to dashboard
                                 </label>
-                                <button type="submit" className="btn-primary w-full" disabled={updateBoardMut.isPending}>
-                                    {updateBoardMut.isPending ? 'Saving...' : 'Save Board'}
-                                </button>
+                                <div className="flex items-center justify-between gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                        onClick={() => {
+                                            if (window.confirm(`Delete project "${editingBoard.name}" and all its tasks?`)) {
+                                                deleteBoardMut.mutate(editingBoard.id);
+                                                setEditingBoard(null);
+                                            }
+                                        }}
+                                    >
+                                        Delete
+                                    </button>
+                                    <div className="flex gap-2 ml-auto">
+                                        <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={() => setEditingBoard(null)}>
+                                            Cancel
+                                        </button>
+                                        <button type="submit" className="btn-primary" disabled={updateBoardMut.isPending}>
+                                            {updateBoardMut.isPending ? 'Saving...' : 'Save'}
+                                        </button>
+                                    </div>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -515,9 +534,28 @@ export default function ProjectsPage() {
                                 <input type="checkbox" checked={boardForm.pinToDashboard} onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })} />
                                 Pin to dashboard
                             </label>
-                            <button type="submit" className="btn-primary w-full" disabled={updateBoardMut.isPending}>
-                                {updateBoardMut.isPending ? 'Saving...' : 'Save Board'}
-                            </button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                    onClick={() => {
+                                        if (window.confirm(`Delete project "${editingBoard.name}" and all its tasks?`)) {
+                                            deleteBoardMut.mutate(editingBoard.id);
+                                            setEditingBoard(null);
+                                        }
+                                    }}
+                                >
+                                    Delete
+                                </button>
+                                <div className="flex gap-2 ml-auto">
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={() => setEditingBoard(null)}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={updateBoardMut.isPending}>
+                                        {updateBoardMut.isPending ? 'Saving...' : 'Save'}
+                                    </button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -588,9 +626,37 @@ export default function ProjectsPage() {
                                 Pin to dashboard
                             </label>
                             <NotificationFields form={taskForm} setForm={setTaskForm} />
-                            <button type="submit" className="btn-primary w-full" disabled={createTaskMut.isPending || updateTaskMut.isPending}>
-                                {createTaskMut.isPending || updateTaskMut.isPending ? 'Saving...' : (editingTask ? 'Save Changes' : 'Create Project Task')}
-                            </button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <div>
+                                    {editingTask && (
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => {
+                                                if (window.confirm('Delete this task?')) {
+                                                    deleteTaskMut.mutate(editingTask.id);
+                                                    setEditingTask(null);
+                                                    setShowCreateTask(false);
+                                                }
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 ml-auto">
+                                    <button
+                                        type="button"
+                                        className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50"
+                                        onClick={() => { setShowCreateTask(false); setEditingTask(null); setTaskForm({ ...emptyTaskForm }); }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={createTaskMut.isPending || updateTaskMut.isPending}>
+                                        {createTaskMut.isPending || updateTaskMut.isPending ? 'Saving...' : (editingTask ? 'Save' : 'Create Project Task')}
+                                    </button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>

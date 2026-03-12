@@ -32,6 +32,10 @@ export const ASSISTANT_INTENTS = [
     'query_tasks',
     'create_expense',
     'query_expenses',
+    'create_fund',
+    'query_funds',
+    'create_keyboard',
+    'query_keyboards',
     'goal_checkin',
     'query_goals',
     'query_housework',
@@ -48,6 +52,8 @@ export const WRITE_INTENTS: ReadonlySet<AssistantIntent> = new Set([
     'update_task_status',
     'update_project_task_status',
     'create_expense',
+    'create_fund',
+    'create_keyboard',
     'goal_checkin',
     'update_housework_status',
 ]);
@@ -73,6 +79,16 @@ export const HELP_TEXT = `NgocKy Assistant — available commands:
 • "show expenses this month"
 • "tell me all expenses of March"
 
+*Funds*
+• "log a buy fund for 2m keycap mechanical keyboard"
+• "show my funds this month"
+• "show keyboard sell funds"
+
+*Keyboard*
+• "add keyboard kohaku r1 kit 30m"
+• "show my keyboards"
+• "show red keycaps"
+
 *Goals*
 • "show my goals"
 • "what is my goal progress"
@@ -89,7 +105,7 @@ export const FALLBACK_TEXT =
 
 export const WELCOME_TEXT =
     'Welcome to *NgocKy Assistant* 🤖\n\n' +
-    'I can help you manage tasks, calendar events, expenses, and more \\— all from Telegram\\.\n\n' +
+    'I can help you manage tasks, calendar events, expenses, funds, keyboard collection items, and more \\— all from Telegram\\.\n\n' +
     'To get started:\n' +
     '1\\. Open NgocKy Settings in the web app\n' +
     '2\\. Go to the *Assistant* tab\n' +

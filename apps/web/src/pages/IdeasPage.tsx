@@ -238,6 +238,7 @@ export default function IdeasPage() {
                                             }}
                                             className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''} ${draggingTopicId === topic.id ? 'opacity-60' : ''} ${dragOverTopicId === topic.id ? 'ring-2 ring-slate-300' : ''}`}
                                             onClick={() => setSelectedTopicId(topic.id)}
+                                            onDoubleClick={() => canManage && openEditTopic(topic)}
                                             style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}
                                         >
                                             <div className="flex items-start justify-between gap-3">
@@ -298,7 +299,7 @@ export default function IdeasPage() {
                                     const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
                                     const canManage = !sharedOwnerName;
                                     return (
-                                    <div key={log.id} className="card p-5 group break-inside-avoid animate-fade-in hover:shadow-lg transition-all duration-300">
+                                    <div key={log.id} className="card p-5 group break-inside-avoid animate-fade-in hover:shadow-lg transition-all duration-300" onDoubleClick={() => canManage && openEditLog(log)}>
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 {log.category && <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-600">{log.category}</span>}
@@ -376,7 +377,30 @@ export default function IdeasPage() {
                                 <input type="checkbox" checked={topicForm.isShared} onChange={(e) => setTopicForm({ ...topicForm, isShared: e.target.checked })} />
                                 Share with all users
                             </label>
-                            <button type="submit" className="btn-primary w-full" disabled={createTopicMut.isPending || updateTopicMut.isPending}>{editingTopic ? 'Save Topic' : 'Create Topic'}</button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <div>
+                                    {editingTopic && (
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => {
+                                                if (window.confirm('Delete this idea topic and all logs?')) {
+                                                    deleteTopicMut.mutate(editingTopic.id);
+                                                    closeTopicModal();
+                                                }
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 ml-auto">
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeTopicModal}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={createTopicMut.isPending || updateTopicMut.isPending}>{editingTopic ? 'Save' : 'Create Topic'}</button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -435,7 +459,30 @@ export default function IdeasPage() {
                                     ))}
                                 </div>
                             </div>
-                            <button type="submit" className="btn-primary w-full" disabled={createLogMut.isPending || updateLogMut.isPending}>{editingLog ? 'Save Log' : 'Add Log'}</button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <div>
+                                    {editingLog && (
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => {
+                                                if (window.confirm('Delete idea log?')) {
+                                                    deleteLogMut.mutate(editingLog.id);
+                                                    closeLogModal();
+                                                }
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 ml-auto">
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeLogModal}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={createLogMut.isPending || updateLogMut.isPending}>{editingLog ? 'Save' : 'Add Log'}</button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>

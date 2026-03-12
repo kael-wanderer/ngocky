@@ -176,12 +176,16 @@ function HouseworkForm({
     form,
     setForm,
     onSubmit,
+    onCancel,
+    onDelete,
     loading,
     submitLabel,
 }: {
     form: HouseworkFormState;
     setForm: React.Dispatch<React.SetStateAction<HouseworkFormState>>;
     onSubmit: () => void;
+    onCancel: () => void;
+    onDelete?: () => void;
     loading: boolean;
     submitLabel: string;
 }) {
@@ -214,7 +218,21 @@ function HouseworkForm({
             </label>
             <NotificationFields form={form} setForm={setForm} />
 
-            <button type="submit" className="btn-primary w-full" disabled={loading}>{submitLabel}</button>
+            <div className="flex items-center justify-between gap-3 pt-2">
+                <div>
+                    {onDelete && (
+                        <button type="button" className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white" onClick={onDelete}>
+                            Delete
+                        </button>
+                    )}
+                </div>
+                <div className="flex gap-2 ml-auto">
+                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={onCancel}>
+                        Cancel
+                    </button>
+                    <button type="submit" className="btn-primary" disabled={loading}>{submitLabel}</button>
+                </div>
+            </div>
         </form>
     );
 }
@@ -537,6 +555,7 @@ export default function HouseworkPage() {
                             form={form}
                             setForm={setForm}
                             onSubmit={() => createMut.mutate(buildBody())}
+                            onCancel={() => setShowCreate(false)}
                             loading={createMut.isPending}
                             submitLabel="Create"
                         />
@@ -555,8 +574,15 @@ export default function HouseworkPage() {
                             form={form}
                             setForm={setForm}
                             onSubmit={() => updateMut.mutate({ id: editingItem.id, body: buildBody() })}
+                            onCancel={() => setEditingItem(null)}
+                            onDelete={() => {
+                                if (window.confirm('Delete this housework item?')) {
+                                    deleteMut.mutate(editingItem.id);
+                                    setEditingItem(null);
+                                }
+                            }}
                             loading={updateMut.isPending}
-                            submitLabel="Save Changes"
+                            submitLabel="Save"
                         />
                     </div>
                 </div>

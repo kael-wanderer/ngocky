@@ -1,0 +1,230 @@
+{
+  "name": "3.NgocKy-telegram-assistant-v1.2",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -416,
+        -112
+      ],
+      "id": "98ce56d0-aeb2-4953-9ec0-af547de15906",
+      "name": "Telegram Trigger",
+      "webhookId": "016e17e3-22a4-4af9-a3d9-be6501461951",
+      "credentials": {
+        "telegramApi": {
+          "id": "urihZTDAcekXuOqq",
+          "name": "Gia nô nhà bọ"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{$env.NGOCKY_TELEGRAM_BOT_TOKEN}}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('extract_user_message').item.json.chatId }}"
+            },
+            {
+              "name": "text",
+              "value": "I can only process text messages right now. Send /help for available commands."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        16
+      ],
+      "id": "17e284cf-cb50-4b98-b1ce-891a7f78d029",
+      "name": "reply_non_text"
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $input.first().json.message;\nif (!msg?.text) return [{ json: { skip: true, chatId: String(msg?.chat?.id ?? '') } }];\nreturn [{\n  json: {\n    skip: false,\n    chatId: String(msg.chat.id),\n    telegramUserId: String(msg.from.id),\n    telegramUsername: msg.from.username ?? '',\n    messageId: String(msg.message_id),\n    text: msg.text,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        -112
+      ],
+      "id": "e0791895-4a9a-4ab0-8c2a-69d897dbba52",
+      "name": "extract_user_message"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ngocky.kael.io.vn/api/assistant/telegram/message",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chatId\": \"{{ $json.chatId }}\",\n  \"telegramUserId\": \"{{ $json.telegramUserId }}\",\n  \"telegramUsername\": \"{{ $json.telegramUsername }}\",\n  \"messageId\": \"{{ $json.messageId }}\",\n  \"text\": \"{{ $json.text }}\"\n}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "3504af2c-eff4-4f95-9c86-70de150ecf3d",
+      "name": "backend_request_process",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        -240
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "DBEBei7iUNFBHiLy",
+          "name": "NgocKy Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{$env.NGOCKY_TELEGRAM_BOT_TOKEN}}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('extract_user_message').item.json.chatId }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.reply }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "MarkdownV2"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        576,
+        -240
+      ],
+      "id": "accb421a-b749-453c-bc4a-93ed723bfb7b",
+      "name": "giano_reply_telegram"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c56720cf-7de4-4c17-8882-f5239baa9661",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        -112
+      ],
+      "id": "4e9acfca-f2ae-4e36-9ba9-4a8e4fb03c4f",
+      "name": "skip_action?"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "extract_user_message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract_user_message": {
+      "main": [
+        [
+          {
+            "node": "skip_action?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "backend_request_process": {
+      "main": [
+        [
+          {
+            "node": "giano_reply_telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "skip_action?": {
+      "main": [
+        [
+          {
+            "node": "backend_request_process",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "reply_non_text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "4d8d60bc-db00-4eef-b36d-9211f99ccb5e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "84dfe6f660992ab67cbf337f1ca22d0da0cb540f7e6cc22b45ff99532f788940"
+  },
+  "id": "MwHJCDV9S01wpZ0s",
+  "tags": []
+}

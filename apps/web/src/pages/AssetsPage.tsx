@@ -359,6 +359,7 @@ export default function AssetsPage() {
                                     }}
                                     className={`card p-4 cursor-pointer transition-all hover:shadow-md ${selectedAsset?.id === asset.id ? 'ring-2 ring-primary border-transparent' : ''} ${draggingAssetId === asset.id ? 'opacity-60' : ''} ${dragOverAssetId === asset.id ? 'ring-2 ring-slate-300' : ''}`}
                                     onClick={() => setSelectedAsset(asset)}
+                                    onDoubleClick={() => canManage && openEditAsset(asset)}
                                     style={selectedAsset?.id === asset.id ? { borderColor: 'var(--color-primary)' } : {}}
                                 >
                                     <div className="flex items-start justify-between gap-3">
@@ -485,7 +486,7 @@ export default function AssetsPage() {
                                     ) : (
                                         <div className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
                                             {(records || []).map((record: any) => (
-                                                <div key={record.id} className="py-4 first:pt-0">
+                                                <div key={record.id} className="py-4 first:pt-0" onDoubleClick={() => canManage && openEditRecord(record)}>
                                                     <div className="flex items-start justify-between gap-4">
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -609,9 +610,32 @@ export default function AssetsPage() {
                                 <input type="checkbox" checked={assetForm.isShared} onChange={(e) => setAssetForm({ ...assetForm, isShared: e.target.checked })} />
                                 Share with all users
                             </label>
-                            <button type="submit" className="btn-primary w-full" disabled={createAssetMut.isPending || updateAssetMut.isPending}>
-                                {editingAsset ? 'Save Appliance / Device' : 'Create Appliance / Device'}
-                            </button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <div>
+                                    {editingAsset && (
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => {
+                                                if (window.confirm('Delete this asset and all maintenance logs?')) {
+                                                    deleteAssetMut.mutate(editingAsset.id);
+                                                    closeAssetModal();
+                                                }
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 ml-auto">
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeAssetModal}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={createAssetMut.isPending || updateAssetMut.isPending}>
+                                        {editingAsset ? 'Save' : 'Create Appliance / Device'}
+                                    </button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -662,9 +686,32 @@ export default function AssetsPage() {
                                 <input type="checkbox" checked={(recordForm as any).pinToDashboard || false} onChange={(e) => setRecordForm({ ...(recordForm as any), pinToDashboard: e.target.checked })} />
                                 Pin to dashboard
                             </label>
-                            <button type="submit" className="btn-primary w-full" disabled={createRecordMut.isPending || updateRecordMut.isPending}>
-                                {editingRecord ? 'Save Log' : 'Create Log'}
-                            </button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <div>
+                                    {editingRecord && (
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => {
+                                                if (selectedAsset && window.confirm('Delete this maintenance log?')) {
+                                                    deleteRecordMut.mutate({ assetId: selectedAsset.id, recordId: editingRecord.id });
+                                                    closeRecordModal();
+                                                }
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 ml-auto">
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeRecordModal}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={createRecordMut.isPending || updateRecordMut.isPending}>
+                                        {editingRecord ? 'Save' : 'Create Log'}
+                                    </button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>

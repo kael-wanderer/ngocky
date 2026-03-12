@@ -12,6 +12,10 @@ import { resolveProjectTaskQuery } from './resolvers/projectTaskQuery';
 import { resolveCalendarQuery } from './resolvers/calendarQuery';
 import { resolveExpenseCreate } from './resolvers/expenseCreate';
 import { resolveExpenseQuery } from './resolvers/expenseQuery';
+import { resolveFundCreate } from './resolvers/fundCreate';
+import { resolveFundQuery } from './resolvers/fundQuery';
+import { resolveKeyboardCreate } from './resolvers/keyboardCreate';
+import { resolveKeyboardQuery } from './resolvers/keyboardQuery';
 import { resolveGoalCheckin } from './resolvers/goalCheckin';
 import { resolveGoalQuery } from './resolvers/goalQuery';
 import { resolveHouseworkQuery } from './resolvers/houseworkQuery';
@@ -76,6 +80,18 @@ export async function dispatchIntent(
 
         case 'query_expenses':
             return resolveExpenseQuery(entities, ctx);
+
+        case 'create_fund':
+            return resolveFundCreate(entities, ctx);
+
+        case 'query_funds':
+            return resolveFundQuery(entities, ctx);
+
+        case 'create_keyboard':
+            return resolveKeyboardCreate(entities, ctx);
+
+        case 'query_keyboards':
+            return resolveKeyboardQuery(entities, ctx);
 
         case 'goal_checkin':
             return resolveGoalCheckin(entities, ctx);

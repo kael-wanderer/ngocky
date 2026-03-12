@@ -83,12 +83,16 @@ function GoalForm({
     form,
     setForm,
     onSubmit,
+    onCancel,
+    onDelete,
     loading,
     isEdit,
 }: {
     form: GoalFormState;
     setForm: React.Dispatch<React.SetStateAction<GoalFormState>>;
     onSubmit: (f: any) => void;
+    onCancel: () => void;
+    onDelete?: () => void;
     loading: boolean;
     isEdit: boolean;
 }) {
@@ -142,9 +146,23 @@ function GoalForm({
                     Pin to dashboard
                 </label>
             </div>
-            <button type="submit" className="btn-primary w-full" disabled={loading}>
-                {loading ? 'Saving...' : (isEdit ? 'Save Changes' : 'Create Goal')}
-            </button>
+            <div className="flex items-center justify-between gap-3 pt-2">
+                <div>
+                    {isEdit && onDelete && (
+                        <button type="button" className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white" onClick={onDelete}>
+                            Delete
+                        </button>
+                    )}
+                </div>
+                <div className="flex gap-2 ml-auto">
+                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={onCancel}>
+                        Cancel
+                    </button>
+                    <button type="submit" className="btn-primary" disabled={loading}>
+                        {loading ? 'Saving...' : (isEdit ? 'Save' : 'Create Goal')}
+                    </button>
+                </div>
+            </div>
         </form>
     );
 }
@@ -153,12 +171,16 @@ function TaskForm({
     form,
     setForm,
     onSubmit,
+    onCancel,
+    onDelete,
     loading,
     isEdit,
 }: {
     form: TaskFormState;
     setForm: React.Dispatch<React.SetStateAction<TaskFormState>>;
     onSubmit: (f: any) => void;
+    onCancel: () => void;
+    onDelete?: () => void;
     loading: boolean;
     isEdit: boolean;
 }) {
@@ -306,9 +328,23 @@ function TaskForm({
                     Pin to dashboard
                 </label>
             </div>
-            <button type="submit" className="btn-primary w-full" disabled={loading}>
-                {loading ? 'Saving...' : (isEdit ? 'Save Task' : 'Create Task')}
-            </button>
+            <div className="flex items-center justify-between gap-3 pt-2">
+                <div>
+                    {isEdit && onDelete && (
+                        <button type="button" className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white" onClick={onDelete}>
+                            Delete
+                        </button>
+                    )}
+                </div>
+                <div className="flex gap-2 ml-auto">
+                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={onCancel}>
+                        Cancel
+                    </button>
+                    <button type="submit" className="btn-primary" disabled={loading}>
+                        {loading ? 'Saving...' : (isEdit ? 'Save' : 'Create Task')}
+                    </button>
+                </div>
+            </div>
         </form>
     );
 }
@@ -725,6 +761,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                         key={goal.id}
                                         className={`card p-5 animate-slide-up transition-shadow cursor-grab active:cursor-grabbing ${dragOverGoalId === goal.id ? 'ring-2 shadow-lg' : 'hover:shadow-lg'}`}
                                         style={dragOverGoalId === goal.id ? { '--tw-ring-color': 'var(--color-primary)' } as any : {}}
+                                        onDoubleClick={() => openEditGoal(goal)}
                                         draggable
                                         onDragStart={() => setDraggingGoalId(goal.id)}
                                         onDragOver={(e) => { e.preventDefault(); setDragOverGoalId(goal.id); }}
@@ -785,7 +822,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                 const overachieved = progressPct > 100;
                                 const notifText = formatNotification(goal);
                                 return (
-                                    <div key={goal.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors group">
+                                    <div key={goal.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors group" onDoubleClick={() => openEditGoal(goal)}>
                                         <div className="w-44 flex-shrink-0">
                                             <div className="flex items-center gap-1.5 flex-wrap">
                                                 <span className="font-medium text-sm truncate" style={{ color: 'var(--color-text)' }}>{goal.title}</span>
@@ -973,7 +1010,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Create New Goal</h3>
                             <button onClick={() => setShowCreate(false)}><X className="w-5 h-5" /></button>
                         </div>
-                        <GoalForm form={goalForm} setForm={setGoalForm} onSubmit={(f) => createGoalMut.mutate(f)} loading={createGoalMut.isPending} isEdit={false} />
+                        <GoalForm form={goalForm} setForm={setGoalForm} onSubmit={(f) => createGoalMut.mutate(f)} onCancel={() => setShowCreate(false)} loading={createGoalMut.isPending} isEdit={false} />
                     </div>
                 </div>
             )}
@@ -985,7 +1022,20 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Edit Goal</h3>
                             <button onClick={() => setEditGoal(null)}><X className="w-5 h-5" /></button>
                         </div>
-                        <GoalForm form={goalForm} setForm={setGoalForm} onSubmit={(f) => updateGoalMut.mutate({ id: editGoal.id, body: f })} loading={updateGoalMut.isPending} isEdit />
+                        <GoalForm
+                            form={goalForm}
+                            setForm={setGoalForm}
+                            onSubmit={(f) => updateGoalMut.mutate({ id: editGoal.id, body: f })}
+                            onCancel={() => setEditGoal(null)}
+                            onDelete={() => {
+                                if (window.confirm('Delete this goal and ALL its check-ins? This cannot be undone.')) {
+                                    deleteGoalMut.mutate(editGoal.id);
+                                    setEditGoal(null);
+                                }
+                            }}
+                            loading={updateGoalMut.isPending}
+                            isEdit
+                        />
                     </div>
                 </div>
             )}
@@ -997,10 +1047,23 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editTask ? 'Edit Task' : 'Add Task'}</h3>
                             <button onClick={() => { setShowTaskModal(false); setEditTask(null); }}><X className="w-5 h-5" /></button>
                         </div>
-                        <TaskForm form={taskForm} setForm={setTaskForm} onSubmit={(payload) => {
-                            if (editTask) updateTaskMut.mutate({ id: editTask.id, body: payload });
-                            else createTaskMut.mutate(payload);
-                        }} loading={createTaskMut.isPending || updateTaskMut.isPending} isEdit={!!editTask} />
+                        <TaskForm
+                            form={taskForm}
+                            setForm={setTaskForm}
+                            onSubmit={(payload) => {
+                                if (editTask) updateTaskMut.mutate({ id: editTask.id, body: payload });
+                                else createTaskMut.mutate(payload);
+                            }}
+                            onCancel={() => { setShowTaskModal(false); setEditTask(null); }}
+                            onDelete={editTask ? () => {
+                                if (window.confirm('Delete this task?')) {
+                                    deleteTaskMut.mutate(editTask.id);
+                                    setEditTask(null);
+                                }
+                            } : undefined}
+                            loading={createTaskMut.isPending || updateTaskMut.isPending}
+                            isEdit={!!editTask}
+                        />
                     </div>
                 </div>
             )}

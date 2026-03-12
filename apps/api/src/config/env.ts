@@ -7,7 +7,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
 const envSchema = z.object({
     APP_PORT: z.string().default('3001'),
-    APP_VERSION: z.string().default('1.0.0'),
+    APP_VERSION: z.string().default('1.1.0'),
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
     DATABASE_URL: z.string(),
     JWT_SECRET: z.string().min(16),

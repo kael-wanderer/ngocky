@@ -22,6 +22,11 @@ const scopeOptions = [
     { value: 'KEO', label: 'Ca Keo' },
     { value: 'PROJECT', label: 'Project' },
 ];
+const paymentOptions = [
+    { value: 'CASH', label: 'Cash' },
+    { value: 'BANK_TRANSFER', label: 'Bank transfer' },
+    { value: 'CREDIT_CARD', label: 'Credit card' },
+];
 const timeOptions = [
     { value: 'LAST_QUARTER', label: 'Last Quarter' },
     { value: 'LAST_MONTH', label: 'Last Month' },
@@ -35,6 +40,7 @@ const columns = [
     { key: 'type', label: 'Type' },
     { key: 'scope', label: 'Scope' },
     { key: 'category', label: 'Category' },
+    { key: 'payment', label: 'Payment' },
     { key: 'description', label: 'Description' },
     { key: 'amount', label: 'Amount' },
 ] as const;
@@ -59,6 +65,7 @@ const emptyForm = () => ({
     type: 'PAY',
     isShared: false,
     category: DEFAULT_PAY_CATEGORY,
+    payment: 'CASH',
     scope: 'PERSONAL',
     date: format(new Date(), 'yyyy-MM-dd'),
     note: '',
@@ -167,6 +174,7 @@ export default function ExpensesPage() {
                 case 'type': return expense.type || '';
                 case 'scope': return expense.scope || '';
                 case 'category': return expense.category || '';
+                case 'payment': return expense.payment || '';
                 case 'description': return expense.description || '';
                 case 'amount': return expense.amount || 0;
                 default: return '';
@@ -202,6 +210,7 @@ export default function ExpensesPage() {
             Type: expense.type === 'RECEIVE' ? 'Receive' : 'Pay',
             Scope: scopeOptions.find((option) => option.value === expense.scope)?.label || expense.scope || '',
             Category: expense.category || '',
+            Payment: paymentOptions.find((option) => option.value === expense.payment)?.label || expense.payment || '',
             Description: expense.description || '',
             Note: expense.note || '',
             Shared: expense.isShared ? 'Yes' : 'No',
@@ -312,6 +321,7 @@ export default function ExpensesPage() {
             type: expense.type || 'PAY',
             isShared: !!expense.isShared,
             category: expense.category || ((expense.type || 'PAY') === 'RECEIVE' ? receiveCategories[0] : DEFAULT_PAY_CATEGORY),
+            payment: expense.payment || 'CASH',
             scope: expense.scope || 'PERSONAL',
             date: format(new Date(expense.date), 'yyyy-MM-dd'),
             note: expense.note || '',
@@ -473,6 +483,14 @@ export default function ExpensesPage() {
                                     </select>
                                 </div>
                                 <div>
+                                    <label className="label">Payment <span className="text-red-500">*</span></label>
+                                    <select className="input" value={form.payment} onChange={(e) => setForm({ ...form, payment: e.target.value })}>
+                                        {paymentOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
                                     <label className="label">Amount <span className="text-red-500">*</span></label>
                                     <input className="input" required placeholder="Example: 82000000, 600k, or 82M" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
                                     {form.amount && (
@@ -490,9 +508,32 @@ export default function ExpensesPage() {
                                 <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} />
                                 Share with all users
                             </label>
-                            <button type="submit" className="btn-primary w-full" disabled={createMut.isPending || updateMut.isPending}>
-                                {editingExpense ? 'Save Changes' : 'Add Expense'}
-                            </button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <div>
+                                    {editingExpense && (
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => {
+                                                if (window.confirm('Delete this expense?')) {
+                                                    deleteMut.mutate(editingExpense.id);
+                                                    closeModal();
+                                                }
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 ml-auto">
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeModal}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={createMut.isPending || updateMut.isPending}>
+                                        {editingExpense ? 'Save' : 'Add Expense'}
+                                    </button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -539,12 +580,13 @@ export default function ExpensesPage() {
                                         const canEdit = expense.userId === user?.id;
                                         const sharedOwnerName = getSharedOwnerName(expense, user?.id);
                                         return (
-                                            <tr key={expense.id}>
+                                            <tr key={expense.id} onDoubleClick={() => canEdit && openEdit(expense)} className={canEdit ? 'cursor-pointer' : ''}>
                                                 <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(expense.date), 'MMM d, yyyy')}</td>
                                                 <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{expense.user?.name || '-'}</td>
                                                 <td><span className={`badge ${isReceive ? 'badge-success' : 'badge-danger'}`}>{isReceive ? 'Receive' : 'Pay'}</span></td>
                                                 <td><span className="badge badge-warning">{scopeOptions.find((option) => option.value === expense.scope)?.label || expense.scope}</span></td>
                                                 <td><span className="badge-primary">{expense.category || '-'}</span></td>
+                                                <td><span className="badge-primary">{paymentOptions.find((option) => option.value === expense.payment)?.label || expense.payment || '-'}</span></td>
                                                 <td>
                                                     <div className="font-medium" style={{ color: 'var(--color-text)' }}>{expense.description}</div>
                                                     <div className="flex items-center gap-2 mt-1 flex-wrap">

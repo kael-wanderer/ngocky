@@ -570,6 +570,12 @@ export default function KeyboardPage() {
                     editing={!!editing}
                     onSave={submitForm}
                     onClose={closeModal}
+                    onDelete={editing ? () => {
+                        if (confirm('Delete this keyboard?')) {
+                            deleteMut.mutate(editing.id);
+                            closeModal();
+                        }
+                    } : undefined}
                     saving={createMut.isPending || updateMut.isPending}
                 />
             )}
@@ -588,12 +594,13 @@ export default function KeyboardPage() {
 
 // ─── Add / Edit Modal ────────────────────────────────
 
-function KeyboardModal({ form, setForm, editing, onSave, onClose, saving }: {
+function KeyboardModal({ form, setForm, editing, onSave, onClose, onDelete, saving }: {
     form: FormState;
     setForm: React.Dispatch<React.SetStateAction<FormState>>;
     editing: boolean;
     onSave: () => void;
     onClose: () => void;
+    onDelete?: () => void;
     saving: boolean;
 }) {
     const set = (k: keyof FormState, v: any) => setForm(p => ({ ...p, [k]: v }));
@@ -738,11 +745,20 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, saving }: {
                         </div>
                     </div>
 
-                    <div className="flex gap-2 justify-end mt-6">
-                        <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
-                        <button onClick={onSave} disabled={!form.name || saving} className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
+                    <div className="mt-6 flex items-center justify-between gap-3">
+                        <div>
+                            {editing && onDelete && (
+                                <button onClick={onDelete} className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white">
+                                    Delete
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                            <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
+                            <button onClick={onSave} disabled={!form.name || saving} className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
                             {saving ? 'Saving…' : 'Save'}
-                        </button>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

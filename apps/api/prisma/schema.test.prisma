@@ -59,6 +59,12 @@ enum ExpenseScope {
   PROJECT
 }
 
+enum ExpensePayment {
+  CASH
+  BANK_TRANSFER
+  CREDIT_CARD
+}
+
 enum NotificationChannel {
   EMAIL
   TELEGRAM
@@ -435,6 +441,7 @@ model Expense {
   date        DateTime
   description String
   amount      Float
+  payment     ExpensePayment @default(CASH)
   category    String?
   scope       ExpenseScope @default(PERSONAL)
   note        String?

@@ -28,7 +28,7 @@ type CollectFieldPayload = {
     kind: 'collect_field';
     prompt: string;
     parsedIntent: ParsedIntent;
-    field: 'amount' | 'category' | 'title' | 'taskTitle' | 'goalTitle' | 'itemTitle';
+    field: 'amount' | 'category' | 'title' | 'taskTitle' | 'goalTitle' | 'itemTitle' | 'description' | 'name';
 };
 
 export type PendingActionPayload =
@@ -258,6 +258,10 @@ function summarizeWriteIntent(parsed: ParsedIntent): string {
             return `update the project task *${escapeMd(parsed.entities.taskTitle ?? parsed.entities.taskId ?? 'task')}*`;
         case 'create_expense':
             return `log an expense${parsed.entities.amount ? ` for *${escapeMd(String(parsed.entities.amount))}*` : ''}`;
+        case 'create_fund':
+            return `log a fund transaction${parsed.entities.description ? ` for *${escapeMd(parsed.entities.description)}*` : ''}`;
+        case 'create_keyboard':
+            return `create a keyboard item${parsed.entities.name ? ` named *${escapeMd(parsed.entities.name)}*` : ''}`;
         case 'goal_checkin':
             return `log a check\\-in for *${escapeMd(parsed.entities.goalTitle ?? parsed.entities.goalId ?? 'goal')}*`;
         case 'update_housework_status':

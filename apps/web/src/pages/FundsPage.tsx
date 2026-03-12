@@ -297,7 +297,7 @@ export default function FundsPage() {
 
         const payload = {
             ...form,
-            condition: normalizeConditionForType(form.type, form.condition),
+            condition: form.type === 'BUY' ? (form.condition || null) : null,
             keyboardItemName: form.keyboardItemId
                 ? keyboardOptions.find((item: any) => item.id === form.keyboardItemId)?.name || null
                 : form.description,
@@ -438,9 +438,32 @@ export default function FundsPage() {
                                     </div>
                                 )}
                             </div>
-                            <button type="submit" className="btn-primary w-full" disabled={createMut.isPending || updateMut.isPending}>
-                                {editingFund ? 'Save Changes' : 'Add Transaction'}
-                            </button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <div>
+                                    {editingFund && (
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => {
+                                                if (window.confirm('Delete this fund transaction?')) {
+                                                    deleteMut.mutate(editingFund.id);
+                                                    closeModal();
+                                                }
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 ml-auto">
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeModal}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={createMut.isPending || updateMut.isPending}>
+                                        {editingFund ? 'Save' : 'Add Transaction'}
+                                    </button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>

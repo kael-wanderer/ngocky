@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
 import { getFeatureFlags, isFeatureRouteEnabled } from '../config/features';
@@ -133,6 +133,10 @@ export default function AppLayout() {
     const [draggedItem, setDraggedItem] = useState<{ groupId: string; to: string } | null>(null);
     const [dragOverItem, setDragOverItem] = useState<{ groupId: string; to: string } | null>(null);
     const [dragOverGroup, setDragOverGroup] = useState<string | null>(null);
+    const [showNotificationMenu, setShowNotificationMenu] = useState(false);
+    const [showAccountMenu, setShowAccountMenu] = useState(false);
+    const notificationMenuRef = useRef<HTMLDivElement | null>(null);
+    const accountMenuRef = useRef<HTMLDivElement | null>(null);
 
     const isAdmin = user?.role === 'OWNER' || user?.role === 'ADMIN';
     const featureFlags = getFeatureFlags(user);
@@ -163,6 +167,32 @@ export default function AppLayout() {
         window.localStorage.setItem(GROUP_ORDER_STORAGE_KEY, JSON.stringify(groupOrder));
         window.localStorage.setItem(GROUP_ORDER_VERSION_KEY, String(GROUP_ORDER_VERSION));
     }, [groupOrder]);
+
+    useEffect(() => {
+        if (!showNotificationMenu) return;
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!notificationMenuRef.current?.contains(event.target as Node)) {
+                setShowNotificationMenu(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showNotificationMenu]);
+
+    useEffect(() => {
+        if (!showAccountMenu) return;
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!accountMenuRef.current?.contains(event.target as Node)) {
+                setShowAccountMenu(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showAccountMenu]);
 
     const toggleGroup = (groupId: string) => {
         setGroupOpen((current) => ({
@@ -396,7 +426,7 @@ export default function AppLayout() {
                 {/* Footer */}
                 {!collapsed && (
                     <div className="p-4 border-t text-[11px]" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
-                        NgốcKý v1.0.0
+                        NgốcKý v1.1.0
                     </div>
                 )}
             </aside>
@@ -425,26 +455,125 @@ export default function AppLayout() {
                     </h1>
 
                     <div className="ml-auto flex items-center gap-3">
-                        <button className="btn-ghost p-2 rounded-lg relative">
-                            <Bell className="w-5 h-5" />
-                        </button>
-                        <div
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                            onClick={handleLogout}
-                            title="Logout"
-                        >
-                            {user?.avatarUrl ? (
-                                <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
-                            ) : (
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
-                                    style={{ background: 'linear-gradient(135deg, var(--color-primary), #7c3aed)' }}>
-                                    {user?.name?.charAt(0).toUpperCase()}
+                        <div className="relative" ref={notificationMenuRef}>
+                            <button
+                                className="btn-ghost p-2 rounded-lg relative"
+                                title="Notifications"
+                                onClick={() => setShowNotificationMenu((current) => !current)}
+                            >
+                                <Bell className="w-5 h-5" />
+                            </button>
+                            {showNotificationMenu && (
+                                <div
+                                    className="absolute right-0 mt-2 w-56 rounded-xl border shadow-lg py-2 z-40"
+                                    style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+                                >
+                                    <button
+                                        type="button"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                        style={{ color: 'var(--color-text)' }}
+                                        onClick={() => {
+                                            setShowNotificationMenu(false);
+                                            navigate('/notifications');
+                                        }}
+                                    >
+                                        Notification Setting
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                        style={{ color: 'var(--color-text)' }}
+                                        onClick={() => {
+                                            setShowNotificationMenu(false);
+                                            navigate('/settings?tab=notifications');
+                                        }}
+                                    >
+                                        Notification Channel
+                                    </button>
                                 </div>
                             )}
-                            <span className="hidden sm:block text-sm font-medium" style={{ color: 'var(--color-text)' }}>
-                                {user?.name}
-                            </span>
-                            <LogOut className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                        </div>
+                        <div className="relative" ref={accountMenuRef}>
+                            <button
+                                type="button"
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                                onClick={() => setShowAccountMenu((current) => !current)}
+                                title="Account"
+                            >
+                                {user?.avatarUrl ? (
+                                    <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
+                                        style={{ background: 'linear-gradient(135deg, var(--color-primary), #7c3aed)' }}>
+                                        {user?.name?.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                                <span className="hidden sm:block text-sm font-medium" style={{ color: 'var(--color-text)' }}>
+                                    {user?.name}
+                                </span>
+                            </button>
+                            {showAccountMenu && (
+                                <div
+                                    className="absolute right-0 mt-2 w-56 rounded-xl border shadow-lg py-2 z-40"
+                                    style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+                                >
+                                    <button
+                                        type="button"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                        style={{ color: 'var(--color-text)' }}
+                                        onClick={() => {
+                                            setShowAccountMenu(false);
+                                            navigate('/settings?tab=profile');
+                                        }}
+                                    >
+                                        Update profile
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                        style={{ color: 'var(--color-text)' }}
+                                        onClick={() => {
+                                            setShowAccountMenu(false);
+                                            navigate('/settings?tab=theme');
+                                        }}
+                                    >
+                                        Theme settings
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                        style={{ color: 'var(--color-text)' }}
+                                        onClick={() => {
+                                            setShowAccountMenu(false);
+                                            navigate('/settings?tab=features');
+                                        }}
+                                    >
+                                        Feature options
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                        style={{ color: 'var(--color-text)' }}
+                                        onClick={() => {
+                                            setShowAccountMenu(false);
+                                            navigate('/settings?tab=security');
+                                        }}
+                                    >
+                                        Password & MFA
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 transition-colors"
+                                        style={{ color: 'var(--color-danger)' }}
+                                        onClick={() => {
+                                            setShowAccountMenu(false);
+                                            handleLogout();
+                                        }}
+                                    >
+                                        Sign out
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </header>

@@ -82,6 +82,12 @@ enum ExpenseType {
   RECEIVE
 }
 
+enum ExpensePayment {
+  CASH
+  BANK_TRANSFER
+  CREDIT_CARD
+}
+
 enum HobbyFundType {
   BUY
   SELL
@@ -614,6 +620,7 @@ model Expense {
   description String
   amount      Float
   type        ExpenseType  @default(PAY)
+  payment     ExpensePayment @default(CASH)
   isShared    Boolean      @default(false)
   category    String?
   scope       ExpenseScope @default(PERSONAL)

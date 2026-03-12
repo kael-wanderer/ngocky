@@ -66,6 +66,22 @@ query_expenses:
   examples: "show expenses this month", "tell me all expenses of March", "chi tiêu tháng 3", "how much did I spend this week", "expenses last month", "show food expenses"
   note: "of March" / "tháng 3" = from 2026-03-01 to 2026-03-31; resolve month names to full date ranges
 
+create_fund:
+  entities: { "description": "string (required)", "amount": <number in VND, required>, "type": "BUY|SELL|TOP_UP (required)", "scope": "MECHANICAL_KEYBOARD|PLAY_STATION (required)", "category": "KEYCAP|KIT|SHIPPING|ACCESSORIES|OTHER (required)", "condition": "BNIB|USED (required only for BUY)", "date": "YYYY-MM-DD (optional, default today)", "keyboardName": "string (optional, used for keyboard sell matching)" }
+  examples: "log buy keycap gmk cafe 7.8m mechanical keyboard used", "add sell fund kohaku r1 36m kit mechanical keyboard", "top up ps5 2m play station other"
+
+query_funds:
+  entities: { "dateRange": { "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" } (optional), "type": "BUY|SELL|TOP_UP (optional)", "scope": "MECHANICAL_KEYBOARD|PLAY_STATION (optional)", "category": "KEYCAP|KIT|SHIPPING|ACCESSORIES|OTHER (optional)" }
+  examples: "show my funds this month", "show keyboard sell funds", "funds for play station", "buy funds in March"
+
+create_keyboard:
+  entities: { "name": "string (required)", "price": <number in VND (optional)>, "category": "Kit|Keycap|Shipping|Accessories|Other (optional)", "tag": "string (optional)", "color": "string (optional)", "condition": "BNIB|Used (optional)", "note": "string (optional)" }
+  examples: "add keyboard kohaku r1 kit 30m silver", "create keycap gmk cafe 7.8m used", "new keyboard cycle 7 purple"
+
+query_keyboards:
+  entities: { "category": "Kit|Keycap|Shipping|Accessories|Other (optional)", "tag": "string (optional)", "color": "string (optional)", "keyword": "string (optional)" }
+  examples: "show my keyboards", "show red keycaps", "find board 3 keyboards", "list silver kits"
+
 goal_checkin:
   entities: { "goalTitle": "string (required)", "quantity": <number, optional default 1>, "note": "string (optional)" }
   examples: "logged 5km for running goal", "check in running 5km", "đăng ký chạy bộ 5km", "tập gym xong"
@@ -103,6 +119,8 @@ Vietnamese action keywords:
 - hoàn thành / xong / done / đánh dấu xong = mark done
 - mở lại = reopen
 - tiêu / chi / trả / spent / mua = create_expense
+- fund / buy / sell / top up = create_fund or query_funds depending on context
+- keyboard / keycap / kit = create_keyboard or query_keyboards depending on context
 - lịch / sự kiện / event = query_calendar
 - task / việc cần làm = query_tasks or create_task (context-dependent)
 - việc nhà / chores / dọn = housework
@@ -148,6 +166,22 @@ function regexFallback(text: string, today: string): ParsedIntent {
 
     if (/\b(spent|tiêu|chi |trả tiền|bought|mua)\b/i.test(t)) {
         return { intent: 'create_expense', confidence: 0.6, entities: {} };
+    }
+
+    if (/\b(show .*fund|query .*fund|funds?|giao dịch hobby|lịch sử fund)\b/i.test(t)) {
+        return { intent: 'query_funds', confidence: 0.65, entities: {} };
+    }
+
+    if (/\b(log|add|create|new)\b.*\b(buy|sell|top[\s-]?up)\b.*\b(fund|keyboard|play station|ps5|keycap|kit)\b/i.test(t)) {
+        return { intent: 'create_fund', confidence: 0.65, entities: {} };
+    }
+
+    if (/\b(show|list|find|query)\b.*\b(keyboard|keyboards|keycap|keycaps|kit|kits)\b/i.test(t)) {
+        return { intent: 'query_keyboards', confidence: 0.65, entities: {} };
+    }
+
+    if (/\b(add|create|new)\b.*\b(keyboard|keycap|kit)\b/i.test(t)) {
+        return { intent: 'create_keyboard', confidence: 0.65, entities: {} };
     }
 
     if (/\b(check.?in|logged|đăng ký|chạy bộ|tập gym|goal)\b/i.test(t)) {

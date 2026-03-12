@@ -316,7 +316,30 @@ export default function CalendarPage() {
                                 <p className="text-sm text-red-500">{formError}</p>
                             )}
                             <NotificationFields form={form} setForm={setForm} />
-                            <button type="submit" className="btn-primary w-full" disabled={createMut.isPending || updateMut.isPending}>{editingEvent ? 'Save Changes' : 'Create Event'}</button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <div>
+                                    {editingEvent && (
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => {
+                                                if (window.confirm('Delete this event?')) {
+                                                    deleteMut.mutate(getSourceId(editingEvent));
+                                                    setEditingEvent(null);
+                                                }
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 ml-auto">
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={() => { setShowCreate(false); setEditingEvent(null); }}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={createMut.isPending || updateMut.isPending}>{editingEvent ? 'Save' : 'Create Event'}</button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -359,7 +382,7 @@ export default function CalendarPage() {
                         {selectedDate && selectedEvents.length === 0 && <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No events</p>}
                         <div className="space-y-2">
                             {selectedEvents.map((e: any) => (
-                                <div key={e.id} className="p-3 rounded-lg border-l-4" style={{ borderColor: e.color || 'var(--color-primary)', backgroundColor: 'var(--color-bg)' }}>
+                                <div key={e.id} className="p-3 rounded-lg border-l-4" style={{ borderColor: e.color || 'var(--color-primary)', backgroundColor: 'var(--color-bg)' }} onDoubleClick={() => openEdit(e)}>
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
@@ -394,7 +417,7 @@ export default function CalendarPage() {
                                 {items.length === 0 ? (
                                     <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No events</p>
                                 ) : items.map((e: any) => (
-                                    <div key={e.id} className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
+                                    <div key={e.id} className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-border)' }} onDoubleClick={() => openEdit(e)}>
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
                                                 <div className="flex items-center gap-2 flex-wrap">

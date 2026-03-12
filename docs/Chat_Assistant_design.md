@@ -24,6 +24,10 @@ Telegram is the chat UI. NgocKy API remains the system of record for identity, a
 - query personal tasks such as `today`, `tomorrow`, `this week`
 - add a quick expense log (amount + category + optional note)
 - query expense history by date range or category
+- add a hobby fund transaction (buy, sell, top-up)
+- query hobby fund history by date range, type, scope, or category
+- add a keyboard collection item
+- query keyboard collection items by name, category, tag, or color
 - log a goal check-in (progress value + goal name)
 - query goal progress
 - query housework items by status/due date
@@ -44,6 +48,28 @@ Telegram is the chat UI. NgocKy API remains the system of record for identity, a
 - voice/image handling
 - multi-step autonomous workflows
 
+### Current module coverage check
+
+Supported in the assistant:
+
+- standalone tasks
+- projects and project tasks
+- calendar
+- expenses
+- funds
+- keyboard
+- goals
+- housework
+
+Not yet supported:
+
+- learning
+- ideas
+- assets
+- notifications / scheduled actions
+- settings / feature toggles
+- admin / user management
+
 ### V1.5 candidates
 
 - query expense summary / spending report by date range
@@ -59,6 +85,8 @@ The current codebase already has all domain APIs needed for V1 execution:
 - project task status flows in `apps/api/src/routes/projects.ts`
 - calendar querying in `apps/api/src/routes/calendar.ts`
 - expense creation in `apps/api/src/routes/expenses.ts`
+- fund transaction creation/query in `apps/api/src/routes/funds.ts`
+- keyboard collection CRUD in `apps/api/src/routes/keyboards.ts`
 - goal check-in in `apps/api/src/routes/checkins.ts`
 - housework CRUD in `apps/api/src/routes/housework.ts`
 - user notification profile already includes `telegramChatId`
@@ -186,6 +214,10 @@ The LLM should return structured intents, not direct prose-only decisions.
 - `query_tasks`
 - `create_expense`
 - `query_expenses`
+- `create_fund`
+- `query_funds`
+- `create_keyboard`
+- `query_keyboards`
 - `goal_checkin`
 - `query_goals`
 - `query_housework`
@@ -210,25 +242,28 @@ The LLM should return structured intents, not direct prose-only decisions.
 
 ```json
 {
-  "intent": "create_expense",
+  "intent": "create_fund",
   "confidence": 0.95,
   "entities": {
-    "amount": 150000,
-    "category": "FOOD",
-    "note": "lunch with client"
+    "description": "GMK Cafe",
+    "amount": 7800000,
+    "type": "BUY",
+    "scope": "MECHANICAL_KEYBOARD",
+    "category": "KEYCAP",
+    "condition": "USED"
   }
 }
 ```
 
 ```json
 {
-  "intent": "goal_checkin",
+  "intent": "create_keyboard",
   "confidence": 0.88,
   "entities": {
-    "goalName": "running",
-    "value": 5,
-    "unit": "km",
-    "note": "felt good"
+    "name": "Kohaku R1 silver",
+    "category": "Kit",
+    "price": 36000000,
+    "color": "Silver"
   }
 }
 ```
@@ -246,6 +281,13 @@ Users may write in Vietnamese, English, or mixed. The LLM system prompt must exp
   - `"cao"`, `"urgent"` → priority `HIGH`
   - `"thấp"` → priority `LOW`
 - date expressions like `"ngày mai"`, `"tuần này"`, `"sáng mai"` must be resolved to ISO dates using the user's timezone
+- hobby terms must be mapped to enum-safe values:
+  - `"mua"`, `"buy"` → fund type `BUY`
+  - `"bán"`, `"sell"` → fund type `SELL`
+  - `"nạp"`, `"top up"` → fund type `TOP_UP`
+  - `"phím cơ"`, `"keyboard"` → scope `MECHANICAL_KEYBOARD`
+  - `"playstation"`, `"ps"` → scope `PLAY_STATION`
+  - `"keycap"`, `"kit"`, `"shipping"`, `"accessories"` → fund / keyboard categories
 
 ### Timezone in date parsing
 

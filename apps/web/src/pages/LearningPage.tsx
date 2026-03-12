@@ -279,6 +279,7 @@ export default function LearningPage() {
                                             }}
                                             className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''} ${draggingTopicId === topic.id ? 'opacity-60' : ''} ${dragOverTopicId === topic.id ? 'ring-2 ring-slate-300' : ''}`}
                                             onClick={() => setSelectedTopicId(topic.id)}
+                                            onDoubleClick={() => canManage && openEditTopic(topic)}
                                             style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}
                                         >
                                             <div className="flex items-start justify-between gap-3">
@@ -346,7 +347,7 @@ export default function LearningPage() {
                                             const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
                                             const canManage = !sharedOwnerName;
                                             return (
-                                            <div key={history.id} className="card p-5 group flex flex-col h-full">
+                                            <div key={history.id} className="card p-5 group flex flex-col h-full" onDoubleClick={() => canManage && openEditHistory(history)}>
                                                 <div className="flex items-start justify-between mb-2">
                                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getStatusColor(history.status)}`}>{history.status.replace('_', ' ')}</span>
                                                     {canManage && (
@@ -430,7 +431,30 @@ export default function LearningPage() {
                                 <input type="checkbox" checked={topicForm.isShared} onChange={(e) => setTopicForm({ ...topicForm, isShared: e.target.checked })} />
                                 Share with all users
                             </label>
-                            <button type="submit" className="btn-primary w-full" disabled={createTopicMut.isPending || updateTopicMut.isPending}>{editingTopic ? 'Save Topic' : 'Create Topic'}</button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <div>
+                                    {editingTopic && (
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => {
+                                                if (window.confirm('Delete this topic and all histories?')) {
+                                                    deleteTopicMut.mutate(editingTopic.id);
+                                                    closeTopicModal();
+                                                }
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 ml-auto">
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeTopicModal}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={createTopicMut.isPending || updateTopicMut.isPending}>{editingTopic ? 'Save' : 'Create Topic'}</button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -473,7 +497,30 @@ export default function LearningPage() {
                                 <textarea className="input" rows={3} value={historyForm.description} onChange={(e) => setHistoryForm({ ...historyForm, description: e.target.value })} />
                             </div>
                             <NotificationFields form={historyForm as any} setForm={setHistoryForm as any} />
-                            <button type="submit" className="btn-primary w-full" disabled={createHistoryMut.isPending || updateHistoryMut.isPending}>{editingHistory ? 'Save History' : 'Add History'}</button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <div>
+                                    {editingHistory && (
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => {
+                                                if (window.confirm('Delete this history?')) {
+                                                    deleteHistoryMut.mutate(editingHistory.id);
+                                                    closeHistoryModal();
+                                                }
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 ml-auto">
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeHistoryModal}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={createHistoryMut.isPending || updateHistoryMut.isPending}>{editingHistory ? 'Save' : 'Add History'}</button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>

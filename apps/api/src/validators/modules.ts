@@ -338,6 +338,7 @@ export const createExpenseSchema = z.object({
     description: z.string().min(1).max(300),
     amount: z.number().positive(),
     type: z.enum(['PAY', 'RECEIVE']).optional(),
+    payment: z.enum(['CASH', 'BANK_TRANSFER', 'CREDIT_CARD']).optional(),
     isShared: z.boolean().optional(),
     category: z.string().optional(),
     scope: z.enum(['PERSONAL', 'FAMILY', 'KEO', 'PROJECT']).optional(),

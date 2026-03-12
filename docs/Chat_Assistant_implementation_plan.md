@@ -2,7 +2,7 @@
 
 ## Objective
 
-Implement a Telegram chat assistant for NgocKy V1 with safe write actions and natural language querying across tasks, calendar, expenses, goals, and housework.
+Implement a Telegram chat assistant for NgocKy V1.1 with safe write actions and natural language querying across tasks, projects, calendar, expenses, funds, keyboard collection, goals, and housework.
 
 ## Delivery Strategy
 
@@ -160,6 +160,10 @@ Create n8n workflow "NgocKy Assistant — Inbound":
    - Header: `X-Assistant-Api-Key: {{$env.ASSISTANT_API_KEY}}`
    - Body: `{ chatId, telegramUserId, telegramUsername, messageId, text }`
 5. **Telegram node (sendMessage)** — send `{{ $json.reply }}` to `chatId`
+
+Notes:
+- Funds and Keyboard do not require new n8n branches because the workflow forwards raw text and the backend resolves the module intent.
+- The latest workflow copy should reply to non-text messages with a fixed help prompt instead of dropping them.
 
 ### Output
 
@@ -345,6 +349,36 @@ LLM system prompt includes:
 - optional date range (month names resolved to full ranges)
 - optional category filter
 - returns list of expenses sorted by date desc + total sum
+- max 10 results
+
+### `create_fund` → `resolvers/fundCreate.ts`
+
+- resolve description, amount, type, scope, category, optional condition, optional date
+- validate `BUY` requires `condition`
+- if `SELL` and `scope = MECHANICAL_KEYBOARD`, resolve the matching keyboard item
+- if multiple keyboard matches exist, create `AssistantPendingAction` and return numbered options
+- create the fund transaction
+- preserve existing fund automation behavior:
+  - eligible mechanical keyboard BUY creates a keyboard item
+  - mechanical keyboard SELL deletes the selected keyboard item
+
+### `query_funds` → `resolvers/fundQuery.ts`
+
+- optional date range
+- optional type, scope, category filters
+- return the latest fund transactions in reverse chronological order
+- max 10 results
+
+### `create_keyboard` → `resolvers/keyboardCreate.ts`
+
+- resolve name, optional price, category, tag, color, condition, note
+- create a keyboard collection item
+- map assistant `condition` into the module's current `description` field
+
+### `query_keyboards` → `resolvers/keyboardQuery.ts`
+
+- optional keyword, category, tag, color filters
+- return keyboard collection items visible to the user
 - max 10 results
 
 ### `query_goals` → `resolvers/goalQuery.ts`

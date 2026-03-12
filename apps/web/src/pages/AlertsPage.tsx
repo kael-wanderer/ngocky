@@ -641,9 +641,32 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 <span style={{ color: 'var(--color-text)' }}>Enable notification</span>
                             </label>
 
-                            <button type="submit" className="btn-primary w-full" disabled={createRuleMut.isPending || updateRuleMut.isPending}>
-                                {editingRule ? 'Save Notification' : 'Create Notification'}
-                            </button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <div>
+                                    {editingRule && (
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => {
+                                                if (confirm('Delete rule?')) {
+                                                    deleteRuleMut.mutate(editingRule.id);
+                                                    closeRuleModal();
+                                                }
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 ml-auto">
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeRuleModal}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={createRuleMut.isPending || updateRuleMut.isPending}>
+                                        {editingRule ? 'Save' : 'Create Notification'}
+                                    </button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -780,9 +803,32 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 />
                                 <span style={{ color: 'var(--color-text)' }}>Enable schedule</span>
                             </label>
-                            <button type="submit" className="btn-primary w-full" disabled={createReportMut.isPending || updateReportMut.isPending}>
-                                {editingReport ? 'Save Action' : 'Schedule Action'}
-                            </button>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                                <div>
+                                    {editingReport && (
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => {
+                                                if (confirm('Delete schedule?')) {
+                                                    deleteReportMut.mutate(editingReport.id);
+                                                    closeReportModal();
+                                                }
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 ml-auto">
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeReportModal}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary" disabled={createReportMut.isPending || updateReportMut.isPending}>
+                                        {editingReport ? 'Save' : 'Schedule Action'}
+                                    </button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>
