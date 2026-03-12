@@ -3,6 +3,7 @@ import { ValidationError } from './errors';
 
 export const COLOR_SETTING_UNASSIGNED_KEY = 'UNASSIGNED';
 export const CAKEO_COLOR_MODULE = 'CAKEO';
+export const CALENDAR_COLOR_MODULE = 'CALENDAR';
 export const CAKEO_COLOR_SCOPE = 'ASSIGNEE';
 export const DEFAULT_UNASSIGNED_COLOR = '#94a3b8';
 
@@ -60,75 +61,92 @@ export function buildDefaultCakeoColorEntries(users: Array<{ id: string; email: 
     return entries;
 }
 
-export async function getCakeoColorSettings() {
+function buildEffectiveModuleEntries(
+    module: typeof CAKEO_COLOR_MODULE | typeof CALENDAR_COLOR_MODULE,
+    users: Array<{ id: string; email: string }>,
+    stored: Array<{ entityKey: string; color: string }>,
+) {
+    const defaults = buildDefaultCakeoColorEntries(users).filter((entry) => entry.entityKey !== COLOR_SETTING_UNASSIGNED_KEY);
+    const storedByKey = new Map<string, string>(stored.map((entry) => [entry.entityKey, normalizeColor(entry.color)]));
+    const userEntries = defaults.map((entry) => ({
+        entityKey: entry.entityKey,
+        color: storedByKey.get(entry.entityKey) || entry.color,
+    }));
+
+    return module === CAKEO_COLOR_MODULE
+        ? [{ entityKey: COLOR_SETTING_UNASSIGNED_KEY, color: DEFAULT_UNASSIGNED_COLOR }, ...userEntries]
+        : userEntries;
+}
+
+async function getStoredModuleEntries(module: typeof CAKEO_COLOR_MODULE | typeof CALENDAR_COLOR_MODULE) {
+    return prisma.moduleColorSetting.findMany({
+        where: { module: module as any, scope: CAKEO_COLOR_SCOPE as any },
+        orderBy: { createdAt: 'asc' },
+    });
+}
+
+export async function getModuleColorSettings(module: typeof CAKEO_COLOR_MODULE | typeof CALENDAR_COLOR_MODULE, currentUserId: string) {
     const [users, stored] = await Promise.all([
         listCakeoAssignableUsers(),
-        prisma.moduleColorSetting.findMany({
-            where: { module: CAKEO_COLOR_MODULE as any, scope: CAKEO_COLOR_SCOPE as any },
-            orderBy: { createdAt: 'asc' },
-        }),
+        getStoredModuleEntries(module),
     ]);
 
-    const defaults = buildDefaultCakeoColorEntries(users);
-    const storedByKey = new Map<string, string>(stored.map((entry: { entityKey: string; color: string }) => [entry.entityKey, normalizeColor(entry.color)]));
+    const entries = buildEffectiveModuleEntries(module, users, stored as Array<{ entityKey: string; color: string }>);
+    const currentUserEntry = entries.find((entry) => entry.entityKey === currentUserId) || null;
+    const usedColors = entries
+        .filter((entry) => entry.entityKey !== currentUserId)
+        .map((entry) => entry.color);
 
     return {
-        users,
-        entries: defaults.map((entry) => ({
-            entityKey: entry.entityKey,
-            color: storedByKey.get(entry.entityKey) || entry.color,
-        })),
+        entries,
+        currentUserEntry,
+        usedColors,
     };
 }
 
-export async function saveCakeoColorSettings(rawEntries: Array<{ entityKey: string; color: string }>) {
-    const users = await listCakeoAssignableUsers();
-    const validKeys = new Set<string>([COLOR_SETTING_UNASSIGNED_KEY, ...users.map((user: { id: string }) => user.id)]);
-    const normalizedEntries = rawEntries.map((entry) => ({
-        entityKey: entry.entityKey,
-        color: normalizeColor(entry.color),
-    }));
+export async function saveOwnModuleColorSetting(
+    module: typeof CAKEO_COLOR_MODULE | typeof CALENDAR_COLOR_MODULE,
+    userId: string,
+    color: string,
+) {
+    const normalizedColor = normalizeColor(color);
+    const settings = await getModuleColorSettings(module, userId);
 
-    if (normalizedEntries.length !== validKeys.size) {
-        throw new ValidationError('Color settings must include Unassigned and every active Ca Keo assignee');
+    if (settings.usedColors.includes(normalizedColor)) {
+        throw new ValidationError('This color is already used in this module. Please choose a different color.');
     }
 
-    const seenKeys = new Set<string>();
-    const seenColors = new Set<string>();
-
-    for (const entry of normalizedEntries) {
-        if (!validKeys.has(entry.entityKey)) {
-            throw new ValidationError('Unknown assignee in color settings');
-        }
-        if (seenKeys.has(entry.entityKey)) {
-            throw new ValidationError('Duplicate assignee entries are not allowed');
-        }
-        if (seenColors.has(entry.color)) {
-            throw new ValidationError('Colors must be unique within Ca Keo');
-        }
-        seenKeys.add(entry.entityKey);
-        seenColors.add(entry.color);
-    }
-
-    await prisma.$transaction([
-        prisma.moduleColorSetting.deleteMany({
-            where: { module: CAKEO_COLOR_MODULE as any, scope: CAKEO_COLOR_SCOPE as any },
-        }),
-        prisma.moduleColorSetting.createMany({
-            data: normalizedEntries.map((entry) => ({
-                module: CAKEO_COLOR_MODULE as any,
+    await prisma.moduleColorSetting.upsert({
+        where: {
+            module_scope_entityKey: {
+                module: module as any,
                 scope: CAKEO_COLOR_SCOPE as any,
-                entityKey: entry.entityKey,
-                color: entry.color,
-            })),
-        }),
-    ]);
+                entityKey: userId,
+            },
+        },
+        update: { color: normalizedColor },
+        create: {
+            module: module as any,
+            scope: CAKEO_COLOR_SCOPE as any,
+            entityKey: userId,
+            color: normalizedColor,
+        },
+    });
 
-    return getCakeoColorSettings();
+    return getModuleColorSettings(module, userId);
 }
 
-export async function resetCakeoColorSettings() {
-    const users = await listCakeoAssignableUsers();
-    const defaults = buildDefaultCakeoColorEntries(users);
-    return saveCakeoColorSettings(defaults);
+export async function resetOwnModuleColorSetting(
+    module: typeof CAKEO_COLOR_MODULE | typeof CALENDAR_COLOR_MODULE,
+    userId: string,
+) {
+    await prisma.moduleColorSetting.deleteMany({
+        where: {
+            module: module as any,
+            scope: CAKEO_COLOR_SCOPE as any,
+            entityKey: userId,
+        },
+    });
+
+    return getModuleColorSettings(module, userId);
 }

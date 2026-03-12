@@ -147,6 +147,7 @@ enum Theme {
 
 enum ColorSettingModule {
   CAKEO
+  CALENDAR
 }
 
 enum ColorSettingScope {

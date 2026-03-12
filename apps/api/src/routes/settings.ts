@@ -6,8 +6,8 @@ import { sendSuccess, sendMessage } from '../utils/response';
 import { config } from '../config/env';
 import { buildOtpAuthUrl, buildQrCodeUrl, generateTotpSecret, verifyTotpCode } from '../utils/mfa';
 import { UnauthorizedError, ValidationError } from '../utils/errors';
-import { updateCakeoColorSettingsSchema } from '../validators/settings';
-import { getCakeoColorSettings, resetCakeoColorSettings, saveCakeoColorSettings } from '../utils/colorSettings';
+import { updateOwnModuleColorSchema } from '../validators/settings';
+import { CAKEO_COLOR_MODULE, CALENDAR_COLOR_MODULE, getModuleColorSettings, resetOwnModuleColorSetting, saveOwnModuleColorSetting } from '../utils/colorSettings';
 
 const router = Router();
 router.use(authenticate);
@@ -124,23 +124,44 @@ router.patch('/profile', async (req: Request, res: Response, next: NextFunction)
     } catch (err) { next(err); }
 });
 
-router.get('/color-settings/cakeo', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/color-settings/cakeo', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const data = await getCakeoColorSettings();
+        const data = await getModuleColorSettings(CAKEO_COLOR_MODULE, req.user!.userId);
         sendSuccess(res, data);
     } catch (err) { next(err); }
 });
 
-router.put('/color-settings/cakeo', authorize('OWNER', 'ADMIN'), validate(updateCakeoColorSettingsSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.put('/color-settings/cakeo', validate(updateOwnModuleColorSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const data = await saveCakeoColorSettings(req.body.entries);
+        const data = await saveOwnModuleColorSetting(CAKEO_COLOR_MODULE, req.user!.userId, req.body.color);
         sendSuccess(res, data);
     } catch (err) { next(err); }
 });
 
-router.post('/color-settings/cakeo/reset', authorize('OWNER', 'ADMIN'), async (_req: Request, res: Response, next: NextFunction) => {
+router.post('/color-settings/cakeo/reset', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const data = await resetCakeoColorSettings();
+        const data = await resetOwnModuleColorSetting(CAKEO_COLOR_MODULE, req.user!.userId);
+        sendSuccess(res, data);
+    } catch (err) { next(err); }
+});
+
+router.get('/color-settings/calendar', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const data = await getModuleColorSettings(CALENDAR_COLOR_MODULE, req.user!.userId);
+        sendSuccess(res, data);
+    } catch (err) { next(err); }
+});
+
+router.put('/color-settings/calendar', validate(updateOwnModuleColorSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const data = await saveOwnModuleColorSetting(CALENDAR_COLOR_MODULE, req.user!.userId, req.body.color);
+        sendSuccess(res, data);
+    } catch (err) { next(err); }
+});
+
+router.post('/color-settings/calendar/reset', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const data = await resetOwnModuleColorSetting(CALENDAR_COLOR_MODULE, req.user!.userId);
         sendSuccess(res, data);
     } catch (err) { next(err); }
 });

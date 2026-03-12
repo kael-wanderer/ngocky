@@ -339,29 +339,19 @@ export default function CaKeoPage() {
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="label">Start Date</label>
-                                    <label className="relative block cursor-pointer">
-                                        <span className="input block text-sm">{form.startDate ? format(new Date(`${form.startDate}T00:00`), 'MMM dd, yyyy') : 'Select date'}</span>
-                                        <input type="date" className="absolute inset-0 opacity-0 w-full cursor-pointer" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
-                                    </label>
+                                    <input type="date" className="input" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="label">Start Time</label>
-                                    <select className="input" value={form.startTime} disabled={!form.startDate || form.allDay} onChange={(e) => setForm({ ...form, startTime: e.target.value })}>
-                                        {TIME_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                    </select>
+                                    <input type="time" className="input" value={form.startTime} disabled={!form.startDate || form.allDay} onChange={(e) => setForm({ ...form, startTime: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="label">End Date</label>
-                                    <label className="relative block cursor-pointer">
-                                        <span className="input block text-sm">{form.endDate ? format(new Date(`${form.endDate}T00:00`), 'MMM dd, yyyy') : 'None'}</span>
-                                        <input type="date" className="absolute inset-0 opacity-0 w-full cursor-pointer" min={form.startDate || undefined} value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
-                                    </label>
+                                    <input type="date" className="input" min={form.startDate || undefined} value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="label">End Time</label>
-                                    <select className="input" value={form.endTime} disabled={!form.endDate || form.allDay} onChange={(e) => setForm({ ...form, endTime: e.target.value })}>
-                                        {TIME_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                    </select>
+                                    <input type="time" className="input" value={form.endTime} disabled={!form.endDate || form.allDay} onChange={(e) => setForm({ ...form, endTime: e.target.value })} />
                                 </div>
                             </div>
                             <div>

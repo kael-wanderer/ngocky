@@ -43,7 +43,8 @@ export default function SettingsPage() {
         notificationEmail: '',
         telegramChatId: '',
     });
-    const [cakeoColorForm, setCakeoColorForm] = useState<Record<string, string>>({});
+    const [cakeoColor, setCakeoColor] = useState('#94a3b8');
+    const [calendarColor, setCalendarColor] = useState('#94a3b8');
     const [phoneViewForm, setPhoneViewForm] = useState<string[]>([...DEFAULT_MOBILE_NAV_ITEMS]);
     const mfaDisableInputRef = useRef<HTMLInputElement>(null);
 
@@ -95,14 +96,14 @@ export default function SettingsPage() {
         queryFn: async () => (await api.get('/settings/mfa')).data.data,
     });
 
-    const { data: cakeoUsers = [] } = useQuery({
-        queryKey: ['cakeo-users'],
-        queryFn: async () => (await api.get('/cakeos/users')).data.data,
-    });
-
     const { data: cakeoColorSettings, refetch: refetchCakeoColors } = useQuery({
         queryKey: ['settings', 'color-settings', 'cakeo'],
         queryFn: async () => (await api.get('/settings/color-settings/cakeo')).data.data,
+    });
+
+    const { data: calendarColorSettings, refetch: refetchCalendarColors } = useQuery({
+        queryKey: ['settings', 'color-settings', 'calendar'],
+        queryFn: async () => (await api.get('/settings/color-settings/calendar')).data.data,
     });
 
     const updateProfile = useMutation({
@@ -122,7 +123,7 @@ export default function SettingsPage() {
     });
 
     const saveCakeoColors = useMutation({
-        mutationFn: (entries: Array<{ entityKey: string; color: string }>) => api.put('/settings/color-settings/cakeo', { entries }),
+        mutationFn: (color: string) => api.put('/settings/color-settings/cakeo', { color }),
         onSuccess: async () => {
             await Promise.all([
                 qc.invalidateQueries({ queryKey: ['settings', 'color-settings', 'cakeo'] }),
@@ -145,6 +146,32 @@ export default function SettingsPage() {
             setTimeout(() => setMsg(''), 2500);
         },
         onError: (e: any) => setMsg(e.response?.data?.message || 'Failed to reset Ca Keo colors'),
+    });
+
+    const saveCalendarColor = useMutation({
+        mutationFn: (color: string) => api.put('/settings/color-settings/calendar', { color }),
+        onSuccess: async () => {
+            await Promise.all([
+                qc.invalidateQueries({ queryKey: ['settings', 'color-settings', 'calendar'] }),
+                qc.invalidateQueries({ queryKey: ['calendar'] }),
+            ]);
+            setMsg('Calendar color saved.');
+            setTimeout(() => setMsg(''), 2500);
+        },
+        onError: (e: any) => setMsg(e.response?.data?.message || 'Failed to save Calendar color'),
+    });
+
+    const resetCalendarColor = useMutation({
+        mutationFn: () => api.post('/settings/color-settings/calendar/reset'),
+        onSuccess: async () => {
+            await Promise.all([
+                refetchCalendarColors(),
+                qc.invalidateQueries({ queryKey: ['calendar'] }),
+            ]);
+            setMsg('Calendar color reset to default.');
+            setTimeout(() => setMsg(''), 2500);
+        },
+        onError: (e: any) => setMsg(e.response?.data?.message || 'Failed to reset Calendar color'),
     });
 
     const setupMfa = useMutation({
@@ -217,13 +244,14 @@ export default function SettingsPage() {
     }, [profile]);
 
     useEffect(() => {
-        if (!cakeoColorSettings?.entries) return;
-        setCakeoColorForm(
-            Object.fromEntries(
-                cakeoColorSettings.entries.map((entry: { entityKey: string; color: string }) => [entry.entityKey, entry.color]),
-            ),
-        );
+        if (!cakeoColorSettings?.currentUserEntry?.color) return;
+        setCakeoColor(cakeoColorSettings.currentUserEntry.color);
     }, [cakeoColorSettings]);
+
+    useEffect(() => {
+        if (!calendarColorSettings?.currentUserEntry?.color) return;
+        setCalendarColor(calendarColorSettings.currentUserEntry.color);
+    }, [calendarColorSettings]);
 
     const handleTabClick = (id: string) => {
         setTab(id);
@@ -289,45 +317,28 @@ export default function SettingsPage() {
         { id: 'OCEAN_INK', name: 'Ocean Ink', colors: ['#2ea7a0', '#294055', '#0f1722'] },
     ];
 
-    const canManageSharedColors = user?.role === 'OWNER' || user?.role === 'ADMIN';
-    const cakeoColorRows = useMemo(() => {
-        const users = cakeoColorSettings?.users || cakeoUsers;
-        return [
-            { entityKey: 'UNASSIGNED', label: 'Unassigned', helper: 'Default shared color for tasks without an assignee' },
-            ...users.map((u: any) => ({
-                entityKey: u.id,
-                label: u.name,
-                helper: u.email,
-            })),
-        ];
-    }, [cakeoColorSettings, cakeoUsers]);
+    const cakeoUsedColors = useMemo(
+        () => new Set<string>((cakeoColorSettings?.usedColors || []).map((value: string) => value.toLowerCase())),
+        [cakeoColorSettings],
+    );
+    const calendarUsedColors = useMemo(
+        () => new Set<string>((calendarColorSettings?.usedColors || []).map((value: string) => value.toLowerCase())),
+        [calendarColorSettings],
+    );
 
-    const cakeoUsedColors = new Set(Object.values(cakeoColorForm).map((value) => value?.toLowerCase()).filter(Boolean));
-
-    const handleCakeoColorChange = (entityKey: string, color: string) => {
-        const normalizedColor = color.toLowerCase();
-        const duplicateOwner = Object.entries(cakeoColorForm).find(([key, value]) => key !== entityKey && value?.toLowerCase() === normalizedColor);
-        if (duplicateOwner) {
-            setMsg('Each Ca Keo color must be unique. Please choose a different color.');
+    const handleOwnColorChange = (
+        nextColor: string,
+        setColor: React.Dispatch<React.SetStateAction<string>>,
+        usedColors: Set<string>,
+        moduleLabel: string,
+    ) => {
+        const normalizedColor = nextColor.toLowerCase();
+        if (usedColors.has(normalizedColor)) {
+            setMsg(`${moduleLabel} color must be unique. Please choose a different color.`);
             setTimeout(() => setMsg(''), 3000);
             return;
         }
-        setCakeoColorForm((current) => ({ ...current, [entityKey]: normalizedColor }));
-    };
-
-    const handleSaveCakeoColors = () => {
-        const missingEntry = cakeoColorRows.find((row) => !cakeoColorForm[row.entityKey]);
-        if (missingEntry) {
-            setMsg(`Missing color for ${missingEntry.label}.`);
-            setTimeout(() => setMsg(''), 3000);
-            return;
-        }
-
-        const entries = cakeoColorRows.map((row) => ({
-            entityKey: row.entityKey,
-            color: cakeoColorForm[row.entityKey],
-        }));
-        saveCakeoColors.mutate(entries);
+        setColor(normalizedColor);
     };
 
     const selectedPhoneView = useMemo(
