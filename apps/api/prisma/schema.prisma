@@ -853,6 +853,7 @@ model CaKeo {
   id                      String        @id @default(cuid())
   title                   String
   description             String?
+  type                    String        @default("Task")
   category                String?
   status                  String        @default("TODO")
   assignerId              String?

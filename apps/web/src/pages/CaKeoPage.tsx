@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Baby, Plus, X, ChevronLeft, ChevronRight, Pencil, Trash2,
-    Filter, List, Calendar as CalIcon, LayoutGrid,
+    Filter, List, Calendar as CalIcon, LayoutGrid, Palette,
 } from 'lucide-react';
 import {
     format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay,
@@ -15,6 +15,7 @@ import NotificationFields, { buildNotificationPayload, emptyNotification, loadNo
 
 const CATEGORIES = ['School', 'Activity', 'Medical', 'Entertainment', 'Home', 'Other'];
 const STATUSES = ['TODO', 'IN_PROGRESS', 'DONE', 'CANCELLED'];
+const TYPES = ['Task', 'Event', 'Schedule'];
 
 const STATUS_LABEL: Record<string, string> = {
     TODO: 'Todo',
@@ -45,11 +46,22 @@ const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
     return { value: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`, label: `${h12}:${String(m).padStart(2, '0')}${period}` };
 });
 
+const UNASSIGNED_COLOR = '#94a3b8';
+const USER_COLORS_KEY = 'cakeo_user_colors';
+
+function loadUserColors(): Record<string, string> {
+    try { return JSON.parse(localStorage.getItem(USER_COLORS_KEY) || '{}'); } catch { return {}; }
+}
+function saveUserColors(colors: Record<string, string>) {
+    localStorage.setItem(USER_COLORS_KEY, JSON.stringify(colors));
+}
+
 type CaKeoView = 'calendar' | 'list' | 'kanban';
 
 const emptyForm = () => ({
     title: '',
     description: '',
+    type: 'Task',
     category: '',
     status: 'TODO',
     assignerId: '',
@@ -76,12 +88,16 @@ export default function CaKeoPage() {
     const [form, setForm] = useState(emptyForm());
     const [formError, setFormError] = useState('');
     const [filters, setFilters] = useState({ status: '', assignerId: '', category: '' });
+    const [calTypeFilter, setCalTypeFilter] = useState<string[]>(TYPES);
+    const [userColors, setUserColors] = useState<Record<string, string>>(loadUserColors);
+    const [showColorConfig, setShowColorConfig] = useState(false);
 
     // Queries
     const { data: usersData } = useQuery({
         queryKey: ['cakeo-users'],
         queryFn: async () => (await api.get('/cakeos/users')).data.data,
     });
+    // Users already excludes OWNER role (filtered in backend)
     const users: any[] = usersData || [];
 
     const { data: itemsData, isLoading } = useQuery({
@@ -120,41 +136,55 @@ export default function CaKeoPage() {
     const days = eachDayOfInterval({ start: calStart, end: calEnd });
     const today = new Date();
 
+    // Calendar items with type filter applied
+    const calendarItems = useMemo(
+        () => items.filter((item: any) => calTypeFilter.includes(item.type || 'Task')),
+        [items, calTypeFilter],
+    );
+
     const getItemsForDay = (day: Date) =>
-        items.filter((item: any) => item.startDate && isSameDay(new Date(item.startDate), day));
+        calendarItems.filter((item: any) => item.startDate && isSameDay(new Date(item.startDate), day));
     const selectedItems = selectedDate ? getItemsForDay(selectedDate) : [];
 
-    // Stats for list view
+    // Kanban groups
+    const kanbanGroups = useMemo(() =>
+        STATUSES.map((status) => ({
+            status,
+            items: items.filter((item: any) => item.status === status),
+        })),
+        [items],
+    );
+
+    // Stats for list view (per assignee user, OWNER already excluded from users list)
     const stats = useMemo(() => {
         const result: Record<string, { pending: number; done: number }> = {};
         users.forEach((u: any) => { result[u.id] = { pending: 0, done: 0 }; });
         items.forEach((item: any) => {
-            if (!item.assignerId) return;
-            if (!result[item.assignerId]) result[item.assignerId] = { pending: 0, done: 0 };
+            if (!item.assignerId || !result[item.assignerId]) return;
             if (item.status === 'DONE') result[item.assignerId].done += 1;
             else if (item.status !== 'CANCELLED') result[item.assignerId].pending += 1;
         });
         return result;
     }, [items, users]);
 
-    // Kanban groups
-    const kanbanGroups = useMemo(() => {
-        return STATUSES.map((status) => ({
-            status,
-            items: items.filter((item: any) => item.status === status),
-        }));
-    }, [items]);
+    // User color helpers
+    function getAssigneeColor(assignerId: string | null | undefined): string {
+        if (!assignerId) return UNASSIGNED_COLOR;
+        return userColors[assignerId] || UNASSIGNED_COLOR;
+    }
+
+    function updateUserColor(userId: string, color: string) {
+        const next = { ...userColors, [userId]: color };
+        setUserColors(next);
+        saveUserColors(next);
+    }
 
     // Modal helpers
     function openCreate(date?: Date) {
         setEditingItem(null);
         setFormError('');
         const base = date || selectedDate || new Date();
-        setForm({
-            ...emptyForm(),
-            startDate: format(base, 'yyyy-MM-dd'),
-            endDate: format(base, 'yyyy-MM-dd'),
-        });
+        setForm({ ...emptyForm(), startDate: format(base, 'yyyy-MM-dd'), endDate: format(base, 'yyyy-MM-dd') });
         setShowModal(true);
     }
 
@@ -164,6 +194,7 @@ export default function CaKeoPage() {
         setForm({
             title: item.title || '',
             description: item.description || '',
+            type: item.type || 'Task',
             category: item.category || '',
             status: item.status || 'TODO',
             assignerId: item.assignerId || '',
@@ -208,7 +239,13 @@ export default function CaKeoPage() {
     }
 
     function handleDelete(id: string) {
-        if (window.confirm('Delete this task?')) deleteMut.mutate(id);
+        if (window.confirm('Delete this item?')) deleteMut.mutate(id);
+    }
+
+    function toggleCalType(type: string) {
+        setCalTypeFilter((prev) =>
+            prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+        );
     }
 
     return (
@@ -220,23 +257,31 @@ export default function CaKeoPage() {
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Ca Keo</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                    {/* View switcher */}
                     <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
                         <button onClick={() => setView('calendar')} className={`px-3 py-2 text-sm flex items-center gap-1.5 ${view === 'calendar' ? 'bg-gray-100' : ''}`} title="Calendar"><CalIcon className="w-4 h-4" /></button>
                         <button onClick={() => setView('list')} className={`px-3 py-2 text-sm flex items-center gap-1.5 ${view === 'list' ? 'bg-gray-100' : ''}`} title="List"><List className="w-4 h-4" /></button>
                         <button onClick={() => setView('kanban')} className={`px-3 py-2 text-sm flex items-center gap-1.5 ${view === 'kanban' ? 'bg-gray-100' : ''}`} title="Kanban"><LayoutGrid className="w-4 h-4" /></button>
                     </div>
                     <button className="btn-primary" onClick={() => openCreate()}>
-                        <Plus className="w-4 h-4" /> New Task
+                        <Plus className="w-4 h-4" /> New
                     </button>
                 </div>
             </div>
 
             {/* Filters */}
             <div className="card p-4">
-                <div className="flex items-center gap-2 mb-3">
-                    <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
-                    <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                        <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
+                    </div>
+                    <button
+                        className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border transition-colors"
+                        style={{ borderColor: 'var(--color-border)', color: showColorConfig ? '#ec4899' : 'var(--color-text-secondary)' }}
+                        onClick={() => setShowColorConfig(!showColorConfig)}
+                    >
+                        <Palette className="w-3.5 h-3.5" /> User Colors
+                    </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <select className="input text-sm" value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })}>
@@ -252,6 +297,25 @@ export default function CaKeoPage() {
                         {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
+                {/* User Color Config */}
+                {showColorConfig && users.length > 0 && (
+                    <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                        <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>Assignee Colors</p>
+                        <div className="flex flex-wrap gap-4">
+                            {users.map((u: any) => (
+                                <label key={u.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                                    <input
+                                        type="color"
+                                        className="w-7 h-7 rounded cursor-pointer border-0 p-0.5"
+                                        value={userColors[u.id] || UNASSIGNED_COLOR}
+                                        onChange={(e) => updateUserColor(u.id, e.target.value)}
+                                    />
+                                    <span style={{ color: 'var(--color-text)' }}>{u.name}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Modal */}
@@ -259,7 +323,7 @@ export default function CaKeoPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
                     <div className="card p-6 w-full max-w-lg animate-slide-up overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">{editingItem ? 'Edit Task' : 'New Task'}</h3>
+                            <h3 className="text-lg font-semibold">{editingItem ? 'Edit' : 'New'}</h3>
                             <button onClick={closeModal}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -267,7 +331,13 @@ export default function CaKeoPage() {
                                 <label className="label">Title <span className="text-red-500">*</span></label>
                                 <input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className="label">Type</label>
+                                    <select className="input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                                        {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
                                 <div>
                                     <label className="label">Category</label>
                                     <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
@@ -283,7 +353,7 @@ export default function CaKeoPage() {
                                 </div>
                             </div>
                             <div>
-                                <label className="label">Assigner</label>
+                                <label className="label">Assign To</label>
                                 <select className="input" value={form.assignerId} onChange={(e) => setForm({ ...form, assignerId: e.target.value })}>
                                     <option value="">Unassigned</option>
                                     {users.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -341,7 +411,7 @@ export default function CaKeoPage() {
                                 <div>
                                     {editingItem && (
                                         <button type="button" className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
-                                            onClick={() => { if (window.confirm('Delete this task?')) { deleteMut.mutate(editingItem.id); closeModal(); } }}>
+                                            onClick={() => { if (window.confirm('Delete?')) { deleteMut.mutate(editingItem.id); closeModal(); } }}>
                                             Delete
                                         </button>
                                     )}
@@ -361,6 +431,28 @@ export default function CaKeoPage() {
             {/* CALENDAR VIEW */}
             {view === 'calendar' && (
                 <>
+                    {/* Type filter chips */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Type:</span>
+                        {TYPES.map((type) => {
+                            const active = calTypeFilter.includes(type);
+                            return (
+                                <button
+                                    key={type}
+                                    onClick={() => toggleCalType(type)}
+                                    className="text-xs px-3 py-1 rounded-full border transition-colors font-medium"
+                                    style={{
+                                        backgroundColor: active ? '#ec4899' : 'transparent',
+                                        color: active ? '#fff' : 'var(--color-text-secondary)',
+                                        borderColor: active ? '#ec4899' : 'var(--color-border)',
+                                    }}
+                                >
+                                    {type}
+                                </button>
+                            );
+                        })}
+                    </div>
+
                     <div className="flex items-center justify-between">
                         <button onClick={() => setCurrentDate(subMonths(currentDate, 1))} className="btn-ghost p-2"><ChevronLeft className="w-5 h-5" /></button>
                         <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{format(currentDate, 'MMMM yyyy')}</h3>
@@ -393,7 +485,7 @@ export default function CaKeoPage() {
                                             {dayItems.length > 0 && (
                                                 <div className="flex justify-center gap-0.5 mt-0.5">
                                                     {dayItems.slice(0, 3).map((item: any, i: number) => (
-                                                        <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color || STATUS_COLOR[item.status] || '#ec4899' }} />
+                                                        <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getAssigneeColor(item.assignerId) }} />
                                                     ))}
                                                 </div>
                                             )}
@@ -409,15 +501,15 @@ export default function CaKeoPage() {
                                     {selectedDate ? format(selectedDate, 'EEEE, MMMM d') : 'Select a day'}
                                 </h4>
                                 {selectedDate && (
-                                    <button className="btn-ghost p-1" title="Add task for this day" onClick={() => openCreate(selectedDate)}>
+                                    <button className="btn-ghost p-1" title="Add for this day" onClick={() => openCreate(selectedDate)}>
                                         <Plus className="w-4 h-4" />
                                     </button>
                                 )}
                             </div>
-                            {selectedDate && selectedItems.length === 0 && <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No tasks</p>}
+                            {selectedDate && selectedItems.length === 0 && <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Nothing here</p>}
                             <div className="space-y-2">
                                 {selectedItems.map((item: any) => (
-                                    <CaKeoCard key={item.id} item={item} users={users} onEdit={openEdit} onDelete={handleDelete} />
+                                    <CaKeoCard key={item.id} item={item} assigneeColor={getAssigneeColor(item.assignerId)} onEdit={openEdit} onDelete={handleDelete} />
                                 ))}
                             </div>
                         </div>
@@ -427,26 +519,30 @@ export default function CaKeoPage() {
 
             {/* LIST VIEW */}
             {view === 'list' && (
-                <div className="space-y-6">
-                    {/* Stats */}
+                <div className="space-y-4">
+                    {/* Per-assignee stats */}
                     {users.length > 0 && (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {users.map((u: any) => (
                                 <React.Fragment key={u.id}>
                                     <div className="card p-4">
-                                        <div className="text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{u.name} — Pending</div>
+                                        <div className="text-xs font-medium mb-1 flex items-center gap-1.5">
+                                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getAssigneeColor(u.id) }} />
+                                            <span style={{ color: 'var(--color-text-secondary)' }}>{u.name} — Pending</span>
+                                        </div>
                                         <div className="text-2xl font-bold" style={{ color: '#f59e0b' }}>{stats[u.id]?.pending ?? 0}</div>
                                     </div>
                                     <div className="card p-4">
-                                        <div className="text-xs font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{u.name} — Done</div>
+                                        <div className="text-xs font-medium mb-1 flex items-center gap-1.5">
+                                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getAssigneeColor(u.id) }} />
+                                            <span style={{ color: 'var(--color-text-secondary)' }}>{u.name} — Done</span>
+                                        </div>
                                         <div className="text-2xl font-bold" style={{ color: '#22c55e' }}>{stats[u.id]?.done ?? 0}</div>
                                     </div>
                                 </React.Fragment>
                             ))}
                         </div>
                     )}
-
-                    {/* Table */}
                     {isLoading ? (
                         <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="card h-14 animate-pulse bg-gray-100" />)}</div>
                     ) : (
@@ -456,6 +552,7 @@ export default function CaKeoPage() {
                                     <thead>
                                         <tr>
                                             <th>Title</th>
+                                            <th>Type</th>
                                             <th>Category</th>
                                             <th>Status</th>
                                             <th>Assignee</th>
@@ -465,17 +562,18 @@ export default function CaKeoPage() {
                                     </thead>
                                     <tbody>
                                         {items.length === 0 && (
-                                            <tr><td colSpan={6} className="text-center py-8 text-sm" style={{ color: 'var(--color-text-secondary)' }}>No tasks found</td></tr>
+                                            <tr><td colSpan={7} className="text-center py-8 text-sm" style={{ color: 'var(--color-text-secondary)' }}>No items found</td></tr>
                                         )}
                                         {items.map((item: any) => (
                                             <tr key={item.id} className="group hover:bg-gray-50 cursor-pointer" onDoubleClick={() => openEdit(item)}>
                                                 <td>
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.color || STATUS_COLOR[item.status] }} />
+                                                        <div className="w-1.5 h-5 rounded-sm flex-shrink-0" style={{ backgroundColor: getAssigneeColor(item.assignerId) }} />
                                                         <span className="font-medium" style={{ color: 'var(--color-text)' }}>{item.title}</span>
                                                     </div>
-                                                    {item.description && <p className="text-xs mt-0.5 truncate max-w-xs" style={{ color: 'var(--color-text-secondary)' }}>{item.description}</p>}
+                                                    {item.description && <p className="text-xs mt-0.5 truncate max-w-xs pl-3.5" style={{ color: 'var(--color-text-secondary)' }}>{item.description}</p>}
                                                 </td>
+                                                <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{item.type || 'Task'}</td>
                                                 <td>{item.category ? <span className="badge badge-secondary">{item.category}</span> : '—'}</td>
                                                 <td>
                                                     <span className="px-2 py-0.5 rounded-full text-xs font-medium"
@@ -483,8 +581,15 @@ export default function CaKeoPage() {
                                                         {STATUS_LABEL[item.status] || item.status}
                                                     </span>
                                                 </td>
-                                                <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                                                    {item.assigner?.name || '—'}
+                                                <td>
+                                                    {item.assigner ? (
+                                                        <span className="inline-flex items-center gap-1.5 text-sm">
+                                                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getAssigneeColor(item.assignerId) }} />
+                                                            <span style={{ color: getAssigneeColor(item.assignerId) }}>{item.assigner.name}</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-sm" style={{ color: UNASSIGNED_COLOR }}>Unassigned</span>
+                                                    )}
                                                 </td>
                                                 <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                                                     {item.startDate ? format(new Date(item.startDate), 'MMM d, yyyy') : '—'}
@@ -516,16 +621,16 @@ export default function CaKeoPage() {
                                     <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{STATUS_LABEL[status]}</span>
                                     <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: STATUS_BG[status], color: STATUS_COLOR[status] }}>{colItems.length}</span>
                                 </div>
-                                <button className="btn-ghost p-1" title={`Add ${STATUS_LABEL[status]} task`} onClick={() => { openCreate(); setForm((f) => ({ ...f, status })); }}>
+                                <button className="btn-ghost p-1" title={`Add ${STATUS_LABEL[status]}`} onClick={() => { openCreate(); setForm((f) => ({ ...f, status })); }}>
                                     <Plus className="w-3.5 h-3.5" />
                                 </button>
                             </div>
                             <div className="space-y-2">
                                 {colItems.map((item: any) => (
-                                    <CaKeoCard key={item.id} item={item} users={users} onEdit={openEdit} onDelete={handleDelete} compact />
+                                    <CaKeoCard key={item.id} item={item} assigneeColor={getAssigneeColor(item.assignerId)} onEdit={openEdit} onDelete={handleDelete} compact />
                                 ))}
                                 {colItems.length === 0 && (
-                                    <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-secondary)' }}>No tasks</p>
+                                    <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-secondary)' }}>Empty</p>
                                 )}
                             </div>
                         </div>
@@ -538,9 +643,9 @@ export default function CaKeoPage() {
 
 // ─── CaKeo Card ─────────────────────────────────────
 
-function CaKeoCard({ item, users: _users, onEdit, onDelete, compact = false }: {
+function CaKeoCard({ item, assigneeColor, onEdit, onDelete, compact = false }: {
     item: any;
-    users: any[];
+    assigneeColor: string;
     onEdit: (item: any) => void;
     onDelete: (id: string) => void;
     compact?: boolean;
@@ -548,7 +653,7 @@ function CaKeoCard({ item, users: _users, onEdit, onDelete, compact = false }: {
     return (
         <div
             className="p-3 rounded-lg border-l-4 cursor-pointer hover:shadow-sm transition-shadow"
-            style={{ borderColor: item.color || STATUS_COLOR[item.status] || '#ec4899', backgroundColor: 'var(--color-bg)' }}
+            style={{ borderColor: assigneeColor, backgroundColor: 'var(--color-bg)' }}
             onDoubleClick={() => onEdit(item)}
         >
             <div className="flex items-start justify-between gap-2">
@@ -558,11 +663,16 @@ function CaKeoCard({ item, users: _users, onEdit, onDelete, compact = false }: {
                         <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-text-secondary)' }}>{item.description}</p>
                     )}
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {item.type && item.type !== 'Task' && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-pink-50 font-medium text-pink-600">{item.type}</span>
+                        )}
                         {item.category && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{item.category}</span>
                         )}
-                        {item.assigner?.name && (
-                            <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{item.assigner.name}</span>
+                        {item.assigner?.name ? (
+                            <span className="text-[10px] font-medium" style={{ color: assigneeColor }}>{item.assigner.name}</span>
+                        ) : (
+                            <span className="text-[10px]" style={{ color: UNASSIGNED_COLOR }}>Unassigned</span>
                         )}
                         {!compact && item.startDate && (
                             <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>

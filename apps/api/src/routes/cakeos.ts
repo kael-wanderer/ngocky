@@ -27,7 +27,7 @@ function buildWhere(userId: string) {
 router.get('/users', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const users = await prisma.user.findMany({
-            where: { active: true },
+            where: { active: true, role: { not: 'OWNER' } },
             select: { id: true, name: true, email: true },
             orderBy: { name: 'asc' },
         });
@@ -39,13 +39,14 @@ router.get('/users', async (req: Request, res: Response, next: NextFunction) => 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
-        const { status, assignerId, category, startFrom, startTo } = req.query as Record<string, string>;
+        const { status, assignerId, category, type, startFrom, startTo } = req.query as Record<string, string>;
 
         const where: any = buildWhere(userId);
 
         if (status) where.status = status;
         if (assignerId) where.assignerId = assignerId;
         if (category) where.category = category;
+        if (type) where.type = type;
 
         if (startFrom || startTo) {
             where.startDate = {};
@@ -66,7 +67,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
-        const { title, description, category, status, assignerId, startDate, endDate, allDay, color, showOnCalendar, isShared, ...rest } = req.body;
+        const { title, description, type, category, status, assignerId, startDate, endDate, allDay, color, showOnCalendar, isShared, ...rest } = req.body;
 
         const reminderFields = resolveReminderFields(req.body, {
             anchorDate: startDate,
@@ -77,6 +78,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
             data: {
                 title,
                 description: description || null,
+                type: type || 'Task',
                 category: category || null,
                 status: status || 'TODO',
                 assignerId: assignerId || null,
@@ -103,7 +105,7 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
         if (!existing) throw new NotFoundError('CaKeo item');
         if (existing.ownerId !== userId) throw new ForbiddenError('Not your item');
 
-        const { title, description, category, status, assignerId, startDate, endDate, allDay, color, showOnCalendar, isShared } = req.body;
+        const { title, description, type, category, status, assignerId, startDate, endDate, allDay, color, showOnCalendar, isShared } = req.body;
 
         const reminderFields = resolveReminderFields(
             { ...existing, ...req.body },
@@ -119,6 +121,7 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
             data: {
                 ...(title !== undefined && { title }),
                 ...(description !== undefined && { description: description || null }),
+                ...(type !== undefined && { type: type || 'Task' }),
                 ...(category !== undefined && { category: category || null }),
                 ...(status !== undefined && { status }),
                 ...(assignerId !== undefined && { assignerId: assignerId || null }),
