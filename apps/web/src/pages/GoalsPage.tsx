@@ -10,6 +10,7 @@ import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
+import { parseCompactAmountInput } from '../utils/amount';
 
 const unitOptions = [
     { value: 'times', label: 'Time' },
@@ -168,7 +169,7 @@ function TaskForm({
                 title: form.title,
                 description: form.description,
                 taskType: form.taskType,
-                amount: form.taskType === 'PAYMENT' ? Number(form.amount) : null,
+                amount: form.taskType === 'PAYMENT' ? parseCompactAmountInput(form.amount) : null,
                 expenseCategory: form.taskType === 'PAYMENT' ? form.expenseCategory : null,
                 scope: form.taskType === 'PAYMENT' ? form.scope : 'PERSONAL',
                 isShared: form.isShared,
@@ -211,7 +212,7 @@ function TaskForm({
                 {form.taskType === 'PAYMENT' && (
                     <div>
                         <label className="label">Amount <span className="text-red-500">*</span></label>
-                        <input type="number" min={1} step="0.01" className="input" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
+                        <input className="input" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="e.g. 600k or 2M" required />
                     </div>
                 )}
             </div>

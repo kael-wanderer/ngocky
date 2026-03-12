@@ -1,20 +1,48 @@
 import { Router } from 'express';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
-import { sendSuccess, sendCreated, sendMessage } from '../utils/response';
+import { sendSuccess, sendCreated, sendMessage, sendPaginated } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
+import { parseCompactAmountInput } from '../utils/amount';
 
 const router = Router();
 router.use(authenticate);
 
+function normalizeKitOnlyFields(payload: any) {
+    if (payload.category === 'Kit') {
+        return {
+            stab: payload.stab ?? null,
+            switchAlpha: payload.switchAlpha ?? null,
+            switchMod: payload.switchMod ?? null,
+            assembler: payload.assembler ?? null,
+        };
+    }
+
+    return {
+        stab: null,
+        switchAlpha: null,
+        switchMod: null,
+        assembler: null,
+    };
+}
+
 router.get('/', async (req, res, next) => {
     try {
         const userId = req.user!.userId;
-        const keyboards = await prisma.keyboard.findMany({
-            where: { OR: [{ ownerId: userId }, { isShared: true }] },
-            orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-        });
-        sendSuccess(res, keyboards);
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 25));
+        const where = { OR: [{ ownerId: userId }, { isShared: true }] };
+
+        const [keyboards, total] = await Promise.all([
+            prisma.keyboard.findMany({
+                where,
+                skip: (page - 1) * limit,
+                take: limit,
+                orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+            }),
+            prisma.keyboard.count({ where }),
+        ]);
+        sendPaginated(res, keyboards, total, page, limit);
     } catch (e) { next(e); }
 });
 
@@ -26,7 +54,7 @@ router.post('/', async (req, res, next) => {
         const keyboard = await prisma.keyboard.create({
             data: {
                 name,
-                price: price != null ? Number(price) : null,
+                price: parseCompactAmountInput(price),
                 category: category ?? null,
                 tag: tag ?? null,
                 color: color ?? null,
@@ -34,10 +62,7 @@ router.post('/', async (req, res, next) => {
                 extras: extras ?? [],
                 description: description ?? null,
                 note: note ?? null,
-                stab: stab ?? null,
-                switchAlpha: switchAlpha ?? null,
-                switchMod: switchMod ?? null,
-                assembler: assembler ?? null,
+                ...normalizeKitOnlyFields({ category, stab, switchAlpha, switchMod, assembler }),
                 isShared: !!isShared,
                 ownerId: userId,
                 sortOrder: (last._max.sortOrder ?? -1) + 1,
@@ -59,7 +84,7 @@ router.patch('/:id', async (req, res, next) => {
             where: { id: kb.id },
             data: {
                 ...(name !== undefined && { name }),
-                ...(price !== undefined && { price: price != null ? Number(price) : null }),
+                ...(price !== undefined && { price: parseCompactAmountInput(price) }),
                 ...(category !== undefined && { category }),
                 ...(tag !== undefined && { tag }),
                 ...(color !== undefined && { color }),
@@ -67,10 +92,15 @@ router.patch('/:id', async (req, res, next) => {
                 ...(extras !== undefined && { extras }),
                 ...(description !== undefined && { description }),
                 ...(note !== undefined && { note }),
-                ...(stab !== undefined && { stab }),
-                ...(switchAlpha !== undefined && { switchAlpha }),
-                ...(switchMod !== undefined && { switchMod }),
-                ...(assembler !== undefined && { assembler }),
+                ...((category !== undefined || stab !== undefined || switchAlpha !== undefined || switchMod !== undefined || assembler !== undefined)
+                    ? normalizeKitOnlyFields({
+                        category: category !== undefined ? category : kb.category,
+                        stab: stab !== undefined ? stab : kb.stab,
+                        switchAlpha: switchAlpha !== undefined ? switchAlpha : kb.switchAlpha,
+                        switchMod: switchMod !== undefined ? switchMod : kb.switchMod,
+                        assembler: assembler !== undefined ? assembler : kb.assembler,
+                    })
+                    : {}),
                 ...(isShared !== undefined && { isShared }),
             },
         });
@@ -100,7 +130,7 @@ router.post('/import', async (req, res, next) => {
         await prisma.keyboard.createMany({
             data: rows.map(r => ({
                 name: String(r.name ?? '').trim() || 'Untitled',
-                price: r.price != null ? Number(r.price) : null,
+                price: parseCompactAmountInput(r.price),
                 category: r.category ?? null,
                 tag: r.tag ?? null,
                 color: r.color ?? null,
@@ -108,10 +138,7 @@ router.post('/import', async (req, res, next) => {
                 extras: Array.isArray(r.extras) ? r.extras : (r.extras ? String(r.extras).split(',').map((s: string) => s.trim()).filter(Boolean) : []),
                 description: r.description ?? null,
                 note: r.note ?? null,
-                stab: r.stab ?? null,
-                switchAlpha: r.switchAlpha ?? null,
-                switchMod: r.switchMod ?? null,
-                assembler: r.assembler ?? null,
+                ...normalizeKitOnlyFields(r),
                 isShared: false,
                 ownerId: userId,
                 sortOrder: order++,

@@ -14,7 +14,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const currentUserId = req.user!.userId;
         const page = Math.max(1, parseInt(req.query.page as string) || 1);
-        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 25));
         const userId = req.query.userId as string;
         const type = req.query.type as string;
         const category = req.query.category as string;

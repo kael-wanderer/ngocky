@@ -1,0 +1,1 @@
+ALTER TYPE "HobbyFundCategory" ADD VALUE IF NOT EXISTS 'OTHER';

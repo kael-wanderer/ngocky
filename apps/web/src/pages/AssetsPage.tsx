@@ -7,6 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
+import { parseCompactAmountInput } from '../utils/amount';
 
 const emptyAssetForm = () => ({
     name: '',
@@ -248,7 +249,7 @@ export default function AssetsPage() {
         e.preventDefault();
         if (!selectedAsset) return;
 
-        const parsedCost = recordForm.cost.trim() ? Number(recordForm.cost.replace(/,/g, '')) : undefined;
+        const parsedCost = recordForm.cost.trim() ? parseCompactAmountInput(recordForm.cost) : undefined;
         if (parsedCost !== undefined && Number.isNaN(parsedCost)) {
             window.alert('Cost must be a valid number.');
             return;
@@ -635,7 +636,7 @@ export default function AssetsPage() {
                                 </div>
                                 <div>
                                     <label className="label">Cost</label>
-                                    <input className="input" value={recordForm.cost} onChange={(e) => setRecordForm({ ...recordForm, cost: e.target.value })} placeholder="Optional" />
+                                    <input className="input" value={recordForm.cost} onChange={(e) => setRecordForm({ ...recordForm, cost: e.target.value })} placeholder="Optional, e.g. 600k or 2M" />
                                 </div>
                                 <div className="col-span-2">
                                     <label className="label">Description <span className="text-red-500">*</span></label>

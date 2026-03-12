@@ -1,6 +1,6 @@
 # NgốcKý – Family Record Management
 
-A private family record management web app for managing goals, standalone tasks, project tasks, housework, calendars, expenses, assets, learning records, ideas, hobby funds, analytics, notifications, a Telegram assistant, and per-user feature-based navigation.
+A private family record management web app for managing goals, standalone tasks, project tasks, housework, calendars, expenses, assets, learning records, ideas, keyboard collections, hobby funds, analytics, notifications, a Telegram assistant, and per-user feature-based navigation.
 
 ## Tech Stack
 
@@ -129,6 +129,7 @@ NgocKy/
 | Calendar | `GET/POST /api/calendar` | Event CRUD |
 | Expenses | `GET/POST /api/expenses` | Expense CRUD |
 | Funds | `GET/POST /api/funds` | Hobby fund transaction CRUD |
+| Keyboard | `GET/POST /api/keyboards` | Keyboard collection CRUD |
 | Analytics | `GET /api/reports/*` | Analytics chart data + CSV |
 | Alerts | `GET/POST /api/alerts` | Notification rule CRUD |
 | Scheduled Reports | `GET/POST /api/scheduled-reports` | Scheduled report CRUD |
@@ -218,10 +219,11 @@ Account linking:
 - **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete`, grouped operational states, sharing, and optional reminders
 - **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`, `Quarterly`), shared visibility, participants, and optional pre-start reminders
 - **Assets** – Home appliance/device registry with sharing, warranty tracking, maintenance records, linked maintenance calendar events, reminder support, and automatic expense creation when a maintenance log includes cost
-- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, running totals in `VND`, and categories including `Maintenance`, `Insurance`, `Family Support`, `Gift`, and `Ca Keo`
+- **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, running totals in `VND`, shorthand amount input such as `600k` and `82M`, and pagination with page size options `25`, `50`, `100`
 - **Learning** – Topic-first learning management with shared topics, topic categories (`Soft-skill`, `Expertise`, `AI`, `Other`), shared ownership display on histories, duplicate actions, and progress/deadline tracking
 - **Ideas** – Topic-first idea capture with shared topics, shared ownership display on logs, duplicate actions, and category/status tracking
-- **Funds** – Hobby transaction ledger with fields `Description`, `Type` (`Buy`, `Sell`, `Top-up`), `Scope` (`Mechanical keyboard`, `Play Station`), `Category` (`Keycap`, `Kit`, `Shipping`, `Accessories`), `Date`, and `Amount`
+- **Keyboard** – Keyboard collection table with category/tag/color/spec/extras/condition/price metadata, alternating row striping, sortable columns, always-visible filters, CSV import, pagination, and double-click edit
+- **Funds** – Hobby transaction ledger with fields `Description`, `Type` (`Buy`, `Sell`, `Top-up`), `Scope` (`Mechanical keyboard`, `Play Station`), `Category` (`Keycap`, `Kit`, `Shipping`, `Accessories`, `Other`), `Condition`, `Date`, and `Amount`; supports CSV import, pagination, shorthand amount input such as `600k` and `82M`, and keyboard-linked `Buy`/`Sell` automation
 - **Assistant** – Telegram-based assistant for quick task actions, calendar queries, expense logging, goal check-ins, housework updates, and project/project-task lookup with confirmation/disambiguation for ambiguous writes
 - **Analytics** – Charts and summaries for project items, standalone tasks, goals, calendar, housework, expenses, assets, learning, and ideas with time-aware filters
 - **Notifications** – Rule-based notification settings with drag reorder, double-click-to-edit, and schedule-time based due logic
@@ -287,7 +289,7 @@ Navigation visibility is user-configurable from `User Settings > Features`.
 
 - **Personal**: Tasks, Projects, Goals, Expenses, Ideas
 - **Family**: Housework, Assets, Calendar
-- **Hobby**: Learning, Funds
+- **Hobby**: Keyboard, Funds, Learning
 
 Behavior:
 
@@ -326,6 +328,67 @@ Recent product updates include:
 - project item type added with options `Task`, `Bug`, `Feature`, `Story`, `Epic`
 - project page wording updated from `Task` to `Item` where needed to avoid confusion with standalone tasks
 - analytics page renamed from `Reports` and expanded to cover `Project`, `Task`, `Goal`, `Calendar`, `Asset`, `Housework`, `Expenses`, `Learning`, and `Ideas`
+
+## Pagination
+
+List-style modules can use pagination controls with:
+
+- page numbers
+- `Prev` / `Next` buttons
+- page size options `25`, `50`, `100`
+
+Current pages using this pattern:
+
+- Expenses
+- Funds
+- Keyboard
+
+Recommended terms for future requests:
+
+- `pagination`
+- `page size`
+- `items per page`
+
+## Hobby Automation
+
+Funds and Keyboard now have a limited cross-module automation flow for mechanical keyboard transactions:
+
+- when `Funds.scope = Mechanical keyboard`
+- and `Type = Buy`
+- and `Category` is `Keycap`, `Kit`, or `Accessories`
+- the app automatically creates a new Keyboard item
+
+For mechanical keyboard sell transactions:
+
+- the Funds form shows a `Keyboard Item` picker
+- the selected keyboard item is deleted when the sell transaction is created
+- if the selected item cannot be found, the backend returns `not matching item in collection`
+
+Current buy mapping:
+
+- `Funds.description` -> `Keyboard.name`
+- `Funds.amount` -> `Keyboard.price`
+- `Funds.category` -> `Keyboard.category`
+- `Funds.condition` -> Keyboard condition display field
+
+## Amount Input
+
+The app supports compact amount and price input in key money-entry flows.
+
+Examples:
+
+- `600k` -> `600000`
+- `2M` -> `2000000`
+- `7.8M` -> `7800000`
+
+This is currently supported in:
+
+- Expenses amount
+- Funds amount
+- Keyboard price
+- standalone payment task amount
+- asset maintenance cost
+- collection item price
 - analytics filters now support time-aware filtering across all analytics modules, with tab-specific type/category/scope controls
 - scheduled reports now support `Weekly Summary`, `Next Week Tasks`, `Today Tasks`, and `Tomorrow Tasks`
 - report frequency `One Time` now runs as a true one-time job instead of a disabled `None` state

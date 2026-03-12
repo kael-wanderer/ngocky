@@ -83,8 +83,9 @@ Monitors family and personal spending.
   - `RECEIVE` amounts are shown in green.
   - Each expense can be marked `shared` to appear for all users.
   - Expense table supports ascending/descending sort on every visible column.
-  - Expense input accepts shorthand values such as `82M` and stores them as numeric VND amounts.
+  - Expense input accepts shorthand values such as `600k` and `82M` and stores them as numeric VND amounts.
   - Expense summary is split into `Total income`, `Total payment`, and `Remaining fund`.
+  - Expense table uses pagination with page size options `25`, `50`, `100`.
 
 Scheduled or future payments should not live directly in Expenses. They belong to Tasks first, and generate Expenses only when completed if automation is enabled.
 
@@ -143,6 +144,7 @@ The following modules are treated as records:
 
 - Expenses
 - Funds
+- Keyboard
 - Asset maintenance logs
 - Learning histories
 - Idea logs
@@ -171,6 +173,16 @@ Implemented / planned patterns:
     - `category = Maintenance`
     - `amount = cost`
     - `note = description`
+- `FundTransaction -> Keyboard`
+  - Use case: hobby buy/sell tracking for mechanical keyboard collection
+  - Rule: only applies when `scope = Mechanical keyboard`
+  - Buy flow:
+    - only for categories `Keycap`, `Kit`, and `Accessories`
+    - creates a new keyboard item automatically
+  - Sell flow:
+    - user explicitly selects the keyboard item in the Funds form
+    - selected keyboard item is deleted on transaction create
+    - if no matching keyboard item is found, the transaction should fail with a validation error
 
 Design constraints:
 
@@ -183,6 +195,7 @@ Current practical note:
 
 - `MaintenanceRecord -> Expense` is currently one-way on create
 - editing or deleting a maintenance record does not yet update/delete the derived expense
+- `FundTransaction -> Keyboard` is currently executed on create, not as a full bidirectional sync on later updates
 
 ### 10. Notification & Reminder Model
 
@@ -293,7 +306,7 @@ Fixed groups:
 - `Dashboard`: Dashboard, Analytics
 - `Personal`: Tasks, Projects, Goals, Expenses, Ideas
 - `Family`: Housework, Assets, Calendar
-- `Hobby`: Learning, Funds
+- `Hobby`: Keyboard, Funds, Learning
 - `Settings`: Reports, Notifications, User Settings
 - `Admin`: User Management
 
@@ -316,7 +329,44 @@ Settings behavior is intentionally mixed based on action type:
 - **Features** fields control module visibility per user and require explicit `Save`
   - `Personal`: Tasks, Projects, Goals, Expenses, Ideas
   - `Family`: Housework, Assets, Calendar
-  - `Hobby`: Learning, Funds
+  - `Hobby`: Keyboard, Funds, Learning
+
+### 15. Keyboard Module
+
+Keyboard is a table-first hobby collection module.
+
+- primary fields: `Name`, `Category`, `Tag`, `Color`, `Spec`, `Extras`, `Condition`, `Price`, `Note`
+- kit-only fields: `Stab`, `Switch Alpha`, `Switch Mod`, `Assembler`
+- `Condition` is controlled as a constrained dropdown (`BNIB`, `Used`)
+- `Price` is VND and accepts shorthand input such as `600k` and `7.8M`
+- keyboard table behavior includes:
+  - alternating spreadsheet-style row striping
+  - double-click to edit
+  - sort controls on every visible column
+  - always-visible filter row
+  - pagination with page sizes `25`, `50`, `100`
+  - CSV import with column mapping
+
+### 16. Funds Module
+
+Funds is a hobby transaction ledger for non-general-expense activity.
+
+- supported fields:
+  - `Description`
+  - `Type` (`Buy`, `Sell`, `Top-up`)
+  - `Scope` (`Mechanical keyboard`, `Play Station`)
+  - `Category` (`Keycap`, `Kit`, `Shipping`, `Accessories`, `Other`)
+  - `Condition` (`BNIB`, `Used`) for `Buy`
+  - `Date`
+  - `Amount`
+- behavior rules:
+  - `Condition` is required only for `Buy`
+  - `Condition` is disabled and cleared for `Sell` and `Top-up`
+  - `Sell` is shown in green, `Top-up` in blue
+  - double-click row opens edit
+  - supports CSV import with column mapping
+  - supports pagination with page sizes `25`, `50`, `100`
+  - accepts shorthand amounts such as `600k` and `82M`
 - **Notification** fields (`notificationEnabled`, `notificationChannel`, `notificationEmail`, `telegramChatId`) also require explicit `Save`
 - **Assistant** tab manages Telegram link generation, link status, and revocation
 - **Theme** changes still apply immediately

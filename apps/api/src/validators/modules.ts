@@ -347,13 +347,24 @@ export const createExpenseSchema = z.object({
 
 export const updateExpenseSchema = createExpenseSchema.partial();
 
-export const createFundSchema = z.object({
+const fundSchemaBase = z.object({
     description: z.string().min(1).max(200),
     type: z.enum(['BUY', 'SELL', 'TOP_UP']),
     scope: z.enum(['MECHANICAL_KEYBOARD', 'PLAY_STATION']),
-    category: z.enum(['KEYCAP', 'KIT', 'SHIPPING', 'ACCESSORIES']),
+    category: z.enum(['KEYCAP', 'KIT', 'SHIPPING', 'ACCESSORIES', 'OTHER']),
+    condition: z.enum(['BNIB', 'USED']).optional().nullable(),
+    keyboardItemId: z.string().optional().nullable(),
+    keyboardItemName: z.string().optional().nullable(),
     date: z.string().datetime(),
     amount: z.number().positive(),
 });
 
-export const updateFundSchema = createFundSchema.partial();
+function validateFundCondition(data: any, ctx: z.RefinementCtx) {
+    if (data.type === 'BUY' && !data.condition) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['condition'], message: 'condition is required for buy transactions' });
+    }
+}
+
+export const createFundSchema = fundSchemaBase.superRefine(validateFundCondition);
+
+export const updateFundSchema = fundSchemaBase.partial().superRefine(validateFundCondition);

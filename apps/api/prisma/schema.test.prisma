@@ -81,6 +81,7 @@ enum HobbyFundCategory {
   KIT
   SHIPPING
   ACCESSORIES
+  OTHER
 }
 
 enum AlertFrequency {
@@ -457,6 +458,7 @@ model FundTransaction {
   type        HobbyFundType
   scope       HobbyFundScope
   category    HobbyFundCategory
+  condition   String?
   userId      String
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
@@ -468,6 +470,7 @@ model FundTransaction {
   @@index([type])
   @@index([scope])
   @@index([category])
+  @@index([condition])
 }
 
 // ─── Alert Rules ────────────────────────────────────

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Filter, Keyboard, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Filter, Keyboard, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
+import PaginationControls from '../components/PaginationControls';
+import { parseCompactAmountInput } from '../utils/amount';
 
 // ─── Constants ───────────────────────────────────────
 
-const CATEGORIES = ['Keycap', 'Kit', 'Shipping'];
+const CATEGORIES = ['Keycap', 'Kit', 'Shipping', 'Accessories', 'Other'];
 const TAGS = ['Board 1', 'Board 2', 'Board 3', 'Board 4', 'Board 5', 'Board 6', 'Board 7', 'Board 8', 'Board 9', 'Board 10', 'Board 11', 'Board 12', 'Board 13', 'Board 14', 'Board 15', 'Board 16', 'Board 17', 'Stock'];
 const COLORS = ['Blue', 'PC', 'Purple', 'Red', 'Gray', 'Green', 'Black', 'Silver', 'Copper', 'Brown', 'Rose Gold', 'Orange', 'Beige', 'Colorful'];
 const SPECS = ['Base', 'Space', 'Plate Alu', 'Solder', 'Novel', 'Alpha', 'Icon mod', 'Hiragana', 'Hotswap', 'Deskmat', 'Fix kit'];
@@ -13,6 +15,14 @@ const EXTRAS = ['Hotswap', 'Solder', 'Plate Alu', 'Plate CF', 'Plate PC', 'Plate
 const STABS = ['V2.0', 'V2.1', 'V2.2'];
 const SWITCH_ALPHAS = ['VB 3 pin', 'VB 5 pin'];
 const SWITCH_MODS = ['VB 3 pin', 'VB 5 pin', 'HB', 'Cherry Black'];
+const CONDITIONS = ['BNIB', 'Used'];
+const PRICE_RANGES = [
+    { value: 'UNDER_5M', label: '< 5M' },
+    { value: 'BETWEEN_5M_10M', label: '5M to 10M' },
+    { value: 'BETWEEN_10M_20M', label: '10M to 20M' },
+    { value: 'BETWEEN_20M_30M', label: '20M to 30M' },
+    { value: 'OVER_30M', label: 'Over 30M' },
+] as const;
 const COLOR_TEXT_MAP: Record<string, string> = {
     Blue: '#2563eb',
     PC: '#6b7280',
@@ -28,6 +38,13 @@ const COLOR_TEXT_MAP: Record<string, string> = {
     Orange: '#ea580c',
     Beige: '#a16207',
     Colorful: '#db2777',
+};
+const CATEGORY_TEXT_MAP: Record<string, string> = {
+    Kit: '#2563eb',
+    Keycap: '#16a34a',
+    Shipping: '#ea580c',
+    Accessories: '#6b7280',
+    Other: '#6b7280',
 };
 
 // ─── Types ───────────────────────────────────────────
@@ -69,9 +86,26 @@ type FormState = {
     isShared: boolean;
 };
 
+type SortKey = 'name' | 'category' | 'tag' | 'color' | 'spec' | 'extras' | 'condition' | 'price' | 'note' | 'stab' | 'switchAlpha' | 'switchMod' | 'assembler';
+type SortOrder = 'asc' | 'desc';
+
 // ─── Helpers ─────────────────────────────────────────
 
-const formatVND = (n: number) => `${new Intl.NumberFormat('vi-VN').format(n)} ₫`;
+const formatVND = (n: number) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n)} VND`;
+
+function matchesPriceRange(price: number | null, range: string) {
+    if (!range) return true;
+    if (price == null) return false;
+
+    if (range === 'UNDER_5M') return price < 5_000_000;
+    if (range === 'BETWEEN_5M_10M') return price >= 5_000_000 && price <= 10_000_000;
+    if (range === 'BETWEEN_10M_20M') return price > 10_000_000 && price <= 20_000_000;
+    if (range === 'BETWEEN_20M_30M') return price > 20_000_000 && price <= 30_000_000;
+    if (range === 'OVER_30M') return price > 30_000_000;
+    return true;
+}
+
+const parseAmountInput = parseCompactAmountInput;
 
 function emptyForm(): FormState {
     return { name: '', price: '', category: '', tag: '', color: '', spec: [], extras: [], description: '', note: '', stab: '', switchAlpha: '', switchMod: '', assembler: '', isShared: false };
@@ -97,9 +131,23 @@ function formFromItem(item: KeyboardItem): FormState {
 }
 
 function formToBody(f: FormState) {
+    const kitOnlyFields = isKitCategory(f.category)
+        ? {
+            stab: f.stab || null,
+            switchAlpha: f.switchAlpha || null,
+            switchMod: f.switchMod || null,
+            assembler: f.assembler || null,
+        }
+        : {
+            stab: null,
+            switchAlpha: null,
+            switchMod: null,
+            assembler: null,
+        };
+
     return {
         name: f.name,
-        price: f.price !== '' ? Number(f.price) : null,
+        price: f.price !== '' ? parseAmountInput(f.price) : null,
         category: f.category || null,
         tag: f.tag || null,
         color: f.color || null,
@@ -107,10 +155,7 @@ function formToBody(f: FormState) {
         extras: f.extras,
         description: f.description || null,
         note: f.note || null,
-        stab: f.stab || null,
-        switchAlpha: f.switchAlpha || null,
-        switchMod: f.switchMod || null,
-        assembler: f.assembler || null,
+        ...kitOnlyFields,
         isShared: f.isShared,
     };
 }
@@ -119,11 +164,23 @@ function toggleArr(arr: string[], val: string): string[] {
     return arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val];
 }
 
+function isKitCategory(category: string) {
+    return category === 'Kit';
+}
+
 function Chip({ label, onRemove }: { label: string; onRemove?: () => void }) {
     return (
         <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
             {label}
             {onRemove && <button type="button" onClick={onRemove} className="ml-0.5 hover:text-red-500"><X className="w-2.5 h-2.5" /></button>}
+        </span>
+    );
+}
+
+function KeyboardCategoryBadge({ category }: { category: string }) {
+    return (
+        <span className="px-1.5 py-0.5 rounded text-xs font-semibold" style={{ color: CATEGORY_TEXT_MAP[category] || '#374151', backgroundColor: `${CATEGORY_TEXT_MAP[category] || '#d1d5db'}20` }}>
+            {category}
         </span>
     );
 }
@@ -174,9 +231,12 @@ export default function KeyboardPage() {
     const [filterCategory, setFilterCategory] = useState('');
     const [filterTag, setFilterTag] = useState('');
     const [filterColor, setFilterColor] = useState('');
-    const [filterSpec, setFilterSpec] = useState('');
+    const [filterPriceRange, setFilterPriceRange] = useState('');
     const [filterSearch, setFilterSearch] = useState('');
-    const [showFilters, setShowFilters] = useState(false);
+    const [sortBy, setSortBy] = useState<SortKey>('name');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(25);
 
     // Modal
     const [showModal, setShowModal] = useState(false);
@@ -186,10 +246,15 @@ export default function KeyboardPage() {
     // Import
     const [showImport, setShowImport] = useState(false);
 
-    const { data: items = [] } = useQuery<KeyboardItem[]>({
+    const { data } = useQuery({
         queryKey: ['keyboards'],
-        queryFn: async () => (await api.get('/keyboards')).data.data,
+        queryFn: async () => (await api.get('/keyboards?page=1&limit=1000')).data,
     });
+    const items: KeyboardItem[] = data?.data || [];
+
+    useEffect(() => {
+        setPage(1);
+    }, [filterCategory, filterTag, filterColor, filterPriceRange, filterSearch, sortBy, sortOrder, pageSize]);
 
     const createMut = useMutation({
         mutationFn: (body: any) => api.post('/keyboards', body),
@@ -217,6 +282,10 @@ export default function KeyboardPage() {
     function closeModal() { setShowModal(false); setEditing(null); }
     function submitForm() {
         if (!form.name) return;
+        if (form.price && Number.isNaN(parseAmountInput(form.price))) {
+            alert('Price must be a valid number. Example: 7800000 or 7.8M');
+            return;
+        }
         const body = formToBody(form);
         if (editing) updateMut.mutate({ id: editing.id, body });
         else createMut.mutate(body);
@@ -228,12 +297,59 @@ export default function KeyboardPage() {
         if (filterCategory && item.category !== filterCategory) return false;
         if (filterTag && item.tag !== filterTag) return false;
         if (filterColor && item.color !== filterColor) return false;
-        if (filterSpec && !item.spec.includes(filterSpec)) return false;
+        if (!matchesPriceRange(item.price, filterPriceRange)) return false;
         return true;
     });
 
-    const totalPrice = filtered.reduce((s, i) => s + (i.price ?? 0), 0);
-    const activeFilterCount = [filterCategory, filterTag, filterColor, filterSpec].filter(Boolean).length;
+    const sortedItems = useMemo(() => {
+        const getValue = (item: KeyboardItem, key: SortKey) => {
+            switch (key) {
+                case 'name': return item.name || '';
+                case 'category': return item.category || '';
+                case 'tag': return item.tag || '';
+                case 'color': return item.color || '';
+                case 'spec': return item.spec?.join(', ') || '';
+                case 'extras': return item.extras?.join(', ') || '';
+                case 'condition': return item.description || '';
+                case 'price': return item.price ?? 0;
+                case 'note': return item.note || '';
+                case 'stab': return item.stab || '';
+                case 'switchAlpha': return item.switchAlpha || '';
+                case 'switchMod': return item.switchMod || '';
+                case 'assembler': return item.assembler || '';
+                default: return '';
+            }
+        };
+
+        return [...filtered].sort((left, right) => {
+            const leftValue = getValue(left, sortBy);
+            const rightValue = getValue(right, sortBy);
+            const result = typeof leftValue === 'number' && typeof rightValue === 'number'
+                ? leftValue - rightValue
+                : String(leftValue).localeCompare(String(rightValue), undefined, { numeric: true, sensitivity: 'base' });
+            return sortOrder === 'asc' ? result : -result;
+        });
+    }, [filtered, sortBy, sortOrder]);
+
+    const totalItems = sortedItems.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const paginatedItems = sortedItems.slice((page - 1) * pageSize, page * pageSize);
+    const totalPrice = sortedItems.reduce((s, i) => s + (i.price ?? 0), 0);
+    const activeFilterCount = [filterCategory, filterTag, filterColor, filterPriceRange].filter(Boolean).length;
+
+    function toggleSort(column: SortKey) {
+        if (sortBy === column) {
+            setSortOrder((current) => current === 'asc' ? 'desc' : 'asc');
+            return;
+        }
+        setSortBy(column);
+        setSortOrder(column === 'price' ? 'desc' : 'asc');
+    }
+
+    function renderSortIcon(column: SortKey) {
+        if (sortBy !== column) return <ArrowUp className="w-3.5 h-3.5 opacity-30" />;
+        return sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />;
+    }
 
     return (
         <div className="space-y-4">
@@ -260,8 +376,8 @@ export default function KeyboardPage() {
 
             {/* Filter bar */}
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                    <div className="flex-1 min-w-[160px]">
+                <div className="flex items-center gap-3 flex-nowrap overflow-x-auto pb-1">
+                    <div className="min-w-[220px] flex-[1.4]">
                         <input
                             value={filterSearch}
                             onChange={e => setFilterSearch(e.target.value)}
@@ -269,39 +385,28 @@ export default function KeyboardPage() {
                             className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         />
                     </div>
-                    <button
-                        onClick={() => setShowFilters(s => !s)}
-                        className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg border ${showFilters || activeFilterCount > 0 ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-blue-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
-                    >
-                        <Filter className="w-4 h-4" />
-                        Filters{activeFilterCount > 0 && <span className="font-bold ml-0.5">({activeFilterCount})</span>}
-                    </button>
                     {activeFilterCount > 0 && (
-                        <button onClick={() => { setFilterCategory(''); setFilterTag(''); setFilterColor(''); setFilterSpec(''); }} className="text-xs text-gray-400 hover:text-red-500">
+                        <button onClick={() => { setFilterCategory(''); setFilterTag(''); setFilterColor(''); setFilterPriceRange(''); }} className="shrink-0 text-xs text-gray-400 hover:text-red-500">
                             Clear
                         </button>
                     )}
+                    <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="min-w-[150px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                        <option value="">All categories</option>
+                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <select value={filterTag} onChange={e => setFilterTag(e.target.value)} className="min-w-[150px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                        <option value="">All tags</option>
+                        {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <select value={filterColor} onChange={e => setFilterColor(e.target.value)} className="min-w-[150px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                        <option value="">All colors</option>
+                        {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <select value={filterPriceRange} onChange={e => setFilterPriceRange(e.target.value)} className="min-w-[170px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                        <option value="">All prices</option>
+                        {PRICE_RANGES.map(range => <option key={range.value} value={range.value}>{range.label}</option>)}
+                    </select>
                 </div>
-                {showFilters && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                        <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                            <option value="">All categories</option>
-                            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                        <select value={filterTag} onChange={e => setFilterTag(e.target.value)} className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                            <option value="">All tags</option>
-                            {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
-                        <select value={filterColor} onChange={e => setFilterColor(e.target.value)} className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                            <option value="">All colors</option>
-                            {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                        <select value={filterSpec} onChange={e => setFilterSpec(e.target.value)} className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                            <option value="">All specs</option>
-                            {SPECS.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                    </div>
-                )}
             </div>
 
             {/* Table */}
@@ -310,35 +415,106 @@ export default function KeyboardPage() {
                     <table className="w-full text-sm">
                         <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                             <tr>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[160px]">Name</th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">Category</th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">Tag</th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-20">Color</th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[140px]">Spec</th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">Extras</th>
-                                <th className="text-right px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">Price</th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">Condition</th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">Note</th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-20">Stab</th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">Switch Alpha</th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">Switch Mod</th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">Assembler</th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[160px]">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('name')}>
+                                        Name
+                                        {renderSortIcon('name')}
+                                    </button>
+                                </th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('category')}>
+                                        Category
+                                        {renderSortIcon('category')}
+                                    </button>
+                                </th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('tag')}>
+                                        Tag
+                                        {renderSortIcon('tag')}
+                                    </button>
+                                </th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-20">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('color')}>
+                                        Color
+                                        {renderSortIcon('color')}
+                                    </button>
+                                </th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[140px]">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('spec')}>
+                                        Spec
+                                        {renderSortIcon('spec')}
+                                    </button>
+                                </th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('extras')}>
+                                        Extras
+                                        {renderSortIcon('extras')}
+                                    </button>
+                                </th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('condition')}>
+                                        Condition
+                                        {renderSortIcon('condition')}
+                                    </button>
+                                </th>
+                                <th className="text-right px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('price')}>
+                                        Price
+                                        {renderSortIcon('price')}
+                                    </button>
+                                </th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('note')}>
+                                        Note
+                                        {renderSortIcon('note')}
+                                    </button>
+                                </th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-20">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('stab')}>
+                                        Stab
+                                        {renderSortIcon('stab')}
+                                    </button>
+                                </th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('switchAlpha')}>
+                                        Switch Alpha
+                                        {renderSortIcon('switchAlpha')}
+                                    </button>
+                                </th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('switchMod')}>
+                                        Switch Mod
+                                        {renderSortIcon('switchMod')}
+                                    </button>
+                                </th>
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">
+                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('assembler')}>
+                                        Assembler
+                                        {renderSortIcon('assembler')}
+                                    </button>
+                                </th>
                                 <th className="w-16" />
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.length === 0 && (
+                            {paginatedItems.length === 0 && (
                                 <tr>
                                     <td colSpan={14} className="text-center py-12 text-gray-400">No keyboards found</td>
                                 </tr>
                             )}
-                            {filtered.map(item => (
-                                <tr key={item.id} onDoubleClick={() => openEdit(item)} className="group border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+                            {paginatedItems.map((item, index) => (
+                                <tr
+                                    key={item.id}
+                                    onDoubleClick={() => openEdit(item)}
+                                    className={`group border-t border-gray-200 dark:border-gray-800 cursor-pointer ${index % 2 === 0 ? 'bg-[#f2f2f2] dark:bg-[#202225]' : 'bg-white dark:bg-gray-900'} hover:bg-[#e9e9e9] dark:hover:bg-[#2a2d31]'}`}
+                                >
                                     <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{item.name}</td>
                                     <td className="px-3 py-2">
-                                        {item.category ? <span className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">{item.category}</span> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
+                                        {item.category ? <KeyboardCategoryBadge category={item.category} /> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
                                     </td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{item.tag ?? <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                                    <td className="px-3 py-2 text-xs">
+                                        {item.tag ? <span style={{ color: item.color ? (COLOR_TEXT_MAP[item.color] || 'var(--color-text-secondary)') : 'var(--color-text-secondary)' }}>{item.tag}</span> : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                                    </td>
                                     <td className="px-3 py-2">
                                         {item.color ? <span className="text-xs font-semibold" style={{ color: COLOR_TEXT_MAP[item.color] || 'var(--color-text)' }}>{item.color}</span> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
                                     </td>
@@ -352,15 +528,15 @@ export default function KeyboardPage() {
                                             {item.extras?.length ? item.extras.map(e => <span key={e} className="px-1.5 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">{e}</span>) : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
                                         </div>
                                     </td>
+                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.description ?? ''}>{item.description || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
                                         {item.price != null ? formatVND(item.price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
                                     </td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.description ?? ''}>{item.description || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.note ?? ''}>{item.note || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{item.stab || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{item.switchAlpha || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{item.switchMod || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{item.assembler || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{isKitCategory(item.category || '') ? (item.stab || <span className="text-gray-300 dark:text-gray-600">—</span>) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{isKitCategory(item.category || '') ? (item.switchAlpha || <span className="text-gray-300 dark:text-gray-600">—</span>) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{isKitCategory(item.category || '') ? (item.switchMod || <span className="text-gray-300 dark:text-gray-600">—</span>) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{isKitCategory(item.category || '') ? (item.assembler || <span className="text-gray-300 dark:text-gray-600">—</span>) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2">
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
                                             <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
@@ -376,6 +552,14 @@ export default function KeyboardPage() {
                         </tbody>
                     </table>
                 </div>
+                <PaginationControls
+                    page={page}
+                    totalPages={totalPages}
+                    pageSize={pageSize}
+                    totalItems={totalItems}
+                    onPageChange={setPage}
+                    onPageSizeChange={setPageSize}
+                />
             </div>
 
             {/* Add/Edit Modal */}
@@ -413,6 +597,18 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, saving }: {
     saving: boolean;
 }) {
     const set = (k: keyof FormState, v: any) => setForm(p => ({ ...p, [k]: v }));
+    const isKit = isKitCategory(form.category);
+
+    function setCategory(value: string) {
+        setForm((current) => ({
+            ...current,
+            category: value,
+            stab: isKitCategory(value) ? current.stab : '',
+            switchAlpha: isKitCategory(value) ? current.switchAlpha : '',
+            switchMod: isKitCategory(value) ? current.switchMod : '',
+            assembler: isKitCategory(value) ? current.assembler : '',
+        }));
+    }
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -429,13 +625,13 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, saving }: {
                         {/* Price */}
                         <div>
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Price (VND)</label>
-                            <input type="number" value={form.price} onChange={e => set('price', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm" placeholder="e.g. 7800000" />
+                            <input value={form.price} onChange={e => set('price', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm" placeholder="e.g. 7800000, 600k, or 7.8M" />
                         </div>
 
                         {/* Category */}
                         <div>
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-                            <select value={form.category} onChange={e => set('category', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
+                            <select value={form.category} onChange={e => setCategory(e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
                                 <option value="">—</option>
                                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
@@ -488,7 +684,10 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, saving }: {
                         {/* Condition */}
                         <div className="col-span-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Condition</label>
-                            <input value={form.description} onChange={e => set('description', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm" placeholder="e.g. Used, BNIB, Built" />
+                            <select value={form.description} onChange={e => set('description', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
+                                <option value="">—</option>
+                                {CONDITIONS.map(condition => <option key={condition} value={condition}>{condition}</option>)}
+                            </select>
                         </div>
 
                         {/* Note */}
@@ -500,7 +699,7 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, saving }: {
                         {/* Stab */}
                         <div>
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Stab</label>
-                            <select value={form.stab} onChange={e => set('stab', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
+                            <select disabled={!isKit} value={form.stab} onChange={e => set('stab', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                 <option value="">—</option>
                                 {STABS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
@@ -509,7 +708,7 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, saving }: {
                         {/* Switch Alpha */}
                         <div>
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Switch Alpha</label>
-                            <select value={form.switchAlpha} onChange={e => set('switchAlpha', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
+                            <select disabled={!isKit} value={form.switchAlpha} onChange={e => set('switchAlpha', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                 <option value="">—</option>
                                 {SWITCH_ALPHAS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
@@ -518,7 +717,7 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, saving }: {
                         {/* Switch Mod */}
                         <div>
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Switch Mod</label>
-                            <select value={form.switchMod} onChange={e => set('switchMod', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
+                            <select disabled={!isKit} value={form.switchMod} onChange={e => set('switchMod', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                 <option value="">—</option>
                                 {SWITCH_MODS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
@@ -527,7 +726,7 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, saving }: {
                         {/* Assembler */}
                         <div>
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Assembler</label>
-                            <input value={form.assembler} onChange={e => set('assembler', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm" placeholder="e.g. Hieu" />
+                            <input disabled={!isKit} value={form.assembler} onChange={e => set('assembler', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed" placeholder="e.g. Hieu" />
                         </div>
 
                         {/* Shared */}
@@ -603,7 +802,7 @@ function CsvImportModal({ onImport, onClose, loading }: {
             const target = mapping[h];
             if (!target) return;
             const val = row[i] ?? '';
-            if (target === 'price') { item.price = val ? Number(String(val).replace(/[^0-9.]/g, '')) || null : null; return; }
+            if (target === 'price') { item.price = val ? parseAmountInput(String(val)) || null : null; return; }
             if (target === 'spec' || target === 'extras') {
                 item[target] = val ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
                 return;

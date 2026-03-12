@@ -1,10 +1,12 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, Wallet, Filter, FileSpreadsheet, FileText, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
+import PaginationControls from '../components/PaginationControls';
+import { parseCompactAmountInput } from '../utils/amount';
 
 const DEFAULT_PAY_CATEGORY = 'Food';
 const payCategories = ['AI', 'Ca Keo', 'Food', 'Gift', 'Healthcare', 'House', 'Insurance', 'Maintenance', 'Education', 'Entertainment', 'Family Support', 'Shopping', 'Transportation', 'Utilities', 'Other'];
@@ -49,16 +51,7 @@ const escapeHtml = (value: string) => value
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-const parseAmountInput = (value: string) => {
-    const normalized = value.trim().replace(/,/g, '').toUpperCase();
-    if (!normalized) return NaN;
-    const match = normalized.match(/^(\d+(?:\.\d+)?)([KMB])?$/);
-    if (!match) return NaN;
-    const base = Number(match[1]);
-    const multiplierMap: Record<string, number> = { K: 1_000, M: 1_000_000, B: 1_000_000_000 };
-    const multiplier = match[2] ? multiplierMap[match[2]] : 1;
-    return Math.round(base * multiplier);
-};
+const parseAmountInput = parseCompactAmountInput;
 
 const emptyForm = () => ({
     description: '',
@@ -114,13 +107,16 @@ export default function ExpensesPage() {
     const [form, setForm] = useState(emptyForm());
     const [sortBy, setSortBy] = useState<SortKey>('date');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(25);
 
     const effectiveRange = filters.timePreset === 'CUSTOM'
         ? { dateFrom: filters.dateFrom, dateTo: filters.dateTo }
         : getDateRangeFromPreset(filters.timePreset);
 
     const queryParams = new URLSearchParams();
-    queryParams.set('limit', '100');
+    queryParams.set('page', String(page));
+    queryParams.set('limit', String(pageSize));
     if (filters.type) queryParams.set('type', filters.type);
     if (filters.scope) queryParams.set('scope', filters.scope);
     if (filters.category) queryParams.set('category', filters.category);
@@ -128,7 +124,7 @@ export default function ExpensesPage() {
     if (effectiveRange.dateTo) queryParams.set('dateTo', new Date(`${effectiveRange.dateTo}T23:59:59.999`).toISOString());
 
     const { data, isLoading } = useQuery({
-        queryKey: ['expenses', filters, effectiveRange],
+        queryKey: ['expenses', filters, effectiveRange, page, pageSize],
         queryFn: async () => (await api.get(`/expenses?${queryParams}`)).data,
     });
 
@@ -154,7 +150,14 @@ export default function ExpensesPage() {
     });
 
     const expenses = data?.data || [];
+    const meta = data?.meta;
+    const totalPages = meta?.totalPages || 1;
+    const totalItems = meta?.total || expenses.length;
     const categoryOptions = form.type === 'RECEIVE' ? receiveCategories : payCategories;
+
+    useEffect(() => {
+        setPage(1);
+    }, [filters, effectiveRange.dateFrom, effectiveRange.dateTo, pageSize]);
 
     const sortedExpenses = useMemo(() => {
         const getValue = (expense: any, key: SortKey) => {
@@ -471,7 +474,7 @@ export default function ExpensesPage() {
                                 </div>
                                 <div>
                                     <label className="label">Amount <span className="text-red-500">*</span></label>
-                                    <input className="input" required placeholder="Example: 82000000 or 82M" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                                    <input className="input" required placeholder="Example: 82000000, 600k, or 82M" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
                                     {form.amount && (
                                         <div className="mt-1 text-xs" style={{ color: Number.isNaN(parsedAmount) ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
                                             {Number.isNaN(parsedAmount) ? 'Invalid amount format' : amountPreview}
@@ -569,6 +572,14 @@ export default function ExpensesPage() {
                                 </tbody>
                             </table>
                         </div>
+                        <PaginationControls
+                            page={page}
+                            totalPages={totalPages}
+                            pageSize={pageSize}
+                            totalItems={totalItems}
+                            onPageChange={setPage}
+                            onPageSizeChange={setPageSize}
+                        />
                     </div>
                 </div>
             )}

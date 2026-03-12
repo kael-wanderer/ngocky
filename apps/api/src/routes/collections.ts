@@ -3,6 +3,7 @@ import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { sendSuccess, sendCreated, sendMessage } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
+import { parseCompactAmountInput } from '../utils/amount';
 
 const router = Router();
 router.use(authenticate);
@@ -118,7 +119,7 @@ router.post('/:id/items', async (req, res, next) => {
             data: {
                 collectionId: col.id,
                 name,
-                price: price != null ? Number(price) : null,
+                price: parseCompactAmountInput(price),
                 status: status ?? null,
                 imageUrl: imageUrl ?? null,
                 data: data ?? {},
@@ -144,7 +145,7 @@ router.patch('/:id/items/:itemId', async (req, res, next) => {
             where: { id: item.id },
             data: {
                 ...(name !== undefined && { name }),
-                ...(price !== undefined && { price: price != null ? Number(price) : null }),
+                ...(price !== undefined && { price: parseCompactAmountInput(price) }),
                 ...(status !== undefined && { status }),
                 ...(imageUrl !== undefined && { imageUrl }),
                 ...(data !== undefined && { data }),
@@ -188,7 +189,7 @@ router.post('/:id/items/import', async (req, res, next) => {
             data: rows.map(r => ({
                 collectionId: col.id,
                 name: String(r.name ?? '').trim() || 'Untitled',
-                price: r.price != null ? Number(r.price) : null,
+                price: parseCompactAmountInput(r.price),
                 status: r.status ?? null,
                 imageUrl: null,
                 data: r.data ?? {},
