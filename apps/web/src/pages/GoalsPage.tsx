@@ -24,20 +24,15 @@ import {
     type SharedTaskTypeFilter,
 } from '../config/taskFilters';
 import { DEFAULT_GOAL_PERIOD_FILTER, GOAL_PERIOD_FILTER_OPTIONS, type SharedGoalPeriodFilter } from '../config/goalFilters';
+import { DEFAULT_PAY_CATEGORY, EXPENSE_PAY_CATEGORIES, EXPENSE_SCOPE_OPTIONS } from '../config/expenseFilters';
 
 const unitOptions = [
     { value: 'times', label: 'Time' },
     { value: 'minutes', label: 'Minute' },
 ] as const;
 
-const DEFAULT_EXPENSE_PAY_CATEGORY = 'Food';
-const expensePayCategories = ['AI', 'Ca Keo', 'Food', 'Gift', 'Healthcare', 'House', 'Insurance', 'Maintenance', 'Education', 'Entertainment', 'Family Support', 'Shopping', 'Transportation', 'Utilities', 'Other'];
-const expenseScopeOptions = [
-    { value: 'PERSONAL', label: 'Personal' },
-    { value: 'FAMILY', label: 'Family' },
-    { value: 'KEO', label: 'Ca Keo' },
-    { value: 'PROJECT', label: 'Project' },
-] as const;
+const expensePayCategories = EXPENSE_PAY_CATEGORIES;
+const expenseScopeOptions = EXPENSE_SCOPE_OPTIONS;
 
 const goalEmptyForm = {
     title: '',
@@ -56,7 +51,7 @@ const taskEmptyForm = {
     description: '',
     taskType: 'TASK',
     amount: '',
-    expenseCategory: DEFAULT_EXPENSE_PAY_CATEGORY,
+    expenseCategory: DEFAULT_PAY_CATEGORY,
     scope: 'PERSONAL',
     isShared: false,
     pinToDashboard: false,
@@ -270,7 +265,7 @@ function TaskForm({
                         ...form,
                         taskType: e.target.value,
                         amount: e.target.value === 'PAYMENT' ? form.amount : '',
-                        expenseCategory: e.target.value === 'PAYMENT' ? form.expenseCategory : DEFAULT_EXPENSE_PAY_CATEGORY,
+                        expenseCategory: e.target.value === 'PAYMENT' ? form.expenseCategory : DEFAULT_PAY_CATEGORY,
                         scope: e.target.value === 'PAYMENT' ? form.scope : 'PERSONAL',
                         createExpenseAutomatically: e.target.value === 'PAYMENT' ? form.createExpenseAutomatically : false,
                     })}>
@@ -290,7 +285,7 @@ function TaskForm({
                     <div>
                         <label className="label">Category <span className="text-red-500">*</span></label>
                         <select className="input" value={form.expenseCategory} onChange={(e) => setForm({ ...form, expenseCategory: e.target.value })} required>
-                            {expensePayCategories.map((category) => (
+                            {expensePayCategories.map((category: string) => (
                                 <option key={category} value={category}>{category}</option>
                             ))}
                         </select>
@@ -298,7 +293,7 @@ function TaskForm({
                     <div>
                         <label className="label">Scope <span className="text-red-500">*</span></label>
                         <select className="input" value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })} required>
-                            {expenseScopeOptions.map((scope) => (
+                            {expenseScopeOptions.map((scope: { value: string; label: string }) => (
                                 <option key={scope.value} value={scope.value}>{scope.label}</option>
                             ))}
                         </select>
@@ -687,7 +682,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             description: task.description || '',
             taskType: task.taskType || 'TASK',
             amount: task.amount != null ? String(task.amount) : '',
-            expenseCategory: task.expenseCategory || DEFAULT_EXPENSE_PAY_CATEGORY,
+            expenseCategory: task.expenseCategory || DEFAULT_PAY_CATEGORY,
             scope: task.scope || 'PERSONAL',
             isShared: !!task.isShared,
             pinToDashboard: !!task.pinToDashboard,
@@ -711,7 +706,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             description: task.description || '',
             taskType: task.taskType || 'TASK',
             amount: task.amount != null ? String(task.amount) : '',
-            expenseCategory: task.expenseCategory || DEFAULT_EXPENSE_PAY_CATEGORY,
+            expenseCategory: task.expenseCategory || DEFAULT_PAY_CATEGORY,
             scope: task.scope || 'PERSONAL',
             isShared: !!task.isShared,
             pinToDashboard: !!task.pinToDashboard,
@@ -1270,7 +1265,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                     <div className="flex items-center justify-between text-xs">
                                                         <span style={{ color: 'var(--color-text-secondary)' }}>Scope</span>
                                                         <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
-                                                            {expenseScopeOptions.find((scope) => scope.value === task.scope)?.label || 'Personal'}
+                                                            {expenseScopeOptions.find((scope: { value: string; label: string }) => scope.value === task.scope)?.label || 'Personal'}
                                                         </span>
                                                     </div>
                                                 </>

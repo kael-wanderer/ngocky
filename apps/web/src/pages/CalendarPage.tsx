@@ -5,6 +5,8 @@ import { Calendar as CalIcon, Plus, X, ChevronLeft, ChevronRight, Pencil, Trash2
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, addDays, isWithinInterval } from 'date-fns';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
+import ColorPicker from '../components/ColorPicker';
+import { useAuthStore } from '../stores/auth';
 
 type CalendarView = 'today' | 'week' | 'month';
 
@@ -47,28 +49,6 @@ const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
     return { value: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`, label: `${h12}:${String(m).padStart(2, '0')}${period}` };
 });
 
-const COLOR_STORAGE_KEY = 'calendar-recent-colors';
-const PRESET_COLORS = [
-    '#111827',
-    '#ef4444',
-    '#f97316',
-    '#f59e0b',
-    '#eab308',
-    '#22c55e',
-    '#14b8a6',
-    '#3b82f6',
-    '#6366f1',
-    '#8b5cf6',
-    '#ec4899',
-    '#6b7280',
-] as const;
-
-function normalizeHexColor(value: string) {
-    const next = value.trim().replace('#', '');
-    if (/^[0-9a-fA-F]{6}$/.test(next)) return `#${next.toLowerCase()}`;
-    return null;
-}
-
 function getCalendarTypeBadge(type?: string) {
     if (type === 'MEETING') {
         return { label: 'Meeting', style: { backgroundColor: '#fef2f2', color: '#dc2626' } };
@@ -76,105 +56,6 @@ function getCalendarTypeBadge(type?: string) {
 
     return { label: 'Event', style: { backgroundColor: '#ecfdf5', color: '#16a34a' } };
 }
-
-function ColorPicker({
-    value,
-    onChange,
-    recentColors,
-}: {
-    value: string;
-    onChange: (next: string) => void;
-    recentColors: string[];
-}) {
-    const current = normalizeHexColor(value) || '#4f46e5';
-    const [open, setOpen] = useState(false);
-    const wrapperRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        if (!open) return;
-
-        const handleOutsideClick = (event: MouseEvent) => {
-            if (!wrapperRef.current?.contains(event.target as Node)) {
-                setOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleOutsideClick);
-        return () => document.removeEventListener('mousedown', handleOutsideClick);
-    }, [open]);
-
-    return (
-        <div ref={wrapperRef} className="relative">
-            <div className="flex items-center gap-3">
-                <label className="label mb-0">Color</label>
-                <button
-                    type="button"
-                    className="h-9 w-9 rounded border border-gray-300 shadow-sm"
-                    style={{ backgroundColor: current }}
-                    onClick={() => setOpen((currentValue) => !currentValue)}
-                    title={`Change color ${current}`}
-                />
-            </div>
-            {recentColors.length > 0 && (
-                <div className="mt-3 flex items-center gap-2">
-                    {recentColors.slice(0, 5).map((color) => (
-                        <button
-                            key={color}
-                            type="button"
-                            className={`h-6 w-6 rounded-full border ${current === color ? 'border-slate-900' : 'border-gray-300'}`}
-                            style={{ backgroundColor: color }}
-                            onClick={() => onChange(color)}
-                            title={color}
-                        />
-                    ))}
-                </div>
-            )}
-            {open && (
-                <div className="absolute left-0 top-full z-30 mt-3 w-[260px] rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Basic Colors</p>
-                    <div className="mt-3 grid grid-cols-4 gap-3">
-                        {PRESET_COLORS.map((color) => (
-                            <button
-                                key={color}
-                                type="button"
-                                className={`h-9 w-9 rounded-lg border-2 transition-transform hover:scale-[1.03] ${current === color ? 'border-slate-900' : 'border-gray-200'}`}
-                                style={{ backgroundColor: color }}
-                                onClick={() => {
-                                    onChange(color);
-                                    setOpen(false);
-                                }}
-                                title={color}
-                            />
-                        ))}
-                    </div>
-                    <div className="mt-4 flex items-center justify-between">
-                        <label className="flex items-center gap-2 text-xs text-gray-500">
-                            <span>#</span>
-                            <input
-                                type="text"
-                                className="w-24 rounded border border-gray-200 px-2 py-1 text-xs text-gray-700"
-                                value={current.slice(1)}
-                                onChange={(e) => {
-                                    const next = normalizeHexColor(e.target.value);
-                                    if (next) onChange(next);
-                                }}
-                                placeholder="ec4899"
-                            />
-                        </label>
-                        <button
-                            type="button"
-                            className="text-xs font-medium text-gray-500 hover:text-gray-800"
-                            onClick={() => setOpen(false)}
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
-
 const emptyForm = {
     title: '',
     type: 'EVENT',
@@ -184,7 +65,7 @@ const emptyForm = {
     endDate: '',
     endTime: '10:00',
     allDay: false,
-    color: '#4f46e5',
+    color: '',
     isShared: true,
     pinToDashboard: false,
     repeatFrequency: '',
@@ -196,6 +77,7 @@ const emptyForm = {
 export default function CalendarPage() {
     const qc = useQueryClient();
     const navigate = useNavigate();
+    const { user } = useAuthStore();
     const [searchParams, setSearchParams] = useSearchParams();
     const [view, setView] = useState<CalendarView>('month');
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -206,7 +88,6 @@ export default function CalendarPage() {
     const [selectedTimeRange, setSelectedTimeRange] = useState<{ startTime: string; endTime: string } | null>(null);
     const [form, setForm] = useState({ ...emptyForm });
     const [formError, setFormError] = useState('');
-    const [recentColors, setRecentColors] = useState<string[]>([]);
     const eventIdParam = searchParams.get('eventId');
     const dateParam = searchParams.get('date');
 
@@ -232,6 +113,14 @@ export default function CalendarPage() {
     const { data } = useQuery({
         queryKey: ['calendar', view, format(range.start, 'yyyy-MM-dd'), format(range.end, 'yyyy-MM-dd')],
         queryFn: async () => (await api.get(`/calendar?startFrom=${range.start.toISOString()}&startTo=${range.end.toISOString()}&limit=200`)).data.data,
+    });
+    const { data: calendarColorSettings } = useQuery({
+        queryKey: ['settings', 'color-settings', 'calendar'],
+        queryFn: async () => (await api.get('/settings/color-settings/calendar')).data.data,
+    });
+    const { data: cakeoColorSettings } = useQuery({
+        queryKey: ['settings', 'color-settings', 'cakeo'],
+        queryFn: async () => (await api.get('/settings/color-settings/cakeo')).data.data,
     });
 
     const { data: cakeoData } = useQuery({
@@ -274,10 +163,30 @@ export default function CalendarPage() {
         onSuccess: () => qc.invalidateQueries({ queryKey: ['calendar'] }),
     });
 
-    const calendarEvents = data || [];
+    const calendarUserColors = useMemo(() => {
+        const entries = calendarColorSettings?.entries || [];
+        return Object.fromEntries(entries.map((entry: any) => [entry.entityKey, entry.color]));
+    }, [calendarColorSettings]);
+    const cakeoUserColors = useMemo(() => {
+        const entries = cakeoColorSettings?.entries || [];
+        return Object.fromEntries(entries.map((entry: any) => [entry.entityKey, entry.color]));
+    }, [cakeoColorSettings]);
+    const getGlobalCalendarColor = (event: any) => {
+        const creatorId = event.createdById || event.createdBy?.id || user?.id;
+        return (creatorId && calendarUserColors[creatorId]) || '#4f46e5';
+    };
+    const getGlobalCakeoColor = (item: any) => {
+        if (!item.assignerId) return '#94a3b8';
+        return cakeoUserColors[item.assignerId] || '#94a3b8';
+    };
+
+    const calendarEvents = (data || []).map((event: any) => ({
+        ...event,
+        displayColor: event.color || getGlobalCalendarColor(event),
+    }));
     const cakeoEvents = (cakeoData || [])
         .filter((item: any) => item.showOnCalendar && item.startDate)
-        .map((item: any) => ({ ...item, _source: 'cakeo', color: item.color || '#ec4899' }));
+        .map((item: any) => ({ ...item, _source: 'cakeo', displayColor: item.color || getGlobalCakeoColor(item) }));
     const taskEvents = (tasksData || [])
         .filter((item: any) => item.showOnCalendar && item.dueDate)
         .filter((item: any) => {
@@ -291,6 +200,7 @@ export default function CalendarPage() {
             endDate: item.dueDate,
             allDay: false,
             color: item.taskType === 'PAYMENT' ? '#f59e0b' : '#4f46e5',
+            displayColor: item.taskType === 'PAYMENT' ? '#f59e0b' : '#4f46e5',
         }));
     const houseworkEvents = (houseworkData || [])
         .filter((item: any) => item.showOnCalendar && item.nextDueDate)
@@ -305,6 +215,7 @@ export default function CalendarPage() {
             endDate: item.nextDueDate,
             allDay: false,
             color: '#059669',
+            displayColor: '#059669',
         }));
     const events = [...calendarEvents, ...cakeoEvents, ...taskEvents, ...houseworkEvents];
     const monthStart = startOfMonth(currentDate);
@@ -367,7 +278,7 @@ export default function CalendarPage() {
             endDate: event.endDate ? format(new Date(event.endDate), 'yyyy-MM-dd') : '',
             endTime: event.endDate ? format(new Date(event.endDate), 'HH:mm') : '',
             allDay: !!event.allDay,
-            color: event.color || '#4f46e5',
+            color: event._source ? '' : event.color || '',
             isShared: !!event.isShared,
             pinToDashboard: !!event.pinToDashboard,
             repeatFrequency: event.repeatFrequency || '',
@@ -440,17 +351,6 @@ export default function CalendarPage() {
     const togglePin = (event: any) => {
         updateMut.mutate({ id: getSourceId(event), body: { pinToDashboard: !event.pinToDashboard } });
     };
-
-    useEffect(() => {
-        try {
-            const stored = JSON.parse(window.localStorage.getItem(COLOR_STORAGE_KEY) || '[]');
-            if (Array.isArray(stored)) {
-                setRecentColors(stored.filter((value): value is string => typeof value === 'string').slice(0, 5));
-            }
-        } catch {
-            setRecentColors([]);
-        }
-    }, []);
 
     useEffect(() => {
         if (dateParam) {
@@ -541,6 +441,7 @@ export default function CalendarPage() {
                             const body: any = {
                                 ...form,
                                 type: form.type,
+                                color: form.color || null,
                                 startDate: startAt.toISOString(),
                                 repeatFrequency: form.repeatFrequency || null,
                                 repeatEndType: form.repeatFrequency ? (form.repeatEndType || 'NEVER') : null,
@@ -550,11 +451,6 @@ export default function CalendarPage() {
                             else delete body.endDate;
                             if (form.repeatFrequency && form.repeatEndType === 'ON_DATE' && form.repeatUntil) body.repeatUntil = new Date(`${form.repeatUntil}T23:59:59.999`).toISOString();
                             else body.repeatUntil = null;
-                            setRecentColors((current) => {
-                                const next = [form.color, ...current.filter((color) => color !== form.color)].slice(0, 5);
-                                window.localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(next));
-                                return next;
-                            });
                             if (editingEvent) updateMut.mutate({ id: getSourceId(editingEvent), body });
                             else createMut.mutate(body);
                         }} className="space-y-4">
@@ -611,9 +507,21 @@ export default function CalendarPage() {
                                     </div>
                                 )}
                                 <div>
-                                    <ColorPicker value={form.color} onChange={(color) => setForm({ ...form, color })} recentColors={recentColors} />
+                                    <ColorPicker
+                                        value={form.color}
+                                        fallbackColor={calendarUserColors[user?.id || ''] || '#4f46e5'}
+                                        onChange={(color) => setForm({ ...form, color })}
+                                        onClear={() => setForm({ ...form, color: '' })}
+                                        label="Color"
+                                        storageKey="calendar-recent-colors"
+                                    />
                                 </div>
                             </div>
+                            {!form.color && (
+                                <p className="text-xs -mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                    Using your global Calendar color by default. Picking a color here creates a local override.
+                                </p>
+                            )}
                             {form.repeatFrequency && form.repeatEndType === 'ON_DATE' && (
                                 <div>
                                     <label className="label">Repeat Until</label>
@@ -702,7 +610,7 @@ export default function CalendarPage() {
                                     >
                                         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium ${isToday ? 'text-white' : ''}`} style={isToday ? { backgroundColor: 'var(--color-primary)' } : {}}>{format(day, 'd')}</span>
                                         {dayEvents.length > 0 && (
-                                            <div className="flex justify-center gap-0.5 mt-0.5">{dayEvents.slice(0, 3).map((e: any, i: number) => (<div key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: e.color || 'var(--color-primary)' }} />))}</div>
+                                            <div className="flex justify-center gap-0.5 mt-0.5">{dayEvents.slice(0, 3).map((e: any, i: number) => (<div key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: e.displayColor || e.color || 'var(--color-primary)' }} />))}</div>
                                         )}
                                     </button>
                                 );
@@ -715,7 +623,7 @@ export default function CalendarPage() {
                         {selectedDate && selectedEvents.length === 0 && <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No events</p>}
                         <div className="space-y-2">
                             {selectedEvents.map((e: any) => (
-                                <div key={e.id} className="p-3 rounded-lg border-l-4 cursor-pointer" style={{ borderColor: e.color || 'var(--color-primary)', backgroundColor: 'var(--color-bg)' }} onClick={() => handleEventClick(e)}>
+                                <div key={e.id} className="p-3 rounded-lg border-l-4 cursor-pointer" style={{ borderColor: e.displayColor || e.color || 'var(--color-primary)', backgroundColor: 'var(--color-bg)' }} onClick={() => handleEventClick(e)}>
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
@@ -854,7 +762,7 @@ export default function CalendarPage() {
                                                         height: Math.max(height - 2, 20),
                                                         left: `calc(${col * colPct}% + 2px)`,
                                                         width: `calc(${colPct}% - 4px)`,
-                                                        backgroundColor: e.color || 'var(--color-primary)',
+                                                        backgroundColor: e.displayColor || e.color || 'var(--color-primary)',
                                                     }}
                                                     onClick={(ev) => { ev.stopPropagation(); handleEventClick(e); }}
                                                 >
@@ -886,7 +794,7 @@ export default function CalendarPage() {
                                                 key={`allday-${e.id}`}
                                                 data-event="1"
                                                 className="absolute left-0.5 right-0.5 z-10 rounded cursor-pointer hover:opacity-90 px-1 py-0.5"
-                                                style={{ top: 2, backgroundColor: e.color || 'var(--color-primary)' }}
+                                                style={{ top: 2, backgroundColor: e.displayColor || e.color || 'var(--color-primary)' }}
                                                 onClick={(ev) => { ev.stopPropagation(); handleEventClick(e); }}
                                             >
                                                 {!e._source && (

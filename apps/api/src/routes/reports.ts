@@ -293,6 +293,43 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                     estimatedCost: item.estimatedCost,
                 })));
             }
+            case 'cakeo': {
+                const assignerId = req.query.assignerId as string;
+                const items = await prisma.caKeo.findMany({
+                    where: {
+                        AND: [
+                            {
+                                OR: [
+                                    { ownerId: userId },
+                                    { assignerId: userId },
+                                    { isShared: true },
+                                ],
+                            },
+                            buildDateFilter(req, 'startDate', 'createdAt'),
+                            ...(type ? [{ type }] : []),
+                            ...(status ? [{ status }] : []),
+                            ...(category ? [{ category }] : []),
+                            ...(assignerId ? [{ assignerId }] : []),
+                        ],
+                    },
+                    include: {
+                        assigner: { select: { name: true } },
+                    },
+                    orderBy: [{ startDate: 'asc' }, { createdAt: 'desc' }],
+                    take: 200,
+                });
+                return sendSuccess(res, items.map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    type: item.type,
+                    status: item.status,
+                    category: item.category,
+                    assigner: item.assigner?.name || 'Unassigned',
+                    startDate: item.startDate,
+                    endDate: item.endDate,
+                    allDay: item.allDay,
+                })));
+            }
             case 'expenses': {
                 const where: any = {
                     OR: [
@@ -467,6 +504,7 @@ router.get('/project-items-by-status', async (req: Request, res: Response, next:
 router.get('/project-items-by-type', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        const type = req.query.type as string;
         const category = req.query.category as string;
         const result = await prisma.projectTask.groupBy({
             by: ['type'],
@@ -474,6 +512,7 @@ router.get('/project-items-by-type', async (req: Request, res: Response, next: N
                 AND: [
                     buildVisibleProjectItemWhere(userId),
                     buildDateFilter(req, 'deadline', 'createdAt'),
+                    ...(type ? [{ type: type as any }] : []),
                     ...(category ? [{ category }] : []),
                 ],
             },
@@ -544,11 +583,13 @@ router.get('/calendar-overview', async (req: Request, res: Response, next: NextF
 router.get('/calendar-by-category', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        const category = req.query.category as string;
         const events = await prisma.calendarEvent.findMany({
             where: {
                 AND: [
                     buildVisibleCalendarEventWhere(userId),
                     buildDateFilter(req, 'startDate'),
+                    ...(category ? [{ category }] : []),
                 ],
             },
             select: { category: true },
@@ -584,7 +625,15 @@ router.get('/asset-overview', async (req: Request, res: Response, next: NextFunc
                 },
             }),
             prisma.maintenanceRecord.findMany({
-                where: { asset: visibleAssets },
+                where: {
+                    asset: {
+                        AND: [
+                            visibleAssets,
+                            ...(type ? [{ type }] : []),
+                            buildDateFilter(req, 'purchaseDate', 'createdAt'),
+                        ],
+                    },
+                },
                 select: {
                     cost: true,
                     nextRecommendedDate: true,
@@ -605,11 +654,13 @@ router.get('/asset-overview', async (req: Request, res: Response, next: NextFunc
 router.get('/assets-by-type', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        const type = req.query.type as string;
         const assets = await prisma.asset.findMany({
             where: {
                 AND: [
                     buildVisibleAssetWhere(userId),
                     buildDateFilter(req, 'purchaseDate', 'createdAt'),
+                    ...(type ? [{ type }] : []),
                 ],
             },
             select: { type: true },
@@ -712,25 +763,28 @@ router.get('/learning-status', async (req: Request, res: Response, next: NextFun
 router.get('/learning-topics', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
-        const topics = await prisma.learningTopic.findMany({
+        const items = await prisma.learningItem.findMany({
             where: {
                 AND: [
                     {
                         OR: [
                             { userId },
-                            { isShared: true },
+                            { topic: { isShared: true } },
                         ],
                     },
-                    buildDateFilter(req, 'createdAt'),
+                    buildDateFilter(req, 'deadline', 'createdAt'),
                 ],
             },
-            include: { _count: { select: { histories: true } } },
-            orderBy: { title: 'asc' },
+            include: {
+                topic: { select: { title: true } },
+            },
         });
-        sendSuccess(res, topics.map((topic) => ({
-            topic: topic.title,
-            count: topic._count.histories,
-        })));
+        const grouped = new Map<string, number>();
+        items.forEach((item) => {
+            const key = item.topic?.title || 'Untitled Topic';
+            grouped.set(key, (grouped.get(key) || 0) + 1);
+        });
+        sendSuccess(res, Array.from(grouped.entries()).map(([topic, count]) => ({ topic, count })));
     } catch (err) { next(err); }
 });
 
@@ -763,25 +817,30 @@ router.get('/ideas-status', async (req: Request, res: Response, next: NextFuncti
 router.get('/idea-topics', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
-        const topics = await prisma.ideaTopic.findMany({
+        const category = req.query.category as string;
+        const ideas = await prisma.idea.findMany({
             where: {
                 AND: [
                     {
                         OR: [
                             { userId },
-                            { isShared: true },
+                            { topic: { isShared: true } },
                         ],
                     },
                     buildDateFilter(req, 'createdAt'),
+                    ...(category ? [{ category }] : []),
                 ],
             },
-            include: { _count: { select: { logs: true } } },
-            orderBy: { title: 'asc' },
+            include: {
+                topic: { select: { title: true } },
+            },
         });
-        sendSuccess(res, topics.map((topic) => ({
-            topic: topic.title,
-            count: topic._count.logs,
-        })));
+        const grouped = new Map<string, number>();
+        ideas.forEach((idea) => {
+            const key = idea.topic?.title || 'Untitled Topic';
+            grouped.set(key, (grouped.get(key) || 0) + 1);
+        });
+        sendSuccess(res, Array.from(grouped.entries()).map(([topic, count]) => ({ topic, count })));
     } catch (err) { next(err); }
 });
 

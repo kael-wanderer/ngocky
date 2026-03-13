@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth';
 import { Settings as SettingsIcon, User, Bell, Palette, Shield, Camera, Bot, Copy, Check, ExternalLink, Unlink, LayoutGrid, Smartphone, ChevronUp, ChevronDown } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { DEFAULT_MOBILE_NAV_ITEMS, FEATURE_GROUPS, FEATURE_FLAGS, MOBILE_NAV_OPTIONS, getMobileNavItems, type FeatureFlags, type FeatureFlagKey } from '../config/features';
+import ColorPicker from '../components/ColorPicker';
 
 function resizeImageToBase64(file: File, maxSize = 128): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -692,7 +693,9 @@ export default function SettingsPage() {
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: '#94a3b8', borderColor: 'var(--color-border)' }} />
-                                            <input type="color" value="#94a3b8" disabled className="w-10 h-10 rounded border-0 bg-transparent p-0 opacity-60" />
+                                            <div className="opacity-60 pointer-events-none">
+                                                <ColorPicker value="#94a3b8" onChange={() => {}} storageKey="settings-cakeo-recent-colors" />
+                                            </div>
                                         </div>
                                     </div>
 
@@ -705,11 +708,10 @@ export default function SettingsPage() {
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: cakeoColor, borderColor: 'var(--color-border)' }} />
-                                            <input
-                                                type="color"
+                                            <ColorPicker
                                                 value={cakeoColor}
-                                                onChange={(e) => handleOwnColorChange(e.target.value, setCakeoColor, cakeoUsedColors, 'Ca Keo')}
-                                                className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent p-0"
+                                                onChange={(color) => handleOwnColorChange(color, setCakeoColor, cakeoUsedColors, 'Ca Keo')}
+                                                storageKey="settings-cakeo-recent-colors"
                                             />
                                         </div>
                                     </div>
@@ -753,11 +755,10 @@ export default function SettingsPage() {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: calendarColor, borderColor: 'var(--color-border)' }} />
-                                        <input
-                                            type="color"
+                                        <ColorPicker
                                             value={calendarColor}
-                                            onChange={(e) => handleOwnColorChange(e.target.value, setCalendarColor, calendarUsedColors, 'Calendar')}
-                                            className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent p-0"
+                                            onChange={(color) => handleOwnColorChange(color, setCalendarColor, calendarUsedColors, 'Calendar')}
+                                            storageKey="settings-calendar-recent-colors"
                                         />
                                     </div>
                                 </div>

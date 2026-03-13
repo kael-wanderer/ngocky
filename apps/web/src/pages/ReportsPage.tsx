@@ -37,6 +37,17 @@ import {
     type SharedHouseworkFrequencyFilter,
     type SharedHouseworkStatusFilter,
 } from '../config/houseworkFilters';
+import {
+    CAKEO_CATEGORY_OPTIONS,
+    CAKEO_DATE_FILTER_OPTIONS,
+    CAKEO_STATUS_FILTER_OPTIONS,
+    CAKEO_TYPE_FILTER_OPTIONS,
+    DEFAULT_CAKEO_FILTERS,
+    getCaKeoDateRange,
+    type SharedCaKeoDateFilter,
+    type SharedCaKeoStatusFilter,
+    type SharedCaKeoTypeFilter,
+} from '../config/cakeoFilters';
 import MultiSelectFilter from '../components/MultiSelectFilter';
 import {
     DEFAULT_KEYBOARD_FILTERS,
@@ -102,6 +113,9 @@ type AnalyticsTaskStatusFilter = SharedTaskStatusFilter;
 type AnalyticsHouseworkDueDateFilter = SharedHouseworkDueDateFilter;
 type AnalyticsHouseworkFrequencyFilter = SharedHouseworkFrequencyFilter;
 type AnalyticsHouseworkStatusFilter = SharedHouseworkStatusFilter;
+type AnalyticsCaKeoDateFilter = SharedCaKeoDateFilter;
+type AnalyticsCaKeoTypeFilter = SharedCaKeoTypeFilter;
+type AnalyticsCaKeoStatusFilter = SharedCaKeoStatusFilter;
 
 const ANALYTICS_ROUTE_TAB_MAP = {
     '/projects': { id: 'project', label: 'Projects' },
@@ -309,6 +323,13 @@ export default function ReportsPage() {
         frequency: AnalyticsHouseworkFrequencyFilter;
         status: AnalyticsHouseworkStatusFilter;
     }>({ ...DEFAULT_HOUSEWORK_FILTERS });
+    const [cakeoFilters, setCakeoFilters] = useState<{
+        date: AnalyticsCaKeoDateFilter;
+        type: AnalyticsCaKeoTypeFilter;
+        status: AnalyticsCaKeoStatusFilter;
+        assignerId: string;
+        category: string;
+    }>({ ...DEFAULT_CAKEO_FILTERS });
     const [keyboardFilters, setKeyboardFilters] = useState({ ...DEFAULT_KEYBOARD_FILTERS });
     const [fundsFilters, setFundsFilters] = useState({ ...DEFAULT_FUNDS_FILTERS });
 
@@ -327,6 +348,10 @@ export default function ReportsPage() {
         () => getHouseworkDueDateRange(houseworkFilters.dueDate),
         [houseworkFilters.dueDate],
     );
+    const cakeoSelectedRange = useMemo(
+        () => getCaKeoDateRange(cakeoFilters.date),
+        [cakeoFilters.date],
+    );
 
     const baseQuery = useMemo(() => {
         const params = new URLSearchParams();
@@ -335,6 +360,7 @@ export default function ReportsPage() {
         const isSingleGoalView = selectionMode === 'single' && singleSelectedTab === 'goals';
         const isSingleExpenseView = selectionMode === 'single' && singleSelectedTab === 'expenses';
         const isSingleHouseworkView = selectionMode === 'single' && singleSelectedTab === 'housework';
+        const isSingleCakeoView = selectionMode === 'single' && singleSelectedTab === 'cakeo';
         if (isSingleTaskView) {
             if (taskFilters.type !== 'ALL') params.set('type', taskFilters.type);
             if (taskFilters.priority !== 'ALL') params.set('priority', taskFilters.priority);
@@ -348,6 +374,11 @@ export default function ReportsPage() {
         } else if (isSingleHouseworkView) {
             if (houseworkFilters.frequency !== 'ALL') params.set('frequency', houseworkFilters.frequency);
             if (houseworkFilters.status !== 'ALL') params.set('status', houseworkFilters.status);
+        } else if (isSingleCakeoView) {
+            if (cakeoFilters.type !== 'ALL') params.set('type', cakeoFilters.type);
+            if (cakeoFilters.status !== 'ALL') params.set('status', cakeoFilters.status);
+            if (cakeoFilters.assignerId) params.set('assignerId', cakeoFilters.assignerId);
+            if (cakeoFilters.category) params.set('category', cakeoFilters.category);
         } else if (filters.type) params.set('type', filters.type);
         if (!isSingleExpenseView && filters.scope) params.set('scope', filters.scope);
         if (!isSingleExpenseView && filters.category) params.set('category', filters.category);
@@ -364,14 +395,19 @@ export default function ReportsPage() {
                 params.set('dateFrom', houseworkSelectedRange.start.toISOString());
                 params.set('dateTo', houseworkSelectedRange.end.toISOString());
             }
+        } else if (isSingleCakeoView) {
+            if (cakeoSelectedRange) {
+                params.set('dateFrom', cakeoSelectedRange.start.toISOString());
+                params.set('dateTo', cakeoSelectedRange.end.toISOString());
+            }
         } else if (selectedRange) {
             params.set('dateFrom', selectedRange.start.toISOString());
             params.set('dateTo', selectedRange.end.toISOString());
         }
-        if (!isSingleTaskView && !isSingleExpenseView && !isSingleHouseworkView && reportTimeRange === 'CUSTOM' && filters.dateFrom) params.set('dateFrom', new Date(`${filters.dateFrom}T00:00:00`).toISOString());
-        if (!isSingleTaskView && !isSingleExpenseView && !isSingleHouseworkView && reportTimeRange === 'CUSTOM' && filters.dateTo) params.set('dateTo', new Date(`${filters.dateTo}T23:59:59.999`).toISOString());
+        if (!isSingleTaskView && !isSingleExpenseView && !isSingleHouseworkView && !isSingleCakeoView && reportTimeRange === 'CUSTOM' && filters.dateFrom) params.set('dateFrom', new Date(`${filters.dateFrom}T00:00:00`).toISOString());
+        if (!isSingleTaskView && !isSingleExpenseView && !isSingleHouseworkView && !isSingleCakeoView && reportTimeRange === 'CUSTOM' && filters.dateTo) params.set('dateTo', new Date(`${filters.dateTo}T23:59:59.999`).toISOString());
         return params.toString();
-    }, [reportTimeRange, filters, selectedRange, selectionMode, singleSelectedTab, taskFilters, taskSelectedRange, goalPeriodFilter, expenseFilters, expenseSelectedRange, houseworkFilters, houseworkSelectedRange]);
+    }, [reportTimeRange, filters, selectedRange, selectionMode, singleSelectedTab, taskFilters, taskSelectedRange, goalPeriodFilter, expenseFilters, expenseSelectedRange, houseworkFilters, houseworkSelectedRange, cakeoFilters, cakeoSelectedRange]);
 
     const expenseQuery = useMemo(() => {
         const params = new URLSearchParams(baseQuery);
@@ -401,6 +437,31 @@ export default function ReportsPage() {
         if (source.dateTo) params.set('dateTo', new Date(`${source.dateTo}T23:59:59.999`).toISOString());
         return params.toString();
     }, [selectionMode, singleSelectedTab, fundsFilters]);
+    const cakeoAnalyticsQuery = useMemo(() => {
+        const params = new URLSearchParams();
+        const singleCakeo = selectionMode === 'single' && singleSelectedTab === 'cakeo';
+        if (singleCakeo) {
+            if (cakeoFilters.status !== 'ALL') params.set('status', cakeoFilters.status);
+            if (cakeoFilters.assignerId) params.set('assignerId', cakeoFilters.assignerId);
+            if (cakeoFilters.category) params.set('category', cakeoFilters.category);
+            if (cakeoFilters.type !== 'ALL') params.set('type', cakeoFilters.type);
+            if (cakeoSelectedRange) {
+                params.set('startFrom', cakeoSelectedRange.start.toISOString());
+                params.set('startTo', cakeoSelectedRange.end.toISOString());
+            }
+        } else {
+            if (filters.category) params.set('category', filters.category);
+            if (filters.type) params.set('type', filters.type);
+            if (selectedRange) {
+                params.set('startFrom', selectedRange.start.toISOString());
+                params.set('startTo', selectedRange.end.toISOString());
+            } else if (reportTimeRange === 'CUSTOM') {
+                if (filters.dateFrom) params.set('startFrom', new Date(`${filters.dateFrom}T00:00:00`).toISOString());
+                if (filters.dateTo) params.set('startTo', new Date(`${filters.dateTo}T23:59:59.999`).toISOString());
+            }
+        }
+        return params.toString();
+    }, [selectionMode, singleSelectedTab, cakeoFilters, cakeoSelectedRange, filters, selectedRange, reportTimeRange]);
 
     const { data: tasksByStatus } = useQuery({
         queryKey: ['reports', 'tasks-by-status', baseQuery],
@@ -496,6 +557,10 @@ export default function ReportsPage() {
         queryKey: ['reports', 'raw-housework', baseQuery],
         queryFn: async () => (await api.get(`/reports/raw-records?module=housework&${baseQuery}`)).data.data,
     });
+    const { data: rawCakeoSource } = useQuery({
+        queryKey: ['reports', 'raw-cakeo', cakeoAnalyticsQuery],
+        queryFn: async () => (await api.get(`/cakeos?${cakeoAnalyticsQuery}`)).data.data,
+    });
     const { data: rawExpenses } = useQuery({
         queryKey: ['reports', 'raw-expenses', baseQuery],
         queryFn: async () => (await api.get(`/reports/raw-records?module=expenses&${baseQuery}`)).data.data,
@@ -519,6 +584,10 @@ export default function ReportsPage() {
     const { data: fundsAnalyticsData } = useQuery({
         queryKey: ['reports', 'funds-analytics', fundsAnalyticsQuery],
         queryFn: async () => (await api.get(`/funds?${fundsAnalyticsQuery}`)).data,
+    });
+    const { data: cakeoUsersData } = useQuery({
+        queryKey: ['reports', 'cakeo-users'],
+        queryFn: async () => (await api.get('/cakeos/users')).data.data,
     });
 
     const ff = useMemo(() => getFeatureFlags(user), [user]);
@@ -587,6 +656,7 @@ export default function ReportsPage() {
     const isSingleGoalView = selectionMode === 'single' && singleSelectedTab === 'goals';
     const isSingleExpenseView = selectionMode === 'single' && singleSelectedTab === 'expenses';
     const isSingleHouseworkView = selectionMode === 'single' && singleSelectedTab === 'housework';
+    const isSingleCakeoView = selectionMode === 'single' && singleSelectedTab === 'cakeo';
     const isSingleKeyboardView = selectionMode === 'single' && singleSelectedTab === 'keyboard';
     const isSingleFundsView = selectionMode === 'single' && singleSelectedTab === 'funds';
     const filterGridCols = 1 + (showTypeSelect || showTypeInput ? 1 : 0) + (showScopeSelect ? 1 : 0) + (showCategorySelect || showCategoryInput ? 1 : 0);
@@ -643,6 +713,29 @@ export default function ReportsPage() {
         });
         return Array.from(map.entries()).map(([type, count]) => ({ type, count }));
     }, [fundsAnalyticsRows]);
+    const cakeoUsers = cakeoUsersData || [];
+    const rawCakeo = useMemo(
+        () => (rawCakeoSource || []).map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            type: item.type,
+            status: item.status,
+            category: item.category,
+            assigner: item.assigner?.name || 'Unassigned',
+            startDate: item.startDate,
+            endDate: item.endDate,
+            allDay: item.allDay,
+        })),
+        [rawCakeoSource],
+    );
+    const cakeoStatusChart = useMemo(() => {
+        const map = new Map<string, number>();
+        rawCakeo.forEach((item: any) => {
+            const key = item.status || 'UNKNOWN';
+            map.set(key, (map.get(key) || 0) + 1);
+        });
+        return Array.from(map.entries()).map(([status, count]) => ({ status, count }));
+    }, [rawCakeo]);
 
     const tableConfigs = {
         project: {
@@ -705,6 +798,19 @@ export default function ReportsPage() {
                 { key: 'active', label: 'Active', render: (value: any) => (value ? 'Yes' : 'No') },
             ],
             rows: rawHousework || [],
+        },
+        cakeo: {
+            title: 'Ca Keo Items',
+            columns: [
+                { key: 'title', label: 'Title' },
+                { key: 'type', label: 'Type' },
+                { key: 'status', label: 'Status' },
+                { key: 'assigner', label: 'Assignee' },
+                { key: 'category', label: 'Category' },
+                { key: 'startDate', label: 'Start Date', render: (value: any) => formatDisplayDate(value) },
+                { key: 'endDate', label: 'End Date', render: (value: any) => formatDisplayDate(value) },
+            ],
+            rows: rawCakeo,
         },
         expenses: {
             title: 'Expenses',
@@ -813,6 +919,9 @@ export default function ReportsPage() {
                     { label: 'Completed', value: houseworkStatus.completed },
                 ] : [],
             },
+        ],
+        cakeo: [
+            { title: 'Ca Keo by Status', columns: [{ key: 'status', label: 'Status' }, { key: 'count', label: 'Count' }], rows: cakeoStatusChart },
         ],
         expenses: [
             { title: 'Expenses by Category', columns: [{ key: 'category', label: 'Category' }, { key: 'count', label: 'Count' }, { key: 'total', label: 'Total', render: (value: any) => formatVND(Number(value || 0)) }], rows: expenseSummary || [] },
@@ -1154,6 +1263,36 @@ export default function ReportsPage() {
                                 ))}
                             </select>
                         </div>
+                    ) : isSingleCakeoView ? (
+                        <div className="grid grid-cols-1 gap-3 flex-1 md:grid-cols-5">
+                            <select className="input text-sm" value={cakeoFilters.date} onChange={(e) => setCakeoFilters((current) => ({ ...current, date: e.target.value as AnalyticsCaKeoDateFilter }))}>
+                                {CAKEO_DATE_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                            <select className="input text-sm" value={cakeoFilters.type} onChange={(e) => setCakeoFilters((current) => ({ ...current, type: e.target.value as AnalyticsCaKeoTypeFilter }))}>
+                                {CAKEO_TYPE_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                            <select className="input text-sm" value={cakeoFilters.status} onChange={(e) => setCakeoFilters((current) => ({ ...current, status: e.target.value as AnalyticsCaKeoStatusFilter }))}>
+                                {CAKEO_STATUS_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                            <select className="input text-sm" value={cakeoFilters.assignerId} onChange={(e) => setCakeoFilters((current) => ({ ...current, assignerId: e.target.value }))}>
+                                <option value="">All Assignees</option>
+                                {cakeoUsers.map((user: any) => (
+                                    <option key={user.id} value={user.id}>{user.name}</option>
+                                ))}
+                            </select>
+                            <select className="input text-sm" value={cakeoFilters.category} onChange={(e) => setCakeoFilters((current) => ({ ...current, category: e.target.value }))}>
+                                <option value="">All Categories</option>
+                                {CAKEO_CATEGORY_OPTIONS.map((category) => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
+                            </select>
+                        </div>
                     ) : isSingleKeyboardView ? (
                         <div className="flex flex-1 flex-wrap gap-3">
                             <div className="min-w-[220px] flex-[1.4]">
@@ -1281,7 +1420,7 @@ export default function ReportsPage() {
                         <input type="date" className="input text-sm" value={expenseFilters.dateFrom} onChange={(e) => setExpenseFilters((current) => ({ ...current, dateFrom: e.target.value }))} />
                         <input type="date" className="input text-sm" value={expenseFilters.dateTo} min={expenseFilters.dateFrom || undefined} onChange={(e) => setExpenseFilters((current) => ({ ...current, dateTo: e.target.value }))} />
                     </div>
-                ) : reportTimeRange === 'CUSTOM' && !isSingleTaskView && !isSingleGoalView && !isSingleExpenseView && !isSingleHouseworkView && !isSingleKeyboardView && !isSingleFundsView && (
+                ) : reportTimeRange === 'CUSTOM' && !isSingleTaskView && !isSingleGoalView && !isSingleExpenseView && !isSingleHouseworkView && !isSingleCakeoView && !isSingleKeyboardView && !isSingleFundsView && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input type="date" className="input text-sm" value={filters.dateFrom} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} />
                         <input type="date" className="input text-sm" value={filters.dateTo} min={filters.dateFrom || undefined} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
@@ -1744,9 +1883,43 @@ export default function ReportsPage() {
                 </div>
             )}
             {selectedTabs.includes('cakeo') && (
-                <div className="card p-5">
-                    <h3 className="font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Ca Keo Analytics</h3>
-                    <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Ca Keo analytics content is not added yet.</p>
+                <div className="space-y-6">
+                    {showCharts && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Ca Keo by Status</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <BarChart data={cakeoStatusChart}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                        <XAxis dataKey="status" tick={{ fontSize: 12 }} />
+                                        <YAxis tick={{ fontSize: 12 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                {[
+                                    { label: 'Total Items', value: rawCakeo.length, color: '#0ea5e9' },
+                                    { label: 'Todo', value: rawCakeo.filter((item: any) => item.status === 'TODO').length, color: '#6366f1' },
+                                    { label: 'In Progress', value: rawCakeo.filter((item: any) => item.status === 'IN_PROGRESS').length, color: '#f59e0b' },
+                                    { label: 'Done', value: rawCakeo.filter((item: any) => item.status === 'DONE').length, color: '#22c55e' },
+                                ].map((item) => (
+                                    <div key={item.label} className="card p-6 text-center">
+                                        <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{item.label}</p>
+                                        <p className="text-4xl font-bold" style={{ color: item.color }}>{item.value}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {showTables && (
+                        <DataTableCard
+                            title="Ca Keo Items"
+                            columns={tableConfigs.cakeo.columns}
+                            rows={rawCakeo}
+                        />
+                    )}
                 </div>
             )}
             {selectedTabs.includes('keyboard') && (
