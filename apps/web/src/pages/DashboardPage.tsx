@@ -107,7 +107,7 @@ export default function DashboardPage() {
     todayStart.setHours(0, 0, 0, 0);
 
     const cards = [
-        { label: taskCardLabels[timeRange], value: s.tasksInRange ?? 0, icon: FolderKanban, color: '#4f46e5', bg: '#eef2ff', to: '/goals?tab=tasks' },
+        { label: taskCardLabels[timeRange], value: s.tasksInRange ?? 0, icon: FolderKanban, color: '#4f46e5', bg: '#eef2ff', to: '/tasks' },
         { label: 'Housework Due', value: s.houseworkThisWeek, icon: Home, color: '#059669', bg: '#ecfdf5', to: '/housework' },
         { label: 'Upcoming Events', value: s.upcomingEventsCount, icon: Calendar, color: '#7c3aed', bg: '#f5f3ff', to: '/calendar' },
         { label: 'Overdue Items', value: s.overdueItemsTotal || 0, icon: AlertTriangle, color: '#dc2626', bg: '#fef2f2', to: '/' },
@@ -144,7 +144,7 @@ export default function DashboardPage() {
     }
 
     function openStandaloneTask(taskId?: string | null) {
-        navigate(taskId ? `/goals?tab=tasks&editId=${taskId}` : '/goals?tab=tasks');
+        navigate(taskId ? `/tasks?editId=${taskId}` : '/tasks');
     }
 
     function openOverdueProjectItem(taskId?: string | null, projectId?: string | null) {
