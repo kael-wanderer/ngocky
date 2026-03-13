@@ -804,7 +804,11 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     }, [activeTab, forcedTab, searchParams, setSearchParams]);
 
     useEffect(() => {
+        if (goalsLoading) return;
         if (!editGoal && !checkInGoalId && !showCreate && (editIdParam || checkInIdParam) && activeTab === 'GOALS') {
+            const hasRequestedGoal = (editIdParam && goals.some((goal: any) => goal.id === editIdParam))
+                || (checkInIdParam && goals.some((goal: any) => goal.id === checkInIdParam));
+            if (hasRequestedGoal) return;
             setSearchParams((prev) => {
                 const next = new URLSearchParams(prev);
                 next.delete('editId');
@@ -812,17 +816,20 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                 return next;
             }, { replace: true });
         }
-    }, [editGoal, checkInGoalId, showCreate, editIdParam, checkInIdParam, setSearchParams, activeTab]);
+    }, [editGoal, checkInGoalId, showCreate, editIdParam, checkInIdParam, setSearchParams, activeTab, goalsLoading, goals]);
 
     useEffect(() => {
+        if (tasksLoading) return;
         if (!editTask && !showTaskModal && editIdParam && activeTab === 'TASKS') {
+            const hasRequestedTask = tasks.some((task: any) => task.id === editIdParam);
+            if (hasRequestedTask) return;
             setSearchParams((prev) => {
                 const next = new URLSearchParams(prev);
                 next.delete('editId');
                 return next;
             }, { replace: true });
         }
-    }, [editTask, showTaskModal, editIdParam, setSearchParams, activeTab]);
+    }, [editTask, showTaskModal, editIdParam, setSearchParams, activeTab, tasksLoading, tasks]);
 
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
