@@ -789,12 +789,17 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
 
     useEffect(() => {
         if (forcedTab) return;
+        const requestedTab = (searchParams.get('tab') || '').toUpperCase();
+        const nextTab = requestedTab === 'TASKS' ? 'TASKS' : requestedTab === 'GOALS' ? 'GOALS' : null;
+        if (nextTab && nextTab !== activeTab) {
+            setActiveTab(nextTab);
+        }
+    }, [forcedTab, searchParams, activeTab]);
+
+    useEffect(() => {
+        if (forcedTab) return;
         const next = new URLSearchParams(searchParams);
         next.set('tab', activeTab === 'TASKS' ? 'tasks' : 'goals');
-        if (activeTab === 'TASKS') {
-            next.delete('editId');
-            next.delete('checkInId');
-        }
         setSearchParams(next, { replace: true });
     }, [activeTab, forcedTab, searchParams, setSearchParams]);
 

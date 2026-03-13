@@ -436,6 +436,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                         id: key,
                         name: task.project?.name || 'Project',
                         earliestDeadline: task.deadline,
+                        sampleTaskId: task.id,
                         dueTaskCount: 1,
                         sampleTaskTitle: task.title,
                         sampleTaskStatus: task.status,
@@ -445,6 +446,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 current.dueTaskCount += 1;
                 if (task.deadline && (!current.earliestDeadline || new Date(task.deadline).getTime() < new Date(current.earliestDeadline).getTime())) {
                     current.earliestDeadline = task.deadline;
+                    current.sampleTaskId = task.id;
                     current.sampleTaskTitle = task.title;
                     current.sampleTaskStatus = task.status;
                 }
@@ -532,6 +534,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             ...overdueTaskItems.map((t: any) => ({
                 id: t.id,
                 type: 'PROJECT',
+                projectId: t.projectId,
                 title: t.title,
                 date: t.deadline,
                 meta: [t.project?.name, t.assignee?.name].filter(Boolean).join(' · ') || null,

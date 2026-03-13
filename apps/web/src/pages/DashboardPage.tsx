@@ -129,6 +129,32 @@ export default function DashboardPage() {
         return 'project';
     };
     const filteredOverdueItems = (data?.overdueItems || []).filter((item: any) => categories.includes(overdueByCategory(item.type)));
+    const dueTasks = data?.dueTasks || [];
+
+    function openProjectTask(projectId?: string | null, taskId?: string | null) {
+        if (projectId && taskId) {
+            navigate(`/projects?boardId=${projectId}&taskId=${taskId}`);
+            return;
+        }
+        if (projectId) {
+            navigate(`/projects?boardId=${projectId}`);
+            return;
+        }
+        navigate('/projects');
+    }
+
+    function openStandaloneTask(taskId?: string | null) {
+        navigate(taskId ? `/goals?tab=tasks&editId=${taskId}` : '/goals?tab=tasks');
+    }
+
+    function openOverdueProjectItem(taskId?: string | null, projectId?: string | null) {
+        if (projectId) {
+            openProjectTask(projectId, taskId);
+            return;
+        }
+        const matchedTask = dueTasks.find((entry: any) => entry.id === taskId);
+        openProjectTask(matchedTask?.projectId || null, taskId);
+    }
 
     // Map section IDs to renderable elements
     function renderSection(id: SectionId): React.ReactNode {
@@ -213,7 +239,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No project deadlines in selected time</p>
                             )}
                             {(data?.dueProjects || []).map((p: any) => (
-                                <button key={p.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(`/projects?boardId=${p.id}`)}>
+                                <button key={p.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => openProjectTask(p.id, p.sampleTaskId)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{p.name}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -247,7 +273,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No tasks with deadline in selected time</p>
                             )}
                             {(data?.dueTasks || []).map((t: any) => (
-                                <button key={t.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => t.taskKind === 'STANDALONE' ? navigate('/goals?tab=tasks') : navigate(`/projects?boardId=${t.projectId}&taskId=${t.id}`)}>
+                                <button key={t.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => t.taskKind === 'STANDALONE' ? openStandaloneTask(t.id) : openProjectTask(t.projectId, t.id)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{t.title}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -321,14 +347,16 @@ export default function DashboardPage() {
                                 <button key={`${p.type}-${p.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1"
                                     onClick={() => {
                                         if (p.type === 'GOAL') navigate(`/goals?editId=${p.id}`);
-                                        else if (p.type === 'TASK') navigate(`/projects?boardId=${p.projectId || ''}&taskId=${p.id}`);
+                                        else if (p.type === 'TASK') {
+                                            if (p.projectId) openProjectTask(p.projectId, p.id);
+                                            else openStandaloneTask(p.id);
+                                        }
                                         else if (p.type === 'PROJECT') navigate(`/projects?boardId=${p.id}`);
                                         else if (p.type === 'HOUSEWORK') navigate(`/housework?editId=${p.id}`);
                                         else if (p.type === 'CALENDAR') navigate(`/calendar?eventId=${p.id}`);
                                         else if (p.type === 'ASSET') navigate(`/assets?assetId=${p.assetId || ''}`);
                                         else if (p.type === 'LEARNING') navigate('/learning');
                                         else if (p.type === 'IDEA') navigate('/ideas');
-                                        else if (p.type === 'TASK') navigate('/goals?tab=tasks');
                                     }}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{p.title}</p>
@@ -546,8 +574,8 @@ export default function DashboardPage() {
                     {filteredOverdueItems.map((o: any) => (
                         <button key={`${o.type}-${o.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-red-50 rounded px-1"
                             onClick={() => {
-                                if (o.type === 'PROJECT') navigate('/projects');
-                                else if (o.type === 'TASK') navigate('/goals?tab=tasks');
+                                if (o.type === 'PROJECT') openOverdueProjectItem(o.id, o.projectId);
+                                else if (o.type === 'TASK') openStandaloneTask(o.id);
                                 else if (o.type === 'HOUSEWORK') navigate(`/housework?editId=${o.id}`);
                                 else if (o.type === 'CALENDAR') navigate(`/calendar?eventId=${o.id}`);
                                 else if (o.type === 'ASSET') navigate('/assets');
