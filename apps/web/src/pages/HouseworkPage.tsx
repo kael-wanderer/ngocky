@@ -7,6 +7,16 @@ import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
+import {
+    DEFAULT_HOUSEWORK_FILTERS,
+    getHouseworkDueDateRange,
+    HOUSEWORK_DUE_DATE_FILTER_OPTIONS,
+    HOUSEWORK_FREQUENCY_OPTIONS,
+    HOUSEWORK_STATUS_FILTER_OPTIONS,
+    type SharedHouseworkDueDateFilter,
+    type SharedHouseworkFrequencyFilter,
+    type SharedHouseworkStatusFilter,
+} from '../config/houseworkFilters';
 
 const freqLabels: Record<string, string> = {
     ONE_TIME: 'One time',
@@ -28,7 +38,7 @@ const weekdayLabels: Record<string, string> = {
     '7': 'Sunday',
 };
 
-const frequencyOptions = ['ONE_TIME', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY'];
+const frequencyOptions = [...HOUSEWORK_FREQUENCY_OPTIONS];
 
 const emptyForm = {
     title: '',
@@ -47,8 +57,9 @@ const emptyForm = {
 };
 
 type HouseworkFormState = typeof emptyForm;
-type HouseworkDueDateFilter = 'ALL' | 'TODAY' | 'THIS_WEEK' | 'NEXT_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH';
-type HouseworkStatusFilter = 'ALL' | 'PLANNED' | 'IN_PROGRESS' | 'DONE';
+type HouseworkDueDateFilter = SharedHouseworkDueDateFilter;
+type HouseworkStatusFilter = SharedHouseworkStatusFilter;
+type HouseworkFrequencyFilter = SharedHouseworkFrequencyFilter;
 type HouseworkSortKey = 'title' | 'description' | 'frequencyType' | 'status' | 'nextDueDate' | 'notification' | 'showOnCalendar';
 type HouseworkGridSort = 'TITLE_ASC' | 'TITLE_DESC' | 'DUE_ASC' | 'DUE_DESC';
 
@@ -311,13 +322,9 @@ export default function HouseworkPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [filters, setFilters] = useState<{
         dueDate: HouseworkDueDateFilter;
-        frequency: string;
+        frequency: HouseworkFrequencyFilter;
         status: HouseworkStatusFilter;
-    }>({
-        dueDate: 'ALL',
-        frequency: 'ALL',
-        status: 'ALL',
-    });
+    }>({ ...DEFAULT_HOUSEWORK_FILTERS });
     const [sortBy, setSortBy] = useState<HouseworkSortKey>('nextDueDate');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [gridSort, setGridSort] = useState<HouseworkGridSort>('DUE_ASC');
@@ -468,26 +475,20 @@ export default function HouseworkPage() {
     const nextMonthStart = addMonths(thisMonthStart, 1);
     const nextMonthEnd = endOfMonth(nextMonthStart);
 
-    const filteredItems = useMemo(() => {
-        return items.filter((item: any) => {
+    const filteredItems = useMemo(() =>
+        items.filter((item: any) => {
             if (filters.frequency !== 'ALL' && item.frequencyType !== filters.frequency) return false;
             const status = item.status === 'ARCHIVED' ? 'PLANNED' : item.status || 'PLANNED';
             if (filters.status !== 'ALL' && status !== filters.status) return false;
 
-            if (filters.dueDate === 'ALL') return true;
+            const dueRange = getHouseworkDueDateRange(filters.dueDate);
+            if (!dueRange) return true;
             if (!item.nextDueDate) return false;
 
             const dueDate = new Date(item.nextDueDate);
-            const dueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
-
-            if (filters.dueDate === 'TODAY') return dueDay.getTime() === today.getTime();
-            if (filters.dueDate === 'THIS_WEEK') return isWithinInterval(dueDay, { start: today, end: endThisWeek });
-            if (filters.dueDate === 'NEXT_WEEK') return isWithinInterval(dueDay, { start: nextWeekStart, end: nextWeekEnd });
-            if (filters.dueDate === 'THIS_MONTH') return isWithinInterval(dueDay, { start: thisMonthStart, end: thisMonthEnd });
-            if (filters.dueDate === 'NEXT_MONTH') return isWithinInterval(dueDay, { start: nextMonthStart, end: nextMonthEnd });
-            return true;
-        });
-    }, [items, filters, today, endThisWeek, nextWeekStart, nextWeekEnd, thisMonthStart, thisMonthEnd, nextMonthStart, nextMonthEnd]);
+            return isWithinInterval(dueDate, dueRange);
+        }),
+    [items, filters]);
 
     const sortedItems = useMemo(() => {
         return [...filteredItems].sort((a, b) => {
@@ -728,36 +729,30 @@ export default function HouseworkPage() {
                     <Filter className="w-5 h-5" style={{ color: 'var(--color-text-secondary)' }} />
                     <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Filters</h3>
                 </div>
-                <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+                <div className={`grid grid-cols-1 gap-3 ${viewMode === 'grid' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
                     <select className="input" value={filters.dueDate} onChange={(e) => setFilters((prev) => ({ ...prev, dueDate: e.target.value as HouseworkDueDateFilter }))}>
-                        <option value="ALL">All Due Dates</option>
-                        <option value="TODAY">Today</option>
-                        <option value="THIS_WEEK">This Week</option>
-                        <option value="NEXT_WEEK">Next Week</option>
-                        <option value="THIS_MONTH">This Month</option>
-                        <option value="NEXT_MONTH">Next Month</option>
+                        {HOUSEWORK_DUE_DATE_FILTER_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
                     </select>
-                    <select className="input" value={filters.frequency} onChange={(e) => setFilters((prev) => ({ ...prev, frequency: e.target.value }))}>
+                    <select className="input" value={filters.frequency} onChange={(e) => setFilters((prev) => ({ ...prev, frequency: e.target.value as HouseworkFrequencyFilter }))}>
                         <option value="ALL">All Frequencies</option>
                         {frequencyOptions.map((k) => <option key={k} value={k}>{freqLabels[k]}</option>)}
                     </select>
                     <select className="input" value={filters.status} onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value as HouseworkStatusFilter }))}>
-                        <option value="ALL">All Statuses</option>
-                        <option value="PLANNED">Plan</option>
-                        <option value="IN_PROGRESS">In Progress</option>
-                        <option value="DONE">Done</option>
+                        {HOUSEWORK_STATUS_FILTER_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
                     </select>
-                </div>
-                {viewMode === 'grid' && (
-                    <div className="flex justify-end">
-                        <select className="input max-w-[220px]" value={gridSort} onChange={(e) => setGridSort(e.target.value as HouseworkGridSort)}>
+                    {viewMode === 'grid' && (
+                        <select className="input" value={gridSort} onChange={(e) => setGridSort(e.target.value as HouseworkGridSort)}>
                             <option value="TITLE_ASC">Name (A-Z)</option>
                             <option value="TITLE_DESC">Name (Z-A)</option>
                             <option value="DUE_ASC">Due Date (ASC)</option>
                             <option value="DUE_DESC">Due Date (DESC)</option>
                         </select>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             {(showCreate || editingItem) && (

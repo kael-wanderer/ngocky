@@ -7,21 +7,24 @@ import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
 import PaginationControls from '../components/PaginationControls';
 import { parseCompactAmountInput } from '../utils/amount';
+import {
+    DEFAULT_EXPENSE_FILTERS,
+    DEFAULT_PAY_CATEGORY,
+    EXPENSE_ALL_CATEGORIES,
+    EXPENSE_PAY_CATEGORIES,
+    EXPENSE_RECEIVE_CATEGORIES,
+    EXPENSE_SCOPE_OPTIONS,
+    EXPENSE_TIME_PRESET_OPTIONS,
+    EXPENSE_TYPE_OPTIONS,
+    getExpenseDateRangeFromPreset,
+    type ExpenseTimePreset,
+} from '../config/expenseFilters';
 
-const DEFAULT_PAY_CATEGORY = 'Food';
-const payCategories = ['AI', 'Ca Keo', 'Food', 'Gift', 'Healthcare', 'House', 'Insurance', 'Maintenance', 'Education', 'Entertainment', 'Family Support', 'Shopping', 'Transportation', 'Utilities', 'Other'];
-const receiveCategories = ['Salary', 'Sell', 'Top-up'];
-const allCategories = [...new Set([...payCategories, ...receiveCategories])];
-const typeOptions = [
-    { value: 'PAY', label: 'Pay' },
-    { value: 'RECEIVE', label: 'Receive' },
-];
-const scopeOptions = [
-    { value: 'PERSONAL', label: 'Personal' },
-    { value: 'FAMILY', label: 'Family' },
-    { value: 'KEO', label: 'Ca Keo' },
-    { value: 'PROJECT', label: 'Project' },
-];
+const payCategories = EXPENSE_PAY_CATEGORIES;
+const receiveCategories = EXPENSE_RECEIVE_CATEGORIES;
+const allCategories = EXPENSE_ALL_CATEGORIES;
+const typeOptions = EXPENSE_TYPE_OPTIONS;
+const scopeOptions = EXPENSE_SCOPE_OPTIONS;
 const scopeColors: Record<string, { color: string; bg: string }> = {
     PERSONAL: { color: '#1d4ed8', bg: '#dbeafe' },
     FAMILY: { color: '#15803d', bg: '#dcfce7' },
@@ -38,13 +41,7 @@ const paymentOptions = [
     { value: 'BANK_TRANSFER', label: 'Bank transfer' },
     { value: 'CREDIT_CARD', label: 'Credit card' },
 ];
-const timeOptions = [
-    { value: 'LAST_QUARTER', label: 'Last Quarter' },
-    { value: 'LAST_MONTH', label: 'Last Month' },
-    { value: 'THIS_MONTH', label: 'This Month' },
-    { value: 'THIS_QUARTER', label: 'This Quarter' },
-    { value: 'CUSTOM', label: 'Custom' },
-];
+const timeOptions = EXPENSE_TIME_PRESET_OPTIONS;
 const columns = [
     { key: 'date', label: 'Date' },
     { key: 'user', label: 'User' },
@@ -58,7 +55,7 @@ const columns = [
 
 type SortKey = typeof columns[number]['key'];
 type SortOrder = 'asc' | 'desc';
-type TimePreset = 'LAST_QUARTER' | 'LAST_MONTH' | 'THIS_MONTH' | 'THIS_QUARTER' | 'CUSTOM';
+type TimePreset = ExpenseTimePreset;
 
 const formatAmount = (amount: number) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(amount)} VND`;
 const escapeHtml = (value: string) => value
@@ -82,46 +79,13 @@ const emptyForm = () => ({
     note: '',
 });
 
-function getDateRangeFromPreset(preset: TimePreset) {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-    if (preset === 'THIS_MONTH') {
-        return {
-            dateFrom: format(new Date(currentYear, currentMonth, 1), 'yyyy-MM-dd'),
-            dateTo: format(new Date(currentYear, currentMonth + 1, 0), 'yyyy-MM-dd'),
-        };
-    }
-    if (preset === 'LAST_MONTH') {
-        return {
-            dateFrom: format(new Date(currentYear, currentMonth - 1, 1), 'yyyy-MM-dd'),
-            dateTo: format(new Date(currentYear, currentMonth, 0), 'yyyy-MM-dd'),
-        };
-    }
-    const quarterStartMonth = Math.floor(currentMonth / 3) * 3;
-    if (preset === 'THIS_QUARTER') {
-        return {
-            dateFrom: format(new Date(currentYear, quarterStartMonth, 1), 'yyyy-MM-dd'),
-            dateTo: format(new Date(currentYear, quarterStartMonth + 3, 0), 'yyyy-MM-dd'),
-        };
-    }
-    const lastQuarterEndMonth = quarterStartMonth - 1;
-    const lastQuarterYear = lastQuarterEndMonth < 0 ? currentYear - 1 : currentYear;
-    const normalizedEndMonth = (lastQuarterEndMonth + 12) % 12;
-    const lastQuarterStartMonth = normalizedEndMonth - 2;
-    return {
-        dateFrom: format(new Date(lastQuarterYear, lastQuarterStartMonth, 1), 'yyyy-MM-dd'),
-        dateTo: format(new Date(lastQuarterYear, normalizedEndMonth + 1, 0), 'yyyy-MM-dd'),
-    };
-}
-
 export default function ExpensesPage() {
     const qc = useQueryClient();
     const { user } = useAuthStore();
     const exportContentRef = useRef<HTMLDivElement>(null);
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState<any>(null);
-    const [filters, setFilters] = useState({ type: '', scope: '', category: '', timePreset: 'THIS_MONTH' as TimePreset, dateFrom: '', dateTo: '' });
+    const [filters, setFilters] = useState({ ...DEFAULT_EXPENSE_FILTERS });
     const [form, setForm] = useState(emptyForm());
     const [sortBy, setSortBy] = useState<SortKey>('date');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
@@ -130,7 +94,7 @@ export default function ExpensesPage() {
 
     const effectiveRange = filters.timePreset === 'CUSTOM'
         ? { dateFrom: filters.dateFrom, dateTo: filters.dateTo }
-        : getDateRangeFromPreset(filters.timePreset);
+        : getExpenseDateRangeFromPreset(filters.timePreset);
 
     const queryParams = new URLSearchParams();
     queryParams.set('page', String(page));

@@ -11,6 +11,19 @@ import { addMonths, addWeeks, endOfMonth, endOfWeek, format, isWithinInterval, s
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
 import { parseCompactAmountInput } from '../utils/amount';
+import {
+    DEFAULT_TASK_FILTERS,
+    getTaskDueDateRange,
+    TASK_DUE_DATE_FILTER_OPTIONS,
+    TASK_PRIORITY_FILTER_OPTIONS,
+    TASK_STATUS_FILTER_OPTIONS,
+    TASK_TYPE_FILTER_OPTIONS,
+    type SharedTaskDueDateFilter,
+    type SharedTaskPriorityFilter,
+    type SharedTaskStatusFilter,
+    type SharedTaskTypeFilter,
+} from '../config/taskFilters';
+import { DEFAULT_GOAL_PERIOD_FILTER, GOAL_PERIOD_FILTER_OPTIONS, type SharedGoalPeriodFilter } from '../config/goalFilters';
 
 const unitOptions = [
     { value: 'times', label: 'Time' },
@@ -63,10 +76,10 @@ type GoalFormState = typeof goalEmptyForm;
 type TaskFormState = typeof taskEmptyForm;
 type TaskSortKey = 'title' | 'taskType' | 'status' | 'priority' | 'dueDate' | 'showOnCalendar';
 type TaskGridSortOption = 'TITLE_ASC' | 'TITLE_DESC' | 'DUE_ASC' | 'DUE_DESC';
-type TaskDueDateFilter = 'ALL' | 'TODAY' | 'THIS_WEEK' | 'NEXT_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH';
-type TaskTypeFilter = 'ALL' | 'TASK' | 'PAYMENT';
-type TaskPriorityFilter = 'ALL' | 'LOW' | 'MEDIUM' | 'HIGH';
-type TaskStatusFilter = 'ALL' | 'PLANNED' | 'IN_PROGRESS' | 'DONE';
+type TaskDueDateFilter = SharedTaskDueDateFilter;
+type TaskTypeFilter = SharedTaskTypeFilter;
+type TaskPriorityFilter = SharedTaskPriorityFilter;
+type TaskStatusFilter = SharedTaskStatusFilter;
 
 function getTaskDueBadge(task: any) {
     if (!task.dueDate) {
@@ -430,18 +443,13 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const [dateError, setDateError] = useState('');
     const [duration, setDuration] = useState<number | ''>('');
     const [quantity, setQuantity] = useState(1);
-    const [periodFilter, setPeriodFilter] = useState<'ALL' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY'>('ALL');
+    const [periodFilter, setPeriodFilter] = useState<SharedGoalPeriodFilter>(DEFAULT_GOAL_PERIOD_FILTER);
     const [taskFilters, setTaskFilters] = useState<{
         dueDate: TaskDueDateFilter;
         type: TaskTypeFilter;
         priority: TaskPriorityFilter;
         status: TaskStatusFilter;
-    }>({
-        dueDate: 'ALL',
-        type: 'ALL',
-        priority: 'ALL',
-        status: 'ALL',
-    });
+    }>({ ...DEFAULT_TASK_FILTERS });
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [taskViewMode, setTaskViewMode] = useState<'grid' | 'list'>('list');
     const [taskSortBy, setTaskSortBy] = useState<TaskSortKey>('dueDate');
@@ -560,44 +568,20 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
         return goals.filter((goal: any) => goal.periodType === periodFilter);
     }, [goals, periodFilter]);
 
-    const filteredTasks = useMemo(() => {
-        const today = startOfToday();
-        const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
-        const thisWeekEnd = endOfWeek(today, { weekStartsOn: 1 });
-        const nextWeekStart = addWeeks(thisWeekStart, 1);
-        const nextWeekEnd = endOfWeek(nextWeekStart, { weekStartsOn: 1 });
-        const thisMonthStart = startOfMonth(today);
-        const thisMonthEnd = endOfMonth(today);
-        const nextMonthStart = startOfMonth(addMonths(today, 1));
-        const nextMonthEnd = endOfMonth(addMonths(today, 1));
-
-        return tasks.filter((task: any) => {
+    const filteredTasks = useMemo(() =>
+        tasks.filter((task: any) => {
             if (taskFilters.type !== 'ALL' && task.taskType !== taskFilters.type) return false;
             if (taskFilters.priority !== 'ALL' && task.priority !== taskFilters.priority) return false;
             if (taskFilters.status !== 'ALL' && task.status !== taskFilters.status) return false;
 
-            if (taskFilters.dueDate === 'ALL') return true;
+            const dueRange = getTaskDueDateRange(taskFilters.dueDate);
+            if (!dueRange) return true;
             if (!task.dueDate) return false;
 
             const dueDate = new Date(task.dueDate);
-            const dueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
-
-            switch (taskFilters.dueDate) {
-                case 'TODAY':
-                    return dueDay.getTime() === today.getTime();
-                case 'THIS_WEEK':
-                    return isWithinInterval(dueDate, { start: thisWeekStart, end: thisWeekEnd });
-                case 'NEXT_WEEK':
-                    return isWithinInterval(dueDate, { start: nextWeekStart, end: nextWeekEnd });
-                case 'THIS_MONTH':
-                    return isWithinInterval(dueDate, { start: thisMonthStart, end: thisMonthEnd });
-                case 'NEXT_MONTH':
-                    return isWithinInterval(dueDate, { start: nextMonthStart, end: nextMonthEnd });
-                default:
-                    return true;
-            }
-        });
-    }, [tasks, taskFilters]);
+            return isWithinInterval(dueDate, dueRange);
+        }),
+    [tasks, taskFilters]);
 
     const sortedTasks = useMemo(() => {
         const getValue = (task: any, key: TaskSortKey) => {
@@ -872,11 +856,10 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                 <>
                     <div className="flex items-center justify-between flex-wrap gap-3">
                         <div className="flex items-center gap-2">
-                            <select className="input" value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value as any)}>
-                                <option value="ALL">All</option>
-                                <option value="WEEKLY">Weekly</option>
-                                <option value="MONTHLY">Monthly</option>
-                                <option value="QUARTERLY">Quarterly</option>
+                            <select className="input" value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value as SharedGoalPeriodFilter)}>
+                                {GOAL_PERIOD_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
                             </select>
                             <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
                                 <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
@@ -1029,29 +1012,24 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                         </div>
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
                             <select className="input text-sm min-w-[180px]" value={taskFilters.dueDate} onChange={(e) => setTaskFilters((current) => ({ ...current, dueDate: e.target.value as TaskDueDateFilter }))}>
-                                <option value="ALL">Due Date: All</option>
-                                <option value="TODAY">Due Date: Today</option>
-                                <option value="THIS_WEEK">Due Date: This Week</option>
-                                <option value="NEXT_WEEK">Due Date: Next Week</option>
-                                <option value="THIS_MONTH">Due Date: This Month</option>
-                                <option value="NEXT_MONTH">Due Date: Next Month</option>
+                                {TASK_DUE_DATE_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
                             </select>
                             <select className="input text-sm min-w-[180px]" value={taskFilters.type} onChange={(e) => setTaskFilters((current) => ({ ...current, type: e.target.value as TaskTypeFilter }))}>
-                                <option value="ALL">Type: All</option>
-                                <option value="TASK">Type: Task</option>
-                                <option value="PAYMENT">Type: Payment</option>
+                                {TASK_TYPE_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
                             </select>
                             <select className="input text-sm min-w-[180px]" value={taskFilters.priority} onChange={(e) => setTaskFilters((current) => ({ ...current, priority: e.target.value as TaskPriorityFilter }))}>
-                                <option value="ALL">Priority: All</option>
-                                <option value="LOW">Priority: Low</option>
-                                <option value="MEDIUM">Priority: Medium</option>
-                                <option value="HIGH">Priority: High</option>
+                                {TASK_PRIORITY_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
                             </select>
                             <select className="input text-sm min-w-[180px]" value={taskFilters.status} onChange={(e) => setTaskFilters((current) => ({ ...current, status: e.target.value as TaskStatusFilter }))}>
-                                <option value="ALL">Status: All</option>
-                                <option value="PLANNED">Status: Plan</option>
-                                <option value="IN_PROGRESS">Status: In Progress</option>
-                                <option value="DONE">Status: Done</option>
+                                {TASK_STATUS_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
                             </select>
                             {taskViewMode === 'grid' && (
                                 <select className="input text-sm min-w-[180px]" value={taskGridSort} onChange={(e) => setTaskGridSort(e.target.value as TaskGridSortOption)}>

@@ -40,6 +40,8 @@ const STATUS_BG: Record<string, string> = {
 };
 
 const UNASSIGNED_COLOR = '#94a3b8';
+const CALENDAR_SELECTION_COLOR = '#60a5fa';
+const CALENDAR_SELECTION_BG = '#e0f2fe';
 
 type CaKeoView = 'calendar' | 'list' | 'kanban';
 
@@ -415,9 +417,9 @@ export default function CaKeoPage() {
                                     onClick={() => toggleCalType(type)}
                                     className="text-xs px-3 py-1 rounded-full border transition-colors font-medium"
                                     style={{
-                                        backgroundColor: active ? '#ec4899' : 'transparent',
+                                        backgroundColor: active ? CALENDAR_SELECTION_COLOR : 'transparent',
                                         color: active ? '#fff' : 'var(--color-text-secondary)',
-                                        borderColor: active ? '#ec4899' : 'var(--color-border)',
+                                        borderColor: active ? CALENDAR_SELECTION_COLOR : 'var(--color-border)',
                                     }}
                                 >
                                     {type}
@@ -449,10 +451,14 @@ export default function CaKeoPage() {
                                             key={day.toISOString()}
                                             onClick={() => setSelectedDate(day)}
                                             className={`aspect-square p-1 rounded-lg text-sm transition-all relative ${isSelected ? 'ring-2 ring-offset-1' : 'hover:bg-gray-50'}`}
-                                            style={{ color: inMonth ? 'var(--color-text)' : 'var(--color-text-secondary)', opacity: inMonth ? 1 : 0.4, ...(isSelected ? { '--tw-ring-color': '#ec4899' } as any : {}) }}
+                                            style={{
+                                                color: inMonth ? 'var(--color-text)' : 'var(--color-text-secondary)',
+                                                opacity: inMonth ? 1 : 0.4,
+                                                ...(isSelected ? { '--tw-ring-color': CALENDAR_SELECTION_COLOR, backgroundColor: CALENDAR_SELECTION_BG } as any : {}),
+                                            }}
                                         >
                                             <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium ${isToday ? 'text-white' : ''}`}
-                                                style={isToday ? { backgroundColor: '#ec4899' } : {}}>
+                                                style={isToday ? { backgroundColor: CALENDAR_SELECTION_COLOR } : {}}>
                                                 {format(day, 'd')}
                                             </span>
                                             {dayItems.length > 0 && (

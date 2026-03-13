@@ -2,7 +2,57 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
-import { getFeatureFlags } from '../config/features';
+import { FEATURE_GROUPS, getFeatureFlags } from '../config/features';
+import {
+    DEFAULT_TASK_FILTERS,
+    getTaskDueDateRange,
+    TASK_DUE_DATE_FILTER_OPTIONS,
+    TASK_PRIORITY_FILTER_OPTIONS,
+    TASK_STATUS_FILTER_OPTIONS,
+    TASK_TYPE_FILTER_OPTIONS,
+    type SharedTaskDueDateFilter,
+    type SharedTaskPriorityFilter,
+    type SharedTaskStatusFilter,
+    type SharedTaskTypeFilter,
+} from '../config/taskFilters';
+import { DEFAULT_GOAL_PERIOD_FILTER, GOAL_PERIOD_FILTER_OPTIONS, type SharedGoalPeriodFilter } from '../config/goalFilters';
+import {
+    DEFAULT_EXPENSE_FILTERS,
+    EXPENSE_ALL_CATEGORIES,
+    EXPENSE_PAY_CATEGORIES,
+    EXPENSE_RECEIVE_CATEGORIES,
+    EXPENSE_SCOPE_OPTIONS,
+    EXPENSE_TIME_PRESET_OPTIONS,
+    EXPENSE_TYPE_OPTIONS,
+    getExpenseDateRangeFromPreset,
+    type ExpenseTimePreset,
+} from '../config/expenseFilters';
+import {
+    DEFAULT_HOUSEWORK_FILTERS,
+    getHouseworkDueDateRange,
+    HOUSEWORK_DUE_DATE_FILTER_OPTIONS,
+    HOUSEWORK_FREQUENCY_OPTIONS,
+    HOUSEWORK_STATUS_FILTER_OPTIONS,
+    type SharedHouseworkDueDateFilter,
+    type SharedHouseworkFrequencyFilter,
+    type SharedHouseworkStatusFilter,
+} from '../config/houseworkFilters';
+import MultiSelectFilter from '../components/MultiSelectFilter';
+import {
+    DEFAULT_KEYBOARD_FILTERS,
+    KEYBOARD_FILTER_CATEGORIES,
+    KEYBOARD_FILTER_COLORS,
+    KEYBOARD_FILTER_PRICE_RANGES,
+    KEYBOARD_FILTER_TAGS,
+    matchesKeyboardFilters,
+} from '../config/keyboardFilters';
+import {
+    DEFAULT_FUNDS_FILTERS,
+    FUNDS_CATEGORY_OPTIONS,
+    FUNDS_CONDITION_OPTIONS,
+    FUNDS_SCOPE_OPTIONS,
+    FUNDS_TYPE_OPTIONS,
+} from '../config/fundsFilters';
 import { BarChart3, FileSpreadsheet, FileText, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
@@ -44,6 +94,32 @@ type ReportTimeRange =
     | 'CUSTOM';
 
 type AnalyticsViewType = 'CHARTS' | 'TABLES' | 'BOTH';
+type AnalyticsSelectionMode = 'single' | 'multi';
+type AnalyticsTaskDueDateFilter = SharedTaskDueDateFilter;
+type AnalyticsTaskTypeFilter = SharedTaskTypeFilter;
+type AnalyticsTaskPriorityFilter = SharedTaskPriorityFilter;
+type AnalyticsTaskStatusFilter = SharedTaskStatusFilter;
+type AnalyticsHouseworkDueDateFilter = SharedHouseworkDueDateFilter;
+type AnalyticsHouseworkFrequencyFilter = SharedHouseworkFrequencyFilter;
+type AnalyticsHouseworkStatusFilter = SharedHouseworkStatusFilter;
+
+const ANALYTICS_ROUTE_TAB_MAP = {
+    '/projects': { id: 'project', label: 'Projects' },
+    '/tasks': { id: 'tasks', label: 'Tasks' },
+    '/expenses': { id: 'expenses', label: 'Expenses' },
+    '/goals': { id: 'goals', label: 'Goals' },
+    '/ideas': { id: 'ideas', label: 'Ideas' },
+    '/calendar': { id: 'calendar', label: 'Calendar' },
+    '/cakeo': { id: 'cakeo', label: 'Ca Keo' },
+    '/housework': { id: 'housework', label: 'Housework' },
+    '/assets': { id: 'assets', label: 'Assets' },
+    '/keyboard': { id: 'keyboard', label: 'Keyboard' },
+    '/funds': { id: 'funds', label: 'Funds' },
+    '/learning': { id: 'learning', label: 'Learning' },
+} as const;
+
+type AnalyticsTab = (typeof ANALYTICS_ROUTE_TAB_MAP)[keyof typeof ANALYTICS_ROUTE_TAB_MAP];
+type AnalyticsTabId = AnalyticsTab['id'];
 
 const reportTimeRangeOptions: Array<{ value: ReportTimeRange; label: string }> = [
     { value: 'TODAY', label: 'Today' },
@@ -143,8 +219,8 @@ function DataTableCard({
     rows,
 }: {
     title: string;
-    columns: Array<{ key: string; label: string; render?: (value: any, row: Record<string, any>) => React.ReactNode }>;
-    rows: Array<Record<string, any>>;
+    columns: ReadonlyArray<{ key: string; label: string; render?: (value: any, row: Record<string, any>) => React.ReactNode }>;
+    rows: ReadonlyArray<Record<string, any>>;
 }) {
     return (
         <div className="card p-5 overflow-hidden">
@@ -207,37 +283,95 @@ function renderExportCell(
     return String(rendered);
 }
 
+function sameTabIds(left: AnalyticsTabId[], right: AnalyticsTabId[]) {
+    return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
 export default function ReportsPage() {
     const reportContentRef = useRef<HTMLDivElement>(null);
     const { user } = useAuthStore();
-    const [selectedTabs, setSelectedTabs] = useState<string[]>(['tasks']);
+    const [selectionMode, setSelectionMode] = useState<AnalyticsSelectionMode>('single');
+    const [singleSelectedTab, setSingleSelectedTab] = useState<AnalyticsTabId | 'all'>('calendar');
+    const [multiSelectedTabs, setMultiSelectedTabs] = useState<AnalyticsTabId[]>(['calendar']);
     const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('THIS_WEEK');
     const [viewType, setViewType] = useState<AnalyticsViewType>('BOTH');
     const [filters, setFilters] = useState({ type: '', scope: '', category: '', dateFrom: '', dateTo: '' });
-
-    useEffect(() => {
-        setFilters((current) => ({ ...current, type: '', scope: '', category: '' }));
-    }, [selectedTabs]);
+    const [goalPeriodFilter, setGoalPeriodFilter] = useState<SharedGoalPeriodFilter>(DEFAULT_GOAL_PERIOD_FILTER);
+    const [taskFilters, setTaskFilters] = useState<{
+        dueDate: AnalyticsTaskDueDateFilter;
+        type: AnalyticsTaskTypeFilter;
+        priority: AnalyticsTaskPriorityFilter;
+        status: AnalyticsTaskStatusFilter;
+    }>({ ...DEFAULT_TASK_FILTERS });
+    const [expenseFilters, setExpenseFilters] = useState({ ...DEFAULT_EXPENSE_FILTERS });
+    const [houseworkFilters, setHouseworkFilters] = useState<{
+        dueDate: AnalyticsHouseworkDueDateFilter;
+        frequency: AnalyticsHouseworkFrequencyFilter;
+        status: AnalyticsHouseworkStatusFilter;
+    }>({ ...DEFAULT_HOUSEWORK_FILTERS });
+    const [keyboardFilters, setKeyboardFilters] = useState({ ...DEFAULT_KEYBOARD_FILTERS });
+    const [fundsFilters, setFundsFilters] = useState({ ...DEFAULT_FUNDS_FILTERS });
 
     const selectedRange = useMemo(() => {
         if (reportTimeRange === 'CUSTOM') return null;
         return getRangeForPreset(reportTimeRange);
     }, [reportTimeRange]);
+    const taskSelectedRange = useMemo(() => getTaskDueDateRange(taskFilters.dueDate), [taskFilters.dueDate]);
+    const expenseSelectedRange = useMemo(
+        () => expenseFilters.timePreset === 'CUSTOM'
+            ? { dateFrom: expenseFilters.dateFrom, dateTo: expenseFilters.dateTo }
+            : getExpenseDateRangeFromPreset(expenseFilters.timePreset as ExpenseTimePreset),
+        [expenseFilters],
+    );
+    const houseworkSelectedRange = useMemo(
+        () => getHouseworkDueDateRange(houseworkFilters.dueDate),
+        [houseworkFilters.dueDate],
+    );
 
     const baseQuery = useMemo(() => {
         const params = new URLSearchParams();
         params.set('groupBy', 'category');
-        if (filters.type) params.set('type', filters.type);
-        if (filters.scope) params.set('scope', filters.scope);
-        if (filters.category) params.set('category', filters.category);
-        if (selectedRange) {
+        const isSingleTaskView = selectionMode === 'single' && singleSelectedTab === 'tasks';
+        const isSingleGoalView = selectionMode === 'single' && singleSelectedTab === 'goals';
+        const isSingleExpenseView = selectionMode === 'single' && singleSelectedTab === 'expenses';
+        const isSingleHouseworkView = selectionMode === 'single' && singleSelectedTab === 'housework';
+        if (isSingleTaskView) {
+            if (taskFilters.type !== 'ALL') params.set('type', taskFilters.type);
+            if (taskFilters.priority !== 'ALL') params.set('priority', taskFilters.priority);
+            if (taskFilters.status !== 'ALL') params.set('status', taskFilters.status);
+        } else if (isSingleGoalView) {
+            if (goalPeriodFilter !== 'ALL') params.set('periodType', goalPeriodFilter);
+        } else if (isSingleExpenseView) {
+            if (expenseFilters.type) params.set('type', expenseFilters.type);
+            if (expenseFilters.scope) params.set('scope', expenseFilters.scope);
+            if (expenseFilters.category) params.set('category', expenseFilters.category);
+        } else if (isSingleHouseworkView) {
+            if (houseworkFilters.frequency !== 'ALL') params.set('frequency', houseworkFilters.frequency);
+            if (houseworkFilters.status !== 'ALL') params.set('status', houseworkFilters.status);
+        } else if (filters.type) params.set('type', filters.type);
+        if (!isSingleExpenseView && filters.scope) params.set('scope', filters.scope);
+        if (!isSingleExpenseView && filters.category) params.set('category', filters.category);
+        if (isSingleTaskView) {
+            if (taskSelectedRange) {
+                params.set('dateFrom', taskSelectedRange.start.toISOString());
+                params.set('dateTo', taskSelectedRange.end.toISOString());
+            }
+        } else if (isSingleExpenseView) {
+            if (expenseSelectedRange.dateFrom) params.set('dateFrom', new Date(`${expenseSelectedRange.dateFrom}T00:00:00`).toISOString());
+            if (expenseSelectedRange.dateTo) params.set('dateTo', new Date(`${expenseSelectedRange.dateTo}T23:59:59.999`).toISOString());
+        } else if (isSingleHouseworkView) {
+            if (houseworkSelectedRange) {
+                params.set('dateFrom', houseworkSelectedRange.start.toISOString());
+                params.set('dateTo', houseworkSelectedRange.end.toISOString());
+            }
+        } else if (selectedRange) {
             params.set('dateFrom', selectedRange.start.toISOString());
             params.set('dateTo', selectedRange.end.toISOString());
         }
-        if (reportTimeRange === 'CUSTOM' && filters.dateFrom) params.set('dateFrom', new Date(`${filters.dateFrom}T00:00:00`).toISOString());
-        if (reportTimeRange === 'CUSTOM' && filters.dateTo) params.set('dateTo', new Date(`${filters.dateTo}T23:59:59.999`).toISOString());
+        if (!isSingleTaskView && !isSingleExpenseView && !isSingleHouseworkView && reportTimeRange === 'CUSTOM' && filters.dateFrom) params.set('dateFrom', new Date(`${filters.dateFrom}T00:00:00`).toISOString());
+        if (!isSingleTaskView && !isSingleExpenseView && !isSingleHouseworkView && reportTimeRange === 'CUSTOM' && filters.dateTo) params.set('dateTo', new Date(`${filters.dateTo}T23:59:59.999`).toISOString());
         return params.toString();
-    }, [reportTimeRange, filters, selectedRange]);
+    }, [reportTimeRange, filters, selectedRange, selectionMode, singleSelectedTab, taskFilters, taskSelectedRange, goalPeriodFilter, expenseFilters, expenseSelectedRange, houseworkFilters, houseworkSelectedRange]);
 
     const expenseQuery = useMemo(() => {
         const params = new URLSearchParams(baseQuery);
@@ -252,6 +386,21 @@ export default function ReportsPage() {
     }, [expenseQuery]);
 
     const reportQuery = baseQuery ? `?${baseQuery}` : '';
+    const fundsAnalyticsQuery = useMemo(() => {
+        const source = selectionMode === 'single' && singleSelectedTab === 'funds'
+            ? fundsFilters
+            : DEFAULT_FUNDS_FILTERS;
+        const params = new URLSearchParams();
+        params.set('page', '1');
+        params.set('limit', '1000');
+        if (source.type) params.set('type', source.type);
+        if (source.scope) params.set('scope', source.scope);
+        if (source.category) params.set('category', source.category);
+        if (source.condition) params.set('condition', source.condition);
+        if (source.dateFrom) params.set('dateFrom', new Date(`${source.dateFrom}T00:00:00`).toISOString());
+        if (source.dateTo) params.set('dateTo', new Date(`${source.dateTo}T23:59:59.999`).toISOString());
+        return params.toString();
+    }, [selectionMode, singleSelectedTab, fundsFilters]);
 
     const { data: tasksByStatus } = useQuery({
         queryKey: ['reports', 'tasks-by-status', baseQuery],
@@ -363,22 +512,65 @@ export default function ReportsPage() {
         queryKey: ['reports', 'raw-ideas', baseQuery],
         queryFn: async () => (await api.get(`/reports/raw-records?module=ideas&${baseQuery}`)).data.data,
     });
+    const { data: keyboardAnalyticsData } = useQuery({
+        queryKey: ['reports', 'keyboard-analytics'],
+        queryFn: async () => (await api.get('/keyboards?page=1&limit=1000')).data,
+    });
+    const { data: fundsAnalyticsData } = useQuery({
+        queryKey: ['reports', 'funds-analytics', fundsAnalyticsQuery],
+        queryFn: async () => (await api.get(`/funds?${fundsAnalyticsQuery}`)).data,
+    });
 
-    const ff = getFeatureFlags(user);
-    const allTabs = [
-        { id: 'project',   label: 'Projects',   feature: ff.featureProjects },
-        { id: 'tasks',     label: 'Tasks',       feature: ff.featureTasks },
-        { id: 'expenses',  label: 'Expenses',    feature: ff.featureExpenses },
-        { id: 'housework', label: 'Housework',   feature: ff.featureHousework },
-        { id: 'calendar',  label: 'Calendar',    feature: ff.featureCalendar },
-        { id: 'goals',     label: 'Goals',       feature: ff.featureGoals },
-        { id: 'assets',    label: 'Assets',      feature: ff.featureAssets },
-        { id: 'learning',  label: 'Learning',    feature: ff.featureLearning },
-        { id: 'ideas',     label: 'Ideas',       feature: ff.featureIdeas },
-    ];
-    const tabs = allTabs.filter(t => t.feature);
+    const ff = useMemo(() => getFeatureFlags(user), [user]);
+    const tabs = useMemo<AnalyticsTab[]>(
+        () => FEATURE_GROUPS
+            .flatMap((group) => group.items)
+            .filter((item) => ff[item.key])
+            .map((item) => {
+                const analyticsTab = ANALYTICS_ROUTE_TAB_MAP[item.route as keyof typeof ANALYTICS_ROUTE_TAB_MAP];
+                return analyticsTab ? { ...analyticsTab } : null;
+            })
+            .filter((tab): tab is AnalyticsTab => tab !== null),
+        [ff],
+    );
 
-    const primaryTab = selectedTabs[0] || 'tasks';
+    useEffect(() => {
+        const availableIds = tabs.map((tab) => tab.id);
+        const preferredDefault = availableIds.includes('calendar') ? 'calendar' : availableIds[0];
+
+        setMultiSelectedTabs((current) => {
+            const filtered = current.filter((id) => availableIds.includes(id));
+            if (filtered.length > 0) {
+                return sameTabIds(current, filtered) ? current : filtered;
+            }
+            const fallback = preferredDefault ? [preferredDefault] : [];
+            return sameTabIds(current, fallback) ? current : fallback;
+        });
+
+        setSingleSelectedTab((current) => {
+            if (current === 'all') return 'all';
+            if (current && availableIds.includes(current)) return current;
+            return preferredDefault || 'all';
+        });
+    }, [tabs]);
+
+    const selectedTabs = useMemo<AnalyticsTabId[]>(
+        () => (selectionMode === 'single'
+            ? (singleSelectedTab === 'all' ? tabs.map((tab) => tab.id) : [singleSelectedTab])
+            : multiSelectedTabs),
+        [selectionMode, singleSelectedTab, tabs, multiSelectedTabs],
+    );
+
+    const selectedTabsKey = useMemo(() => selectedTabs.join('|'), [selectedTabs]);
+
+    useEffect(() => {
+        setFilters((current) => {
+            if (!current.type && !current.scope && !current.category) return current;
+            return { ...current, type: '', scope: '', category: '' };
+        });
+    }, [selectedTabsKey]);
+
+    const primaryTab = selectedTabs[0] || (tabs.some((tab) => tab.id === 'calendar') ? 'calendar' : tabs[0]?.id || 'calendar');
     const hasMultipleTabsSelected = selectedTabs.length > 1;
 
     const typeFilterOptions =
@@ -391,6 +583,12 @@ export default function ReportsPage() {
     const showScopeSelect = !hasMultipleTabsSelected && primaryTab === 'expenses';
     const showCategorySelect = !hasMultipleTabsSelected && primaryTab === 'expenses';
     const showCategoryInput = !hasMultipleTabsSelected && ['project', 'calendar', 'ideas'].includes(primaryTab);
+    const isSingleTaskView = selectionMode === 'single' && singleSelectedTab === 'tasks';
+    const isSingleGoalView = selectionMode === 'single' && singleSelectedTab === 'goals';
+    const isSingleExpenseView = selectionMode === 'single' && singleSelectedTab === 'expenses';
+    const isSingleHouseworkView = selectionMode === 'single' && singleSelectedTab === 'housework';
+    const isSingleKeyboardView = selectionMode === 'single' && singleSelectedTab === 'keyboard';
+    const isSingleFundsView = selectionMode === 'single' && singleSelectedTab === 'funds';
     const filterGridCols = 1 + (showTypeSelect || showTypeInput ? 1 : 0) + (showScopeSelect ? 1 : 0) + (showCategorySelect || showCategoryInput ? 1 : 0);
     const filterGridClass = filterGridCols >= 4
         ? 'grid-cols-1 md:grid-cols-4'
@@ -406,7 +604,45 @@ export default function ReportsPage() {
         ? `${filters.dateFrom || 'Start'} → ${filters.dateTo || 'End'}`
         : selectedRange
             ? `${formatDisplayDate(selectedRange.start)} → ${formatDisplayDate(selectedRange.end)}`
-        : 'All Time';
+            : 'All Time';
+    const keyboardItems = keyboardAnalyticsData?.data || [];
+    const keyboardAnalyticsRows = useMemo(
+        () => keyboardItems.filter((item: any) => matchesKeyboardFilters(item, isSingleKeyboardView ? keyboardFilters : DEFAULT_KEYBOARD_FILTERS)),
+        [keyboardItems, keyboardFilters, isSingleKeyboardView],
+    );
+    const keyboardSummary = useMemo(() => {
+        const totals = { kit: 0, keycap: 0, accessories: 0, total: 0 };
+        keyboardAnalyticsRows.forEach((item: any) => {
+            const price = item.price ?? 0;
+            totals.total += price;
+            if (item.category === 'Kit') totals.kit += price;
+            if (item.category === 'Keycap') totals.keycap += price;
+            if (item.category === 'Accessories') totals.accessories += price;
+        });
+        return totals;
+    }, [keyboardAnalyticsRows]);
+    const keyboardCategoryChart = useMemo(() => {
+        const map = new Map<string, number>();
+        keyboardAnalyticsRows.forEach((item: any) => {
+            const key = item.category || 'Uncategorized';
+            map.set(key, (map.get(key) || 0) + 1);
+        });
+        return Array.from(map.entries()).map(([category, count]) => ({ category, count }));
+    }, [keyboardAnalyticsRows]);
+    const fundsAnalyticsRows = fundsAnalyticsData?.data || [];
+    const fundsSummary = useMemo(() => {
+        const buy = fundsAnalyticsRows.filter((item: any) => item.type === 'BUY').reduce((sum: number, item: any) => sum + item.amount, 0);
+        const sell = fundsAnalyticsRows.filter((item: any) => item.type === 'SELL').reduce((sum: number, item: any) => sum + item.amount, 0);
+        const topUp = fundsAnalyticsRows.filter((item: any) => item.type === 'TOP_UP').reduce((sum: number, item: any) => sum + item.amount, 0);
+        return { buy, sell, topUp, net: sell + topUp - buy };
+    }, [fundsAnalyticsRows]);
+    const fundsTypeChart = useMemo(() => {
+        const map = new Map<string, number>();
+        fundsAnalyticsRows.forEach((item: any) => {
+            map.set(item.type, (map.get(item.type) || 0) + 1);
+        });
+        return Array.from(map.entries()).map(([type, count]) => ({ type, count }));
+    }, [fundsAnalyticsRows]);
 
     const tableConfigs = {
         project: {
@@ -462,6 +698,7 @@ export default function ReportsPage() {
             columns: [
                 { key: 'title', label: 'Title' },
                 { key: 'frequencyType', label: 'Frequency' },
+                { key: 'status', label: 'Status' },
                 { key: 'assignee', label: 'Assignee' },
                 { key: 'nextDueDate', label: 'Next Due', render: (value: any) => formatDisplayDate(value) },
                 { key: 'lastCompletedDate', label: 'Last Completed', render: (value: any) => formatDisplayDate(value) },
@@ -503,6 +740,30 @@ export default function ReportsPage() {
                 { key: 'deadline', label: 'Deadline', render: (value: any) => formatDisplayDate(value) },
             ],
             rows: rawLearning || [],
+        },
+        keyboard: {
+            title: 'Keyboard Items',
+            columns: [
+                { key: 'name', label: 'Name' },
+                { key: 'category', label: 'Category' },
+                { key: 'tag', label: 'Tag' },
+                { key: 'color', label: 'Color' },
+                { key: 'price', label: 'Price', render: (value: any) => value != null ? formatVND(Number(value || 0)) : '—' },
+            ],
+            rows: keyboardAnalyticsRows,
+        },
+        funds: {
+            title: 'Fund Transactions',
+            columns: [
+                { key: 'date', label: 'Date', render: (value: any) => formatDisplayDate(value) },
+                { key: 'type', label: 'Type' },
+                { key: 'scope', label: 'Scope' },
+                { key: 'category', label: 'Category' },
+                { key: 'condition', label: 'Condition' },
+                { key: 'description', label: 'Description' },
+                { key: 'amount', label: 'Amount', render: (value: any) => formatVND(Number(value || 0)) },
+            ],
+            rows: fundsAnalyticsRows,
         },
         ideas: {
             title: 'Ideas',
@@ -574,6 +835,32 @@ export default function ReportsPage() {
             { title: 'Learning by Status', columns: [{ key: 'status', label: 'Status' }, { key: 'count', label: 'Count' }], rows: learningStatus || [] },
             { title: 'Learning by Topic', columns: [{ key: 'topic', label: 'Topic' }, { key: 'count', label: 'Count' }], rows: learningTopics || [] },
         ],
+        keyboard: [
+            {
+                title: 'Keyboard Summary',
+                columns: [{ key: 'label', label: 'Metric' }, { key: 'value', label: 'Value' }],
+                rows: [
+                    { label: 'Kit', value: formatVND(keyboardSummary.kit) },
+                    { label: 'Keycap', value: formatVND(keyboardSummary.keycap) },
+                    { label: 'Accessories', value: formatVND(keyboardSummary.accessories) },
+                    { label: 'Total', value: formatVND(keyboardSummary.total) },
+                ],
+            },
+            { title: 'Keyboard by Category', columns: [{ key: 'category', label: 'Category' }, { key: 'count', label: 'Count' }], rows: keyboardCategoryChart },
+        ],
+        funds: [
+            {
+                title: 'Funds Summary',
+                columns: [{ key: 'label', label: 'Metric' }, { key: 'value', label: 'Value' }],
+                rows: [
+                    { label: 'Buy', value: formatVND(fundsSummary.buy) },
+                    { label: 'Sell', value: formatVND(fundsSummary.sell) },
+                    { label: 'Top-up', value: formatVND(fundsSummary.topUp) },
+                    { label: 'Net', value: formatVND(fundsSummary.net) },
+                ],
+            },
+            { title: 'Funds by Type', columns: [{ key: 'type', label: 'Type' }, { key: 'count', label: 'Count' }], rows: fundsTypeChart },
+        ],
         ideas: [
             { title: 'Ideas by Status', columns: [{ key: 'status', label: 'Status' }, { key: 'count', label: 'Count' }], rows: ideaStatus || [] },
             { title: 'Ideas by Topic', columns: [{ key: 'topic', label: 'Topic' }, { key: 'count', label: 'Count' }], rows: ideaTopics || [] },
@@ -585,7 +872,7 @@ export default function ReportsPage() {
             moduleLabel: string;
             title: string;
             columns: ReadonlyArray<{ key: string; label: string; render?: (value: any, row: Record<string, any>) => React.ReactNode }>;
-            rows: Array<Record<string, any>>;
+            rows: ReadonlyArray<Record<string, any>>;
         }> = [];
 
         selectedTabs.forEach((tabId) => {
@@ -712,8 +999,13 @@ export default function ReportsPage() {
         }, 400);
     }
 
-    function toggleTab(tabId: string) {
-        setSelectedTabs((current) => {
+    function toggleTab(tabId: AnalyticsTabId) {
+        if (selectionMode === 'single') {
+            setSingleSelectedTab(tabId);
+            return;
+        }
+
+        setMultiSelectedTabs((current) => {
             if (current.includes(tabId)) {
                 return current.length === 1 ? current : current.filter((id) => id !== tabId);
             }
@@ -722,16 +1014,54 @@ export default function ReportsPage() {
     }
 
     function selectAllTabs() {
-        setSelectedTabs(tabs.map((t) => t.id));
+        if (selectionMode === 'single') {
+            setSingleSelectedTab('all');
+            return;
+        }
+        setMultiSelectedTabs(tabs.map((t) => t.id));
     }
 
-    const isAllSelected = selectedTabs.length === tabs.length && tabs.every(t => selectedTabs.includes(t.id));
+    function setMode(mode: AnalyticsSelectionMode) {
+        setSelectionMode(mode);
+        if (mode === 'single') {
+            setSingleSelectedTab((current) => {
+                if (current === 'all') return current;
+                return current || multiSelectedTabs[0] || (tabs.some((tab) => tab.id === 'calendar') ? 'calendar' : tabs[0]?.id || 'all');
+            });
+        }
+    }
+
+    const isAllSelected = selectionMode === 'single'
+        ? singleSelectedTab === 'all'
+        : multiSelectedTabs.length === tabs.length && tabs.every((tab) => multiSelectedTabs.includes(tab.id));
 
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
-            <div className="flex items-center gap-2">
-                <BarChart3 className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Analytics</h2>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                    <BarChart3 className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Analytics</h2>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                        type="button"
+                        className="px-4 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2"
+                        style={{ backgroundColor: '#166534', color: '#fff' }}
+                        onClick={handleExportExcel}
+                    >
+                        <FileSpreadsheet className="w-4 h-4" />
+                        Export Excel
+                    </button>
+                    <button
+                        type="button"
+                        className="px-4 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2"
+                        style={{ backgroundColor: '#1d4ed8', color: '#fff' }}
+                        onClick={handleExportPdf}
+                    >
+                        <FileText className="w-4 h-4" />
+                        Export PDF
+                    </button>
+                </div>
             </div>
 
             <div className="card p-4 space-y-3">
@@ -740,37 +1070,188 @@ export default function ReportsPage() {
                     <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>🔍 Analytics Configuration</span>
                 </div>
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className={`grid ${filterGridClass} gap-3 flex-1`}>
-                        <select className="input text-sm" value={reportTimeRange} onChange={(e) => setReportTimeRange(e.target.value as ReportTimeRange)}>
-                            {reportTimeRangeOptions.map((option) => (
-                                <option key={option.value} value={option.value}>{option.label}</option>
-                            ))}
-                        </select>
-                        {showTypeSelect && (
-                            <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>
+                    {isSingleTaskView ? (
+                        <div className="grid grid-cols-1 gap-3 flex-1 md:grid-cols-4">
+                            <select className="input text-sm" value={taskFilters.dueDate} onChange={(e) => setTaskFilters((current) => ({ ...current, dueDate: e.target.value as AnalyticsTaskDueDateFilter }))}>
+                                {TASK_DUE_DATE_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                            <select className="input text-sm" value={taskFilters.type} onChange={(e) => setTaskFilters((current) => ({ ...current, type: e.target.value as AnalyticsTaskTypeFilter }))}>
+                                {TASK_TYPE_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                            <select className="input text-sm" value={taskFilters.priority} onChange={(e) => setTaskFilters((current) => ({ ...current, priority: e.target.value as AnalyticsTaskPriorityFilter }))}>
+                                {TASK_PRIORITY_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                            <select className="input text-sm" value={taskFilters.status} onChange={(e) => setTaskFilters((current) => ({ ...current, status: e.target.value as AnalyticsTaskStatusFilter }))}>
+                                {TASK_STATUS_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    ) : isSingleGoalView ? (
+                        <div className="grid grid-cols-1 gap-3 flex-1 md:grid-cols-1">
+                            <select className="input text-sm" value={goalPeriodFilter} onChange={(e) => setGoalPeriodFilter(e.target.value as SharedGoalPeriodFilter)}>
+                                {GOAL_PERIOD_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    ) : isSingleExpenseView ? (
+                        <div className="grid grid-cols-1 gap-3 flex-1 md:grid-cols-4">
+                            <select className="input text-sm" value={expenseFilters.timePreset} onChange={(e) => setExpenseFilters((current) => ({ ...current, timePreset: e.target.value as ExpenseTimePreset }))}>
+                                {EXPENSE_TIME_PRESET_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                            <select className="input text-sm" value={expenseFilters.type} onChange={(e) => setExpenseFilters((current) => {
+                                const nextType = e.target.value;
+                                const availableCategories = nextType === 'RECEIVE'
+                                    ? EXPENSE_RECEIVE_CATEGORIES
+                                    : nextType === 'PAY'
+                                        ? EXPENSE_PAY_CATEGORIES
+                                        : EXPENSE_ALL_CATEGORIES;
+                                return {
+                                    ...current,
+                                    type: nextType,
+                                    category: current.category && !availableCategories.includes(current.category) ? '' : current.category,
+                                };
+                            })}>
                                 <option value="">All Types</option>
-                                {typeFilterOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                {EXPENSE_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                             </select>
-                        )}
-                        {showTypeInput && (
-                            <input type="text" className="input text-sm" placeholder="Filter by asset type" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} />
-                        )}
-                        {showScopeSelect && (
-                            <select className="input text-sm" value={filters.scope} onChange={(e) => setFilters({ ...filters, scope: e.target.value })}>
+                            <select className="input text-sm" value={expenseFilters.scope} onChange={(e) => setExpenseFilters((current) => ({ ...current, scope: e.target.value }))}>
                                 <option value="">All Scopes</option>
-                                {scopeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                {EXPENSE_SCOPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                             </select>
-                        )}
-                        {showCategorySelect && (
-                            <select className="input text-sm" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
+                            <select className="input text-sm" value={expenseFilters.category} onChange={(e) => setExpenseFilters((current) => ({ ...current, category: e.target.value }))}>
                                 <option value="">All Categories</option>
-                                {expenseCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+                                {(expenseFilters.type === 'RECEIVE' ? EXPENSE_RECEIVE_CATEGORIES : expenseFilters.type === 'PAY' ? EXPENSE_PAY_CATEGORIES : EXPENSE_ALL_CATEGORIES).map((category) => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
                             </select>
-                        )}
-                        {showCategoryInput && (
-                            <input type="text" className="input text-sm" placeholder={`Filter by ${primaryTab === 'calendar' ? 'calendar' : primaryTab} category`} value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} />
-                        )}
-                    </div>
+                        </div>
+                    ) : isSingleHouseworkView ? (
+                        <div className="grid grid-cols-1 gap-3 flex-1 md:grid-cols-3">
+                            <select className="input text-sm" value={houseworkFilters.dueDate} onChange={(e) => setHouseworkFilters((current) => ({ ...current, dueDate: e.target.value as AnalyticsHouseworkDueDateFilter }))}>
+                                {HOUSEWORK_DUE_DATE_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                            <select className="input text-sm" value={houseworkFilters.frequency} onChange={(e) => setHouseworkFilters((current) => ({ ...current, frequency: e.target.value as AnalyticsHouseworkFrequencyFilter }))}>
+                                <option value="ALL">All Frequencies</option>
+                                {HOUSEWORK_FREQUENCY_OPTIONS.map((frequency) => (
+                                    <option key={frequency} value={frequency}>{frequency.replaceAll('_', ' ')}</option>
+                                ))}
+                            </select>
+                            <select className="input text-sm" value={houseworkFilters.status} onChange={(e) => setHouseworkFilters((current) => ({ ...current, status: e.target.value as AnalyticsHouseworkStatusFilter }))}>
+                                {HOUSEWORK_STATUS_FILTER_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    ) : isSingleKeyboardView ? (
+                        <div className="flex flex-1 flex-wrap gap-3">
+                            <div className="min-w-[220px] flex-[1.4]">
+                                <input
+                                    type="text"
+                                    className="input text-sm"
+                                    placeholder="Search by name..."
+                                    value={keyboardFilters.search}
+                                    onChange={(e) => setKeyboardFilters((current) => ({ ...current, search: e.target.value }))}
+                                />
+                            </div>
+                            <MultiSelectFilter
+                                className="min-w-[150px] flex-1"
+                                label="Category"
+                                allLabel="All categories"
+                                options={KEYBOARD_FILTER_CATEGORIES.map((value) => ({ value, label: value }))}
+                                selected={keyboardFilters.categories}
+                                onChange={(values) => setKeyboardFilters((current) => ({ ...current, categories: values }))}
+                            />
+                            <MultiSelectFilter
+                                className="min-w-[150px] flex-1"
+                                label="Tag"
+                                allLabel="All tags"
+                                options={KEYBOARD_FILTER_TAGS.map((value) => ({ value, label: value }))}
+                                selected={keyboardFilters.tags}
+                                onChange={(values) => setKeyboardFilters((current) => ({ ...current, tags: values }))}
+                            />
+                            <MultiSelectFilter
+                                className="min-w-[150px] flex-1"
+                                label="Color"
+                                allLabel="All colors"
+                                options={KEYBOARD_FILTER_COLORS.map((value) => ({ value, label: value }))}
+                                selected={keyboardFilters.colors}
+                                onChange={(values) => setKeyboardFilters((current) => ({ ...current, colors: values }))}
+                            />
+                            <MultiSelectFilter
+                                className="min-w-[170px] flex-1"
+                                label="Price"
+                                allLabel="All prices"
+                                options={KEYBOARD_FILTER_PRICE_RANGES.map((range) => ({ value: range.value, label: range.label }))}
+                                selected={keyboardFilters.priceRanges}
+                                onChange={(values) => setKeyboardFilters((current) => ({ ...current, priceRanges: values as typeof current.priceRanges }))}
+                            />
+                        </div>
+                    ) : isSingleFundsView ? (
+                        <div className="grid grid-cols-1 gap-3 flex-1 md:grid-cols-6">
+                            <select className="input text-sm" value={fundsFilters.type} onChange={(e) => setFundsFilters((current) => ({ ...current, type: e.target.value }))}>
+                                <option value="">All Types</option>
+                                {FUNDS_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                            </select>
+                            <select className="input text-sm" value={fundsFilters.scope} onChange={(e) => setFundsFilters((current) => ({ ...current, scope: e.target.value }))}>
+                                <option value="">All Scopes</option>
+                                {FUNDS_SCOPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                            </select>
+                            <select className="input text-sm" value={fundsFilters.category} onChange={(e) => setFundsFilters((current) => ({ ...current, category: e.target.value }))}>
+                                <option value="">All Categories</option>
+                                {FUNDS_CATEGORY_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                            </select>
+                            <select className="input text-sm" value={fundsFilters.condition} onChange={(e) => setFundsFilters((current) => ({ ...current, condition: e.target.value }))}>
+                                <option value="">All Conditions</option>
+                                {FUNDS_CONDITION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                            </select>
+                            <input type="date" className="input text-sm" value={fundsFilters.dateFrom} onChange={(e) => setFundsFilters((current) => ({ ...current, dateFrom: e.target.value }))} />
+                            <input type="date" className="input text-sm" value={fundsFilters.dateTo} min={fundsFilters.dateFrom || undefined} onChange={(e) => setFundsFilters((current) => ({ ...current, dateTo: e.target.value }))} />
+                        </div>
+                    ) : (
+                        <div className={`grid ${filterGridClass} gap-3 flex-1`}>
+                            <select className="input text-sm" value={reportTimeRange} onChange={(e) => setReportTimeRange(e.target.value as ReportTimeRange)}>
+                                {reportTimeRangeOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                            {showTypeSelect && (
+                                <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>
+                                    <option value="">All Types</option>
+                                    {typeFilterOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                </select>
+                            )}
+                            {showTypeInput && (
+                                <input type="text" className="input text-sm" placeholder="Filter by asset type" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} />
+                            )}
+                            {showScopeSelect && (
+                                <select className="input text-sm" value={filters.scope} onChange={(e) => setFilters({ ...filters, scope: e.target.value })}>
+                                    <option value="">All Scopes</option>
+                                    {scopeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                </select>
+                            )}
+                            {showCategorySelect && (
+                                <select className="input text-sm" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
+                                    <option value="">All Categories</option>
+                                    {expenseCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+                                </select>
+                            )}
+                            {showCategoryInput && (
+                                <input type="text" className="input text-sm" placeholder={`Filter by ${primaryTab === 'calendar' ? 'calendar' : primaryTab} category`} value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} />
+                            )}
+                        </div>
+                    )}
                     <div className="flex items-center gap-3 flex-wrap">
                         <span className="text-sm font-semibold" style={{ color: 'var(--color-text-secondary)' }}>View Type:</span>
                         <div className="flex gap-2 rounded-2xl p-1" style={{ backgroundColor: 'var(--color-bg)' }}>
@@ -795,7 +1276,12 @@ export default function ReportsPage() {
                         </div>
                     </div>
                 </div>
-                {reportTimeRange === 'CUSTOM' && (
+                {isSingleExpenseView && expenseFilters.timePreset === 'CUSTOM' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input type="date" className="input text-sm" value={expenseFilters.dateFrom} onChange={(e) => setExpenseFilters((current) => ({ ...current, dateFrom: e.target.value }))} />
+                        <input type="date" className="input text-sm" value={expenseFilters.dateTo} min={expenseFilters.dateFrom || undefined} onChange={(e) => setExpenseFilters((current) => ({ ...current, dateTo: e.target.value }))} />
+                    </div>
+                ) : reportTimeRange === 'CUSTOM' && !isSingleTaskView && !isSingleGoalView && !isSingleExpenseView && !isSingleHouseworkView && !isSingleKeyboardView && !isSingleFundsView && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input type="date" className="input text-sm" value={filters.dateFrom} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} />
                         <input type="date" className="input text-sm" value={filters.dateTo} min={filters.dateFrom || undefined} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
@@ -806,7 +1292,9 @@ export default function ReportsPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex gap-1 p-1 rounded-lg flex-wrap" style={{ backgroundColor: 'var(--color-bg)' }}>
                     {tabs.map((tab) => {
-                        const selected = selectedTabs.includes(tab.id);
+                        const selected = selectionMode === 'single'
+                            ? singleSelectedTab === tab.id
+                            : multiSelectedTabs.includes(tab.id);
                         return (
                             <button
                                 key={tab.id}
@@ -834,24 +1322,28 @@ export default function ReportsPage() {
                         All
                     </button>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
                     <button
                         type="button"
-                        className="px-4 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2"
-                        style={{ backgroundColor: '#166534', color: '#fff' }}
-                        onClick={handleExportExcel}
+                        onClick={() => setMode('single')}
+                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${selectionMode === 'single' ? 'shadow-sm' : ''}`}
+                        style={{
+                            backgroundColor: selectionMode === 'single' ? 'var(--color-primary)' : 'var(--color-surface)',
+                            color: selectionMode === 'single' ? '#fff' : 'var(--color-text)',
+                        }}
                     >
-                        <FileSpreadsheet className="w-4 h-4" />
-                        Export Excel
+                        Single Select
                     </button>
                     <button
                         type="button"
-                        className="px-4 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2"
-                        style={{ backgroundColor: '#1d4ed8', color: '#fff' }}
-                        onClick={handleExportPdf}
+                        onClick={() => setMode('multi')}
+                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${selectionMode === 'multi' ? 'shadow-sm' : ''}`}
+                        style={{
+                            backgroundColor: selectionMode === 'multi' ? 'var(--color-primary)' : 'var(--color-surface)',
+                            color: selectionMode === 'multi' ? '#fff' : 'var(--color-text)',
+                        }}
                     >
-                        <FileText className="w-4 h-4" />
-                        Export PDF
+                        Multi Select
                     </button>
                 </div>
             </div>
@@ -1247,6 +1739,78 @@ export default function ReportsPage() {
                                 { key: 'createdAt', label: 'Created', render: (value) => formatDisplayDate(value) },
                             ]}
                             rows={rawIdeas || []}
+                        />
+                    )}
+                </div>
+            )}
+            {selectedTabs.includes('cakeo') && (
+                <div className="card p-5">
+                    <h3 className="font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Ca Keo Analytics</h3>
+                    <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Ca Keo analytics content is not added yet.</p>
+                </div>
+            )}
+            {selectedTabs.includes('keyboard') && (
+                <div className="space-y-6">
+                    {showCharts && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Kit</div><div className="text-2xl font-bold" style={{ color: '#2563eb' }}>{formatVND(keyboardSummary.kit)}</div></div>
+                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Keycap</div><div className="text-2xl font-bold" style={{ color: '#16a34a' }}>{formatVND(keyboardSummary.keycap)}</div></div>
+                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Accessories</div><div className="text-2xl font-bold" style={{ color: '#6b7280' }}>{formatVND(keyboardSummary.accessories)}</div></div>
+                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Total</div><div className="text-2xl font-bold" style={{ color: 'var(--color-success)' }}>{formatVND(keyboardSummary.total)}</div></div>
+                            </div>
+                            <div className="card p-5 md:col-span-2">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Keyboard by Category</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <BarChart data={keyboardCategoryChart}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                        <XAxis dataKey="category" tick={{ fontSize: 12 }} />
+                                        <YAxis tick={{ fontSize: 12 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#0f766e" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
+                    {showTables && (
+                        <DataTableCard
+                            title="Keyboard Items"
+                            columns={tableConfigs.keyboard.columns}
+                            rows={keyboardAnalyticsRows}
+                        />
+                    )}
+                </div>
+            )}
+            {selectedTabs.includes('funds') && (
+                <div className="space-y-6">
+                    {showCharts && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Buy</div><div className="text-2xl font-bold" style={{ color: 'var(--color-danger)' }}>{formatVND(fundsSummary.buy)}</div></div>
+                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Sell</div><div className="text-2xl font-bold" style={{ color: 'var(--color-success)' }}>{formatVND(fundsSummary.sell)}</div></div>
+                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Top-up</div><div className="text-2xl font-bold" style={{ color: '#2563eb' }}>{formatVND(fundsSummary.topUp)}</div></div>
+                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Net</div><div className="text-2xl font-bold" style={{ color: fundsSummary.net < 0 ? 'var(--color-danger)' : 'var(--color-success)' }}>{formatVND(fundsSummary.net)}</div></div>
+                            </div>
+                            <div className="card p-5 md:col-span-2">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Funds by Type</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <BarChart data={fundsTypeChart}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                        <XAxis dataKey="type" tick={{ fontSize: 12 }} />
+                                        <YAxis tick={{ fontSize: 12 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
+                    {showTables && (
+                        <DataTableCard
+                            title="Fund Transactions"
+                            columns={tableConfigs.funds.columns}
+                            rows={fundsAnalyticsRows}
                         />
                     )}
                 </div>

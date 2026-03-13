@@ -6,30 +6,18 @@ import api from '../api/client';
 import PaginationControls from '../components/PaginationControls';
 import { parseCompactAmountInput } from '../utils/amount';
 import { useAuthStore } from '../stores/auth';
+import {
+    DEFAULT_FUNDS_FILTERS,
+    FUNDS_CATEGORY_OPTIONS,
+    FUNDS_CONDITION_OPTIONS,
+    FUNDS_SCOPE_OPTIONS,
+    FUNDS_TYPE_OPTIONS,
+} from '../config/fundsFilters';
 
-const typeOptions = [
-    { value: 'BUY', label: 'Buy' },
-    { value: 'SELL', label: 'Sell' },
-    { value: 'TOP_UP', label: 'Top-up' },
-];
-
-const scopeOptions = [
-    { value: 'MECHANICAL_KEYBOARD', label: 'Mechanical keyboard' },
-    { value: 'PLAY_STATION', label: 'Play Station' },
-];
-
-const categoryOptions = [
-    { value: 'KEYCAP', label: 'Keycap' },
-    { value: 'KIT', label: 'Kit' },
-    { value: 'SHIPPING', label: 'Shipping' },
-    { value: 'ACCESSORIES', label: 'Accessories' },
-    { value: 'OTHER', label: 'Other' },
-];
-
-const conditionOptions = [
-    { value: 'BNIB', label: 'BNIB' },
-    { value: 'USED', label: 'Used' },
-];
+const typeOptions = [...FUNDS_TYPE_OPTIONS];
+const scopeOptions = [...FUNDS_SCOPE_OPTIONS];
+const categoryOptions = [...FUNDS_CATEGORY_OPTIONS];
+const conditionOptions = [...FUNDS_CONDITION_OPTIONS];
 
 const columns = [
     { key: 'date', label: 'Date' },
@@ -135,7 +123,7 @@ export default function FundsPage() {
     const [showModal, setShowModal] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [editingFund, setEditingFund] = useState<any>(null);
-    const [filters, setFilters] = useState({ type: '', scope: '', category: '', condition: '', dateFrom: '', dateTo: '' });
+    const [filters, setFilters] = useState({ ...DEFAULT_FUNDS_FILTERS });
     const [form, setForm] = useState(emptyForm());
     const [sortBy, setSortBy] = useState<SortKey>('date');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');

@@ -4,25 +4,28 @@ import api from '../api/client';
 import { ArrowDown, ArrowUp, Filter, Keyboard, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
 import PaginationControls from '../components/PaginationControls';
 import { parseCompactAmountInput } from '../utils/amount';
+import MultiSelectFilter from '../components/MultiSelectFilter';
+import {
+    DEFAULT_KEYBOARD_FILTERS,
+    KEYBOARD_FILTER_CATEGORIES,
+    KEYBOARD_FILTER_COLORS,
+    KEYBOARD_FILTER_PRICE_RANGES,
+    KEYBOARD_FILTER_TAGS,
+    matchesKeyboardFilters,
+} from '../config/keyboardFilters';
 
 // ─── Constants ───────────────────────────────────────
 
-const CATEGORIES = ['Keycap', 'Kit', 'Shipping', 'Accessories', 'Other'];
-const TAGS = ['Board 1', 'Board 2', 'Board 3', 'Board 4', 'Board 5', 'Board 6', 'Board 7', 'Board 8', 'Board 9', 'Board 10', 'Board 11', 'Board 12', 'Board 13', 'Board 14', 'Board 15', 'Board 16', 'Board 17', 'Stock'];
-const COLORS = ['Blue', 'PC', 'Purple', 'Red', 'Gray', 'Green', 'Black', 'Silver', 'Copper', 'Brown', 'Rose Gold', 'Orange', 'Beige', 'Colorful'];
+const CATEGORIES = [...KEYBOARD_FILTER_CATEGORIES];
+const TAGS = [...KEYBOARD_FILTER_TAGS];
+const COLORS = [...KEYBOARD_FILTER_COLORS];
 const SPECS = ['Base', 'Space', 'Plate Alu', 'Solder', 'Novel', 'Alpha', 'Icon mod', 'Hiragana', 'Hotswap', 'Deskmat', 'Fix kit'];
 const EXTRAS = ['Hotswap', 'Solder', 'Plate Alu', 'Plate CF', 'Plate PC', 'Plate PP', 'Rama'];
 const STABS = ['V2.0', 'V2.1', 'V2.2'];
 const SWITCH_ALPHAS = ['VB 3 pin', 'VB 5 pin'];
 const SWITCH_MODS = ['VB 3 pin', 'VB 5 pin', 'HB', 'Cherry Black'];
 const CONDITIONS = ['BNIB', 'Used'];
-const PRICE_RANGES = [
-    { value: 'UNDER_5M', label: '< 5M' },
-    { value: 'BETWEEN_5M_10M', label: '5M to 10M' },
-    { value: 'BETWEEN_10M_20M', label: '10M to 20M' },
-    { value: 'BETWEEN_20M_30M', label: '20M to 30M' },
-    { value: 'OVER_30M', label: 'Over 30M' },
-] as const;
+const PRICE_RANGES = [...KEYBOARD_FILTER_PRICE_RANGES];
 const COLOR_TEXT_MAP: Record<string, string> = {
     Blue: '#2563eb',
     PC: '#6b7280',
@@ -92,18 +95,6 @@ type SortOrder = 'asc' | 'desc';
 // ─── Helpers ─────────────────────────────────────────
 
 const formatVND = (n: number) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n)} VND`;
-
-function matchesPriceRange(price: number | null, range: string) {
-    if (!range) return true;
-    if (price == null) return false;
-
-    if (range === 'UNDER_5M') return price < 5_000_000;
-    if (range === 'BETWEEN_5M_10M') return price >= 5_000_000 && price <= 10_000_000;
-    if (range === 'BETWEEN_10M_20M') return price > 10_000_000 && price <= 20_000_000;
-    if (range === 'BETWEEN_20M_30M') return price > 20_000_000 && price <= 30_000_000;
-    if (range === 'OVER_30M') return price > 30_000_000;
-    return true;
-}
 
 const parseAmountInput = parseCompactAmountInput;
 
@@ -185,63 +176,6 @@ function KeyboardCategoryBadge({ category }: { category: string }) {
     );
 }
 
-function MultiSelectFilter({
-    label,
-    allLabel,
-    options,
-    selected,
-    onChange,
-    className = '',
-}: {
-    label: string;
-    allLabel: string;
-    options: { value: string; label: string }[];
-    selected: string[];
-    onChange: (values: string[]) => void;
-    className?: string;
-}) {
-    const summary = selected.length === 0
-        ? allLabel
-        : selected.length === 1
-            ? options.find((option) => option.value === selected[0])?.label ?? selected[0]
-            : `${selected.length} selected`;
-
-    return (
-        <details className={`relative ${className}`}>
-            <summary className="list-none cursor-pointer text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 whitespace-nowrap overflow-hidden text-ellipsis">
-                {summary}
-            </summary>
-            <div className="absolute left-0 z-20 mt-2 w-full min-w-[180px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg p-2 max-h-64 overflow-y-auto">
-                <div className="mb-2 flex items-center justify-between px-1">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
-                    {selected.length > 0 && (
-                        <button
-                            type="button"
-                            onClick={() => onChange([])}
-                            className="text-xs text-gray-400 hover:text-red-500"
-                        >
-                            Clear
-                        </button>
-                    )}
-                </div>
-                <div className="space-y-1">
-                    {options.map((option) => (
-                        <label key={option.value} className="flex items-center gap-2 rounded px-2 py-1 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={selected.includes(option.value)}
-                                onChange={() => onChange(toggleArr(selected, option.value))}
-                                className="rounded"
-                            />
-                            <span>{option.label}</span>
-                        </label>
-                    ))}
-                </div>
-            </div>
-        </details>
-    );
-}
-
 // ─── CSV helpers ─────────────────────────────────────
 
 function parseCSV(text: string): { headers: string[]; rows: string[][] } {
@@ -285,11 +219,7 @@ export default function KeyboardPage() {
     const qc = useQueryClient();
 
     // Filters
-    const [filterCategory, setFilterCategory] = useState<string[]>([]);
-    const [filterTag, setFilterTag] = useState<string[]>([]);
-    const [filterColor, setFilterColor] = useState<string[]>([]);
-    const [filterPriceRange, setFilterPriceRange] = useState<string[]>([]);
-    const [filterSearch, setFilterSearch] = useState('');
+    const [filters, setFilters] = useState({ ...DEFAULT_KEYBOARD_FILTERS });
     const [sortBy, setSortBy] = useState<SortKey>('name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
     const [page, setPage] = useState(1);
@@ -311,7 +241,7 @@ export default function KeyboardPage() {
 
     useEffect(() => {
         setPage(1);
-    }, [filterCategory, filterTag, filterColor, filterPriceRange, filterSearch, sortBy, sortOrder, pageSize]);
+    }, [filters, sortBy, sortOrder, pageSize]);
 
     const createMut = useMutation({
         mutationFn: (body: any) => api.post('/keyboards', body),
@@ -349,14 +279,7 @@ export default function KeyboardPage() {
     }
 
     // Filtering
-    const filtered = items.filter(item => {
-        if (filterSearch && !item.name.toLowerCase().includes(filterSearch.toLowerCase())) return false;
-        if (filterCategory.length > 0 && (!item.category || !filterCategory.includes(item.category))) return false;
-        if (filterTag.length > 0 && (!item.tag || !filterTag.includes(item.tag))) return false;
-        if (filterColor.length > 0 && (!item.color || !filterColor.includes(item.color))) return false;
-        if (filterPriceRange.length > 0 && !filterPriceRange.some((range) => matchesPriceRange(item.price, range))) return false;
-        return true;
-    });
+    const filtered = items.filter((item) => matchesKeyboardFilters(item, filters));
 
     const sortedItems = useMemo(() => {
         const getValue = (item: KeyboardItem, key: SortKey) => {
@@ -411,7 +334,7 @@ export default function KeyboardPage() {
     const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
     const paginatedItems = sortedItems.slice((page - 1) * pageSize, page * pageSize);
     const totalPrice = summary.total;
-    const activeFilterCount = [filterCategory, filterTag, filterColor, filterPriceRange].filter((values) => values.length > 0).length;
+    const activeFilterCount = [filters.categories, filters.tags, filters.colors, filters.priceRanges].filter((values) => values.length > 0).length;
 
     function toggleSort(column: SortKey) {
         if (sortBy === column) {
@@ -455,14 +378,14 @@ export default function KeyboardPage() {
                 <div className="flex items-center gap-3 flex-nowrap overflow-x-auto pb-1">
                     <div className="min-w-[220px] flex-[1.4]">
                         <input
-                            value={filterSearch}
-                            onChange={e => setFilterSearch(e.target.value)}
+                            value={filters.search}
+                            onChange={e => setFilters((current) => ({ ...current, search: e.target.value }))}
                             placeholder="Search by name…"
                             className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         />
                     </div>
                     {activeFilterCount > 0 && (
-                        <button onClick={() => { setFilterCategory([]); setFilterTag([]); setFilterColor([]); setFilterPriceRange([]); }} className="shrink-0 text-xs text-gray-400 hover:text-red-500">
+                        <button onClick={() => setFilters((current) => ({ ...current, categories: [], tags: [], colors: [], priceRanges: [] }))} className="shrink-0 text-xs text-gray-400 hover:text-red-500">
                             Clear
                         </button>
                     )}
@@ -471,32 +394,32 @@ export default function KeyboardPage() {
                         label="Category"
                         allLabel="All categories"
                         options={CATEGORIES.map((value) => ({ value, label: value }))}
-                        selected={filterCategory}
-                        onChange={setFilterCategory}
+                        selected={filters.categories}
+                        onChange={(values) => setFilters((current) => ({ ...current, categories: values }))}
                     />
                     <MultiSelectFilter
                         className="min-w-[150px] flex-1"
                         label="Tag"
                         allLabel="All tags"
                         options={TAGS.map((value) => ({ value, label: value }))}
-                        selected={filterTag}
-                        onChange={setFilterTag}
+                        selected={filters.tags}
+                        onChange={(values) => setFilters((current) => ({ ...current, tags: values }))}
                     />
                     <MultiSelectFilter
                         className="min-w-[150px] flex-1"
                         label="Color"
                         allLabel="All colors"
                         options={COLORS.map((value) => ({ value, label: value }))}
-                        selected={filterColor}
-                        onChange={setFilterColor}
+                        selected={filters.colors}
+                        onChange={(values) => setFilters((current) => ({ ...current, colors: values }))}
                     />
                     <MultiSelectFilter
                         className="min-w-[170px] flex-1"
                         label="Price"
                         allLabel="All prices"
                         options={PRICE_RANGES.map((range) => ({ value: range.value, label: range.label }))}
-                        selected={filterPriceRange}
-                        onChange={setFilterPriceRange}
+                        selected={filters.priceRanges}
+                        onChange={(values) => setFilters((current) => ({ ...current, priceRanges: values as typeof current.priceRanges }))}
                     />
                 </div>
             </div>

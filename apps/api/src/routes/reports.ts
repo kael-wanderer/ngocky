@@ -138,6 +138,10 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
         const type = req.query.type as string;
         const scope = req.query.scope as string;
         const category = req.query.category as string;
+        const priority = req.query.priority as string;
+        const status = req.query.status as string;
+        const periodType = req.query.periodType as string;
+        const frequency = req.query.frequency as string;
 
         switch (module) {
             case 'project': {
@@ -177,6 +181,8 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                             buildVisibleStandaloneTaskWhere(userId),
                             buildDateFilter(req, 'dueDate', 'createdAt'),
                             ...(type ? [{ taskType: type as any }] : []),
+                            ...(priority ? [{ priority: priority as any }] : []),
+                            ...(status ? [{ status: status as any }] : []),
                         ],
                     },
                     orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }],
@@ -206,6 +212,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                                 ],
                             },
                             buildDateFilter(req, 'startDate'),
+                            ...(periodType ? [{ periodType: periodType as any }] : []),
                         ],
                     },
                     orderBy: { sortOrder: 'asc' },
@@ -264,6 +271,8 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                                 ],
                             },
                             buildDateFilter(req, 'nextDueDate', 'createdAt'),
+                            ...(frequency ? [{ frequencyType: frequency as any }] : []),
+                            ...(status ? [{ status: status as any }] : []),
                         ],
                     },
                     include: {
@@ -276,6 +285,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                     id: item.id,
                     title: item.title,
                     frequencyType: item.frequencyType,
+                    status: item.status,
                     nextDueDate: item.nextDueDate,
                     lastCompletedDate: item.lastCompletedDate,
                     active: item.active,
@@ -414,6 +424,8 @@ router.get('/tasks-by-status', async (req: Request, res: Response, next: NextFun
     try {
         const userId = req.user!.userId;
         const type = req.query.type as string;
+        const priority = req.query.priority as string;
+        const status = req.query.status as string;
         const result = await prisma.task.groupBy({
             by: ['status'],
             where: {
@@ -421,6 +433,8 @@ router.get('/tasks-by-status', async (req: Request, res: Response, next: NextFun
                     buildVisibleStandaloneTaskWhere(userId),
                     buildDateFilter(req, 'dueDate', 'createdAt'),
                     ...(type ? [{ taskType: type as any }] : []),
+                    ...(priority ? [{ priority: priority as any }] : []),
+                    ...(status ? [{ status: status as any }] : []),
                 ],
             },
             _count: { _all: true },
@@ -613,6 +627,7 @@ router.get('/assets-by-type', async (req: Request, res: Response, next: NextFunc
 router.get('/goal-completion', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        const periodType = req.query.periodType as string;
         const goals = await prisma.goal.findMany({
             where: {
                 active: true,
@@ -624,6 +639,7 @@ router.get('/goal-completion', async (req: Request, res: Response, next: NextFun
                         ],
                     },
                     buildDateFilter(req, 'startDate'),
+                    ...(periodType ? [{ periodType: periodType as any }] : []),
                 ],
             },
             select: { id: true, title: true, targetCount: true, currentCount: true, periodType: true, userId: true },
@@ -641,6 +657,8 @@ router.get('/goal-completion', async (req: Request, res: Response, next: NextFun
 router.get('/housework-status', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        const frequency = req.query.frequency as string;
+        const status = req.query.status as string;
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const where: any = {
@@ -654,6 +672,8 @@ router.get('/housework-status', async (req: Request, res: Response, next: NextFu
                     ],
                 },
                 buildDateFilter(req, 'nextDueDate', 'createdAt'),
+                ...(frequency ? [{ frequencyType: frequency as any }] : []),
+                ...(status ? [{ status: status as any }] : []),
             ],
         };
         const [total, overdue, completed] = await Promise.all([
