@@ -21,20 +21,44 @@ const canAccessTask = (task: { createdById?: string; isShared?: boolean; project
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
-        const boards = await prisma.project.findMany({
-            where: {
-                OR: [
-                    { ownerId: userId },
-                    { isShared: true },
-                ],
-            },
-            include: {
-                _count: { select: { tasks: true } },
-                owner: { select: { id: true, name: true } },
-            },
-            orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-        });
-        sendSuccess(res, boards);
+        const visibleBoardsWhere = {
+            OR: [
+                { ownerId: userId },
+                { isShared: true },
+            ],
+        };
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const [boards, overdueTaskCounts] = await Promise.all([
+            prisma.project.findMany({
+                where: visibleBoardsWhere,
+                include: {
+                    _count: { select: { tasks: true } },
+                    owner: { select: { id: true, name: true } },
+                },
+                orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+            }),
+            prisma.projectTask.groupBy({
+                by: ['projectId'],
+                where: {
+                    deadline: { lt: todayStart },
+                    status: { notIn: ['DONE', 'ARCHIVED'] as any },
+                    project: visibleBoardsWhere,
+                },
+                _count: { _all: true },
+            }),
+        ]);
+
+        const overdueTaskCountMap = new Map(
+            overdueTaskCounts.map((entry: any) => [entry.projectId, entry._count._all])
+        );
+
+        sendSuccess(res, boards.map((board: any) => ({
+            ...board,
+            overdueTaskCount: overdueTaskCountMap.get(board.id) || 0,
+            hasOverdueTasks: (overdueTaskCountMap.get(board.id) || 0) > 0,
+        })));
     } catch (err) { next(err); }
 });
 

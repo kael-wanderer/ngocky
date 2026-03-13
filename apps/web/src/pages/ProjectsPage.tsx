@@ -254,6 +254,11 @@ export default function ProjectsPage() {
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{b._count?.tasks || 0} tasks</span>
+                                                        {b.hasOverdueTasks && (
+                                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-700">
+                                                                Overdue{b.overdueTaskCount ? ` (${b.overdueTaskCount})` : ''}
+                                                            </span>
+                                                        )}
                                                         {b.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
                                                         <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{String(b.type || 'PERSONAL').replace('_', ' ')}</span>
                                                         {b.boardStatus && <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${boardStatusColors[b.boardStatus]}20`, color: boardStatusColors[b.boardStatus] }}>{boardStatusLabels[b.boardStatus]}</span>}
@@ -285,6 +290,7 @@ export default function ProjectsPage() {
                                     {/* Col 3: task count + shared + type + pinned + updated */}
                                     <div className="flex-1 flex items-center gap-2 flex-wrap">
                                         <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{b._count?.tasks || 0} tasks</span>
+                                        {b.hasOverdueTasks && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-700">Overdue{b.overdueTaskCount ? ` (${b.overdueTaskCount})` : ''}</span>}
                                         {b.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
                                         {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
                                         <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{String(b.type || 'PERSONAL').replace('_', ' ')}</span>
