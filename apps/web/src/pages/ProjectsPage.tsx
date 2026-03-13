@@ -33,7 +33,9 @@ export default function ProjectsPage() {
     const qc = useQueryClient();
     const { user } = useAuthStore();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
+    const boardIdParam = searchParams.get('boardId');
+    const taskIdParam = searchParams.get('taskId');
+    const [selectedBoardId, setSelectedBoardId] = useState<string | null>(boardIdParam);
     const [boardListView, setBoardListView] = useState<'grid' | 'list'>('grid');
     const [view, setView] = useState<'kanban' | 'list'>('kanban');
     const [showCreateBoard, setShowCreateBoard] = useState(false);
@@ -47,8 +49,14 @@ export default function ProjectsPage() {
     const [taskForm, setTaskForm] = useState({ ...emptyTaskForm });
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const boardIdParam = searchParams.get('boardId');
-    const taskIdParam = searchParams.get('taskId');
+
+    const openBoard = (boardId: string, taskId?: string | null) => {
+        const next = new URLSearchParams();
+        next.set('boardId', boardId);
+        if (taskId) next.set('taskId', taskId);
+        setSelectedBoardId(boardId);
+        setSearchParams(next);
+    };
 
     // Queries
     const { data: boards, isLoading: boardsLoading } = useQuery({
@@ -164,7 +172,7 @@ export default function ProjectsPage() {
     };
 
     useEffect(() => {
-        if (boardIdParam && boardIdParam !== selectedBoardId) {
+        if (boardIdParam !== selectedBoardId) {
             setSelectedBoardId(boardIdParam);
         }
     }, [boardIdParam, selectedBoardId]);
@@ -231,7 +239,7 @@ export default function ProjectsPage() {
                                         <div
                                             key={b.id}
                                             className="card p-5 transition-all group hover:shadow-lg cursor-pointer"
-                                            onClick={() => setSelectedBoardId(b.id)}
+                                            onClick={() => openBoard(b.id)}
                                         >
                                             <div className="flex justify-between items-start mb-2">
                                                 <h3 className="font-bold text-lg" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
@@ -265,7 +273,7 @@ export default function ProjectsPage() {
                                 (() => {
                                     const sharedOwnerName = getSharedOwnerName(b, user?.id);
                                     return (
-                                        <div key={b.id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => setSelectedBoardId(b.id)}>
+                                        <div key={b.id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => openBoard(b.id)}>
                                     {/* Col 1: name */}
                                     <div className="w-44 flex-shrink-0">
                                         <h3 className="font-bold text-sm truncate" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
