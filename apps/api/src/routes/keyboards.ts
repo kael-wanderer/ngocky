@@ -26,6 +26,22 @@ function normalizeKitOnlyFields(payload: any) {
     };
 }
 
+function normalizeStringList(value: unknown): string[] {
+    if (Array.isArray(value)) {
+        return value.map((item) => String(item).trim()).filter(Boolean);
+    }
+
+    if (typeof value === 'string') {
+        return value.split(',').map((item) => item.trim()).filter(Boolean);
+    }
+
+    return [];
+}
+
+function mergeSpecWithExtras(spec: unknown, extras: unknown): string[] {
+    return [...new Set([...normalizeStringList(spec), ...normalizeStringList(extras)])];
+}
+
 router.get('/', async (req, res, next) => {
     try {
         const userId = req.user!.userId;
@@ -50,6 +66,7 @@ router.post('/', async (req, res, next) => {
     try {
         const userId = req.user!.userId;
         const { name, price, category, tag, color, spec, extras, description, note, stab, switchAlpha, switchMod, assembler, isShared } = req.body;
+        const normalizedExtras = normalizeStringList(extras);
         const last = await prisma.keyboard.aggregate({ where: { ownerId: userId }, _max: { sortOrder: true } });
         const keyboard = await prisma.keyboard.create({
             data: {
@@ -58,8 +75,8 @@ router.post('/', async (req, res, next) => {
                 category: category ?? null,
                 tag: tag ?? null,
                 color: color ?? null,
-                spec: spec ?? [],
-                extras: extras ?? [],
+                spec: mergeSpecWithExtras(spec, normalizedExtras),
+                extras: normalizedExtras,
                 description: description ?? null,
                 note: note ?? null,
                 ...normalizeKitOnlyFields({ category, stab, switchAlpha, switchMod, assembler }),
@@ -80,6 +97,8 @@ router.patch('/:id', async (req, res, next) => {
         });
         if (!kb) throw new NotFoundError('Keyboard not found');
         const { name, price, category, tag, color, spec, extras, description, note, stab, switchAlpha, switchMod, assembler, isShared } = req.body;
+        const nextSpec = spec !== undefined ? spec : kb.spec;
+        const nextExtras = extras !== undefined ? normalizeStringList(extras) : kb.extras;
         const updated = await prisma.keyboard.update({
             where: { id: kb.id },
             data: {
@@ -88,8 +107,8 @@ router.patch('/:id', async (req, res, next) => {
                 ...(category !== undefined && { category }),
                 ...(tag !== undefined && { tag }),
                 ...(color !== undefined && { color }),
-                ...(spec !== undefined && { spec }),
-                ...(extras !== undefined && { extras }),
+                ...((spec !== undefined || extras !== undefined) && { spec: mergeSpecWithExtras(nextSpec, nextExtras) }),
+                ...(extras !== undefined && { extras: nextExtras }),
                 ...(description !== undefined && { description }),
                 ...(note !== undefined && { note }),
                 ...((category !== undefined || stab !== undefined || switchAlpha !== undefined || switchMod !== undefined || assembler !== undefined)
@@ -128,21 +147,24 @@ router.post('/import', async (req, res, next) => {
         let order = (last._max.sortOrder ?? -1) + 1;
 
         await prisma.keyboard.createMany({
-            data: rows.map(r => ({
-                name: String(r.name ?? '').trim() || 'Untitled',
-                price: parseCompactAmountInput(r.price),
-                category: r.category ?? null,
-                tag: r.tag ?? null,
-                color: r.color ?? null,
-                spec: Array.isArray(r.spec) ? r.spec : (r.spec ? String(r.spec).split(',').map((s: string) => s.trim()).filter(Boolean) : []),
-                extras: Array.isArray(r.extras) ? r.extras : (r.extras ? String(r.extras).split(',').map((s: string) => s.trim()).filter(Boolean) : []),
-                description: r.description ?? null,
-                note: r.note ?? null,
-                ...normalizeKitOnlyFields(r),
-                isShared: false,
-                ownerId: userId,
-                sortOrder: order++,
-            })),
+            data: rows.map(r => {
+                const parsedExtras = normalizeStringList(r.extras);
+                return {
+                    name: String(r.name ?? '').trim() || 'Untitled',
+                    price: parseCompactAmountInput(r.price),
+                    category: r.category ?? null,
+                    tag: r.tag ?? null,
+                    color: r.color ?? null,
+                    spec: mergeSpecWithExtras(r.spec, parsedExtras),
+                    extras: parsedExtras,
+                    description: r.description ?? null,
+                    note: r.note ?? null,
+                    ...normalizeKitOnlyFields(r),
+                    isShared: false,
+                    ownerId: userId,
+                    sortOrder: order++,
+                };
+            }),
         });
 
         sendCreated(res, { created: rows.length });

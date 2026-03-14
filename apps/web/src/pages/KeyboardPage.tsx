@@ -96,6 +96,7 @@ type FilterDropdownKey = 'categories' | 'tags' | 'colors' | 'priceRanges' | null
 // ─── Helpers ─────────────────────────────────────────
 
 const formatVND = (n: number) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n)} VND`;
+const formatPriceValue = (n: number) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n);
 
 const parseAmountInput = parseCompactAmountInput;
 
@@ -491,13 +492,13 @@ export default function KeyboardPage() {
                                         {renderSortIcon('tag')}
                                     </button>
                                 </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-20">
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('color')}>
                                         Color
                                         {renderSortIcon('color')}
                                     </button>
                                 </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[140px]">
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[170px]">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('spec')}>
                                         Spec
                                         {renderSortIcon('spec')}
@@ -517,7 +518,7 @@ export default function KeyboardPage() {
                                 </th>
                                 <th className="text-right px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('price')}>
-                                        Price
+                                        Price (VND)
                                         {renderSortIcon('price')}
                                     </button>
                                 </th>
@@ -588,7 +589,7 @@ export default function KeyboardPage() {
                                     </td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.description ?? ''}>{item.description || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
-                                        {item.price != null ? formatVND(item.price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                                        {item.price != null ? formatPriceValue(item.price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
                                     </td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.note ?? ''}>{item.note || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{isKitCategory(item.category || '') ? (item.stab || <span className="text-gray-300 dark:text-gray-600">—</span>) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>

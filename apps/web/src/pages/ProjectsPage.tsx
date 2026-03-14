@@ -149,7 +149,7 @@ export default function ProjectsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const boardIdParam = searchParams.get('boardId');
     const taskIdParam = searchParams.get('taskId');
-    const [selectedBoardId, setSelectedBoardId] = useState<string | null>(boardIdParam);
+    const selectedBoardId = boardIdParam;
     const [boardListView, setBoardListView] = useState<'grid' | 'list'>('grid');
     const [view, setView] = useState<'kanban' | 'list'>('kanban');
     const [showCreateBoard, setShowCreateBoard] = useState(false);
@@ -157,6 +157,7 @@ export default function ProjectsPage() {
     const [showCreateTask, setShowCreateTask] = useState(false);
     const [editingTask, setEditingTask] = useState<any>(null);
     const [optimisticTasks, setOptimisticTasks] = useState<any[] | null>(null);
+    const [openingBoardId, setOpeningBoardId] = useState<string | null>(null);
 
     const [boardStatusFilter, setBoardStatusFilter] = useState<'ALL' | 'PLAN' | 'WORKING' | 'COMPLETED'>('ALL');
     const [boardSort, setBoardSort] = useState<'default' | 'name_asc' | 'updated_desc'>('default');
@@ -165,11 +166,19 @@ export default function ProjectsPage() {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const openBoard = (boardId: string, taskId?: string | null) => {
+    const openBoard = async (boardId: string, taskId?: string | null) => {
+        setOpeningBoardId(boardId);
+        try {
+            await qc.ensureQueryData({
+                queryKey: ['project_board', boardId],
+                queryFn: async () => (await api.get(`/projects/${boardId}`)).data.data,
+            });
+        } finally {
+            setOpeningBoardId(null);
+        }
         const next = new URLSearchParams();
         next.set('boardId', boardId);
         if (taskId) next.set('taskId', taskId);
-        setSelectedBoardId(boardId);
         setSearchParams(next);
     };
 
@@ -179,7 +188,7 @@ export default function ProjectsPage() {
         queryFn: async () => (await api.get('/projects')).data.data,
     });
 
-    const { data: activeBoard, isLoading: activeBoardLoading } = useQuery({
+    const { data: activeBoard, isLoading: activeBoardLoading, isFetching: activeBoardFetching } = useQuery({
         queryKey: ['project_board', selectedBoardId],
         queryFn: async () => (await api.get(`/projects/${selectedBoardId}`)).data.data,
         enabled: !!selectedBoardId,
@@ -193,7 +202,7 @@ export default function ProjectsPage() {
 
     const deleteBoardMut = useMutation({
         mutationFn: (id: string) => api.delete(`/projects/${id}`),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setSelectedBoardId(null); },
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setSearchParams({}); },
     });
 
     const updateBoardMut = useMutation({
@@ -210,8 +219,7 @@ export default function ProjectsPage() {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
             qc.invalidateQueries({ queryKey: ['project_boards'] });
-            setShowCreateTask(false);
-            setTaskForm({ ...emptyTaskForm });
+            closeTaskModal();
         },
     });
 
@@ -220,7 +228,7 @@ export default function ProjectsPage() {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
             qc.invalidateQueries({ queryKey: ['project_boards'] });
-            setEditingTask(null);
+            closeTaskModal();
         },
     });
 
@@ -272,6 +280,17 @@ export default function ProjectsPage() {
         qc.invalidateQueries({ queryKey: ['project_boards'] });
     };
 
+    const closeTaskModal = () => {
+        setShowCreateTask(false);
+        setEditingTask(null);
+        setTaskForm({ ...emptyTaskForm });
+        if (taskIdParam) {
+            const next = new URLSearchParams(searchParams);
+            next.delete('taskId');
+            setSearchParams(next);
+        }
+    };
+
     const duplicateTask = (task: any) => {
         setEditingTask(null);
         setTaskForm({
@@ -290,12 +309,6 @@ export default function ProjectsPage() {
     };
 
     useEffect(() => {
-        if (boardIdParam !== selectedBoardId) {
-            setSelectedBoardId(boardIdParam);
-        }
-    }, [boardIdParam, selectedBoardId]);
-
-    useEffect(() => {
         if (!taskIdParam || !activeBoard?.tasks?.length) return;
         const task = activeBoard.tasks.find((t: any) => t.id === taskIdParam);
         if (!task) return;
@@ -306,6 +319,43 @@ export default function ProjectsPage() {
     useEffect(() => {
         setOptimisticTasks(null);
     }, [selectedBoardId, activeBoard?.updatedAt]);
+
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+    const tasks = optimisticTasks || activeBoard?.tasks || [];
+    const activeBoardSharedOwnerName = getSharedOwnerName(activeBoard, user?.id);
+
+    const openTaskEditor = (task: any) => {
+        setEditingTask(task);
+        setTaskForm(buildTaskForm(task));
+    };
+
+    const handleKanbanDragEnd = (event: DragEndEvent) => {
+        const activeId = String(event.active.id || '');
+        const overId = event.over ? String(event.over.id || '') : '';
+        if (!activeId.startsWith('task:') || !overId.startsWith('column:')) return;
+
+        const taskId = activeId.replace('task:', '');
+        const nextStatus = overId.replace('column:', '');
+        const currentTask = tasks.find((task: any) => task.id === taskId);
+
+        if (!currentTask || currentTask.status === nextStatus) return;
+
+        const movedTask = { ...currentTask, status: nextStatus };
+        const untouched = tasks.filter((task: any) => task.id !== taskId);
+        const nextTasks = [
+            ...resequenceTasks(untouched.filter((task: any) => task.status !== nextStatus)),
+            ...resequenceTasks([...untouched.filter((task: any) => task.status === nextStatus), movedTask]),
+        ];
+        const normalizedTasks = STATUS_COLS.flatMap((status) => resequenceTasks(nextTasks.filter((task: any) => task.status === status)));
+
+        setOptimisticTasks(normalizedTasks);
+        moveTaskMut.mutate({
+            id: taskId,
+            status: nextStatus,
+            kanbanOrder: normalizedTasks.filter((task: any) => task.status === nextStatus).findIndex((task: any) => task.id === taskId),
+        });
+    };
 
     if (!selectedBoardId) {
         return (
@@ -350,6 +400,12 @@ export default function ProjectsPage() {
                                         <div
                                             key={b.id}
                                             className="card p-5 transition-all group hover:shadow-lg cursor-pointer"
+                                            onMouseEnter={() => {
+                                                qc.prefetchQuery({
+                                                    queryKey: ['project_board', b.id],
+                                                    queryFn: async () => (await api.get(`/projects/${b.id}`)).data.data,
+                                                });
+                                            }}
                                             onClick={() => openBoard(b.id)}
                                         >
                                             <div className="flex justify-between items-start mb-2">
@@ -389,7 +445,17 @@ export default function ProjectsPage() {
                                 (() => {
                                     const sharedOwnerName = getSharedOwnerName(b, user?.id);
                                     return (
-                                        <div key={b.id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => openBoard(b.id)}>
+                                        <div
+                                            key={b.id}
+                                            className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors group cursor-pointer"
+                                            onMouseEnter={() => {
+                                                qc.prefetchQuery({
+                                                    queryKey: ['project_board', b.id],
+                                                    queryFn: async () => (await api.get(`/projects/${b.id}`)).data.data,
+                                                });
+                                            }}
+                                            onClick={() => openBoard(b.id)}
+                                        >
                                     {/* Col 1: name */}
                                     <div className="w-44 flex-shrink-0">
                                         <h3 className="font-bold text-sm truncate" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
@@ -550,48 +616,11 @@ export default function ProjectsPage() {
         );
     }
 
-    // --- Task View ---
-    const tasks = optimisticTasks || activeBoard?.tasks || [];
-    const activeBoardSharedOwnerName = getSharedOwnerName(activeBoard, user?.id);
-    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
-
-    const openTaskEditor = (task: any) => {
-        setEditingTask(task);
-        setTaskForm(buildTaskForm(task));
-    };
-
-    const handleKanbanDragEnd = (event: DragEndEvent) => {
-        const activeId = String(event.active.id || '');
-        const overId = event.over ? String(event.over.id || '') : '';
-        if (!activeId.startsWith('task:') || !overId.startsWith('column:')) return;
-
-        const taskId = activeId.replace('task:', '');
-        const nextStatus = overId.replace('column:', '');
-        const currentTask = tasks.find((task: any) => task.id === taskId);
-
-        if (!currentTask || currentTask.status === nextStatus) return;
-
-        const movedTask = { ...currentTask, status: nextStatus };
-        const untouched = tasks.filter((task: any) => task.id !== taskId);
-        const nextTasks = [
-            ...resequenceTasks(untouched.filter((task: any) => task.status !== nextStatus)),
-            ...resequenceTasks([...untouched.filter((task: any) => task.status === nextStatus), movedTask]),
-        ];
-        const normalizedTasks = STATUS_COLS.flatMap((status) => resequenceTasks(nextTasks.filter((task: any) => task.status === status)));
-
-        setOptimisticTasks(normalizedTasks);
-        moveTaskMut.mutate({
-            id: taskId,
-            status: nextStatus,
-            kanbanOrder: normalizedTasks.filter((task: any) => task.status === nextStatus).findIndex((task: any) => task.id === taskId),
-        });
-    };
-
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => { setSelectedBoardId(null); setSearchParams({}); }} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <button onClick={() => { setSearchParams({}); }} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
@@ -694,11 +723,11 @@ export default function ProjectsPage() {
 
             {/* Task Modal */}
             {(showCreateTask || editingTask) && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreateTask(false); setEditingTask(null); setTaskForm({ ...emptyTaskForm }); } }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) closeTaskModal(); }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">{editingTask ? 'Edit Project Tasks' : 'New Project Task'}</h3>
-                            <button onClick={() => { setShowCreateTask(false); setEditingTask(null); setTaskForm({ ...emptyTaskForm }); }}><X className="w-5 h-5" /></button>
+                            <button onClick={closeTaskModal}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
@@ -766,8 +795,7 @@ export default function ProjectsPage() {
                                             onClick={() => {
                                                 if (window.confirm('Delete this task?')) {
                                                     deleteTaskMut.mutate(editingTask.id);
-                                                    setEditingTask(null);
-                                                    setShowCreateTask(false);
+                                                    closeTaskModal();
                                                 }
                                             }}
                                         >
@@ -779,7 +807,7 @@ export default function ProjectsPage() {
                                     <button
                                         type="button"
                                         className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50"
-                                        onClick={() => { setShowCreateTask(false); setEditingTask(null); setTaskForm({ ...emptyTaskForm }); }}
+                                        onClick={closeTaskModal}
                                     >
                                         Cancel
                                     </button>
@@ -793,7 +821,7 @@ export default function ProjectsPage() {
                 </div>
             )}
 
-            {activeBoardLoading ? (
+            {(activeBoardLoading || activeBoardFetching || openingBoardId === selectedBoardId || !activeBoard) ? (
                 <div className="animate-pulse space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="card h-20" />)}</div>
             ) : view === 'kanban' ? (
                 <DndContext sensors={sensors} onDragEnd={handleKanbanDragEnd}>

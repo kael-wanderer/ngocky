@@ -147,13 +147,38 @@ export default function DashboardPage() {
         navigate(taskId ? `/tasks?editId=${taskId}` : '/tasks');
     }
 
+    function resolveProjectId(taskId?: string | null, projectId?: string | null) {
+        if (projectId) return projectId;
+        if (!taskId) return null;
+
+        const dueMatch = (data?.dueTasks || []).find((entry: any) => entry.id === taskId);
+        if (dueMatch?.projectId) return dueMatch.projectId;
+
+        const overdueMatch = (data?.overdueItems || []).find((entry: any) => entry.id === taskId);
+        if (overdueMatch?.projectId) return overdueMatch.projectId;
+
+        const pinnedMatch = (data?.pinnedItems || []).find((entry: any) => entry.id === taskId);
+        if (pinnedMatch?.projectId) return pinnedMatch.projectId;
+
+        return null;
+    }
+
+    function openTaskTarget(taskId?: string | null, projectId?: string | null) {
+        const resolvedProjectId = resolveProjectId(taskId, projectId);
+        if (resolvedProjectId) {
+            openProjectTask(resolvedProjectId, taskId);
+            return;
+        }
+        openStandaloneTask(taskId);
+    }
+
     function openOverdueProjectItem(taskId?: string | null, projectId?: string | null) {
         if (projectId) {
             openProjectTask(projectId, taskId);
             return;
         }
         const matchedTask = dueTasks.find((entry: any) => entry.id === taskId);
-        openProjectTask(matchedTask?.projectId || null, taskId);
+        openTaskTarget(taskId, matchedTask?.projectId || null);
     }
 
     // Map section IDs to renderable elements
@@ -273,7 +298,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No tasks with deadline in selected time</p>
                             )}
                             {(data?.dueTasks || []).map((t: any) => (
-                                <button key={t.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => t.taskKind === 'STANDALONE' ? openStandaloneTask(t.id) : openProjectTask(t.projectId, t.id)}>
+                                <button key={t.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => openTaskTarget(t.id, t.projectId)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{t.title}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -347,10 +372,7 @@ export default function DashboardPage() {
                                 <button key={`${p.type}-${p.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1"
                                     onClick={() => {
                                         if (p.type === 'GOAL') navigate(`/goals?editId=${p.id}`);
-                                        else if (p.type === 'TASK') {
-                                            if (p.projectId) openProjectTask(p.projectId, p.id);
-                                            else openStandaloneTask(p.id);
-                                        }
+                                        else if (p.type === 'TASK') openTaskTarget(p.id, p.projectId);
                                         else if (p.type === 'PROJECT') navigate(`/projects?boardId=${p.id}`);
                                         else if (p.type === 'HOUSEWORK') navigate(`/housework?editId=${p.id}`);
                                         else if (p.type === 'CALENDAR') navigate(`/calendar?eventId=${p.id}`);
@@ -575,7 +597,7 @@ export default function DashboardPage() {
                         <button key={`${o.type}-${o.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-red-50 rounded px-1"
                             onClick={() => {
                                 if (o.type === 'PROJECT') openOverdueProjectItem(o.id, o.projectId);
-                                else if (o.type === 'TASK') openStandaloneTask(o.id);
+                                else if (o.type === 'TASK') openTaskTarget(o.id, o.projectId);
                                 else if (o.type === 'HOUSEWORK') navigate(`/housework?editId=${o.id}`);
                                 else if (o.type === 'CALENDAR') navigate(`/calendar?eventId=${o.id}`);
                                 else if (o.type === 'ASSET') navigate('/assets');
