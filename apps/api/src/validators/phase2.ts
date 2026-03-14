@@ -138,6 +138,7 @@ export const createHealthPersonSchema = z.object({
     passportIssueDate: z.string().datetime().nullable().optional(),
     bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']).nullable().optional(),
     weight: z.number().nonnegative().optional(),
+    height: z.number().nonnegative().optional(),
     allergies: z.string().optional(),
     chronicConditions: z.string().optional(),
     currentMedications: z.string().optional(),

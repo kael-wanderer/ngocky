@@ -935,6 +935,7 @@ model HealthPerson {
   passportIssueDate             DateTime?
   bloodType                     String?
   weight                        Float?
+  height                        Float?
   allergies                     String?
   chronicConditions             String?
   currentMedications            String?

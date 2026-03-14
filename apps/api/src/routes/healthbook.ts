@@ -61,6 +61,44 @@ async function assertLogOwner(logId: string, personId: string, userId: string) {
     return log;
 }
 
+function dateAtHourUTC(dateISO: string, hour: number, tz: string): Date {
+    const probe = new Date(`${dateISO}T12:00:00.000Z`);
+    const fmt = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    });
+    const parts = fmt.formatToParts(probe);
+    const get = (type: string) => { const v = parts.find(p => p.type === type)?.value; return v ? parseInt(v) : 0; };
+    let h = get('hour'); if (h === 24) h = 0;
+    const localAsUTC = Date.UTC(get('year'), get('month') - 1, get('day'), h, get('minute'), get('second'));
+    const offsetMs = localAsUTC - probe.getTime();
+    const midnight = new Date(`${dateISO}T00:00:00.000Z`);
+    const dayStartUTC = new Date(midnight.getTime() - offsetMs);
+    return new Date(dayStartUTC.getTime() + hour * 3_600_000);
+}
+
+async function createCheckupCalendarEvent(
+    nextCheckupDate: string, personName: string, location: string | undefined,
+    description: string | undefined, userId: string,
+): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } });
+    const tz = user?.timezone ?? 'Asia/Ho_Chi_Minh';
+    const dateOnly = nextCheckupDate.slice(0, 10);
+    const title = `Next checkup – ${personName}${location ? ` at ${location}` : ''}`;
+    await prisma.calendarEvent.create({
+        data: {
+            title,
+            type: 'MEETING',
+            description: description ?? null,
+            startDate: dateAtHourUTC(dateOnly, 9, tz),
+            endDate: dateAtHourUTC(dateOnly, 12, tz),
+            allDay: false,
+            isShared: true,
+            createdById: userId,
+        },
+    });
+}
+
 async function createHealthExpense(cost: number, date: Date, description: string, userId: string) {
     if (!Number.isFinite(cost) || cost <= 0) return;
     await prisma.expense.create({
@@ -248,7 +286,10 @@ router.get('/:personId/logs', async (req: Request, res: Response, next: NextFunc
     try {
         const personId = paramStr(req, 'personId');
         const logs = await prisma.healthLog.findMany({
-            where: { personId, userId: req.user!.userId },
+            where: {
+                personId,
+                OR: [{ userId: req.user!.userId }, { person: { isShared: true } }],
+            },
             include: { files: { orderBy: { createdAt: 'asc' } } },
             orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
         });
@@ -259,7 +300,8 @@ router.get('/:personId/logs', async (req: Request, res: Response, next: NextFunc
 router.post('/:personId/logs', validate(createHealthLogSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const personId = paramStr(req, 'personId');
-        const { addExpense, ...logData } = req.body;
+        const { addExpense, addToCalendar, ...logData } = req.body;
+        const person = await prisma.healthPerson.findUnique({ where: { id: personId }, select: { name: true } });
         const log = await prisma.healthLog.create({
             data: {
                 ...logData,
@@ -273,6 +315,9 @@ router.post('/:personId/logs', validate(createHealthLogSchema), async (req: Requ
         if (addExpense && req.body.cost) {
             await createHealthExpense(Number(req.body.cost), new Date(req.body.date), req.body.description || 'Healthcare', req.user!.userId);
         }
+        if (addToCalendar && req.body.nextCheckupDate) {
+            await createCheckupCalendarEvent(req.body.nextCheckupDate, person?.name ?? 'Unknown', req.body.location, req.body.description, req.user!.userId);
+        }
         sendCreated(res, log);
     } catch (err) { next(err); }
 });
@@ -282,7 +327,7 @@ router.patch('/:personId/logs/:logId', validate(updateHealthLogSchema), async (r
         const personId = paramStr(req, 'personId');
         const logId = paramStr(req, 'logId');
         await assertLogOwner(logId, personId, req.user!.userId);
-        const { addExpense: _ae, ...logUpdateData } = req.body;
+        const { addExpense: _ae, addToCalendar, ...logUpdateData } = req.body;
         const updated = await prisma.healthLog.update({
             where: { id: logId },
             data: {

@@ -32,6 +32,7 @@ interface HealthPerson {
     passportIssueDate?: string;
     bloodType?: string;
     weight?: number;
+    height?: number;
     allergies?: string;
     chronicConditions?: string;
     currentMedications?: string;
@@ -93,7 +94,7 @@ const LOG_TYPES: { value: string; label: string }[] = [
 
 const EMPTY_PERSON = {
     name: '', dateOfBirth: '', gender: '', mobile: '', personalId: '', idIssueDate: '',
-    passportNumber: '', passportIssueDate: '', bloodType: '', weight: '',
+    passportNumber: '', passportIssueDate: '', bloodType: '', weight: '', height: '',
     allergies: '', chronicConditions: '', currentMedications: '', info: '',
     emergencyContact1Name: '', emergencyContact1Phone: '', emergencyContact1Relationship: '',
     emergencyContact2Name: '', emergencyContact2Phone: '', emergencyContact2Relationship: '',
@@ -107,7 +108,7 @@ const EMPTY_PERSON = {
 const EMPTY_LOG = {
     date: new Date().toISOString().slice(0, 10),
     type: 'DOCTOR_VISIT', location: '', doctor: '', symptoms: '',
-    description: '', cost: '', prescription: '', nextCheckupDate: '', addExpense: false,
+    description: '', cost: '', prescription: '', nextCheckupDate: '', addExpense: false, addToCalendar: false,
 };
 
 function parseAmount(val: string): number | undefined {
@@ -245,6 +246,7 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
         personalId: editing.personalId ?? '', idIssueDate: editing.idIssueDate?.slice(0, 10) ?? '',
         passportNumber: editing.passportNumber ?? '', passportIssueDate: editing.passportIssueDate?.slice(0, 10) ?? '',
         bloodType: editing.bloodType ?? '', weight: editing.weight != null ? String(editing.weight) : '',
+        height: editing.height != null ? String(editing.height) : '',
         allergies: editing.allergies ?? '', chronicConditions: editing.chronicConditions ?? '',
         currentMedications: editing.currentMedications ?? '', info: editing.info ?? '',
         emergencyContact1Name: editing.emergencyContact1Name ?? '', emergencyContact1Phone: editing.emergencyContact1Phone ?? '',
@@ -275,6 +277,7 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
                 insuranceExpiry: form.insuranceExpiry ? new Date(form.insuranceExpiry).toISOString() : null,
                 workInsuranceValidFrom: form.workInsuranceValidFrom ? new Date(form.workInsuranceValidFrom).toISOString() : null,
                 weight: form.weight !== '' ? parseFloat(form.weight) : undefined,
+                height: form.height !== '' ? parseFloat(form.height) : undefined,
             };
             if (editing) { await api.patch(`/healthbook/${editing.id}`, body); }
             else { await api.post('/healthbook', body); }
@@ -337,7 +340,7 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
                                     value={form.personalId} onChange={(e) => set('personalId', e.target.value)} />
                             </div>
                             <div>
-                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Issue date of ID</label>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Issue date of Personal ID</label>
                                 <input type="date" className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
                                     value={form.idIssueDate} onChange={(e) => set('idIssueDate', e.target.value)} />
                             </div>
@@ -358,10 +361,17 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Medical Info</p>
                         <div className="space-y-3">
-                            <div>
-                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Weight (kg)</label>
-                                <input type="number" step="0.1" min="0" className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
-                                    value={form.weight} onChange={(e) => set('weight', e.target.value)} />
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className={labelCls} style={{ color: 'var(--color-text)' }}>Weight (kg)</label>
+                                    <input type="number" step="0.1" min="0" className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                        value={form.weight} onChange={(e) => set('weight', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className={labelCls} style={{ color: 'var(--color-text)' }}>Height (cm)</label>
+                                    <input type="number" step="0.1" min="0" className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                        value={form.height} onChange={(e) => set('height', e.target.value)} />
+                                </div>
                             </div>
                             {[
                                 { key: 'allergies', label: 'Allergies' },
@@ -497,12 +507,18 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
 // ─── Log Modal ────────────────────────────────────────────────────────────────
 
 function LogModal({ personId, editing, onClose, onSaved }: { personId: string; editing?: HealthLog; onClose: () => void; onSaved: () => void }) {
+    const qc = useQueryClient();
+    const [files, setFiles] = useState<HealthFile[]>(editing?.files ?? []);
+    const deleteLogFile = useMutation({
+        mutationFn: (fileId: string) => api.delete(`/healthbook/files/log/${fileId}`),
+        onSuccess: (_, fileId) => setFiles((prev) => prev.filter((f) => f.id !== fileId)),
+    });
     const [form, setForm] = useState(editing ? {
         date: editing.date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
         type: editing.type, location: editing.location ?? '', doctor: editing.doctor ?? '',
         symptoms: editing.symptoms ?? '', description: editing.description ?? '',
         cost: editing.cost != null ? String(editing.cost) : '', prescription: editing.prescription ?? '',
-        nextCheckupDate: editing.nextCheckupDate?.slice(0, 10) ?? '', addExpense: false,
+        nextCheckupDate: editing.nextCheckupDate?.slice(0, 10) ?? '', addExpense: false, addToCalendar: false,
     } : { ...EMPTY_LOG });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -511,6 +527,12 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
     const handleSubmit = async () => {
         if (!form.date) { setError('Date is required'); return; }
         if (form.addExpense && !form.cost) { setError('Cost is required when "Add expense" is checked'); return; }
+        if (form.addToCalendar) {
+            if (!form.nextCheckupDate) { setError('Next Checkup Date is required when "Add to Calendar" is checked'); return; }
+            const checkup = new Date(form.nextCheckupDate);
+            const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+            if (checkup <= todayStart) { setError('Next Checkup Date must be in the future'); return; }
+        }
         setSaving(true); setError('');
         try {
             const costVal = parseAmount(form.cost);
@@ -578,6 +600,40 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                         <textarea rows={2} className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)', resize: 'vertical' }}
                             value={form.prescription} onChange={(e) => set('prescription', e.target.value)} />
                     </div>
+
+                    {/* Prescription / Files */}
+                    <div className="border rounded-lg p-3" style={{ borderColor: 'var(--color-border)' }}>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Paperclip className="w-3.5 h-3.5 text-gray-400" />
+                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Prescription / Files</span>
+                            {editing && (
+                                <div className="ml-auto">
+                                    <FileUploader
+                                        url={`/healthbook/${personId}/logs/${editing.id}/files`}
+                                        onUploaded={async () => {
+                                            const res = await api.get(`/healthbook/${personId}/logs`);
+                                            const updated = (res.data.data as HealthLog[]).find(l => l.id === editing.id);
+                                            if (updated) setFiles(updated.files);
+                                            qc.invalidateQueries({ queryKey: ['healthbook-logs', personId] });
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        {editing ? (
+                            <>
+                                {files.length === 0 && <p className="text-xs text-gray-400 italic">No files attached.</p>}
+                                <div className="space-y-1.5">
+                                    {files.map((f) => (
+                                        <FileItem key={f.id} file={f} kind="log" onDelete={() => deleteLogFile.mutate(f.id)} />
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-xs text-gray-400 italic">Save this log first, then re-open it to upload files.</p>
+                        )}
+                    </div>
+
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className={labelCls} style={{ color: 'var(--color-text)' }}>Cost (VND)</label>
@@ -597,6 +653,14 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                             <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Creates a Family / Healthcare / Bank Transfer expense with the cost above</p>
                         </div>
                     </div>
+                    <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.addToCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.addToCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
+                        <input type="checkbox" id="addToCalendar" checked={form.addToCalendar} onChange={(e) => set('addToCalendar', e.target.checked)} className="rounded mt-0.5" />
+                        <div>
+                            <label htmlFor="addToCalendar" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add to Calendar</label>
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Creates a Meeting event on the Next Checkup Date (09:00–12:00). Requires a future date.</p>
+                        </div>
+                    </div>
+
                     {error && <p className="text-sm text-red-500">{error}</p>}
                 </div>
                 <div className="flex justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
@@ -819,6 +883,7 @@ export default function HealthbookPage() {
                     <InfoRow label="Passport" value={person.passportNumber} />
                     <InfoRow label="Issue date of Passport" value={person.passportIssueDate ? format(new Date(person.passportIssueDate), 'MMM d, yyyy') : undefined} />
                     <InfoRow label="Weight" value={person.weight != null ? `${person.weight} kg` : undefined} />
+                    <InfoRow label="Height" value={person.height != null ? `${person.height} cm` : undefined} />
                     <InfoRow label="Allergies" value={person.allergies} />
                     <InfoRow label="Chronic Conditions" value={person.chronicConditions} />
                     <InfoRow label="Current Medications" value={person.currentMedications} />
