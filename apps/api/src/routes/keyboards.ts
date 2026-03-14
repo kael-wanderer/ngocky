@@ -42,6 +42,14 @@ function mergeSpecWithExtras(spec: unknown, extras: unknown): string[] {
     return [...new Set([...normalizeStringList(spec), ...normalizeStringList(extras)])];
 }
 
+function serializeKeyboard(keyboard: any) {
+    return {
+        ...keyboard,
+        spec: mergeSpecWithExtras(keyboard.spec, keyboard.extras),
+        extras: normalizeStringList(keyboard.extras),
+    };
+}
+
 router.get('/', async (req, res, next) => {
     try {
         const userId = req.user!.userId;
@@ -58,7 +66,7 @@ router.get('/', async (req, res, next) => {
             }),
             prisma.keyboard.count({ where }),
         ]);
-        sendPaginated(res, keyboards, total, page, limit);
+        sendPaginated(res, keyboards.map(serializeKeyboard), total, page, limit);
     } catch (e) { next(e); }
 });
 
@@ -85,7 +93,7 @@ router.post('/', async (req, res, next) => {
                 sortOrder: (last._max.sortOrder ?? -1) + 1,
             },
         });
-        sendCreated(res, keyboard);
+        sendCreated(res, serializeKeyboard(keyboard));
     } catch (e) { next(e); }
 });
 
@@ -123,7 +131,7 @@ router.patch('/:id', async (req, res, next) => {
                 ...(isShared !== undefined && { isShared }),
             },
         });
-        sendSuccess(res, updated);
+        sendSuccess(res, serializeKeyboard(updated));
     } catch (e) { next(e); }
 });
 
