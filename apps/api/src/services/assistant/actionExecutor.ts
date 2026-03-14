@@ -23,6 +23,8 @@ import { resolveHouseworkStatus } from './resolvers/houseworkStatus';
 import { resolveCaKeoCreate } from './resolvers/caKeoCreate';
 import { resolveCaKeoQuery } from './resolvers/caKeoQuery';
 import { resolveCaKeoStatus } from './resolvers/caKeoStatus';
+import { resolveHealthbookQuery, resolveHealthLogsQuery } from './resolvers/healthbookQuery';
+import { resolveHealthLogCreate } from './resolvers/healthLogCreate';
 
 // ─── Main executor ────────────────────────────────────────────────────────────
 
@@ -116,6 +118,15 @@ export async function dispatchIntent(
 
         case 'update_cakeo_status':
             return resolveCaKeoStatus(entities, ctx);
+
+        case 'query_healthbook':
+            return resolveHealthbookQuery(entities, ctx);
+
+        case 'query_health_logs':
+            return resolveHealthLogsQuery(entities, ctx);
+
+        case 'create_health_log':
+            return resolveHealthLogCreate(entities, ctx);
 
         case 'help':
             return { reply: HELP_TEXT, requiresConfirmation: false };

@@ -25,12 +25,17 @@ interface HealthPerson {
     name: string;
     dateOfBirth?: string;
     gender?: string;
-    nationality?: string;
+    mobile?: string;
+    personalId?: string;
+    idIssueDate?: string;
+    passportNumber?: string;
+    passportIssueDate?: string;
     bloodType?: string;
+    weight?: number;
     allergies?: string;
     chronicConditions?: string;
     currentMedications?: string;
-    organDonor: boolean;
+    info?: string;
     emergencyContact1Name?: string;
     emergencyContact1Phone?: string;
     emergencyContact1Relationship?: string;
@@ -42,6 +47,11 @@ interface HealthPerson {
     policyNumber?: string;
     insuranceExpiry?: string;
     coverageType?: string;
+    workInsuranceProvider?: string;
+    workInsuranceCardNo?: string;
+    workInsurancePolicyHolder?: string;
+    workInsuranceId?: string;
+    workInsuranceValidFrom?: string;
     notes?: string;
     isShared: boolean;
     userId: string;
@@ -82,18 +92,22 @@ const LOG_TYPES: { value: string; label: string }[] = [
 ];
 
 const EMPTY_PERSON = {
-    name: '', dateOfBirth: '', gender: '', nationality: '', bloodType: '',
-    allergies: '', chronicConditions: '', currentMedications: '', organDonor: false,
+    name: '', dateOfBirth: '', gender: '', mobile: '', personalId: '', idIssueDate: '',
+    passportNumber: '', passportIssueDate: '', bloodType: '', weight: '',
+    allergies: '', chronicConditions: '', currentMedications: '', info: '',
     emergencyContact1Name: '', emergencyContact1Phone: '', emergencyContact1Relationship: '',
     emergencyContact2Name: '', emergencyContact2Phone: '', emergencyContact2Relationship: '',
     insuranceProvider: '', insuranceCardNumber: '', policyNumber: '', insuranceExpiry: '',
-    coverageType: '', notes: '', isShared: false,
+    coverageType: '',
+    workInsuranceProvider: '', workInsuranceCardNo: '', workInsurancePolicyHolder: '',
+    workInsuranceId: '', workInsuranceValidFrom: '',
+    notes: '', isShared: false,
 };
 
 const EMPTY_LOG = {
     date: new Date().toISOString().slice(0, 10),
     type: 'DOCTOR_VISIT', location: '', doctor: '', symptoms: '',
-    description: '', cost: '', prescription: '', nextCheckupDate: '',
+    description: '', cost: '', prescription: '', nextCheckupDate: '', addExpense: false,
 };
 
 function parseAmount(val: string): number | undefined {
@@ -187,7 +201,7 @@ function FileUploader({ url, onUploaded }: { url: string; onUploaded: () => void
     const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (file.size > 2 * 1024 * 1024) { setError('Max file size is 2 MB'); return; }
+        if (file.size > 4 * 1024 * 1024) { setError('Max file size is 4 MB'); return; }
         const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
         if (!allowed.includes(file.type)) { setError('Only JPEG, PNG, WebP, PDF allowed'); return; }
         setError('');
@@ -208,12 +222,15 @@ function FileUploader({ url, onUploaded }: { url: string; onUploaded: () => void
     return (
         <div>
             <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="hidden" onChange={handleFile} />
-            <button onClick={() => inputRef.current?.click()} disabled={uploading}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors hover:bg-gray-50 disabled:opacity-50"
-                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
-                <Upload className="w-3.5 h-3.5" />
-                {uploading ? 'Uploading…' : 'Upload file'}
-            </button>
+            <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">JPEG, PNG, WebP, PDF · max 4 MB</span>
+                <button onClick={() => inputRef.current?.click()} disabled={uploading}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+                    <Upload className="w-3.5 h-3.5" />
+                    {uploading ? 'Uploading…' : 'Upload file'}
+                </button>
+            </div>
             {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
         </div>
     );
@@ -224,17 +241,23 @@ function FileUploader({ url, onUploaded }: { url: string; onUploaded: () => void
 function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; onClose: () => void; onSaved: () => void }) {
     const [form, setForm] = useState(editing ? {
         name: editing.name, dateOfBirth: editing.dateOfBirth?.slice(0, 10) ?? '',
-        gender: editing.gender ?? '', nationality: editing.nationality ?? '',
-        bloodType: editing.bloodType ?? '', allergies: editing.allergies ?? '',
-        chronicConditions: editing.chronicConditions ?? '', currentMedications: editing.currentMedications ?? '',
-        organDonor: editing.organDonor,
+        gender: editing.gender ?? '', mobile: editing.mobile ?? '',
+        personalId: editing.personalId ?? '', idIssueDate: editing.idIssueDate?.slice(0, 10) ?? '',
+        passportNumber: editing.passportNumber ?? '', passportIssueDate: editing.passportIssueDate?.slice(0, 10) ?? '',
+        bloodType: editing.bloodType ?? '', weight: editing.weight != null ? String(editing.weight) : '',
+        allergies: editing.allergies ?? '', chronicConditions: editing.chronicConditions ?? '',
+        currentMedications: editing.currentMedications ?? '', info: editing.info ?? '',
         emergencyContact1Name: editing.emergencyContact1Name ?? '', emergencyContact1Phone: editing.emergencyContact1Phone ?? '',
         emergencyContact1Relationship: editing.emergencyContact1Relationship ?? '',
         emergencyContact2Name: editing.emergencyContact2Name ?? '', emergencyContact2Phone: editing.emergencyContact2Phone ?? '',
         emergencyContact2Relationship: editing.emergencyContact2Relationship ?? '',
         insuranceProvider: editing.insuranceProvider ?? '', insuranceCardNumber: editing.insuranceCardNumber ?? '',
         policyNumber: editing.policyNumber ?? '', insuranceExpiry: editing.insuranceExpiry?.slice(0, 10) ?? '',
-        coverageType: editing.coverageType ?? '', notes: editing.notes ?? '', isShared: editing.isShared,
+        coverageType: editing.coverageType ?? '',
+        workInsuranceProvider: editing.workInsuranceProvider ?? '', workInsuranceCardNo: editing.workInsuranceCardNo ?? '',
+        workInsurancePolicyHolder: editing.workInsurancePolicyHolder ?? '', workInsuranceId: editing.workInsuranceId ?? '',
+        workInsuranceValidFrom: editing.workInsuranceValidFrom?.slice(0, 10) ?? '',
+        notes: editing.notes ?? '', isShared: editing.isShared,
     } : { ...EMPTY_PERSON });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -247,7 +270,11 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
             const body: any = {
                 ...form,
                 dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : null,
+                idIssueDate: form.idIssueDate ? new Date(form.idIssueDate).toISOString() : null,
+                passportIssueDate: form.passportIssueDate ? new Date(form.passportIssueDate).toISOString() : null,
                 insuranceExpiry: form.insuranceExpiry ? new Date(form.insuranceExpiry).toISOString() : null,
+                workInsuranceValidFrom: form.workInsuranceValidFrom ? new Date(form.workInsuranceValidFrom).toISOString() : null,
+                weight: form.weight !== '' ? parseFloat(form.weight) : undefined,
             };
             if (editing) { await api.patch(`/healthbook/${editing.id}`, body); }
             else { await api.post('/healthbook', body); }
@@ -300,13 +327,29 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
                                 </select>
                             </div>
                             <div>
-                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Nationality</label>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Mobile</label>
                                 <input className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
-                                    value={form.nationality} onChange={(e) => set('nationality', e.target.value)} />
+                                    value={form.mobile} onChange={(e) => set('mobile', e.target.value)} />
                             </div>
-                            <div className="col-span-2 flex items-center gap-2">
-                                <input type="checkbox" id="organDonor" checked={form.organDonor} onChange={(e) => set('organDonor', e.target.checked)} className="rounded" />
-                                <label htmlFor="organDonor" className="text-sm" style={{ color: 'var(--color-text)' }}>Organ Donor</label>
+                            <div>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Personal ID</label>
+                                <input className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.personalId} onChange={(e) => set('personalId', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Issue date of ID</label>
+                                <input type="date" className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.idIssueDate} onChange={(e) => set('idIssueDate', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Passport</label>
+                                <input className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.passportNumber} onChange={(e) => set('passportNumber', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Issue date of Passport</label>
+                                <input type="date" className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.passportIssueDate} onChange={(e) => set('passportIssueDate', e.target.value)} />
                             </div>
                         </div>
                     </div>
@@ -315,10 +358,16 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Medical Info</p>
                         <div className="space-y-3">
+                            <div>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Weight (kg)</label>
+                                <input type="number" step="0.1" min="0" className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.weight} onChange={(e) => set('weight', e.target.value)} />
+                            </div>
                             {[
                                 { key: 'allergies', label: 'Allergies' },
                                 { key: 'chronicConditions', label: 'Chronic Conditions' },
                                 { key: 'currentMedications', label: 'Current Medications' },
+                                { key: 'info', label: 'Info' },
                             ].map(({ key, label }) => (
                                 <div key={key}>
                                     <label className={labelCls} style={{ color: 'var(--color-text)' }}>{label}</label>
@@ -353,26 +402,66 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
                         ))}
                     </div>
 
-                    {/* Insurance */}
+                    {/* Social Insurance */}
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Insurance</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Social Insurance</p>
                         <div className="grid grid-cols-2 gap-3">
-                            {[
-                                { key: 'insuranceProvider', label: 'Provider' },
-                                { key: 'insuranceCardNumber', label: 'Card Number' },
-                                { key: 'policyNumber', label: 'Policy Number' },
-                                { key: 'coverageType', label: 'Coverage Type' },
-                            ].map(({ key, label }) => (
-                                <div key={key}>
-                                    <label className={labelCls} style={{ color: 'var(--color-text)' }}>{label}</label>
-                                    <input className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
-                                        value={(form as any)[key]} onChange={(e) => set(key, e.target.value)} />
-                                </div>
-                            ))}
                             <div>
-                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Expiry Date</label>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Insurance ID</label>
+                                <input className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.insuranceProvider} onChange={(e) => set('insuranceProvider', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Card Number</label>
+                                <input className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.insuranceCardNumber} onChange={(e) => set('insuranceCardNumber', e.target.value)} />
+                            </div>
+                            <div className="col-span-2">
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Place of registration for medical treatment</label>
+                                <input className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.policyNumber} onChange={(e) => set('policyNumber', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Hospital ID</label>
+                                <input className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.coverageType} onChange={(e) => set('coverageType', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Valid from</label>
                                 <input type="date" className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
                                     value={form.insuranceExpiry} onChange={(e) => set('insuranceExpiry', e.target.value)} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Work Insurance */}
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Work Insurance</p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Provider</label>
+                                <input className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.workInsuranceProvider} onChange={(e) => set('workInsuranceProvider', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Card no</label>
+                                <input className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.workInsuranceCardNo} onChange={(e) => set('workInsuranceCardNo', e.target.value)} />
+                            </div>
+                            <div className="col-span-2">
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Policy holder</label>
+                                <input className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.workInsurancePolicyHolder} onChange={(e) => set('workInsurancePolicyHolder', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>ID</label>
+                                <input className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.workInsuranceId} onChange={(e) => set('workInsuranceId', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className={labelCls} style={{ color: 'var(--color-text)' }}>Valid from</label>
+                                <input type="date" className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                                    value={form.workInsuranceValidFrom} onChange={(e) => set('workInsuranceValidFrom', e.target.value)} />
                             </div>
                         </div>
                     </div>
@@ -413,7 +502,7 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
         type: editing.type, location: editing.location ?? '', doctor: editing.doctor ?? '',
         symptoms: editing.symptoms ?? '', description: editing.description ?? '',
         cost: editing.cost != null ? String(editing.cost) : '', prescription: editing.prescription ?? '',
-        nextCheckupDate: editing.nextCheckupDate?.slice(0, 10) ?? '',
+        nextCheckupDate: editing.nextCheckupDate?.slice(0, 10) ?? '', addExpense: false,
     } : { ...EMPTY_LOG });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -421,6 +510,7 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
 
     const handleSubmit = async () => {
         if (!form.date) { setError('Date is required'); return; }
+        if (form.addExpense && !form.cost) { setError('Cost is required when "Add expense" is checked'); return; }
         setSaving(true); setError('');
         try {
             const costVal = parseAmount(form.cost);
@@ -498,6 +588,13 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                             <label className={labelCls} style={{ color: 'var(--color-text)' }}>Next Checkup Date</label>
                             <input type="date" className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
                                 value={form.nextCheckupDate} onChange={(e) => set('nextCheckupDate', e.target.value)} />
+                        </div>
+                    </div>
+                    <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.addExpense ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.addExpense ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
+                        <input type="checkbox" id="addExpense" checked={form.addExpense} onChange={(e) => set('addExpense', e.target.checked)} className="rounded mt-0.5" />
+                        <div>
+                            <label htmlFor="addExpense" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add expense</label>
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Creates a Family / Healthcare / Bank Transfer expense with the cost above</p>
                         </div>
                     </div>
                     {error && <p className="text-sm text-red-500">{error}</p>}
@@ -710,24 +807,34 @@ export default function HealthbookPage() {
                         <div className="flex items-center gap-2">
                             {person.bloodType && <span className="text-xs px-1.5 py-0.5 bg-red-50 text-red-600 rounded font-medium">{person.bloodType}</span>}
                             {person.gender && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{person.gender}</span>}
-                            {person.organDonor && <span className="text-xs px-1.5 py-0.5 bg-green-50 text-green-600 rounded">Organ Donor</span>}
                         </div>
                     </div>
                 </div>
 
                 <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5">
                     <InfoRow label="Date of Birth" value={person.dateOfBirth ? format(new Date(person.dateOfBirth), 'MMM d, yyyy') : undefined} />
-                    <InfoRow label="Nationality" value={person.nationality} />
+                    <InfoRow label="Mobile" value={person.mobile} />
+                    <InfoRow label="Personal ID" value={person.personalId} />
+                    <InfoRow label="Issue date of ID" value={person.idIssueDate ? format(new Date(person.idIssueDate), 'MMM d, yyyy') : undefined} />
+                    <InfoRow label="Passport" value={person.passportNumber} />
+                    <InfoRow label="Issue date of Passport" value={person.passportIssueDate ? format(new Date(person.passportIssueDate), 'MMM d, yyyy') : undefined} />
+                    <InfoRow label="Weight" value={person.weight != null ? `${person.weight} kg` : undefined} />
                     <InfoRow label="Allergies" value={person.allergies} />
                     <InfoRow label="Chronic Conditions" value={person.chronicConditions} />
                     <InfoRow label="Current Medications" value={person.currentMedications} />
+                    <InfoRow label="Info" value={person.info} />
                     {person.emergencyContact1Name && <InfoRow label="Emergency Contact 1" value={`${person.emergencyContact1Name}${person.emergencyContact1Relationship ? ` (${person.emergencyContact1Relationship})` : ''} · ${person.emergencyContact1Phone ?? ''}`} />}
                     {person.emergencyContact2Name && <InfoRow label="Emergency Contact 2" value={`${person.emergencyContact2Name}${person.emergencyContact2Relationship ? ` (${person.emergencyContact2Relationship})` : ''} · ${person.emergencyContact2Phone ?? ''}`} />}
-                    <InfoRow label="Insurance" value={person.insuranceProvider} />
+                    <InfoRow label="Social Insurance ID" value={person.insuranceProvider} />
                     <InfoRow label="Card Number" value={person.insuranceCardNumber} />
-                    <InfoRow label="Policy Number" value={person.policyNumber} />
-                    <InfoRow label="Coverage" value={person.coverageType} />
-                    <InfoRow label="Insurance Expiry" value={person.insuranceExpiry ? format(new Date(person.insuranceExpiry), 'MMM d, yyyy') : undefined} />
+                    <InfoRow label="Registration place" value={person.policyNumber} />
+                    <InfoRow label="Hospital ID" value={person.coverageType} />
+                    <InfoRow label="Valid from" value={person.insuranceExpiry ? format(new Date(person.insuranceExpiry), 'MMM d, yyyy') : undefined} />
+                    <InfoRow label="Work Insurance Provider" value={person.workInsuranceProvider} />
+                    <InfoRow label="Work Insurance Card no" value={person.workInsuranceCardNo} />
+                    <InfoRow label="Work Insurance Policy holder" value={person.workInsurancePolicyHolder} />
+                    <InfoRow label="Work Insurance ID" value={person.workInsuranceId} />
+                    <InfoRow label="Work Insurance Valid from" value={person.workInsuranceValidFrom ? format(new Date(person.workInsuranceValidFrom), 'MMM d, yyyy') : undefined} />
                     {person.notes && (
                         <div className="col-span-2 mt-1">
                             <InfoRow label="Notes" value={person.notes} />
@@ -790,6 +897,11 @@ export default function HealthbookPage() {
                                     {log.symptoms && !expanded && <p className="text-xs mt-1 truncate" style={{ color: 'var(--color-text-secondary)' }}>{log.symptoms}</p>}
                                 </div>
                                 <div className="flex items-center gap-1 flex-shrink-0">
+                                    {log.files.length > 0 && !expanded && (
+                                        <span className="flex items-center gap-0.5 text-xs text-gray-400">
+                                            <Paperclip className="w-3 h-3" />{log.files.length}
+                                        </span>
+                                    )}
                                     {log.cost != null && (
                                         <span className="text-xs font-medium text-red-500">{log.cost.toLocaleString('vi-VN')} ₫</span>
                                     )}
@@ -815,19 +927,19 @@ export default function HealthbookPage() {
                                     {log.prescription && <InfoRow label="Prescription" value={log.prescription} />}
                                     {log.nextCheckupDate && <InfoRow label="Next Checkup" value={format(new Date(log.nextCheckupDate), 'MMM d, yyyy')} />}
 
-                                    {/* Log files */}
-                                    <div className="pt-2 border-t mt-2" style={{ borderColor: 'var(--color-border)' }}>
-                                        <div className="flex items-center gap-2 mb-2">
+                                    {/* Log files — prescription & docs */}
+                                    <div className="pt-3 border-t mt-2" style={{ borderColor: 'var(--color-border)' }}>
+                                        <div className="flex items-center gap-2 mb-3">
                                             <Paperclip className="w-3.5 h-3.5 text-gray-400" />
-                                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Attachments</span>
+                                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Prescription / Files</span>
                                             {isOwner(log) && (
                                                 <div className="ml-auto">
                                                     <FileUploader url={`/healthbook/${personId}/logs/${log.id}/files`} onUploaded={() => qc.invalidateQueries({ queryKey: ['healthbook-logs', personId] })} />
                                                 </div>
                                             )}
                                         </div>
-                                        {log.files.length === 0 && <p className="text-xs text-gray-400">No attachments.</p>}
-                                        <div className="space-y-1.5 mt-2">
+                                        {log.files.length === 0 && <p className="text-xs text-gray-400 italic">No files attached — upload prescriptions or lab results here.</p>}
+                                        <div className="space-y-1.5">
                                             {log.files.map((f) => (
                                                 <FileItem key={f.id} file={f} kind="log" onDelete={() => deleteLogFile.mutate(f.id)} />
                                             ))}

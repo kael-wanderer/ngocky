@@ -25,7 +25,7 @@ const UPLOAD_DIR = path.join(process.env.UPLOAD_DIR || process.cwd(), 'uploads',
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
+const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
 
 const storage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
@@ -67,7 +67,8 @@ async function createHealthExpense(cost: number, date: Date, description: string
         data: {
             description: description || 'Healthcare',
             type: 'PAY',
-            scope: 'PERSONAL',
+            payment: 'BANK_TRANSFER',
+            scope: 'FAMILY',
             date,
             category: 'Healthcare',
             amount: cost,
@@ -153,7 +154,10 @@ router.post('/', validate(createHealthPersonSchema), async (req: Request, res: R
             data: {
                 ...req.body,
                 dateOfBirth: req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : null,
+                idIssueDate: req.body.idIssueDate ? new Date(req.body.idIssueDate) : null,
+                passportIssueDate: req.body.passportIssueDate ? new Date(req.body.passportIssueDate) : null,
                 insuranceExpiry: req.body.insuranceExpiry ? new Date(req.body.insuranceExpiry) : null,
+                workInsuranceValidFrom: req.body.workInsuranceValidFrom ? new Date(req.body.workInsuranceValidFrom) : null,
                 sortOrder,
                 userId: req.user!.userId,
             },
@@ -189,7 +193,10 @@ router.patch('/:personId', validate(updateHealthPersonSchema), async (req: Reque
             data: {
                 ...req.body,
                 dateOfBirth: req.body.dateOfBirth === null ? null : req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : undefined,
+                idIssueDate: req.body.idIssueDate === null ? null : req.body.idIssueDate ? new Date(req.body.idIssueDate) : undefined,
+                passportIssueDate: req.body.passportIssueDate === null ? null : req.body.passportIssueDate ? new Date(req.body.passportIssueDate) : undefined,
                 insuranceExpiry: req.body.insuranceExpiry === null ? null : req.body.insuranceExpiry ? new Date(req.body.insuranceExpiry) : undefined,
+                workInsuranceValidFrom: req.body.workInsuranceValidFrom === null ? null : req.body.workInsuranceValidFrom ? new Date(req.body.workInsuranceValidFrom) : undefined,
             },
         });
         sendSuccess(res, updated);
@@ -252,9 +259,10 @@ router.get('/:personId/logs', async (req: Request, res: Response, next: NextFunc
 router.post('/:personId/logs', validate(createHealthLogSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const personId = paramStr(req, 'personId');
+        const { addExpense, ...logData } = req.body;
         const log = await prisma.healthLog.create({
             data: {
-                ...req.body,
+                ...logData,
                 date: new Date(req.body.date),
                 nextCheckupDate: req.body.nextCheckupDate ? new Date(req.body.nextCheckupDate) : null,
                 personId,
@@ -262,7 +270,7 @@ router.post('/:personId/logs', validate(createHealthLogSchema), async (req: Requ
             },
             include: { files: true },
         });
-        if (req.body.cost) {
+        if (addExpense && req.body.cost) {
             await createHealthExpense(Number(req.body.cost), new Date(req.body.date), req.body.description || 'Healthcare', req.user!.userId);
         }
         sendCreated(res, log);
@@ -274,10 +282,11 @@ router.patch('/:personId/logs/:logId', validate(updateHealthLogSchema), async (r
         const personId = paramStr(req, 'personId');
         const logId = paramStr(req, 'logId');
         await assertLogOwner(logId, personId, req.user!.userId);
+        const { addExpense: _ae, ...logUpdateData } = req.body;
         const updated = await prisma.healthLog.update({
             where: { id: logId },
             data: {
-                ...req.body,
+                ...logUpdateData,
                 date: req.body.date ? new Date(req.body.date) : undefined,
                 nextCheckupDate: req.body.nextCheckupDate === null ? null : req.body.nextCheckupDate ? new Date(req.body.nextCheckupDate) : undefined,
             },

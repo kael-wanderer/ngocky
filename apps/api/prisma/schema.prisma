@@ -928,12 +928,17 @@ model HealthPerson {
   name                          String
   dateOfBirth                   DateTime?
   gender                        String?
-  nationality                   String?
+  mobile                        String?
+  personalId                    String?
+  idIssueDate                   DateTime?
+  passportNumber                String?
+  passportIssueDate             DateTime?
   bloodType                     String?
+  weight                        Float?
   allergies                     String?
   chronicConditions             String?
   currentMedications            String?
-  organDonor                    Boolean   @default(false)
+  info                          String?
   emergencyContact1Name         String?
   emergencyContact1Phone        String?
   emergencyContact1Relationship String?
@@ -945,6 +950,11 @@ model HealthPerson {
   policyNumber                  String?
   insuranceExpiry               DateTime?
   coverageType                  String?
+  workInsuranceProvider         String?
+  workInsuranceCardNo           String?
+  workInsurancePolicyHolder     String?
+  workInsuranceId               String?
+  workInsuranceValidFrom        DateTime?
   notes                         String?
   isShared                      Boolean   @default(false)
   sortOrder                     Int       @default(0)

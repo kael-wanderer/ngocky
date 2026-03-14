@@ -131,12 +131,17 @@ export const createHealthPersonSchema = z.object({
     name: z.string().min(1).max(200),
     dateOfBirth: z.string().datetime().nullable().optional(),
     gender: z.string().optional(),
-    nationality: z.string().optional(),
+    mobile: z.string().optional(),
+    personalId: z.string().optional(),
+    idIssueDate: z.string().datetime().nullable().optional(),
+    passportNumber: z.string().optional(),
+    passportIssueDate: z.string().datetime().nullable().optional(),
     bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']).nullable().optional(),
+    weight: z.number().nonnegative().optional(),
     allergies: z.string().optional(),
     chronicConditions: z.string().optional(),
     currentMedications: z.string().optional(),
-    organDonor: z.boolean().optional(),
+    info: z.string().optional(),
     emergencyContact1Name: z.string().optional(),
     emergencyContact1Phone: z.string().optional(),
     emergencyContact1Relationship: z.string().optional(),
@@ -148,6 +153,11 @@ export const createHealthPersonSchema = z.object({
     policyNumber: z.string().optional(),
     insuranceExpiry: z.string().datetime().nullable().optional(),
     coverageType: z.string().optional(),
+    workInsuranceProvider: z.string().optional(),
+    workInsuranceCardNo: z.string().optional(),
+    workInsurancePolicyHolder: z.string().optional(),
+    workInsuranceId: z.string().optional(),
+    workInsuranceValidFrom: z.string().datetime().nullable().optional(),
     notes: z.string().optional(),
     isShared: z.boolean().optional(),
 });
@@ -164,6 +174,22 @@ export const createHealthLogSchema = z.object({
     cost: z.number().nonnegative().optional(),
     prescription: z.string().optional(),
     nextCheckupDate: z.string().datetime().nullable().optional(),
+    addExpense: z.boolean().optional(),
+}).superRefine((data, ctx) => {
+    if (data.addExpense && (data.cost == null || data.cost <= 0)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['cost'], message: 'Cost is required when "Add expense" is checked' });
+    }
 });
 
-export const updateHealthLogSchema = createHealthLogSchema.partial();
+export const updateHealthLogSchema = z.object({
+    date: z.string().datetime().optional(),
+    type: z.enum(['REGULAR_CHECKUP', 'DOCTOR_VISIT', 'EMERGENCY', 'VACCINATION', 'PRESCRIPTION', 'LAB_RESULT', 'OTHER']).optional(),
+    location: z.string().optional(),
+    doctor: z.string().optional(),
+    symptoms: z.string().optional(),
+    description: z.string().optional(),
+    cost: z.number().nonnegative().optional(),
+    prescription: z.string().optional(),
+    nextCheckupDate: z.string().datetime().nullable().optional(),
+    addExpense: z.boolean().optional(),
+});

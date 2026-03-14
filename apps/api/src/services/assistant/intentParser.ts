@@ -110,6 +110,19 @@ update_cakeo_status:
   entities: { "itemTitle": "string (required)", "status": "TODO|IN_PROGRESS|DONE|CANCELLED (required)" }
   examples: "mark school trip done", "đánh dấu ca keo khám bệnh xong", "complete ca keo activity", "cancel ca keo medical appointment"
 
+query_healthbook:
+  entities: { "personName": "string (optional)" }
+  examples: "show healthbook", "health profiles", "who is in the healthbook", "sổ sức khỏe", "show health record for Nam"
+
+query_health_logs:
+  entities: { "personName": "string (required)", "dateRange": { "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" } (optional) }
+  examples: "health logs for Nam", "show medical history of Linh", "lịch sử khám bệnh của Nam", "health logs for Mom this year", "recent visits for Dad"
+
+create_health_log:
+  entities: { "personName": "string (required)", "date": "YYYY-MM-DD (optional, default today)", "type": "REGULAR_CHECKUP|DOCTOR_VISIT|EMERGENCY|VACCINATION|PRESCRIPTION|LAB_RESULT|OTHER (optional, default DOCTOR_VISIT)", "location": "string (optional, hospital/clinic name)", "doctor": "string (optional)", "symptoms": "string (optional)", "description": "string (optional)", "cost": "number in VND (optional)" }
+  examples: "add health log for Nam doctor visit at Vinmec cost 500k", "log vaccination for Linh today", "thêm khám bệnh cho Nam tại bệnh viện Bạch Mai 300k", "record emergency visit for Dad at City Hospital"
+  note: cost parsing same as expenses — 500k=500000, 1.5M=1500000
+
 help:
   entities: {}
   examples: "/help", "what can you do", "help me", "hướng dẫn"
@@ -138,6 +151,8 @@ Vietnamese action keywords:
 - việc nhà / chores / dọn = housework
 - goal / mục tiêu / chạy bộ / tập gym / đăng ký = goal_checkin
 - ca keo / cakeo / lịch bé / lịch con = create_cakeo or query_cakeos or update_cakeo_status depending on context
+- healthbook / sổ sức khỏe / health record = query_healthbook or query_health_logs depending on context
+- health log / khám bệnh / medical log / add health = create_health_log
 
 Return ONLY the JSON object.`;
 }
@@ -223,6 +238,19 @@ function regexFallback(text: string, today: string): ParsedIntent {
     if (/\b(mark|complete|done|cancel|đánh dấu)\b.+\b(ca keo|cakeo)\b/i.test(t) ||
         /\b(ca keo|cakeo)\b.+\b(done|xong|cancel|hoàn thành)\b/i.test(t)) {
         return { intent: 'update_cakeo_status', confidence: 0.6, entities: {} };
+    }
+
+    if (/\b(add|log|create|record|thêm|tạo)\b.+\b(health log|khám bệnh|medical log|health visit|doctor visit|vaccination|emergency)\b/i.test(t) ||
+        /\b(health log|khám bệnh)\b.+\b(for|cho)\b/i.test(t)) {
+        return { intent: 'create_health_log', confidence: 0.65, entities: {} };
+    }
+
+    if (/\b(health logs?|medical history|lịch sử khám|lịch khám)\b.+\b(for|cho|of)\b/i.test(t)) {
+        return { intent: 'query_health_logs', confidence: 0.65, entities: {} };
+    }
+
+    if (/\b(healthbook|health profiles?|sổ sức khỏe|health record)\b/i.test(t)) {
+        return { intent: 'query_healthbook', confidence: 0.7, entities: {} };
     }
 
     return { intent: 'fallback', confidence: 1.0, entities: {} };

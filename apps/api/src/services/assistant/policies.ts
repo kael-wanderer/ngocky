@@ -43,6 +43,9 @@ export const ASSISTANT_INTENTS = [
     'create_cakeo',
     'query_cakeos',
     'update_cakeo_status',
+    'query_healthbook',
+    'query_health_logs',
+    'create_health_log',
     'link_telegram',
     'help',
     'fallback',
@@ -61,6 +64,7 @@ export const WRITE_INTENTS: ReadonlySet<AssistantIntent> = new Set([
     'update_housework_status',
     'create_cakeo',
     'update_cakeo_status',
+    'create_health_log',
 ]);
 
 export const HELP_TEXT = `NgocKy Assistant - available commands:
@@ -107,6 +111,11 @@ Ca Keo
 - add ca keo school trip tomorrow
 - show ca keo this week
 - mark school trip done
+
+Healthbook
+- show healthbook
+- health logs for [name]
+- add health log for [name] doctor visit at [hospital] cost [amount]
 
 Send /link [code] to connect your NgocKy account.`;
 
