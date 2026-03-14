@@ -146,6 +146,9 @@ export default function CalendarPage() {
             setForm({ ...emptyForm });
             clearSelection();
         },
+        onError: (error: any) => {
+            setFormError(error?.response?.data?.message || 'Failed to create calendar item.');
+        },
     });
 
     const updateMut = useMutation({
@@ -155,6 +158,9 @@ export default function CalendarPage() {
             setEditingEvent(null);
             setForm({ ...emptyForm });
             clearSelection();
+        },
+        onError: (error: any) => {
+            setFormError(error?.response?.data?.message || 'Failed to update calendar item.');
         },
     });
 
@@ -441,12 +447,13 @@ export default function CalendarPage() {
                             const body: any = {
                                 ...form,
                                 type: form.type,
-                                color: form.color || null,
                                 startDate: startAt.toISOString(),
                                 repeatFrequency: form.repeatFrequency || null,
                                 repeatEndType: form.repeatFrequency ? (form.repeatEndType || 'NEVER') : null,
                                 ...buildNotificationPayload(form),
                             };
+                            if (form.color) body.color = form.color;
+                            else delete body.color;
                             if (endAt) body.endDate = endAt.toISOString();
                             else delete body.endDate;
                             if (form.repeatFrequency && form.repeatEndType === 'ON_DATE' && form.repeatUntil) body.repeatUntil = new Date(`${form.repeatUntil}T23:59:59.999`).toISOString();
