@@ -49,7 +49,6 @@ export async function resolveKeyboardCreate(
             tag,
             color,
             spec: [],
-            extras: [],
             description: condition,
             note,
             isShared: false,

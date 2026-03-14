@@ -8,45 +8,22 @@ import { parseCompactAmountInput } from '../utils/amount';
 const router = Router();
 router.use(authenticate);
 
-function normalizeKitOnlyFields(payload: any) {
-    if (payload.category === 'Kit') {
-        return {
-            stab: payload.stab ?? null,
-            switchAlpha: payload.switchAlpha ?? null,
-            switchMod: payload.switchMod ?? null,
-            assembler: payload.assembler ?? null,
-        };
+function normalizeStringList(payload: any) {
+    if (Array.isArray(payload)) {
+        return payload.map((item) => String(item).trim()).filter(Boolean);
     }
 
-    return {
-        stab: null,
-        switchAlpha: null,
-        switchMod: null,
-        assembler: null,
-    };
-}
-
-function normalizeStringList(value: unknown): string[] {
-    if (Array.isArray(value)) {
-        return value.map((item) => String(item).trim()).filter(Boolean);
-    }
-
-    if (typeof value === 'string') {
-        return value.split(',').map((item) => item.trim()).filter(Boolean);
+    if (typeof payload === 'string') {
+        return payload.split(',').map((item) => item.trim()).filter(Boolean);
     }
 
     return [];
 }
 
-function mergeSpecWithExtras(spec: unknown, extras: unknown): string[] {
-    return [...new Set([...normalizeStringList(spec), ...normalizeStringList(extras)])];
-}
-
 function serializeKeyboard(keyboard: any) {
     return {
         ...keyboard,
-        spec: mergeSpecWithExtras(keyboard.spec, keyboard.extras),
-        extras: normalizeStringList(keyboard.extras),
+        spec: normalizeStringList(keyboard.spec),
     };
 }
 
@@ -73,8 +50,7 @@ router.get('/', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
     try {
         const userId = req.user!.userId;
-        const { name, price, category, tag, color, spec, extras, description, note, stab, switchAlpha, switchMod, assembler, isShared } = req.body;
-        const normalizedExtras = normalizeStringList(extras);
+        const { name, price, category, tag, color, spec, description, note, isShared } = req.body;
         const last = await prisma.keyboard.aggregate({ where: { ownerId: userId }, _max: { sortOrder: true } });
         const keyboard = await prisma.keyboard.create({
             data: {
@@ -83,11 +59,9 @@ router.post('/', async (req, res, next) => {
                 category: category ?? null,
                 tag: tag ?? null,
                 color: color ?? null,
-                spec: mergeSpecWithExtras(spec, normalizedExtras),
-                extras: normalizedExtras,
+                spec: normalizeStringList(spec),
                 description: description ?? null,
                 note: note ?? null,
-                ...normalizeKitOnlyFields({ category, stab, switchAlpha, switchMod, assembler }),
                 isShared: !!isShared,
                 ownerId: userId,
                 sortOrder: (last._max.sortOrder ?? -1) + 1,
@@ -104,9 +78,7 @@ router.patch('/:id', async (req, res, next) => {
             where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
         });
         if (!kb) throw new NotFoundError('Keyboard not found');
-        const { name, price, category, tag, color, spec, extras, description, note, stab, switchAlpha, switchMod, assembler, isShared } = req.body;
-        const nextSpec = spec !== undefined ? spec : kb.spec;
-        const nextExtras = extras !== undefined ? normalizeStringList(extras) : kb.extras;
+        const { name, price, category, tag, color, spec, description, note, isShared } = req.body;
         const updated = await prisma.keyboard.update({
             where: { id: kb.id },
             data: {
@@ -115,19 +87,9 @@ router.patch('/:id', async (req, res, next) => {
                 ...(category !== undefined && { category }),
                 ...(tag !== undefined && { tag }),
                 ...(color !== undefined && { color }),
-                ...((spec !== undefined || extras !== undefined) && { spec: mergeSpecWithExtras(nextSpec, nextExtras) }),
-                ...(extras !== undefined && { extras: nextExtras }),
+                ...(spec !== undefined && { spec: normalizeStringList(spec) }),
                 ...(description !== undefined && { description }),
                 ...(note !== undefined && { note }),
-                ...((category !== undefined || stab !== undefined || switchAlpha !== undefined || switchMod !== undefined || assembler !== undefined)
-                    ? normalizeKitOnlyFields({
-                        category: category !== undefined ? category : kb.category,
-                        stab: stab !== undefined ? stab : kb.stab,
-                        switchAlpha: switchAlpha !== undefined ? switchAlpha : kb.switchAlpha,
-                        switchMod: switchMod !== undefined ? switchMod : kb.switchMod,
-                        assembler: assembler !== undefined ? assembler : kb.assembler,
-                    })
-                    : {}),
                 ...(isShared !== undefined && { isShared }),
             },
         });
@@ -156,18 +118,15 @@ router.post('/import', async (req, res, next) => {
 
         await prisma.keyboard.createMany({
             data: rows.map(r => {
-                const parsedExtras = normalizeStringList(r.extras);
                 return {
                     name: String(r.name ?? '').trim() || 'Untitled',
                     price: parseCompactAmountInput(r.price),
                     category: r.category ?? null,
                     tag: r.tag ?? null,
                     color: r.color ?? null,
-                    spec: mergeSpecWithExtras(r.spec, parsedExtras),
-                    extras: parsedExtras,
+                    spec: normalizeStringList(r.spec),
                     description: r.description ?? null,
                     note: r.note ?? null,
-                    ...normalizeKitOnlyFields(r),
                     isShared: false,
                     ownerId: userId,
                     sortOrder: order++,

@@ -20,10 +20,6 @@ const CATEGORIES = [...KEYBOARD_FILTER_CATEGORIES];
 const TAGS = [...KEYBOARD_FILTER_TAGS];
 const COLORS = [...KEYBOARD_FILTER_COLORS];
 const SPECS = ['Base', 'Space', 'Plate Alu', 'Solder', 'Novel', 'Alpha', 'Icon mod', 'Hiragana', 'Hotswap', 'Deskmat', 'Fix kit'];
-const EXTRAS = ['Hotswap', 'Solder', 'Plate Alu', 'Plate CF', 'Plate PC', 'Plate PP', 'Rama'];
-const STABS = ['V2.0', 'V2.1', 'V2.2'];
-const SWITCH_ALPHAS = ['VB 3 pin', 'VB 5 pin'];
-const SWITCH_MODS = ['VB 3 pin', 'VB 5 pin', 'HB', 'Cherry Black'];
 const CONDITIONS = ['BNIB', 'Used'];
 const PRICE_RANGES = [...KEYBOARD_FILTER_PRICE_RANGES];
 const COLOR_TEXT_MAP: Record<string, string> = {
@@ -60,13 +56,8 @@ interface KeyboardItem {
     tag: string | null;
     color: string | null;
     spec: string[];
-    extras: string[];
     description: string | null;
     note: string | null;
-    stab: string | null;
-    switchAlpha: string | null;
-    switchMod: string | null;
-    assembler: string | null;
     isShared: boolean;
     ownerId: string;
     sortOrder: number;
@@ -79,29 +70,23 @@ type FormState = {
     tag: string;
     color: string;
     spec: string[];
-    extras: string[];
     description: string;
     note: string;
-    stab: string;
-    switchAlpha: string;
-    switchMod: string;
-    assembler: string;
     isShared: boolean;
 };
 
-type SortKey = 'name' | 'category' | 'tag' | 'color' | 'spec' | 'extras' | 'condition' | 'price' | 'note' | 'stab' | 'switchAlpha' | 'switchMod' | 'assembler';
+type SortKey = 'name' | 'category' | 'tag' | 'color' | 'spec' | 'condition' | 'price' | 'note';
 type SortOrder = 'asc' | 'desc';
 type FilterDropdownKey = 'categories' | 'tags' | 'colors' | 'priceRanges' | null;
 
 // ─── Helpers ─────────────────────────────────────────
 
 const formatVND = (n: number) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n)} VND`;
-const formatPriceValue = (n: number) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n);
 
 const parseAmountInput = parseCompactAmountInput;
 
 function emptyForm(): FormState {
-    return { name: '', price: '', category: '', tag: '', color: '', spec: [], extras: [], description: '', note: '', stab: '', switchAlpha: '', switchMod: '', assembler: '', isShared: false };
+    return { name: '', price: '', category: '', tag: '', color: '', spec: [], description: '', note: '', isShared: false };
 }
 
 function formFromItem(item: KeyboardItem): FormState {
@@ -112,32 +97,13 @@ function formFromItem(item: KeyboardItem): FormState {
         tag: item.tag ?? '',
         color: item.color ?? '',
         spec: item.spec ?? [],
-        extras: item.extras ?? [],
         description: item.description ?? '',
         note: item.note ?? '',
-        stab: item.stab ?? '',
-        switchAlpha: item.switchAlpha ?? '',
-        switchMod: item.switchMod ?? '',
-        assembler: item.assembler ?? '',
         isShared: item.isShared,
     };
 }
 
 function formToBody(f: FormState) {
-    const kitOnlyFields = isKitCategory(f.category)
-        ? {
-            stab: f.stab || null,
-            switchAlpha: f.switchAlpha || null,
-            switchMod: f.switchMod || null,
-            assembler: f.assembler || null,
-        }
-        : {
-            stab: null,
-            switchAlpha: null,
-            switchMod: null,
-            assembler: null,
-        };
-
     return {
         name: f.name,
         price: f.price !== '' ? parseAmountInput(f.price) : null,
@@ -145,10 +111,8 @@ function formToBody(f: FormState) {
         tag: f.tag || null,
         color: f.color || null,
         spec: f.spec,
-        extras: f.extras,
         description: f.description || null,
         note: f.note || null,
-        ...kitOnlyFields,
         isShared: f.isShared,
     };
 }
@@ -157,8 +121,26 @@ function toggleArr(arr: string[], val: string): string[] {
     return arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val];
 }
 
-function isKitCategory(category: string) {
-    return category === 'Kit';
+function getKeyboardPriceColor(category: string | null, price: number | null) {
+    if (price == null) return undefined;
+
+    if (category === 'Kit') {
+        if (price >= 20_000_000) return '#dc2626';
+        if (price >= 15_000_000) return '#ea580c';
+        if (price >= 10_000_000) return '#2563eb';
+        if (price >= 5_000_000) return '#16a34a';
+        return undefined;
+    }
+
+    if (category === 'Keycap') {
+        if (price >= 10_000_000) return '#dc2626';
+        if (price >= 7_500_000) return '#ea580c';
+        if (price >= 5_000_000) return '#2563eb';
+        if (price >= 3_500_000) return '#16a34a';
+        return undefined;
+    }
+
+    return undefined;
 }
 
 function Chip({ label, onRemove }: { label: string; onRemove?: () => void }) {
@@ -207,12 +189,8 @@ function parseCSV(text: string): { headers: string[]; rows: string[][] } {
 const CSV_HEADER_MAP: Record<string, string> = {
     name: 'name', price: 'price',
     category: 'category', tag: 'tag', color: 'color',
-    spec: 'spec', extras: 'extras',
+    spec: 'spec',
     description: 'description', note: 'note',
-    stab: 'stab',
-    'switch alpha': 'switchAlpha', switchalpha: 'switchAlpha', alpha: 'switchAlpha',
-    'switch mod': 'switchMod', switchmod: 'switchMod', mod: 'switchMod',
-    assembler: 'assembler',
 };
 
 // ─── Main Page ───────────────────────────────────────
@@ -306,14 +284,9 @@ export default function KeyboardPage() {
                 case 'tag': return item.tag || '';
                 case 'color': return item.color || '';
                 case 'spec': return item.spec?.join(', ') || '';
-                case 'extras': return item.extras?.join(', ') || '';
                 case 'condition': return item.description || '';
                 case 'price': return item.price ?? 0;
                 case 'note': return item.note || '';
-                case 'stab': return item.stab || '';
-                case 'switchAlpha': return item.switchAlpha || '';
-                case 'switchMod': return item.switchMod || '';
-                case 'assembler': return item.assembler || '';
                 default: return '';
             }
         };
@@ -474,7 +447,7 @@ export default function KeyboardPage() {
                     <table className="w-full text-sm">
                         <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                             <tr>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[160px]">
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[140px]">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('name')}>
                                         Name
                                         {renderSortIcon('name')}
@@ -498,19 +471,13 @@ export default function KeyboardPage() {
                                         {renderSortIcon('color')}
                                     </button>
                                 </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[170px]">
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[280px]">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('spec')}>
                                         Spec
                                         {renderSortIcon('spec')}
                                     </button>
                                 </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">
-                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('extras')}>
-                                        Extras
-                                        {renderSortIcon('extras')}
-                                    </button>
-                                </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-20">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('condition')}>
                                         Condition
                                         {renderSortIcon('condition')}
@@ -518,38 +485,14 @@ export default function KeyboardPage() {
                                 </th>
                                 <th className="text-right px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('price')}>
-                                        Price (VND)
+                                        Price
                                         {renderSortIcon('price')}
                                     </button>
                                 </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[120px]">
+                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[360px]">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('note')}>
                                         Note
                                         {renderSortIcon('note')}
-                                    </button>
-                                </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-20">
-                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('stab')}>
-                                        Stab
-                                        {renderSortIcon('stab')}
-                                    </button>
-                                </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
-                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('switchAlpha')}>
-                                        Switch Alpha
-                                        {renderSortIcon('switchAlpha')}
-                                    </button>
-                                </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
-                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('switchMod')}>
-                                        Switch Mod
-                                        {renderSortIcon('switchMod')}
-                                    </button>
-                                </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">
-                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('assembler')}>
-                                        Assembler
-                                        {renderSortIcon('assembler')}
                                     </button>
                                 </th>
                                 <th className="w-16" />
@@ -558,7 +501,7 @@ export default function KeyboardPage() {
                         <tbody>
                             {paginatedItems.length === 0 && (
                                 <tr>
-                                    <td colSpan={14} className="text-center py-12 text-gray-400">No keyboards found</td>
+                                    <td colSpan={9} className="text-center py-12 text-gray-400">No keyboards found</td>
                                 </tr>
                             )}
                             {paginatedItems.map((item, index) => (
@@ -582,20 +525,14 @@ export default function KeyboardPage() {
                                             {item.spec?.length ? item.spec.map(s => <Chip key={s} label={s} />) : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
                                         </div>
                                     </td>
-                                    <td className="px-3 py-2">
-                                        <div className="flex flex-wrap gap-0.5">
-                                            {item.extras?.length ? item.extras.map(e => <span key={e} className="px-1.5 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">{e}</span>) : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
-                                        </div>
-                                    </td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.description ?? ''}>{item.description || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
-                                    <td className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
-                                        {item.price != null ? formatPriceValue(item.price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                                    <td
+                                        className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300"
+                                        style={item.price != null ? { color: getKeyboardPriceColor(item.category, item.price) } : undefined}
+                                    >
+                                        {item.price != null ? formatVND(item.price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
                                     </td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.note ?? ''}>{item.note || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{isKitCategory(item.category || '') ? (item.stab || <span className="text-gray-300 dark:text-gray-600">—</span>) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{isKitCategory(item.category || '') ? (item.switchAlpha || <span className="text-gray-300 dark:text-gray-600">—</span>) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{isKitCategory(item.category || '') ? (item.switchMod || <span className="text-gray-300 dark:text-gray-600">—</span>) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">{isKitCategory(item.category || '') ? (item.assembler || <span className="text-gray-300 dark:text-gray-600">—</span>) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2">
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
                                             <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
@@ -663,18 +600,6 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, onDelete, savi
     saving: boolean;
 }) {
     const set = (k: keyof FormState, v: any) => setForm(p => ({ ...p, [k]: v }));
-    const isKit = isKitCategory(form.category);
-
-    function setCategory(value: string) {
-        setForm((current) => ({
-            ...current,
-            category: value,
-            stab: isKitCategory(value) ? current.stab : '',
-            switchAlpha: isKitCategory(value) ? current.switchAlpha : '',
-            switchMod: isKitCategory(value) ? current.switchMod : '',
-            assembler: isKitCategory(value) ? current.assembler : '',
-        }));
-    }
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -697,7 +622,7 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, onDelete, savi
                         {/* Category */}
                         <div>
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-                            <select value={form.category} onChange={e => setCategory(e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
+                            <select value={form.category} onChange={e => set('category', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
                                 <option value="">—</option>
                                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
@@ -734,19 +659,6 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, onDelete, savi
                             </div>
                         </div>
 
-                        {/* Extras */}
-                        <div className="col-span-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Extras</label>
-                            <div className="mt-1 flex flex-wrap gap-1.5">
-                                {EXTRAS.map(e => (
-                                    <button key={e} type="button" onClick={() => set('extras', toggleArr(form.extras, e))}
-                                        className={`px-2 py-0.5 rounded text-xs border transition-colors ${form.extras.includes(e) ? 'bg-green-600 border-green-600 text-white' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
-                                        {e}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
                         {/* Condition */}
                         <div className="col-span-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Condition</label>
@@ -760,39 +672,6 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, onDelete, savi
                         <div className="col-span-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Note</label>
                             <input value={form.note} onChange={e => set('note', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm" />
-                        </div>
-
-                        {/* Stab */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Stab</label>
-                            <select disabled={!isKit} value={form.stab} onChange={e => set('stab', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                                <option value="">—</option>
-                                {STABS.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
-                        </div>
-
-                        {/* Switch Alpha */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Switch Alpha</label>
-                            <select disabled={!isKit} value={form.switchAlpha} onChange={e => set('switchAlpha', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                                <option value="">—</option>
-                                {SWITCH_ALPHAS.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
-                        </div>
-
-                        {/* Switch Mod */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Switch Mod</label>
-                            <select disabled={!isKit} value={form.switchMod} onChange={e => set('switchMod', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                                <option value="">—</option>
-                                {SWITCH_MODS.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
-                        </div>
-
-                        {/* Assembler */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Assembler</label>
-                            <input disabled={!isKit} value={form.assembler} onChange={e => set('assembler', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed" placeholder="e.g. Hieu" />
                         </div>
 
                         {/* Shared */}
@@ -844,13 +723,8 @@ function CsvImportModal({ onImport, onClose, loading }: {
         { key: 'tag', label: 'Tag' },
         { key: 'color', label: 'Color' },
         { key: 'spec', label: 'Spec (multi)' },
-        { key: 'extras', label: 'Extras (multi)' },
         { key: 'description', label: 'Condition' },
         { key: 'note', label: 'Note' },
-        { key: 'stab', label: 'Stab' },
-        { key: 'switchAlpha', label: 'Switch Alpha' },
-        { key: 'switchMod', label: 'Switch Mod' },
-        { key: 'assembler', label: 'Assembler' },
     ];
 
     function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -872,13 +746,13 @@ function CsvImportModal({ onImport, onClose, loading }: {
     }
 
     function buildItem(row: string[]) {
-        const item: any = { name: '', price: null, spec: [], extras: [] };
+        const item: any = { name: '', price: null, spec: [] };
         csvHeaders.forEach((h, i) => {
             const target = mapping[h];
             if (!target) return;
             const val = row[i] ?? '';
             if (target === 'price') { item.price = val ? parseAmountInput(String(val)) || null : null; return; }
-            if (target === 'spec' || target === 'extras') {
+            if (target === 'spec') {
                 item[target] = val ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
                 return;
             }

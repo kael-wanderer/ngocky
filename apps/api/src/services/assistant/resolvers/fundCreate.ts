@@ -146,7 +146,6 @@ export async function resolveFundCreate(
                     category: mapFundCategoryToKeyboardCategory(category),
                     description: condition,
                     spec: [],
-                    extras: [],
                     note: 'Created from Funds',
                     isShared: false,
                     ownerId: ctx.userId,

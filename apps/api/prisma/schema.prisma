@@ -857,13 +857,8 @@ model Keyboard {
   tag         String?
   color       String?
   spec        Json     @default("[]")
-  extras      Json     @default("[]")
   description String?
   note        String?
-  stab        String?
-  switchAlpha String?
-  switchMod   String?
-  assembler   String?
   isShared    Boolean  @default(false)
   ownerId     String
   sortOrder   Int      @default(0)
