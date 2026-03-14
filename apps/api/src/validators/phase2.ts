@@ -124,3 +124,46 @@ export const createScheduledReportSchema = z.object({
 });
 
 export const updateScheduledReportSchema = createScheduledReportSchema.partial();
+
+// ─── Healthbook ──────────────────────────────────────────────────────────────
+
+export const createHealthPersonSchema = z.object({
+    name: z.string().min(1).max(200),
+    dateOfBirth: z.string().datetime().nullable().optional(),
+    gender: z.string().optional(),
+    nationality: z.string().optional(),
+    bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']).nullable().optional(),
+    allergies: z.string().optional(),
+    chronicConditions: z.string().optional(),
+    currentMedications: z.string().optional(),
+    organDonor: z.boolean().optional(),
+    emergencyContact1Name: z.string().optional(),
+    emergencyContact1Phone: z.string().optional(),
+    emergencyContact1Relationship: z.string().optional(),
+    emergencyContact2Name: z.string().optional(),
+    emergencyContact2Phone: z.string().optional(),
+    emergencyContact2Relationship: z.string().optional(),
+    insuranceProvider: z.string().optional(),
+    insuranceCardNumber: z.string().optional(),
+    policyNumber: z.string().optional(),
+    insuranceExpiry: z.string().datetime().nullable().optional(),
+    coverageType: z.string().optional(),
+    notes: z.string().optional(),
+    isShared: z.boolean().optional(),
+});
+
+export const updateHealthPersonSchema = createHealthPersonSchema.partial();
+
+export const createHealthLogSchema = z.object({
+    date: z.string().datetime(),
+    type: z.enum(['REGULAR_CHECKUP', 'DOCTOR_VISIT', 'EMERGENCY', 'VACCINATION', 'PRESCRIPTION', 'LAB_RESULT', 'OTHER']).optional(),
+    location: z.string().optional(),
+    doctor: z.string().optional(),
+    symptoms: z.string().optional(),
+    description: z.string().optional(),
+    cost: z.number().nonnegative().optional(),
+    prescription: z.string().optional(),
+    nextCheckupDate: z.string().datetime().nullable().optional(),
+});
+
+export const updateHealthLogSchema = createHealthLogSchema.partial();

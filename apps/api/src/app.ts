@@ -27,6 +27,7 @@ import serviceRoutes from './routes/service';
 import assistantRoutes from './routes/assistant';
 import keyboardRoutes from './routes/keyboards';
 import cakeoRoutes from './routes/cakeos';
+import healthbookRoutes from './routes/healthbook';
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use('/api/service', serviceRoutes);
 app.use('/api/assistant', assistantRoutes);
 app.use('/api/keyboards', keyboardRoutes);
 app.use('/api/cakeos', cakeoRoutes);
+app.use('/api/healthbook', healthbookRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);

@@ -240,6 +240,7 @@ export default function SettingsPage() {
             featureKeyboard: profile.featureKeyboard ?? true,
             featureFunds: profile.featureFunds ?? true,
             featureCaKeo: profile.featureCaKeo ?? true,
+            featureHealthbook: profile.featureHealthbook ?? true,
         });
         setPhoneViewForm(getMobileNavItems(profile));
     }, [profile]);

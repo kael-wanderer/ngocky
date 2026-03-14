@@ -38,6 +38,7 @@ const profileSelect: any = {
     featureKeyboard: true,
     featureFunds: true,
     featureCaKeo: true,
+    featureHealthbook: true,
 } as const;
 
 const PHONE_VIEW_ALLOWED_ROUTES = [
@@ -109,6 +110,7 @@ router.patch('/profile', async (req: Request, res: Response, next: NextFunction)
             'featureKeyboard',
             'featureFunds',
             'featureCaKeo',
+            'featureHealthbook',
         ];
         const data: any = {};
         allowedFields.forEach((f) => { if (req.body[f] !== undefined) data[f] = req.body[f]; });

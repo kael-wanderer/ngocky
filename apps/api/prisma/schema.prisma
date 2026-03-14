@@ -186,6 +186,16 @@ enum ProjectTaskType {
   EPIC
 }
 
+enum HealthLogType {
+  REGULAR_CHECKUP
+  DOCTOR_VISIT
+  EMERGENCY
+  VACCINATION
+  PRESCRIPTION
+  LAB_RESULT
+  OTHER
+}
+
 // ─── User ───────────────────────────────────────────
 
 model User {
@@ -218,6 +228,7 @@ model User {
   featureKeyboard     Boolean             @default(true)
   featureFunds        Boolean             @default(true)
   featureCaKeo        Boolean             @default(true)
+  featureHealthbook   Boolean             @default(true)
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
@@ -251,6 +262,8 @@ model User {
   keyboards               Keyboard[]
   cakeos                  CaKeo[]                  @relation("CaKeoOwner")
   assignedCaKeos          CaKeo[]                  @relation("CaKeoAssigner")
+  healthPersons           HealthPerson[]
+  healthLogs              HealthLog[]
 }
 
 model ModuleColorSetting {
@@ -906,4 +919,101 @@ model CaKeo {
   @@index([assignerId])
   @@index([startDate])
   @@index([status])
+}
+
+// ─── Healthbook ──────────────────────────────────────
+
+model HealthPerson {
+  id                            String    @id @default(cuid())
+  name                          String
+  dateOfBirth                   DateTime?
+  gender                        String?
+  nationality                   String?
+  bloodType                     String?
+  allergies                     String?
+  chronicConditions             String?
+  currentMedications            String?
+  organDonor                    Boolean   @default(false)
+  emergencyContact1Name         String?
+  emergencyContact1Phone        String?
+  emergencyContact1Relationship String?
+  emergencyContact2Name         String?
+  emergencyContact2Phone        String?
+  emergencyContact2Relationship String?
+  insuranceProvider             String?
+  insuranceCardNumber           String?
+  policyNumber                  String?
+  insuranceExpiry               DateTime?
+  coverageType                  String?
+  notes                         String?
+  isShared                      Boolean   @default(false)
+  sortOrder                     Int       @default(0)
+  userId                        String
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+
+  user  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs  HealthLog[]
+  files HealthPersonFile[]
+
+  @@index([userId])
+}
+
+model HealthLog {
+  id              String        @id @default(cuid())
+  personId        String
+  date            DateTime
+  type            HealthLogType @default(DOCTOR_VISIT)
+  location        String?
+  doctor          String?
+  symptoms        String?
+  description     String?
+  cost            Float?
+  prescription    String?
+  nextCheckupDate DateTime?
+  userId          String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  person HealthPerson  @relation(fields: [personId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files  HealthLogFile[]
+
+  @@index([personId])
+  @@index([userId])
+  @@index([date])
+}
+
+model HealthPersonFile {
+  id           String      @id @default(cuid())
+  personId     String
+  originalName String
+  storedName   String
+  mimeType     String
+  size         Int
+  path         String
+  label        String?
+  userId       String
+  createdAt    DateTime    @default(now())
+
+  person HealthPerson @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([personId])
+}
+
+model HealthLogFile {
+  id           String    @id @default(cuid())
+  logId        String
+  originalName String
+  storedName   String
+  mimeType     String
+  size         Int
+  path         String
+  label        String?
+  userId       String
+  createdAt    DateTime  @default(now())
+
+  log HealthLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+
+  @@index([logId])
 }

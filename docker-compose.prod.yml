@@ -6,6 +6,8 @@ services:
     env_file: .env
     environment:
       - NODE_ENV=production
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,6 +47,7 @@ services:
 
 volumes:
   pgdata:
+  uploads:
 
 networks:
   ngocky:

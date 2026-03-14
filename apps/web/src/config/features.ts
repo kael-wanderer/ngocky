@@ -11,6 +11,7 @@ export const FEATURE_FLAGS = {
     featureKeyboard: true,
     featureFunds: true,
     featureCaKeo: true,
+    featureHealthbook: true,
 } as const;
 
 export const MOBILE_NAV_OPTIONS = [
@@ -25,6 +26,7 @@ export const MOBILE_NAV_OPTIONS = [
     { to: '/cakeo', label: 'Ca Keo' },
     { to: '/housework', label: 'Housework' },
     { to: '/assets', label: 'Assets' },
+    { to: '/healthbook', label: 'Healthbook' },
     { to: '/keyboard', label: 'Keyboard' },
     { to: '/funds', label: 'Funds' },
     { to: '/learning', label: 'Learning' },
@@ -66,6 +68,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
             { key: 'featureCaKeo', label: 'Ca Keo', route: '/cakeo' },
             { key: 'featureHousework', label: 'Housework', route: '/housework' },
             { key: 'featureAssets', label: 'Assets', route: '/assets' },
+            { key: 'featureHealthbook', label: 'Healthbook', route: '/healthbook' },
         ],
     },
     {

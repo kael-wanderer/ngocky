@@ -65,8 +65,12 @@ const getTypeBadgeStyle = (type: string) => {
 };
 
 const normalizeConditionForType = (type: string, condition: string | null | undefined) => {
-    if (type !== 'BUY') {
+    if (type === 'TOP_UP') {
         return '';
+    }
+
+    if (type !== 'BUY') {
+        return condition || '';
     }
 
     return condition || 'USED';
@@ -290,7 +294,8 @@ export default function FundsPage() {
 
         const payload = {
             ...form,
-            condition: form.type === 'BUY' ? (form.condition || null) : null,
+            category: form.type === 'TOP_UP' ? 'OTHER' : form.category,
+            condition: form.type === 'TOP_UP' ? null : (form.condition || null),
             keyboardItemName: form.keyboardItemId
                 ? keyboardOptions.find((item: any) => item.id === form.keyboardItemId)?.name || null
                 : form.description,
@@ -398,6 +403,7 @@ export default function FundsPage() {
                                         onChange={(e) => setForm({
                                             ...form,
                                             type: e.target.value,
+                                            category: e.target.value === 'TOP_UP' ? 'OTHER' : form.category,
                                             condition: normalizeConditionForType(e.target.value, form.condition),
                                             keyboardItemId: e.target.value === 'SELL' ? form.keyboardItemId : '',
                                         })}
@@ -412,8 +418,13 @@ export default function FundsPage() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="label">Category <span className="text-red-500">*</span></label>
-                                    <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                                    <label className="label">Category {form.type !== 'TOP_UP' && <span className="text-red-500">*</span>}</label>
+                                    <select
+                                        className="input disabled:opacity-50 disabled:cursor-not-allowed"
+                                        value={form.type === 'TOP_UP' ? 'OTHER' : form.category}
+                                        disabled={form.type === 'TOP_UP'}
+                                        onChange={(e) => setForm({ ...form, category: e.target.value })}
+                                    >
                                         {categoryOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                                     </select>
                                 </div>
@@ -422,7 +433,7 @@ export default function FundsPage() {
                                     <select
                                         className="input disabled:opacity-50 disabled:cursor-not-allowed"
                                         value={form.condition}
-                                        disabled={form.type !== 'BUY'}
+                                        disabled={form.type === 'TOP_UP'}
                                         onChange={(e) => setForm({ ...form, condition: e.target.value })}
                                     >
                                         {form.type === 'BUY' && <option value="">Select condition</option>}
@@ -548,7 +559,7 @@ export default function FundsPage() {
                                                 </td>
                                                 <td><span className="badge badge-warning">{scopeOptions.find((option) => option.value === fund.scope)?.label || fund.scope}</span></td>
                                                 <td><span className="badge-success">{categoryOptions.find((option) => option.value === fund.category)?.label || fund.category}</span></td>
-                                                <td><span className="badge badge-secondary">{fund.type === 'BUY' ? (conditionOptions.find((option) => option.value === fund.condition)?.label || fund.condition || '—') : '—'}</span></td>
+                                                <td><span className="badge badge-secondary">{conditionOptions.find((option) => option.value === fund.condition)?.label || fund.condition || '—'}</span></td>
                                                 <td>
                                                     <div className="font-medium" style={{ color: 'var(--color-text)' }}>{fund.description}</div>
                                                     <div className="flex items-center gap-2 mt-2">

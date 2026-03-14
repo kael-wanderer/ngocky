@@ -122,6 +122,12 @@ NgocKy/
 | Check-ins | `POST /api/checkins` | Log check-ins |
 | Projects | `GET/POST /api/projects` | Project CRUD |
 | Assets | `GET/POST /api/assets` | Asset CRUD + maintenance |
+| Healthbook | `GET/POST /api/healthbook` | Health person CRUD |
+| Healthbook | `GET/POST /api/healthbook/:personId/logs` | Medical log CRUD |
+| Healthbook | `POST /api/healthbook/:personId/files` | Upload person-level file |
+| Healthbook | `POST /api/healthbook/logs/:logId/files` | Upload log-level file |
+| Healthbook | `GET /api/healthbook/files/:fileId` | View/download file (auth protected) |
+| Healthbook | `DELETE /api/healthbook/files/:fileId` | Delete file |
 | Learning | `GET/POST /api/learning/*` | Topics and histories |
 | Ideas | `GET/POST /api/ideas/*` | Topics and logs |
 | Housework | `GET/POST /api/housework` | Housework CRUD |
@@ -220,13 +226,14 @@ Account linking:
 - **Projects** – Shared boards with kanban + list view, project task types (`Task`, `Bug`, `Feature`, `Story`, `Epic`), priorities, deadlines, assignees, drag-and-drop status updates, and per-item sharing
 - **Housework** – Rule-based recurring housework (`One time`, `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Half yearly`, `Yearly`) with explicit `Mark Complete`, grouped operational states, sharing, and optional reminders
 - **Calendar** – Today/week/month views, color-coded events, optional repeat (`Daily`, `Weekly`, `Monthly`, `Quarterly`), shared visibility, participants, and optional pre-start reminders; planned updates align `Today` with a Google Calendar-style timeline and `Week` with a full week grid instead of a list
-- **Assets** – Home appliance/device registry with sharing, warranty tracking, maintenance records, linked maintenance calendar events, reminder support, and automatic expense creation when a maintenance log includes cost; a List view is planned in addition to the current card/table-first workflows
+- **Assets** – Home appliance/device registry with sharing, warranty tracking, maintenance records, linked maintenance calendar events, reminder support, and automatic expense creation when a maintenance log includes cost; the module is now split into a main asset page plus per-asset detail pages for maintenance history, and maintenance logs support both grid and list views with filtering
+- **Healthbook** – Family health record manager split into two levels: `/healthbook` lists family member profiles (name, DOB, blood type, allergies, chronic conditions, medications, insurance, emergency contacts), and `/healthbook/:personId` shows that person's medical history logs (type, date, location, doctor, symptoms, description, cost, prescription, next checkup date); files (ID card, insurance card, passport, prescriptions, lab results) can be attached at both the person level and the log level; accepted types are JPEG, PNG, WebP, and PDF up to 2 MB per file; files are served through an auth-protected endpoint; medical logs with a non-zero cost auto-create a matching Healthcare expense
 - **Expenses** – Filtered table with edit/delete actions, `type` (`Pay` / `Receive`), type-specific categories, scopes (`Personal`, `Family`, `Keo`, `Project`), sharing, sortable columns, running totals in `VND`, shorthand amount input such as `600k` and `82M`, and pagination with page size options `25`, `50`, `100`
 - **Learning** – Topic-first learning management with shared topics, topic categories (`Soft-skill`, `Expertise`, `AI`, `Other`), shared ownership display on histories, duplicate actions, and progress/deadline tracking
 - **Ideas** – Topic-first idea capture with shared topics, shared ownership display on logs, duplicate actions, and category/status tracking
 - **Ca Keo** – Kid task/calendar tracker with three views: Calendar (monthly grid), List (table with per-person pending/done stats), and Kanban (columns: Todo, In Progress, Done, Cancelled); fields include Title, Category (School/Activity/Medical/Entertainment/Home/Other), Status, Assigner (dynamic from DB users), Start/End date+time, Description, Color, Show on main Calendar flag, and optional notifications; Ca Keo items marked "Show on main Calendar" appear on the main Calendar page with a pink Ca Keo badge. Editing is collaborative for `cong.buithanh@gmail.com` and `kist.t1108@gmail.com`, while delete remains owner-only.
-- **Keyboard** – Keyboard collection table with category/tag/color/spec/extras/condition/price metadata, alternating row striping, sortable columns, always-visible filters, CSV import, pagination, and double-click edit
-- **Funds** – Hobby transaction ledger with fields `Description`, `Type` (`Buy`, `Sell`, `Top-up`), `Scope` (`Mechanical keyboard`, `Play Station`), `Category` (`Keycap`, `Kit`, `Shipping`, `Accessories`, `Other`), `Condition`, `Date`, and `Amount`; supports CSV import, pagination, shorthand amount input such as `600k` and `82M`, and keyboard-linked `Buy`/`Sell` automation
+- **Keyboard** – Keyboard collection table with category/tag/color/spec/condition/price metadata, alternating row striping, sortable columns, always-visible filters, CSV import, pagination, double-click edit, and derived `spec` values merged from historical extras data
+- **Funds** – Hobby transaction ledger with fields `Description`, `Type` (`Buy`, `Sell`, `Top-up`), `Scope` (`Mechanical keyboard`, `Play Station`), `Category` (`Keycap`, `Kit`, `Shipping`, `Accessories`, `Other`), `Condition`, `Date`, and `Amount`; supports CSV import, pagination, shorthand amount input such as `600k` and `82M`, keyboard-linked `Buy`/`Sell` automation, and a shared preset-based time filter (`All Time`, month, quarter, year, custom)
 - **Assistant** – Telegram-based assistant for quick task actions, calendar queries, expense logging, goal check-ins, housework updates, and project/project-task lookup with confirmation/disambiguation for ambiguous writes
 - **Analytics** – Charts and summaries for project items, standalone tasks, goals, calendar, housework, expenses, assets, learning, and ideas with time-aware filters; planned expansion adds Ca Keo, Keyboard, and Funds, and Analytics visibility should follow `User Settings > Desktop Features`
 - **Notifications** – Rule-based notification settings with drag reorder, double-click-to-edit, and schedule-time based due logic
@@ -291,7 +298,7 @@ Current shared modules include:
 Navigation visibility is user-configurable from `User Settings > Desktop Features`.
 
 - **Personal**: Tasks, Projects, Goals, Expenses, Ideas
-- **Family**: Calendar, Ca Keo, Housework, Assets
+- **Family**: Calendar, Ca Keo, Housework, Assets, Healthbook
 - **Hobby**: Keyboard, Funds, Learning
 
 Behavior:
@@ -352,6 +359,9 @@ Recent product updates include:
 - project item type added with options `Task`, `Bug`, `Feature`, `Story`, `Epic`
 - project page wording updated from `Task` to `Item` where needed to avoid confusion with standalone tasks
 - analytics page renamed from `Reports` and expanded to cover `Project`, `Task`, `Goal`, `Calendar`, `Asset`, `Housework`, `Expenses`, `Learning`, and `Ideas`
+- assets split into `/assets` list and `/assets/:assetId` detail pages, with maintenance logs moved into the asset detail flow
+- keyboard data model and UI removed unused fields `extras`, `stab`, `switchAlpha`, `switchMod`, and `assembler`; legacy extras are merged into `spec`
+- funds and expenses now use a shared preset-style time filter with month, quarter, year, all-time, and custom ranges
 
 ## Pagination
 
@@ -394,6 +404,11 @@ Current buy mapping:
 - `Funds.amount` -> `Keyboard.price`
 - `Funds.category` -> `Keyboard.category`
 - `Funds.condition` -> Keyboard condition display field
+
+Keyboard model note:
+
+- the stored/editable keyboard fields no longer include `extras`, `stab`, `switchAlpha`, `switchMod`, or `assembler`
+- existing legacy `extras` values were merged into `spec` during schema cleanup so visible configuration data remains preserved
 
 ## Amount Input
 

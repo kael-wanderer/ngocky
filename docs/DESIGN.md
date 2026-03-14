@@ -305,7 +305,7 @@ Fixed groups:
 
 - `Dashboard`: Dashboard, Analytics
 - `Personal`: Tasks, Projects, Goals, Expenses, Ideas
-- `Family`: Calendar, Ca Keo, Housework, Assets
+- `Family`: Calendar, Ca Keo, Housework, Assets, Healthbook
 - `Hobby`: Keyboard, Funds, Learning
 - `Settings`: Reports, Notifications, User Settings
 - `Admin`: User Management
@@ -328,7 +328,7 @@ Settings behavior is intentionally mixed based on action type:
 - **Profile** fields (`name`, `email`, `timezone`) now use local draft state and require explicit `Save`
 - **Desktop Features** fields control module visibility per user and require explicit `Save`
   - `Personal`: Tasks, Projects, Goals, Expenses, Ideas
-  - `Family`: Calendar, Ca Keo, Housework, Assets
+  - `Family`: Calendar, Ca Keo, Housework, Assets, Healthbook
   - `Hobby`: Keyboard, Funds, Learning
 - **Phone View** controls the bottom mobile navigation per user and requires explicit `Save`
   - supports between `3` and `6` selected modules
@@ -363,8 +363,6 @@ Ca Keo is a kid task and calendar tracker for family scheduling.
   - refine `Today` into a timeline view inspired by Google Calendar
   - refine `Week` into a calendar-grid week view instead of a list
   - add shared Calendar user colors under `Settings > Color Settings` using the same color option logic as Ca Keo
-- **Assets**:
-  - add a List view
 - **Analytics**:
   - add Ca Keo, Keyboard, and Funds
   - module visibility should follow `Settings > Desktop Features`
@@ -378,10 +376,10 @@ Ca Keo is a kid task and calendar tracker for family scheduling.
 
 Keyboard is a table-first hobby collection module.
 
-- primary fields: `Name`, `Category`, `Tag`, `Color`, `Spec`, `Extras`, `Condition`, `Price`, `Note`
-- kit-only fields: `Stab`, `Switch Alpha`, `Switch Mod`, `Assembler`
+- primary fields: `Name`, `Category`, `Tag`, `Color`, `Spec`, `Condition`, `Price`, `Note`
 - `Condition` is controlled as a constrained dropdown (`BNIB`, `Used`)
 - `Price` is VND and accepts shorthand input such as `600k` and `7.8M`
+- legacy `extras` values are merged into `spec` during schema cleanup so visible configuration data is preserved without keeping separate unused columns
 - keyboard table behavior includes:
   - alternating spreadsheet-style row striping
   - double-click to edit
@@ -390,7 +388,7 @@ Keyboard is a table-first hobby collection module.
   - pagination with page sizes `25`, `50`, `100`
   - CSV import with column mapping
 
-### 16. Funds Module
+### 17. Funds Module
 
 Funds is a hobby transaction ledger for non-general-expense activity.
 
@@ -410,12 +408,90 @@ Funds is a hobby transaction ledger for non-general-expense activity.
   - supports CSV import with column mapping
   - supports pagination with page sizes `25`, `50`, `100`
   - accepts shorthand amounts such as `600k` and `82M`
+  - uses a preset-based time filter with `All Time`, `This Month`, `Last Month`, `This Quarter`, `Last Quarter`, `This Year`, `Last Year`, and `Custom`
 - **Notification** fields (`notificationEnabled`, `notificationChannel`, `notificationEmail`, `telegramChatId`) also require explicit `Save`
 - **Assistant** tab manages Telegram link generation, link status, and revocation
 - **Theme** changes still apply immediately
 - **Avatar upload** still updates immediately after upload
 
-### 15. Auth Session Model
+### 18. Assets Module
+
+Assets now use a two-step navigation model instead of a split master-detail page.
+
+- `/assets`
+  - shows the asset collection only
+  - supports the asset-level create/edit/delete flow
+- `/assets/:assetId`
+  - shows one asset summary plus that asset's maintenance history
+  - log area supports both `grid` and `list` views
+  - log filters include text search plus preset filters such as date, next-schedule presence, and price range
+  - `Add Log` lives in the detail-page toolbar, not on the asset list page
+
+Maintenance log presentation notes:
+
+- grid view remains the richer card-style inspection view
+- list view is a denser operational layout with sortable columns
+- linked calendar state and next-schedule data stay at log level, not asset level
+
+### 19. Healthbook Module
+
+Healthbook is a family health record management module. It follows the same two-level navigation pattern as Assets.
+
+- `/healthbook` — list of family member health profiles (HealthPerson)
+- `/healthbook/:personId` — individual profile detail page with medical history logs (HealthLog)
+
+#### HealthPerson — Personal & Emergency Info
+
+Each record represents one family member. Fields:
+
+- **Identity**: full name, date of birth, gender, nationality
+- **Medical critical**: blood type (`A+`, `A-`, `B+`, `B-`, `AB+`, `AB-`, `O+`, `O-`), known allergies, chronic conditions, current medications + dosage, organ donor status
+- **Emergency contacts**: up to two contacts, each with name, relationship, and phone number
+- **Insurance**: provider name, card number, policy number, expiry date, coverage type
+- **Notes**: free-form additional notes
+- **isShared**: follows standard shared-visibility rule
+
+#### HealthLog — Medical History
+
+Each log is tied to a `HealthPerson`. Fields:
+
+- **Date**: visit or event date
+- **Type**: `REGULAR_CHECKUP`, `DOCTOR_VISIT`, `EMERGENCY`, `VACCINATION`, `PRESCRIPTION`, `LAB_RESULT`, `OTHER`
+- **Location**: hospital or clinic name
+- **Doctor**: attending doctor name
+- **Symptoms**: free-form text
+- **Description / Notes**: diagnosis, treatment plan, or general notes
+- **Cost**: VND amount (accepts shorthand `600k`, `2M`); when non-empty, auto-creates a matching `Expense` with `category = Healthcare`, `type = PAY`, `scope = PERSONAL`
+- **Prescription**: free-form prescription text
+- **nextCheckupDate**: optional recommended follow-up date
+
+#### File Attachments
+
+Files can be attached at two levels:
+
+- **Person-level** (`HealthPersonFile`): national ID, passport, insurance card, vaccination booklet
+- **Log-level** (`HealthLogFile`): prescription photos, lab results, X-rays, referral letters
+
+File constraints:
+
+- accepted types: `image/jpeg`, `image/png`, `image/webp`, `application/pdf`
+- max size per file: **2 MB**
+- files are stored on the server filesystem under `uploads/healthbook/` using UUID-based filenames
+- file metadata (original name, path, mime type, size) is stored in the database
+- files are served via a protected API endpoint: `GET /api/healthbook/files/:fileId` — requires valid JWT
+- images display inline in a modal/lightbox; PDFs open via `<iframe>` in a modal
+
+#### Cross-Module Automation
+
+- `HealthLog.cost > 0` → auto-create `Expense` on log create (same one-way pattern as `MaintenanceRecord → Expense`)
+- `HealthLog.nextCheckupDate` → optionally create a linked `CalendarEvent` (same pattern as `MaintenanceRecord → CalendarEvent`)
+
+#### Navigation
+
+- Healthbook lives under the `Family` sidebar group
+- Feature flag: `featureHealthbook` under `Settings > Desktop Features`
+
+### 20. Auth Session Model
 
 - access token expiry is controlled by `JWT_EXPIRY`
 - refresh token lifetime is controlled by `JWT_REFRESH_EXPIRY`

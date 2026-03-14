@@ -17,6 +17,7 @@ import LearningPage from './pages/LearningPage';
 import IdeasPage from './pages/IdeasPage';
 import KeyboardPage from './pages/KeyboardPage';
 import CaKeoPage from './pages/CaKeoPage';
+import HealthbookPage from './pages/HealthbookPage';
 import AlertsPage from './pages/AlertsPage';
 import SettingsPage from './pages/SettingsPage';
 import UsersPage from './pages/UsersPage';
@@ -79,6 +80,8 @@ export default function App() {
                         <Route path="ideas" element={<FeatureRoute route="/ideas"><IdeasPage /></FeatureRoute>} />
                         <Route path="keyboard" element={<FeatureRoute route="/keyboard"><KeyboardPage /></FeatureRoute>} />
                         <Route path="cakeo" element={<FeatureRoute route="/cakeo"><CaKeoPage /></FeatureRoute>} />
+                        <Route path="healthbook" element={<FeatureRoute route="/healthbook"><HealthbookPage /></FeatureRoute>} />
+                        <Route path="healthbook/:personId" element={<FeatureRoute route="/healthbook"><HealthbookPage /></FeatureRoute>} />
                         <Route path="notifications" element={<AlertsPage forcedTab="RULES" />} />
                         <Route path="scheduled-reports" element={<AlertsPage forcedTab="REPORTS" />} />
                         <Route path="alerts" element={<Navigate to="/notifications" replace />} />

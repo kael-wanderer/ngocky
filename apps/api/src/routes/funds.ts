@@ -10,7 +10,7 @@ const router = Router();
 router.use(authenticate);
 
 function normalizeCondition(type: unknown, condition: unknown) {
-    if (type !== 'BUY') {
+    if (type === 'TOP_UP') {
         return null;
     }
 
