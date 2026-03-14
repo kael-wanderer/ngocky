@@ -11,7 +11,9 @@ import {
     FUNDS_CATEGORY_OPTIONS,
     FUNDS_CONDITION_OPTIONS,
     FUNDS_SCOPE_OPTIONS,
+    FUNDS_TIME_FILTER_OPTIONS,
     FUNDS_TYPE_OPTIONS,
+    getFundsDateRange,
 } from '../config/fundsFilters';
 
 const typeOptions = [...FUNDS_TYPE_OPTIONS];
@@ -129,6 +131,9 @@ export default function FundsPage() {
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(25);
+    const presetDateRange = filters.time === 'CUSTOM' ? null : getFundsDateRange(filters.time);
+    const effectiveDateFrom = filters.time === 'CUSTOM' ? filters.dateFrom : (presetDateRange ? format(presetDateRange.start, 'yyyy-MM-dd') : '');
+    const effectiveDateTo = filters.time === 'CUSTOM' ? filters.dateTo : (presetDateRange ? format(presetDateRange.end, 'yyyy-MM-dd') : '');
 
     const queryParams = new URLSearchParams();
     queryParams.set('page', String(page));
@@ -137,8 +142,8 @@ export default function FundsPage() {
     if (filters.scope) queryParams.set('scope', filters.scope);
     if (filters.category) queryParams.set('category', filters.category);
     if (filters.condition) queryParams.set('condition', filters.condition);
-    if (filters.dateFrom) queryParams.set('dateFrom', new Date(`${filters.dateFrom}T00:00:00`).toISOString());
-    if (filters.dateTo) queryParams.set('dateTo', new Date(`${filters.dateTo}T23:59:59.999`).toISOString());
+    if (effectiveDateFrom) queryParams.set('dateFrom', new Date(`${effectiveDateFrom}T00:00:00`).toISOString());
+    if (effectiveDateTo) queryParams.set('dateTo', new Date(`${effectiveDateTo}T23:59:59.999`).toISOString());
 
     const { data, isLoading } = useQuery({
         queryKey: ['funds', filters, page, pageSize],
@@ -327,7 +332,7 @@ export default function FundsPage() {
                     <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
                     <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
                     <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>
                         <option value="">All Types</option>
                         {typeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -344,8 +349,31 @@ export default function FundsPage() {
                         <option value="">All Conditions</option>
                         {conditionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                     </select>
-                    <input type="date" className="input text-sm" value={filters.dateFrom} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} />
-                    <input type="date" className="input text-sm" value={filters.dateTo} min={filters.dateFrom || undefined} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
+                    <select
+                        className="input text-sm"
+                        value={filters.time}
+                        onChange={(e) => setFilters({
+                            ...filters,
+                            time: e.target.value as typeof filters.time,
+                            dateFrom: e.target.value === 'CUSTOM' ? filters.dateFrom : '',
+                            dateTo: e.target.value === 'CUSTOM' ? filters.dateTo : '',
+                        })}
+                    >
+                        {FUNDS_TIME_FILTER_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                    <input
+                        type="date"
+                        className={`input text-sm ${filters.time !== 'CUSTOM' ? 'invisible pointer-events-none' : ''}`}
+                        value={filters.time === 'CUSTOM' ? filters.dateFrom : ''}
+                        onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                    />
+                    <input
+                        type="date"
+                        className={`input text-sm ${filters.time !== 'CUSTOM' ? 'invisible pointer-events-none' : ''}`}
+                        value={filters.time === 'CUSTOM' ? filters.dateTo : ''}
+                        min={filters.time === 'CUSTOM' ? (filters.dateFrom || undefined) : undefined}
+                        onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                    />
                 </div>
             </div>
 

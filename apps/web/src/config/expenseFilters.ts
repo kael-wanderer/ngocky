@@ -18,10 +18,13 @@ export const EXPENSE_SCOPE_OPTIONS = [
 ] as const;
 
 export const EXPENSE_TIME_PRESET_OPTIONS = [
-    { value: 'LAST_QUARTER', label: 'Last Quarter' },
-    { value: 'LAST_MONTH', label: 'Last Month' },
     { value: 'THIS_MONTH', label: 'This Month' },
+    { value: 'LAST_MONTH', label: 'Last Month' },
     { value: 'THIS_QUARTER', label: 'This Quarter' },
+    { value: 'LAST_QUARTER', label: 'Last Quarter' },
+    { value: 'THIS_YEAR', label: 'This Year' },
+    { value: 'LAST_YEAR', label: 'Last Year' },
+    { value: 'ALL', label: 'All Time' },
     { value: 'CUSTOM', label: 'Custom' },
 ] as const;
 
@@ -49,6 +52,12 @@ export function getExpenseDateRangeFromPreset(preset: ExpenseTimePreset) {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
+    if (preset === 'ALL' || preset === 'CUSTOM') {
+        return {
+            dateFrom: '',
+            dateTo: '',
+        };
+    }
     if (preset === 'THIS_MONTH') {
         return {
             dateFrom: format(new Date(currentYear, currentMonth, 1), 'yyyy-MM-dd'),
@@ -66,6 +75,18 @@ export function getExpenseDateRangeFromPreset(preset: ExpenseTimePreset) {
         return {
             dateFrom: format(new Date(currentYear, quarterStartMonth, 1), 'yyyy-MM-dd'),
             dateTo: format(new Date(currentYear, quarterStartMonth + 3, 0), 'yyyy-MM-dd'),
+        };
+    }
+    if (preset === 'THIS_YEAR') {
+        return {
+            dateFrom: format(new Date(currentYear, 0, 1), 'yyyy-MM-dd'),
+            dateTo: format(new Date(currentYear, 11, 31), 'yyyy-MM-dd'),
+        };
+    }
+    if (preset === 'LAST_YEAR') {
+        return {
+            dateFrom: format(new Date(currentYear - 1, 0, 1), 'yyyy-MM-dd'),
+            dateTo: format(new Date(currentYear - 1, 11, 31), 'yyyy-MM-dd'),
         };
     }
     const lastQuarterEndMonth = quarterStartMonth - 1;

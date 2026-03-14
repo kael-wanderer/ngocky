@@ -62,6 +62,7 @@ type HouseworkStatusFilter = SharedHouseworkStatusFilter;
 type HouseworkFrequencyFilter = SharedHouseworkFrequencyFilter;
 type HouseworkSortKey = 'title' | 'description' | 'frequencyType' | 'status' | 'nextDueDate' | 'notification' | 'showOnCalendar';
 type HouseworkGridSort = 'TITLE_ASC' | 'TITLE_DESC' | 'DUE_ASC' | 'DUE_DESC';
+type HouseworkListSortOption = 'TITLE_ASC' | 'TITLE_DESC' | 'DESCRIPTION_ASC' | 'DESCRIPTION_DESC' | 'FREQUENCY_ASC' | 'FREQUENCY_DESC' | 'STATUS_ASC' | 'STATUS_DESC' | 'DUE_ASC' | 'DUE_DESC' | 'NOTIFICATION_ASC' | 'NOTIFICATION_DESC' | 'OPTIONS_ASC' | 'OPTIONS_DESC';
 
 function getNormalizedFormByFrequency(form: HouseworkFormState, frequencyType: string): HouseworkFormState {
     const nextForm = { ...form, frequencyType };
@@ -551,6 +552,78 @@ export default function HouseworkPage() {
         return sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />;
     };
 
+    const getHouseworkListSortValue = (): HouseworkListSortOption => {
+        if (sortBy === 'title') return sortOrder === 'asc' ? 'TITLE_ASC' : 'TITLE_DESC';
+        if (sortBy === 'description') return sortOrder === 'asc' ? 'DESCRIPTION_ASC' : 'DESCRIPTION_DESC';
+        if (sortBy === 'frequencyType') return sortOrder === 'asc' ? 'FREQUENCY_ASC' : 'FREQUENCY_DESC';
+        if (sortBy === 'status') return sortOrder === 'asc' ? 'STATUS_ASC' : 'STATUS_DESC';
+        if (sortBy === 'notification') return sortOrder === 'asc' ? 'NOTIFICATION_ASC' : 'NOTIFICATION_DESC';
+        if (sortBy === 'showOnCalendar') return sortOrder === 'asc' ? 'OPTIONS_ASC' : 'OPTIONS_DESC';
+        return sortOrder === 'asc' ? 'DUE_ASC' : 'DUE_DESC';
+    };
+
+    const handleHouseworkListSortChange = (value: HouseworkListSortOption) => {
+        switch (value) {
+            case 'TITLE_ASC':
+                setSortBy('title');
+                setSortOrder('asc');
+                break;
+            case 'TITLE_DESC':
+                setSortBy('title');
+                setSortOrder('desc');
+                break;
+            case 'DESCRIPTION_ASC':
+                setSortBy('description');
+                setSortOrder('asc');
+                break;
+            case 'DESCRIPTION_DESC':
+                setSortBy('description');
+                setSortOrder('desc');
+                break;
+            case 'FREQUENCY_ASC':
+                setSortBy('frequencyType');
+                setSortOrder('asc');
+                break;
+            case 'FREQUENCY_DESC':
+                setSortBy('frequencyType');
+                setSortOrder('desc');
+                break;
+            case 'STATUS_ASC':
+                setSortBy('status');
+                setSortOrder('asc');
+                break;
+            case 'STATUS_DESC':
+                setSortBy('status');
+                setSortOrder('desc');
+                break;
+            case 'NOTIFICATION_ASC':
+                setSortBy('notification');
+                setSortOrder('asc');
+                break;
+            case 'NOTIFICATION_DESC':
+                setSortBy('notification');
+                setSortOrder('desc');
+                break;
+            case 'OPTIONS_ASC':
+                setSortBy('showOnCalendar');
+                setSortOrder('asc');
+                break;
+            case 'OPTIONS_DESC':
+                setSortBy('showOnCalendar');
+                setSortOrder('desc');
+                break;
+            case 'DUE_DESC':
+                setSortBy('nextDueDate');
+                setSortOrder('desc');
+                break;
+            case 'DUE_ASC':
+            default:
+                setSortBy('nextDueDate');
+                setSortOrder('asc');
+                break;
+        }
+    };
+
     const renderActions = (item: any, canManage: boolean) => (
         <div className="flex items-center gap-1">
             {canManage && (
@@ -729,7 +802,7 @@ export default function HouseworkPage() {
                     <Filter className="w-5 h-5" style={{ color: 'var(--color-text-secondary)' }} />
                     <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Filters</h3>
                 </div>
-                <div className={`grid grid-cols-1 gap-3 ${viewMode === 'grid' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
                     <select className="input" value={filters.dueDate} onChange={(e) => setFilters((prev) => ({ ...prev, dueDate: e.target.value as HouseworkDueDateFilter }))}>
                         {HOUSEWORK_DUE_DATE_FILTER_OPTIONS.map((option) => (
                             <option key={option.value} value={option.value}>{option.label}</option>
@@ -744,12 +817,29 @@ export default function HouseworkPage() {
                             <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
                     </select>
-                    {viewMode === 'grid' && (
+                    {viewMode === 'grid' ? (
                         <select className="input" value={gridSort} onChange={(e) => setGridSort(e.target.value as HouseworkGridSort)}>
-                            <option value="TITLE_ASC">Name (A-Z)</option>
-                            <option value="TITLE_DESC">Name (Z-A)</option>
-                            <option value="DUE_ASC">Due Date (ASC)</option>
-                            <option value="DUE_DESC">Due Date (DESC)</option>
+                            <option value="TITLE_ASC">Sort: Name (A-Z)</option>
+                            <option value="TITLE_DESC">Sort: Name (Z-A)</option>
+                            <option value="DUE_ASC">Sort: Due Date (ASC)</option>
+                            <option value="DUE_DESC">Sort: Due Date (DESC)</option>
+                        </select>
+                    ) : (
+                        <select className="input" value={getHouseworkListSortValue()} onChange={(e) => handleHouseworkListSortChange(e.target.value as HouseworkListSortOption)}>
+                            <option value="TITLE_ASC">Sort: Name (A-Z)</option>
+                            <option value="TITLE_DESC">Sort: Name (Z-A)</option>
+                            <option value="DESCRIPTION_ASC">Sort: Description (A-Z)</option>
+                            <option value="DESCRIPTION_DESC">Sort: Description (Z-A)</option>
+                            <option value="FREQUENCY_ASC">Sort: Frequency (A-Z)</option>
+                            <option value="FREQUENCY_DESC">Sort: Frequency (Z-A)</option>
+                            <option value="STATUS_ASC">Sort: Status (A-Z)</option>
+                            <option value="STATUS_DESC">Sort: Status (Z-A)</option>
+                            <option value="DUE_ASC">Sort: Due Date (ASC)</option>
+                            <option value="DUE_DESC">Sort: Due Date (DESC)</option>
+                            <option value="NOTIFICATION_ASC">Sort: Notification (ASC)</option>
+                            <option value="NOTIFICATION_DESC">Sort: Notification (DESC)</option>
+                            <option value="OPTIONS_ASC">Sort: Options (ASC)</option>
+                            <option value="OPTIONS_DESC">Sort: Options (DESC)</option>
                         </select>
                     )}
                 </div>

@@ -71,6 +71,7 @@ type GoalFormState = typeof goalEmptyForm;
 type TaskFormState = typeof taskEmptyForm;
 type TaskSortKey = 'title' | 'taskType' | 'status' | 'priority' | 'dueDate' | 'showOnCalendar';
 type TaskGridSortOption = 'TITLE_ASC' | 'TITLE_DESC' | 'DUE_ASC' | 'DUE_DESC';
+type TaskListSortOption = 'TITLE_ASC' | 'TITLE_DESC' | 'TYPE_ASC' | 'TYPE_DESC' | 'STATUS_ASC' | 'STATUS_DESC' | 'PRIORITY_ASC' | 'PRIORITY_DESC' | 'DUE_ASC' | 'DUE_DESC' | 'CALENDAR_ASC' | 'CALENDAR_DESC';
 type TaskDueDateFilter = SharedTaskDueDateFilter;
 type TaskTypeFilter = SharedTaskTypeFilter;
 type TaskPriorityFilter = SharedTaskPriorityFilter;
@@ -767,6 +768,69 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
         return taskSortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />;
     }
 
+    function getTaskListSortValue(): TaskListSortOption {
+        if (taskSortBy === 'title') return taskSortOrder === 'asc' ? 'TITLE_ASC' : 'TITLE_DESC';
+        if (taskSortBy === 'taskType') return taskSortOrder === 'asc' ? 'TYPE_ASC' : 'TYPE_DESC';
+        if (taskSortBy === 'status') return taskSortOrder === 'asc' ? 'STATUS_ASC' : 'STATUS_DESC';
+        if (taskSortBy === 'priority') return taskSortOrder === 'asc' ? 'PRIORITY_ASC' : 'PRIORITY_DESC';
+        if (taskSortBy === 'showOnCalendar') return taskSortOrder === 'asc' ? 'CALENDAR_ASC' : 'CALENDAR_DESC';
+        return taskSortOrder === 'asc' ? 'DUE_ASC' : 'DUE_DESC';
+    }
+
+    function handleTaskListSortChange(value: TaskListSortOption) {
+        switch (value) {
+            case 'TITLE_ASC':
+                setTaskSortBy('title');
+                setTaskSortOrder('asc');
+                break;
+            case 'TITLE_DESC':
+                setTaskSortBy('title');
+                setTaskSortOrder('desc');
+                break;
+            case 'TYPE_ASC':
+                setTaskSortBy('taskType');
+                setTaskSortOrder('asc');
+                break;
+            case 'TYPE_DESC':
+                setTaskSortBy('taskType');
+                setTaskSortOrder('desc');
+                break;
+            case 'STATUS_ASC':
+                setTaskSortBy('status');
+                setTaskSortOrder('asc');
+                break;
+            case 'STATUS_DESC':
+                setTaskSortBy('status');
+                setTaskSortOrder('desc');
+                break;
+            case 'PRIORITY_ASC':
+                setTaskSortBy('priority');
+                setTaskSortOrder('asc');
+                break;
+            case 'PRIORITY_DESC':
+                setTaskSortBy('priority');
+                setTaskSortOrder('desc');
+                break;
+            case 'CALENDAR_ASC':
+                setTaskSortBy('showOnCalendar');
+                setTaskSortOrder('asc');
+                break;
+            case 'CALENDAR_DESC':
+                setTaskSortBy('showOnCalendar');
+                setTaskSortOrder('desc');
+                break;
+            case 'DUE_DESC':
+                setTaskSortBy('dueDate');
+                setTaskSortOrder('desc');
+                break;
+            case 'DUE_ASC':
+            default:
+                setTaskSortBy('dueDate');
+                setTaskSortOrder('asc');
+                break;
+        }
+    }
+
     useEffect(() => {
         if (!goals.length) return;
         if (editIdParam && activeTab === 'GOALS') {
@@ -971,6 +1035,13 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                         <div className="w-44 flex-shrink-0">
                                             <div className="flex items-center gap-1.5 flex-wrap">
                                                 <span className="font-medium text-sm truncate" style={{ color: 'var(--color-text)' }}>{goal.title}</span>
+                                                <button
+                                                    type="button"
+                                                    className={`text-[10px] font-bold px-2 py-1 rounded transition-colors flex-shrink-0 ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
+                                                    onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { active: !goal.active } }); }}
+                                                >
+                                                    {goal.active ? 'ENABLED' : 'DISABLED'}
+                                                </button>
                                                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 font-medium capitalize flex-shrink-0" style={{ color: 'var(--color-text-secondary)' }}>{goal.periodType.charAt(0) + goal.periodType.slice(1).toLowerCase()}</span>
                                                 {goal.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold flex-shrink-0">Shared</span>}
                                                 {goal.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold flex-shrink-0">Pinned</span>}
@@ -991,13 +1062,6 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                             {notifText && <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}><Bell className="w-3 h-3 flex-shrink-0" />{notifText}</span>}
                                         </div>
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                                <button
-                                                    type="button"
-                                                    className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
-                                                    onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { active: !goal.active } }); }}
-                                                >
-                                                    {goal.active ? 'ENABLED' : 'DISABLED'}
-                                                </button>
                                             <button onClick={(e) => { e.stopPropagation(); openCheckIn(goal.id); }} disabled={!goal.active} className="p-1.5 rounded-md hover:bg-emerald-50 hover:text-emerald-600 transition-colors" title="Check-in"><Check className="w-3.5 h-3.5" /></button>
                                             <button onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } }); }} className={`p-1.5 rounded-md transition-colors ${goal.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
                                             <button onClick={(e) => { e.stopPropagation(); openEditGoal(goal); }} className="p-1.5 rounded-md hover:text-indigo-500 transition-colors" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
@@ -1038,12 +1102,27 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                     <option key={option.value} value={option.value}>{option.label}</option>
                                 ))}
                             </select>
-                            {taskViewMode === 'grid' && (
+                            {taskViewMode === 'grid' ? (
                                 <select className="input text-sm min-w-[180px]" value={taskGridSort} onChange={(e) => setTaskGridSort(e.target.value as TaskGridSortOption)}>
                                     <option value="TITLE_ASC">Sort: Name (A-Z)</option>
                                     <option value="TITLE_DESC">Sort: Name (Z-A)</option>
                                     <option value="DUE_ASC">Sort: Due Date ASC</option>
                                     <option value="DUE_DESC">Sort: Due Date DESC</option>
+                                </select>
+                            ) : (
+                                <select className="input text-sm min-w-[180px]" value={getTaskListSortValue()} onChange={(e) => handleTaskListSortChange(e.target.value as TaskListSortOption)}>
+                                    <option value="TITLE_ASC">Sort: Name (A-Z)</option>
+                                    <option value="TITLE_DESC">Sort: Name (Z-A)</option>
+                                    <option value="TYPE_ASC">Sort: Type (A-Z)</option>
+                                    <option value="TYPE_DESC">Sort: Type (Z-A)</option>
+                                    <option value="STATUS_ASC">Sort: Status (A-Z)</option>
+                                    <option value="STATUS_DESC">Sort: Status (Z-A)</option>
+                                    <option value="PRIORITY_ASC">Sort: Priority (ASC)</option>
+                                    <option value="PRIORITY_DESC">Sort: Priority (DESC)</option>
+                                    <option value="DUE_ASC">Sort: Due Date ASC</option>
+                                    <option value="DUE_DESC">Sort: Due Date DESC</option>
+                                    <option value="CALENDAR_ASC">Sort: Calendar (ASC)</option>
+                                    <option value="CALENDAR_DESC">Sort: Calendar (DESC)</option>
                                 </select>
                             )}
                         </div>

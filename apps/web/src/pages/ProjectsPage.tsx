@@ -7,6 +7,8 @@ import { format } from 'date-fns';
 import { useAuthStore } from '../stores/auth';
 import { useSearchParams } from 'react-router-dom';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
+import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
 const STATUS_COLS = ['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED'] as const;
 const statusLabels: Record<string, string> = { PLANNED: 'Planned', IN_PROGRESS: 'In Progress', DONE: 'Done', ARCHIVED: 'Archived' };
@@ -29,6 +31,118 @@ const emptyTaskForm = {
     ...emptyNotification,
 };
 
+function resequenceTasks(items: any[]) {
+    return items.map((task, index) => ({ ...task, kanbanOrder: index }));
+}
+
+function buildTaskForm(task: any) {
+    return {
+        title: task.title || '',
+        description: task.description || '',
+        type: task.type || 'TASK',
+        category: task.category || '',
+        priority: task.priority || 'MEDIUM',
+        status: task.status || 'PLANNED',
+        deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
+        isShared: !!task.isShared,
+        pinToDashboard: !!task.pinToDashboard,
+        ...loadNotificationState(task),
+    };
+}
+
+function KanbanColumn({ status, count, children }: { status: string; count: number; children: React.ReactNode }) {
+    const { isOver, setNodeRef } = useDroppable({ id: `column:${status}` });
+
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: statusColors[status] }} />
+                <h4 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{statusLabels[status]}</h4>
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-200" style={{ color: 'var(--color-text-secondary)' }}>
+                    {count}
+                </span>
+            </div>
+            <div
+                ref={setNodeRef}
+                className="space-y-2 min-h-[200px] p-2 rounded-xl bg-gray-50/50 border border-dashed transition-colors"
+                style={{
+                    borderColor: isOver ? statusColors[status] : 'var(--color-border)',
+                    backgroundColor: isOver ? `${statusColors[status]}12` : undefined,
+                }}
+            >
+                {children}
+            </div>
+        </div>
+    );
+}
+
+function DraggableTaskCard({ task, todayStart, userId, onOpen, onDuplicate, onTogglePin, onDelete }: {
+    task: any;
+    todayStart: Date;
+    userId?: string;
+    onOpen: (task: any) => void;
+    onDuplicate: (task: any) => void;
+    onTogglePin: (task: any) => void;
+    onDelete: (id: string) => void;
+}) {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+        id: `task:${task.id}`,
+        data: { taskId: task.id, status: task.status },
+    });
+    const style = {
+        transform: CSS.Translate.toString(transform),
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className="card p-3 cursor-pointer hover:shadow-md transition-shadow relative group touch-none"
+            onClick={() => onOpen(task)}
+            {...listeners}
+            {...attributes}
+        >
+            <div className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
+                <button onClick={(e) => { e.stopPropagation(); onTogglePin(task); }} className={`p-1 ${task.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`}><Pin className="w-3.5 h-3.5" /></button>
+                <button onClick={(e) => { e.stopPropagation(); onDuplicate(task); }} className="p-1 hover:text-sky-500 transition-all"><Copy className="w-3.5 h-3.5" /></button>
+            </div>
+            <button
+                onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all"
+            >
+                <Trash2 className="w-3.5 h-3.5" />
+            </button>
+            <p className="text-sm font-medium pr-5" style={{ color: 'var(--color-text)' }}>{task.title}</p>
+            <div className="flex items-center gap-2 flex-wrap mt-2">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: `${taskTypeColors[task.type || 'TASK']}20`, color: taskTypeColors[task.type || 'TASK'] }}>
+                    {taskTypeLabels[task.type || 'TASK']}
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: `${priorityColors[task.priority]}20`, color: priorityColors[task.priority] }}>
+                    {task.priority}
+                </span>
+                {task.category && <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{task.category}</span>}
+                {task.isShared && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">
+                        Shared
+                    </span>
+                )}
+                {task.pinToDashboard && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">
+                        Pinned
+                    </span>
+                )}
+                {task.deadline && (
+                    <span className="text-[10px]" style={{ color: new Date(task.deadline) < todayStart ? '#dc2626' : 'var(--color-text-secondary)' }}>
+                        📅 {format(new Date(task.deadline), 'MMM d')}
+                    </span>
+                )}
+            </div>
+            {getSharedOwnerName(task, userId) && <p className="text-[11px] mt-2" style={{ color: 'var(--color-text-secondary)' }}>Owner: {getSharedOwnerName(task, userId)}</p>}
+        </div>
+    );
+}
+
 export default function ProjectsPage() {
     const qc = useQueryClient();
     const { user } = useAuthStore();
@@ -42,6 +156,7 @@ export default function ProjectsPage() {
     const [editingBoard, setEditingBoard] = useState<any>(null);
     const [showCreateTask, setShowCreateTask] = useState(false);
     const [editingTask, setEditingTask] = useState<any>(null);
+    const [optimisticTasks, setOptimisticTasks] = useState<any[] | null>(null);
 
     const [boardStatusFilter, setBoardStatusFilter] = useState<'ALL' | 'PLAN' | 'WORKING' | 'COMPLETED'>('ALL');
     const [boardSort, setBoardSort] = useState<'default' | 'name_asc' | 'updated_desc'>('default');
@@ -118,11 +233,14 @@ export default function ProjectsPage() {
     });
 
     const moveTaskMut = useMutation({
-        mutationFn: ({ id, status }: { id: string; status: string }) =>
-            api.patch(`/projects/tasks/${id}`, { status }),
+        mutationFn: ({ id, status, kanbanOrder }: { id: string; status: string; kanbanOrder: number }) =>
+            api.patch(`/projects/tasks/${id}/reorder`, { status, kanbanOrder }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
             qc.invalidateQueries({ queryKey: ['project_boards'] });
+        },
+        onError: () => {
+            setOptimisticTasks(null);
         },
     });
 
@@ -182,19 +300,12 @@ export default function ProjectsPage() {
         const task = activeBoard.tasks.find((t: any) => t.id === taskIdParam);
         if (!task) return;
         setEditingTask(task);
-        setTaskForm({
-            title: task.title || '',
-            description: task.description || '',
-            type: task.type || 'TASK',
-            category: task.category || '',
-            priority: task.priority || 'MEDIUM',
-            status: task.status || 'PLANNED',
-            deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
-            isShared: !!task.isShared,
-            pinToDashboard: !!task.pinToDashboard,
-            ...loadNotificationState(task),
-        });
+        setTaskForm(buildTaskForm(task));
     }, [taskIdParam, activeBoard]);
+
+    useEffect(() => {
+        setOptimisticTasks(null);
+    }, [selectedBoardId, activeBoard?.updatedAt]);
 
     if (!selectedBoardId) {
         return (
@@ -440,8 +551,41 @@ export default function ProjectsPage() {
     }
 
     // --- Task View ---
-    const tasks = activeBoard?.tasks || [];
+    const tasks = optimisticTasks || activeBoard?.tasks || [];
     const activeBoardSharedOwnerName = getSharedOwnerName(activeBoard, user?.id);
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+    const openTaskEditor = (task: any) => {
+        setEditingTask(task);
+        setTaskForm(buildTaskForm(task));
+    };
+
+    const handleKanbanDragEnd = (event: DragEndEvent) => {
+        const activeId = String(event.active.id || '');
+        const overId = event.over ? String(event.over.id || '') : '';
+        if (!activeId.startsWith('task:') || !overId.startsWith('column:')) return;
+
+        const taskId = activeId.replace('task:', '');
+        const nextStatus = overId.replace('column:', '');
+        const currentTask = tasks.find((task: any) => task.id === taskId);
+
+        if (!currentTask || currentTask.status === nextStatus) return;
+
+        const movedTask = { ...currentTask, status: nextStatus };
+        const untouched = tasks.filter((task: any) => task.id !== taskId);
+        const nextTasks = [
+            ...resequenceTasks(untouched.filter((task: any) => task.status !== nextStatus)),
+            ...resequenceTasks([...untouched.filter((task: any) => task.status === nextStatus), movedTask]),
+        ];
+        const normalizedTasks = STATUS_COLS.flatMap((status) => resequenceTasks(nextTasks.filter((task: any) => task.status === status)));
+
+        setOptimisticTasks(normalizedTasks);
+        moveTaskMut.mutate({
+            id: taskId,
+            status: nextStatus,
+            kanbanOrder: normalizedTasks.filter((task: any) => task.status === nextStatus).findIndex((task: any) => task.id === taskId),
+        });
+    };
 
     return (
         <div className="space-y-6">
@@ -652,85 +796,29 @@ export default function ProjectsPage() {
             {activeBoardLoading ? (
                 <div className="animate-pulse space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="card h-20" />)}</div>
             ) : view === 'kanban' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {STATUS_COLS.map((status) => (
-                        <div key={status} className="space-y-3">
-                            <div className="flex items-center gap-2 px-1">
-                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: statusColors[status] }} />
-                                <h4 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{statusLabels[status]}</h4>
-                                <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-200" style={{ color: 'var(--color-text-secondary)' }}>
-                                    {tasks.filter((t: any) => t.status === status).length}
-                                </span>
-                            </div>
-                            <div
-                                className="space-y-2 min-h-[200px] p-2 rounded-xl bg-gray-50/50 border border-dashed"
-                                style={{ borderColor: 'var(--color-border)' }}
-                            >
+                <DndContext sensors={sensors} onDragEnd={handleKanbanDragEnd}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {STATUS_COLS.map((status) => (
+                            <KanbanColumn key={status} status={status} count={tasks.filter((t: any) => t.status === status).length}>
                                 {tasks.filter((t: any) => t.status === status).map((t: any) => (
-                                    <div
+                                    <DraggableTaskCard
                                         key={t.id}
-                                        className="card p-3 cursor-pointer hover:shadow-md transition-shadow relative group"
-                                        onClick={() => {
-                                            setEditingTask(t);
-                                            setTaskForm({
-                                                title: t.title || '',
-                                                description: t.description || '',
-                                                type: t.type || 'TASK',
-                                                category: t.category || '',
-                                                priority: t.priority || 'MEDIUM',
-                                                status: t.status || 'PLANNED',
-                                                deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : '',
-                                                isShared: !!t.isShared,
-                                                pinToDashboard: !!t.pinToDashboard,
-                                                ...loadNotificationState(t),
-                                            });
-                                        }}
-                                    >
-                                        <div className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
-                                            <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: t.id, data: { pinToDashboard: !t.pinToDashboard } }); }} className={`p-1 ${t.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`}><Pin className="w-3.5 h-3.5" /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); duplicateTask(t); }} className="p-1 hover:text-sky-500 transition-all"><Copy className="w-3.5 h-3.5" /></button>
-                                        </div>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleDeleteTask(t.id); }}
-                                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                        <p className="text-sm font-medium pr-5" style={{ color: 'var(--color-text)' }}>{t.title}</p>
-                                        <div className="flex items-center gap-2 flex-wrap mt-2">
-                                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: `${taskTypeColors[t.type || 'TASK']}20`, color: taskTypeColors[t.type || 'TASK'] }}>
-                                                {taskTypeLabels[t.type || 'TASK']}
-                                            </span>
-                                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: `${priorityColors[t.priority]}20`, color: priorityColors[t.priority] }}>
-                                                {t.priority}
-                                            </span>
-                                            {t.category && <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{t.category}</span>}
-                                            {t.isShared && (
-                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">
-                                                    Shared
-                                                </span>
-                                            )}
-                                            {t.pinToDashboard && (
-                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">
-                                                    Pinned
-                                                </span>
-                                            )}
-                                            {t.deadline && (
-                                                <span className="text-[10px]" style={{ color: new Date(t.deadline) < todayStart ? '#dc2626' : 'var(--color-text-secondary)' }}>
-                                                    📅 {format(new Date(t.deadline), 'MMM d')}
-                                                </span>
-                                            )}
-                                        </div>
-                                        {getSharedOwnerName(t, user?.id) && <p className="text-[11px] mt-2" style={{ color: 'var(--color-text-secondary)' }}>Owner: {getSharedOwnerName(t, user?.id)}</p>}
-                                    </div>
+                                        task={t}
+                                        todayStart={todayStart}
+                                        userId={user?.id}
+                                        onOpen={openTaskEditor}
+                                        onDuplicate={duplicateTask}
+                                        onTogglePin={(task) => updateTaskMut.mutate({ id: task.id, data: { pinToDashboard: !task.pinToDashboard } })}
+                                        onDelete={handleDeleteTask}
+                                    />
                                 ))}
                                 {tasks.filter((t: any) => t.status === status).length === 0 && (
-                                    <p className="text-[10px] text-center italic py-4" style={{ color: 'var(--color-text-secondary)' }}>No tasks here</p>
+                                    <p className="text-[10px] text-center italic py-4" style={{ color: 'var(--color-text-secondary)' }}>Drop tasks here</p>
                                 )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                            </KanbanColumn>
+                        ))}
+                    </div>
+                </DndContext>
             ) : (
                 <div className="card overflow-hidden">
                     <div className="table-container">
@@ -743,19 +831,7 @@ export default function ProjectsPage() {
                             <tbody>
                                 {tasks.map((t: any) => (
                                     <tr key={t.id} className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => {
-                                        setEditingTask(t);
-                                        setTaskForm({
-                                            title: t.title || '',
-                                            description: t.description || '',
-                                            type: t.type || 'TASK',
-                                            category: t.category || '',
-                                            priority: t.priority || 'MEDIUM',
-                                            status: t.status || 'PLANNED',
-                                            deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : '',
-                                            isShared: !!t.isShared,
-                                            pinToDashboard: !!t.pinToDashboard,
-                                            ...loadNotificationState(t),
-                                        });
+                                        openTaskEditor(t);
                                     }}>
                                         <td className="font-medium">{t.title}</td>
                                         <td><span className="badge" style={{ backgroundColor: `${taskTypeColors[t.type || 'TASK']}20`, color: taskTypeColors[t.type || 'TASK'] }}>{taskTypeLabels[t.type || 'TASK']}</span></td>

@@ -91,6 +91,7 @@ type FormState = {
 
 type SortKey = 'name' | 'category' | 'tag' | 'color' | 'spec' | 'extras' | 'condition' | 'price' | 'note' | 'stab' | 'switchAlpha' | 'switchMod' | 'assembler';
 type SortOrder = 'asc' | 'desc';
+type FilterDropdownKey = 'categories' | 'tags' | 'colors' | 'priceRanges' | null;
 
 // ─── Helpers ─────────────────────────────────────────
 
@@ -229,9 +230,24 @@ export default function KeyboardPage() {
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState<KeyboardItem | null>(null);
     const [form, setForm] = useState<FormState>(emptyForm());
+    const [openFilter, setOpenFilter] = useState<FilterDropdownKey>(null);
 
     // Import
     const [showImport, setShowImport] = useState(false);
+
+    function setExclusiveFilter<K extends 'categories' | 'tags' | 'colors' | 'priceRanges'>(
+        key: K,
+        values: typeof filters[K],
+    ) {
+        setFilters((current) => ({
+            ...current,
+            categories: key === 'categories' ? [...values as string[]] : [],
+            tags: key === 'tags' ? [...values as string[]] : [],
+            colors: key === 'colors' ? [...values as string[]] : [],
+            priceRanges: key === 'priceRanges' ? [...values as typeof current.priceRanges] : [],
+        }));
+        setOpenFilter(null);
+    }
 
     const { data } = useQuery({
         queryKey: ['keyboards'],
@@ -375,7 +391,7 @@ export default function KeyboardPage() {
 
             {/* Filter bar */}
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
-                <div className="flex items-center gap-3 flex-nowrap overflow-x-auto pb-1">
+                <div className="flex flex-wrap items-center gap-3">
                     <div className="min-w-[220px] flex-[1.4]">
                         <input
                             value={filters.search}
@@ -395,7 +411,9 @@ export default function KeyboardPage() {
                         allLabel="All categories"
                         options={CATEGORIES.map((value) => ({ value, label: value }))}
                         selected={filters.categories}
-                        onChange={(values) => setFilters((current) => ({ ...current, categories: values }))}
+                        open={openFilter === 'categories'}
+                        onOpenChange={(open) => setOpenFilter(open ? 'categories' : null)}
+                        onChange={(values) => setExclusiveFilter('categories', values)}
                     />
                     <MultiSelectFilter
                         className="min-w-[150px] flex-1"
@@ -403,7 +421,9 @@ export default function KeyboardPage() {
                         allLabel="All tags"
                         options={TAGS.map((value) => ({ value, label: value }))}
                         selected={filters.tags}
-                        onChange={(values) => setFilters((current) => ({ ...current, tags: values }))}
+                        open={openFilter === 'tags'}
+                        onOpenChange={(open) => setOpenFilter(open ? 'tags' : null)}
+                        onChange={(values) => setExclusiveFilter('tags', values)}
                     />
                     <MultiSelectFilter
                         className="min-w-[150px] flex-1"
@@ -411,7 +431,9 @@ export default function KeyboardPage() {
                         allLabel="All colors"
                         options={COLORS.map((value) => ({ value, label: value }))}
                         selected={filters.colors}
-                        onChange={(values) => setFilters((current) => ({ ...current, colors: values }))}
+                        open={openFilter === 'colors'}
+                        onOpenChange={(open) => setOpenFilter(open ? 'colors' : null)}
+                        onChange={(values) => setExclusiveFilter('colors', values)}
                     />
                     <MultiSelectFilter
                         className="min-w-[170px] flex-1"
@@ -419,7 +441,9 @@ export default function KeyboardPage() {
                         allLabel="All prices"
                         options={PRICE_RANGES.map((range) => ({ value: range.value, label: range.label }))}
                         selected={filters.priceRanges}
-                        onChange={(values) => setFilters((current) => ({ ...current, priceRanges: values as typeof current.priceRanges }))}
+                        open={openFilter === 'priceRanges'}
+                        onOpenChange={(open) => setOpenFilter(open ? 'priceRanges' : null)}
+                        onChange={(values) => setExclusiveFilter('priceRanges', values as typeof filters.priceRanges)}
                     />
                 </div>
             </div>
@@ -431,7 +455,7 @@ export default function KeyboardPage() {
                 </div>
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
                     <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Keycap</div>
-                    <div className="text-2xl font-bold" style={{ color: '#16a34a' }}>{formatVND(summary.keycap)}</div>
+                    <div className="text-2xl font-bold" style={{ color: '#ea580c' }}>{formatVND(summary.keycap)}</div>
                 </div>
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
                     <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Accessories</div>
@@ -439,7 +463,7 @@ export default function KeyboardPage() {
                 </div>
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
                     <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Total ({sortedItems.length} items)</div>
-                    <div className="text-2xl font-bold" style={{ color: 'var(--color-success)' }}>{formatVND(summary.total)}</div>
+                    <div className="text-2xl font-bold" style={{ color: '#16a34a' }}>{formatVND(summary.total)}</div>
                 </div>
             </div>
 

@@ -73,7 +73,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"chatId\": \"{{ $json.chatId }}\",\n  \"telegramUserId\": \"{{ $json.telegramUserId }}\",\n  \"telegramUsername\": \"{{ $json.telegramUsername }}\",\n  \"messageId\": \"{{ $json.messageId }}\",\n  \"text\": \"{{ $json.text }}\"\n}",
+        "jsonBody": "={{ ({\n  chatId: $json.chatId,\n  telegramUserId: $json.telegramUserId,\n  telegramUsername: $json.telegramUsername,\n  messageId: $json.messageId,\n  text: $json.text,\n}) }}",
         "options": {
           "allowUnauthorizedCerts": true
         }

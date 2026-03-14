@@ -395,10 +395,7 @@ export default function ExpensesPage() {
                     <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
                     <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <select className="input text-sm" value={filters.timePreset} onChange={(e) => handleTimePresetChange(e.target.value as TimePreset)}>
-                        {timeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </select>
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                     <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value, category: filters.category && !((e.target.value || form.type) === 'RECEIVE' ? receiveCategories : payCategories).includes(filters.category) ? '' : filters.category })}>
                         <option value="">All Types</option>
                         {typeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -411,13 +408,23 @@ export default function ExpensesPage() {
                         <option value="">All Categories</option>
                         {(filters.type === 'RECEIVE' ? receiveCategories : filters.type === 'PAY' ? payCategories : allCategories).map((category) => <option key={category} value={category}>{category}</option>)}
                     </select>
+                    <select className="input text-sm" value={filters.timePreset} onChange={(e) => handleTimePresetChange(e.target.value as TimePreset)}>
+                        {timeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                    <input
+                        type="date"
+                        className={`input text-sm ${filters.timePreset !== 'CUSTOM' ? 'invisible pointer-events-none' : ''}`}
+                        value={filters.timePreset === 'CUSTOM' ? filters.dateFrom : ''}
+                        onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                    />
+                    <input
+                        type="date"
+                        className={`input text-sm ${filters.timePreset !== 'CUSTOM' ? 'invisible pointer-events-none' : ''}`}
+                        value={filters.timePreset === 'CUSTOM' ? filters.dateTo : ''}
+                        min={filters.timePreset === 'CUSTOM' ? (filters.dateFrom || undefined) : undefined}
+                        onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                    />
                 </div>
-                {filters.timePreset === 'CUSTOM' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                        <input type="date" className="input text-sm" value={filters.dateFrom} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} />
-                        <input type="date" className="input text-sm" value={filters.dateTo} min={filters.dateFrom || undefined} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
-                    </div>
-                )}
             </div>
 
             {showModal && (
