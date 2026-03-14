@@ -74,6 +74,7 @@ export default function App() {
                         <Route path="funds" element={<FeatureRoute route="/funds"><FundsPage /></FeatureRoute>} />
                         <Route path="reports" element={<ReportsPage />} />
                         <Route path="assets" element={<FeatureRoute route="/assets"><AssetsPage /></FeatureRoute>} />
+                        <Route path="assets/:assetId" element={<FeatureRoute route="/assets"><AssetsPage /></FeatureRoute>} />
                         <Route path="learning" element={<FeatureRoute route="/learning"><LearningPage /></FeatureRoute>} />
                         <Route path="ideas" element={<FeatureRoute route="/ideas"><IdeasPage /></FeatureRoute>} />
                         <Route path="keyboard" element={<FeatureRoute route="/keyboard"><KeyboardPage /></FeatureRoute>} />

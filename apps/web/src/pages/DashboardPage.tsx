@@ -376,7 +376,7 @@ export default function DashboardPage() {
                                         else if (p.type === 'PROJECT') navigate(`/projects?boardId=${p.id}`);
                                         else if (p.type === 'HOUSEWORK') navigate(`/housework?editId=${p.id}`);
                                         else if (p.type === 'CALENDAR') navigate(`/calendar?eventId=${p.id}`);
-                                        else if (p.type === 'ASSET') navigate(`/assets?assetId=${p.assetId || ''}`);
+                                        else if (p.type === 'ASSET') navigate(p.assetId ? `/assets/${p.assetId}` : '/assets');
                                         else if (p.type === 'LEARNING') navigate('/learning');
                                         else if (p.type === 'IDEA') navigate('/ideas');
                                     }}>
@@ -429,7 +429,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No asset records in selected time</p>
                             )}
                             {(data?.dueAssets || []).map((a: any) => (
-                                <button key={a.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(`/assets?assetId=${a.assetId}`)}>
+                                <button key={a.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(a.assetId ? `/assets/${a.assetId}` : '/assets')}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{a.asset?.name || 'Asset'}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{a.description || 'Maintenance'}{a.user?.name ? ` · ${a.user.name}` : ''}</p>
