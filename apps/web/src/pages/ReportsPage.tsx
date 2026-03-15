@@ -484,6 +484,10 @@ export default function ReportsPage() {
         queryKey: ['reports', 'goal-completion', baseQuery],
         queryFn: async () => (await api.get(`/reports/goal-completion${reportQuery}`)).data.data,
     });
+    const { data: goalTrends } = useQuery({
+        queryKey: ['reports', 'goal-trends', baseQuery],
+        queryFn: async () => (await api.get(`/reports/goal-trends${reportQuery}`)).data.data,
+    });
 
     const { data: calendarOverview } = useQuery({
         queryKey: ['reports', 'calendar-overview', baseQuery],
@@ -783,6 +787,25 @@ export default function ReportsPage() {
             ],
             rows: rawGoals || [],
         },
+        goalTrendDaily: {
+            title: 'Goal Check-in Daily Trend',
+            columns: [
+                { key: 'date', label: 'Date', render: (value: any) => formatDisplayDate(value) },
+                { key: 'count', label: 'Check-ins' },
+                { key: 'quantity', label: 'Quantity' },
+            ],
+            rows: goalTrends?.dailyTrend || [],
+        },
+        goalTrendTopGoals: {
+            title: 'Goal Check-in Top Goals',
+            columns: [
+                { key: 'title', label: 'Goal' },
+                { key: 'count', label: 'Check-ins' },
+                { key: 'quantity', label: 'Quantity' },
+                { key: 'lastCheckInAt', label: 'Last Check-in', render: (value: any) => formatDisplayDate(value) },
+            ],
+            rows: goalTrends?.topGoals || [],
+        },
         calendar: {
             title: 'Calendar Events',
             columns: [
@@ -903,6 +926,10 @@ export default function ReportsPage() {
         ],
         goals: [
             { title: 'Goal Completion Rates', columns: [{ key: 'title', label: 'Goal' }, { key: 'completionRate', label: 'Completion' }, { key: 'currentCount', label: 'Current' }, { key: 'targetCount', label: 'Target' }], rows: goalCompletion || [] },
+            { title: 'Goal Check-ins by Weekday', columns: [{ key: 'weekday', label: 'Weekday' }, { key: 'count', label: 'Check-ins' }, { key: 'quantity', label: 'Quantity' }], rows: goalTrends?.weekdayCounts || [] },
+            { title: 'Goal Check-ins by Hour', columns: [{ key: 'hour', label: 'Hour' }, { key: 'count', label: 'Check-ins' }, { key: 'quantity', label: 'Quantity' }], rows: goalTrends?.hourCounts || [] },
+            { title: 'Goal Daily Trend', columns: [{ key: 'date', label: 'Date' }, { key: 'count', label: 'Check-ins' }, { key: 'quantity', label: 'Quantity' }], rows: goalTrends?.dailyTrend || [] },
+            { title: 'Goal Top Check-in Targets', columns: [{ key: 'title', label: 'Goal' }, { key: 'count', label: 'Check-ins' }, { key: 'quantity', label: 'Quantity' }, { key: 'lastCheckInAt', label: 'Last Check-in' }], rows: goalTrends?.topGoals || [] },
         ],
         calendar: [
             {
@@ -1649,32 +1676,127 @@ export default function ReportsPage() {
             {selectedTabs.includes('goals') && (
                 <div className="space-y-6">
                     {showCharts && (
-                        <div className="card p-5">
-                            <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Goal Completion Rates</h3>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={goalCompletion || []} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
-                                    <YAxis dataKey="title" type="category" width={150} tick={{ fontSize: 12 }} />
-                                    <Tooltip formatter={(v: any) => `${v}%`} />
-                                    <Bar dataKey="completionRate" fill="#7c3aed" radius={[0, 4, 4, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
+                        <>
+                            <div className="grid gap-4 md:grid-cols-4">
+                                {[
+                                    { label: 'Check-ins', value: goalTrends?.summary?.totalCheckIns ?? 0, color: '#7c3aed' },
+                                    { label: 'Quantity', value: goalTrends?.summary?.totalQuantity ?? 0, color: '#0891b2' },
+                                    { label: 'Active Days', value: goalTrends?.summary?.activeDays ?? 0, color: '#059669' },
+                                    {
+                                        label: 'Peak Time',
+                                        value: goalTrends?.summary?.topHour && goalTrends?.summary?.topWeekday
+                                            ? `${goalTrends.summary.topWeekday} ${goalTrends.summary.topHour}`
+                                            : '—',
+                                        color: '#d97706',
+                                    },
+                                ].map((item) => (
+                                    <div key={item.label} className="card p-6 text-center">
+                                        <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{item.label}</p>
+                                        <p className="text-3xl font-bold" style={{ color: item.color }}>{item.value}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Goal Completion Rates</h3>
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <BarChart data={goalCompletion || []} layout="vertical">
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                        <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
+                                        <YAxis dataKey="title" type="category" width={150} tick={{ fontSize: 12 }} />
+                                        <Tooltip formatter={(v: any) => `${v}%`} />
+                                        <Bar dataKey="completionRate" fill="#7c3aed" radius={[0, 4, 4, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            <div className="grid gap-4 xl:grid-cols-3">
+                                <div className="card p-5">
+                                    <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Check-ins by Weekday</h3>
+                                    <ResponsiveContainer width="100%" height={260}>
+                                        <BarChart data={goalTrends?.weekdayCounts || []}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                            <XAxis dataKey="weekday" tick={{ fontSize: 12 }} />
+                                            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill="#0891b2" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="card p-5">
+                                    <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Check-ins by Hour</h3>
+                                    <ResponsiveContainer width="100%" height={260}>
+                                        <BarChart data={goalTrends?.hourCounts || []}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                            <XAxis dataKey="hour" tick={{ fontSize: 10 }} interval={2} />
+                                            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill="#d97706" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="card p-5">
+                                    <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Most Checked-in Goals</h3>
+                                    <ResponsiveContainer width="100%" height={260}>
+                                        <BarChart data={goalTrends?.topGoals || []} layout="vertical">
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                            <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
+                                            <YAxis dataKey="title" type="category" width={140} tick={{ fontSize: 12 }} />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill="#059669" radius={[0, 4, 4, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            <div className="card p-5">
+                                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Daily Check-in Trend</h3>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <BarChart data={goalTrends?.dailyTrend || []}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                        <XAxis dataKey="date" tick={{ fontSize: 10 }} minTickGap={24} />
+                                        <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </>
                     )}
                     {showTables && (
-                        <DataTableCard
-                            title="Goals"
-                            columns={[
-                                { key: 'title', label: 'Goal' },
-                                { key: 'periodType', label: 'Period' },
-                                { key: 'completionRate', label: 'Completion', render: (value) => `${value}%` },
-                                { key: 'currentCount', label: 'Current' },
-                                { key: 'targetCount', label: 'Target' },
-                                { key: 'periodEnd', label: 'Period End', render: (value) => formatDisplayDate(value) },
-                            ]}
-                            rows={rawGoals || []}
-                        />
+                        <>
+                            <DataTableCard
+                                title="Goals"
+                                columns={[
+                                    { key: 'title', label: 'Goal' },
+                                    { key: 'periodType', label: 'Period' },
+                                    { key: 'completionRate', label: 'Completion', render: (value) => `${value}%` },
+                                    { key: 'currentCount', label: 'Current' },
+                                    { key: 'targetCount', label: 'Target' },
+                                    { key: 'periodEnd', label: 'Period End', render: (value) => formatDisplayDate(value) },
+                                ]}
+                                rows={rawGoals || []}
+                            />
+                            <DataTableCard
+                                title="Goal Trend Summary"
+                                columns={[
+                                    { key: 'title', label: 'Goal' },
+                                    { key: 'count', label: 'Check-ins' },
+                                    { key: 'quantity', label: 'Quantity' },
+                                    { key: 'lastCheckInAt', label: 'Last Check-in', render: (value) => formatDisplayDate(value) },
+                                ]}
+                                rows={goalTrends?.topGoals || []}
+                            />
+                            <DataTableCard
+                                title="Daily Goal Check-ins"
+                                columns={[
+                                    { key: 'date', label: 'Date', render: (value) => formatDisplayDate(value) },
+                                    { key: 'count', label: 'Check-ins' },
+                                    { key: 'quantity', label: 'Quantity' },
+                                ]}
+                                rows={goalTrends?.dailyTrend || []}
+                            />
+                        </>
                     )}
                 </div>
             )}

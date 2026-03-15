@@ -145,6 +145,9 @@ enum Theme {
   PAPER_MINT
   AMBER_LEDGER
   OCEAN_INK
+  MIDNIGHT_PLUM
+  SAKURA
+  FOREST_NIGHT
 }
 
 enum ColorSettingModule {

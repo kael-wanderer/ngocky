@@ -115,6 +115,10 @@ export default function SettingsPage() {
             setMsg('Saved!');
             setTimeout(() => setMsg(''), 2000);
         },
+        onError: (e: any) => {
+            setMsg(e.response?.data?.message || 'Failed to save settings');
+            setTimeout(() => setMsg(''), 3000);
+        },
     });
 
     const changePw = useMutation({

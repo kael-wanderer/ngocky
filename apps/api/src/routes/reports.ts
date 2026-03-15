@@ -131,6 +131,62 @@ function buildVisibleAssetWhere(userId: string) {
     };
 }
 
+function formatDateParts(date: Date, timeZone: string) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(date);
+    const get = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
+    return {
+        year: get('year'),
+        month: get('month'),
+        day: get('day'),
+    };
+}
+
+function getLocalDateKey(date: Date, timeZone: string) {
+    const { year, month, day } = formatDateParts(date, timeZone);
+    return `${year}-${month}-${day}`;
+}
+
+function getLocalHour(date: Date, timeZone: string) {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone,
+        hour: '2-digit',
+        hourCycle: 'h23',
+    }).formatToParts(date);
+    return Number(parts.find((part) => part.type === 'hour')?.value ?? '0');
+}
+
+function getLocalWeekdayIndex(date: Date, timeZone: string) {
+    const weekday = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        weekday: 'short',
+    }).format(date);
+    const indexByDay: Record<string, number> = {
+        Mon: 0,
+        Tue: 1,
+        Wed: 2,
+        Thu: 3,
+        Fri: 4,
+        Sat: 5,
+        Sun: 6,
+    };
+    return indexByDay[weekday] ?? 0;
+}
+
+function getDateKeysBetween(start: Date, end: Date, timeZone: string) {
+    const keys: string[] = [];
+    const cursor = new Date(start);
+    while (cursor <= end) {
+        keys.push(getLocalDateKey(cursor, timeZone));
+        cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+    return keys;
+}
+
 router.get('/raw-records', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
@@ -211,7 +267,6 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                                     { isShared: true },
                                 ],
                             },
-                            buildDateFilter(req, 'startDate'),
                             ...(periodType ? [{ periodType: periodType as any }] : []),
                         ],
                     },
@@ -689,7 +744,6 @@ router.get('/goal-completion', async (req: Request, res: Response, next: NextFun
                             { isShared: true },
                         ],
                     },
-                    buildDateFilter(req, 'startDate'),
                     ...(periodType ? [{ periodType: periodType as any }] : []),
                 ],
             },
@@ -701,6 +755,129 @@ router.get('/goal-completion', async (req: Request, res: Response, next: NextFun
             completionRate: g.targetCount > 0 ? Math.min(100, Math.round((g.currentCount / g.targetCount) * 100)) : 0,
         }));
         sendSuccess(res, data);
+    } catch (err) { next(err); }
+});
+
+router.get('/goal-trends', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.userId;
+        const periodType = req.query.periodType as string;
+        const { dateFrom, dateTo } = getDateBounds(req);
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { timezone: true },
+        });
+        const timeZone = user?.timezone || 'Asia/Ho_Chi_Minh';
+        const rangeStart = dateFrom ?? new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        const rangeEnd = dateTo ?? new Date();
+        const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+        const checkIns = await prisma.goalCheckIn.findMany({
+            where: {
+                date: buildRangeValue(dateFrom, dateTo) ?? undefined,
+                goal: {
+                    active: true,
+                    AND: [
+                        {
+                            OR: [
+                                { userId },
+                                { isShared: true },
+                            ],
+                        },
+                        ...(periodType ? [{ periodType: periodType as any }] : []),
+                    ],
+                },
+            },
+            select: {
+                id: true,
+                quantity: true,
+                date: true,
+                goalId: true,
+                goal: {
+                    select: {
+                        title: true,
+                    },
+                },
+            },
+            orderBy: { date: 'asc' },
+        });
+
+        const weekdayCounts = Array.from({ length: 7 }, (_, index) => ({
+            weekday: weekdayLabels[index],
+            count: 0,
+            quantity: 0,
+        }));
+        const hourCounts = Array.from({ length: 24 }, (_, hour) => ({
+            hour: `${String(hour).padStart(2, '0')}:00`,
+            count: 0,
+            quantity: 0,
+        }));
+        const dailyMap = new Map<string, { date: string; count: number; quantity: number }>();
+        const goalMap = new Map<string, { goalId: string; title: string; count: number; quantity: number; lastCheckInAt: Date }>();
+
+        for (const key of getDateKeysBetween(rangeStart, rangeEnd, timeZone)) {
+            dailyMap.set(key, { date: key, count: 0, quantity: 0 });
+        }
+
+        checkIns.forEach((checkIn) => {
+            const weekdayIndex = getLocalWeekdayIndex(checkIn.date, timeZone);
+            const hour = getLocalHour(checkIn.date, timeZone);
+            const dayKey = getLocalDateKey(checkIn.date, timeZone);
+
+            weekdayCounts[weekdayIndex].count += 1;
+            weekdayCounts[weekdayIndex].quantity += checkIn.quantity;
+            hourCounts[hour].count += 1;
+            hourCounts[hour].quantity += checkIn.quantity;
+
+            const daily = dailyMap.get(dayKey) ?? { date: dayKey, count: 0, quantity: 0 };
+            daily.count += 1;
+            daily.quantity += checkIn.quantity;
+            dailyMap.set(dayKey, daily);
+
+            const goalEntry = goalMap.get(checkIn.goalId) ?? {
+                goalId: checkIn.goalId,
+                title: checkIn.goal.title,
+                count: 0,
+                quantity: 0,
+                lastCheckInAt: checkIn.date,
+            };
+            goalEntry.count += 1;
+            goalEntry.quantity += checkIn.quantity;
+            if (checkIn.date > goalEntry.lastCheckInAt) {
+                goalEntry.lastCheckInAt = checkIn.date;
+            }
+            goalMap.set(checkIn.goalId, goalEntry);
+        });
+
+        const dailyTrend = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+        const topGoals = Array.from(goalMap.values())
+            .sort((a, b) => b.count - a.count || b.quantity - a.quantity || a.title.localeCompare(b.title))
+            .slice(0, 10)
+            .map((item) => ({
+                ...item,
+                lastCheckInAt: item.lastCheckInAt.toISOString(),
+            }));
+
+        const totalQuantity = checkIns.reduce((sum, item) => sum + item.quantity, 0);
+        const activeDays = dailyTrend.filter((item) => item.count > 0).length;
+        const topWeekday = [...weekdayCounts].sort((a, b) => b.count - a.count)[0];
+        const topHour = [...hourCounts].sort((a, b) => b.count - a.count)[0];
+
+        sendSuccess(res, {
+            summary: {
+                totalCheckIns: checkIns.length,
+                totalQuantity,
+                activeDays,
+                topWeekday: topWeekday?.count ? topWeekday.weekday : null,
+                topWeekdayCount: topWeekday?.count ?? 0,
+                topHour: topHour?.count ? topHour.hour : null,
+                topHourCount: topHour?.count ?? 0,
+            },
+            weekdayCounts,
+            hourCounts,
+            dailyTrend,
+            topGoals,
+        });
     } catch (err) { next(err); }
 });
 

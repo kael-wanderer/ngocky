@@ -179,4 +179,76 @@ describe('Goals & Check-ins API', () => {
 
         expect(goalRes.body.data.currentCount).toBe(0);
     });
+
+    it('should aggregate goal check-in trends by weekday, hour, day, and goal', async () => {
+        const createRes = await request(app)
+            .post('/api/goals')
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({
+                title: 'Trend Goal',
+                periodType: 'WEEKLY',
+                targetCount: 10,
+            });
+        const goalId = createRes.body.data.id;
+
+        const checkIns = [
+            { date: '2026-03-09T01:00:00.000Z', quantity: 1 },
+            { date: '2026-03-09T13:00:00.000Z', quantity: 2 },
+            { date: '2026-03-10T01:30:00.000Z', quantity: 3 },
+        ];
+
+        for (const checkIn of checkIns) {
+            const response = await request(app)
+                .post('/api/checkins')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    goalId,
+                    quantity: checkIn.quantity,
+                    date: checkIn.date,
+                });
+
+            expect(response.status).toBe(201);
+        }
+
+        const trendRes = await request(app)
+            .get('/api/reports/goal-trends')
+            .query({
+                dateFrom: '2026-03-09T00:00:00.000Z',
+                dateTo: '2026-03-10T23:59:59.999Z',
+            })
+            .set('Authorization', `Bearer ${accessToken}`);
+
+        expect(trendRes.status).toBe(200);
+        expect(trendRes.body.data.summary.totalCheckIns).toBe(3);
+        expect(trendRes.body.data.summary.totalQuantity).toBe(6);
+        expect(trendRes.body.data.summary.activeDays).toBe(2);
+        expect(trendRes.body.data.summary.topWeekday).toBe('Mon');
+        expect(trendRes.body.data.summary.topHour).toBe('08:00');
+
+        expect(trendRes.body.data.weekdayCounts.find((item: any) => item.weekday === 'Mon')).toMatchObject({
+            weekday: 'Mon',
+            count: 2,
+            quantity: 3,
+        });
+        expect(trendRes.body.data.weekdayCounts.find((item: any) => item.weekday === 'Tue')).toMatchObject({
+            weekday: 'Tue',
+            count: 1,
+            quantity: 3,
+        });
+        expect(trendRes.body.data.hourCounts.find((item: any) => item.hour === '08:00')).toMatchObject({
+            hour: '08:00',
+            count: 2,
+            quantity: 4,
+        });
+        expect(trendRes.body.data.dailyTrend).toEqual([
+            { date: '2026-03-09', count: 2, quantity: 3 },
+            { date: '2026-03-10', count: 1, quantity: 3 },
+        ]);
+        expect(trendRes.body.data.topGoals[0]).toMatchObject({
+            goalId,
+            title: 'Trend Goal',
+            count: 3,
+            quantity: 6,
+        });
+    });
 });
