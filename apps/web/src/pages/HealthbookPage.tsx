@@ -750,6 +750,7 @@ export default function HealthbookPage() {
     const [logModal, setLogModal] = useState<{ open: boolean; editing?: HealthLog }>({ open: false });
     const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; kind: 'person' | 'log' } | null>(null);
     const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+    const [personFilesOpen, setPersonFilesOpen] = useState(false);
     const [logSearch, setLogSearch] = useState('');
     const [logTypeFilter, setLogTypeFilter] = useState<string>('ALL');
     const [logDateFilter, setLogDateFilter] = useState<LogDateFilter>('ALL');
@@ -1024,21 +1025,32 @@ export default function HealthbookPage() {
 
                 {/* Person files */}
                 <div className="px-6 pb-4 border-t pt-4" style={{ borderColor: 'var(--color-border)' }}>
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2">
                         <Paperclip className="w-3.5 h-3.5 text-gray-400" />
                         <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documents</span>
-                        {isOwner(person) && (
-                            <div className="ml-auto">
+                        {personFilesOpen && isOwner(person) && (
+                            <div className="ml-auto flex items-center gap-2">
                                 <FileUploader url={`/healthbook/${person.id}/files`} onUploaded={() => qc.invalidateQueries({ queryKey: ['healthbook-person', personId] })} />
                             </div>
                         )}
+                        <button
+                            onClick={() => setPersonFilesOpen(o => !o)}
+                            className="p-1 rounded hover:bg-gray-100 cursor-pointer ml-auto"
+                            title={personFilesOpen ? 'Collapse' : 'Expand'}
+                        >
+                            {personFilesOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                        </button>
                     </div>
-                    {(person.files ?? []).length === 0 && <p className="text-xs text-gray-400">No documents attached.</p>}
-                    <div className="space-y-1.5 mt-2">
-                        {(person.files ?? []).map((f) => (
-                            <FileItem key={f.id} file={f} kind="person" onDelete={() => deletePersonFile.mutate(f.id)} />
-                        ))}
-                    </div>
+                    {personFilesOpen && (
+                        <div className="mt-2">
+                            {(person.files ?? []).length === 0 && <p className="text-xs text-gray-400">No documents attached.</p>}
+                            <div className="space-y-1.5">
+                                {(person.files ?? []).map((f) => (
+                                    <FileItem key={f.id} file={f} kind="person" onDelete={() => deletePersonFile.mutate(f.id)} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -1140,9 +1152,8 @@ export default function HealthbookPage() {
                                 const notifBadges = formatLogNotificationBadges(log);
                                 return (
                                     <React.Fragment key={log.id}>
-                                        <tr className="border-b cursor-pointer transition-colors hover:bg-gray-50/50"
-                                            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-                                            onClick={() => toggleLog(log.id)}>
+                                        <tr className="border-b transition-colors hover:bg-gray-50/50"
+                                            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
                                             <td className="px-4 py-3">
                                                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${logTypeBadgeClass(log.type)}`}>{logTypeLabel(log.type)}</span>
                                             </td>
@@ -1163,21 +1174,25 @@ export default function HealthbookPage() {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                                                    {isOwner(log) && (
-                                                        <>
-                                                            <button onClick={() => setLogModal({ open: true, editing: log })} className="p-1 rounded hover:bg-gray-100" title="Edit">
-                                                                <Edit2 className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
-                                                            </button>
-                                                            <button onClick={() => handleDuplicateLog(log)} className="p-1 rounded hover:bg-blue-50" title="Duplicate">
-                                                                <Copy className="w-3.5 h-3.5 text-blue-500 hover:text-blue-600" />
-                                                            </button>
-                                                            <button onClick={() => setDeleteConfirm({ id: log.id, kind: 'log' })} className="p-1 rounded hover:bg-red-50" title="Delete">
-                                                                <Trash2 className="w-3.5 h-3.5 text-red-500 hover:text-red-600" />
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                    {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                                        {isOwner(log) && (
+                                                            <>
+                                                                <button onClick={() => setLogModal({ open: true, editing: log })} className="p-1 rounded hover:bg-gray-100" title="Edit">
+                                                                    <Edit2 className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+                                                                </button>
+                                                                <button onClick={() => handleDuplicateLog(log)} className="p-1 rounded hover:bg-blue-50" title="Duplicate">
+                                                                    <Copy className="w-3.5 h-3.5 text-blue-500 hover:text-blue-600" />
+                                                                </button>
+                                                                <button onClick={() => setDeleteConfirm({ id: log.id, kind: 'log' })} className="p-1 rounded hover:bg-red-50" title="Delete">
+                                                                    <Trash2 className="w-3.5 h-3.5 text-red-500 hover:text-red-600" />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    <button onClick={() => toggleLog(log.id)} className="p-1 rounded hover:bg-gray-100 cursor-pointer" title={expanded ? 'Collapse' : 'Expand'}>
+                                                        {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
