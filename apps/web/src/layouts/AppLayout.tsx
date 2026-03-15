@@ -325,7 +325,7 @@ export default function AppLayout() {
                 {/* Footer */}
                 {!collapsed && (
                     <div className="p-4 border-t text-[11px]" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
-                        NgốcKý v1.1.0
+                        NgốcKý v1.2.0
                     </div>
                 )}
             </aside>

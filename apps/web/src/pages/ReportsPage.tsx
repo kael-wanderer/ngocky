@@ -127,6 +127,7 @@ const ANALYTICS_ROUTE_TAB_MAP = {
     '/cakeo': { id: 'cakeo', label: 'Ca Keo' },
     '/housework': { id: 'housework', label: 'Housework' },
     '/assets': { id: 'assets', label: 'Assets' },
+    '/healthbook': { id: 'healthbook', label: 'Healthbook' },
     '/keyboard': { id: 'keyboard', label: 'Keyboard' },
     '/funds': { id: 'funds', label: 'Funds' },
     '/learning': { id: 'learning', label: 'Learning' },
@@ -310,6 +311,7 @@ export default function ReportsPage() {
     const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('THIS_WEEK');
     const [viewType, setViewType] = useState<AnalyticsViewType>('BOTH');
     const [filters, setFilters] = useState({ type: '', scope: '', category: '', dateFrom: '', dateTo: '' });
+    const [analyticsSearch, setAnalyticsSearch] = useState('');
     const [goalPeriodFilter, setGoalPeriodFilter] = useState<SharedGoalPeriodFilter>(DEFAULT_GOAL_PERIOD_FILTER);
     const [taskFilters, setTaskFilters] = useState<{
         dueDate: AnalyticsTaskDueDateFilter;
@@ -667,6 +669,13 @@ export default function ReportsPage() {
             : filterGridCols === 2
                 ? 'grid-cols-1 md:grid-cols-2'
                 : 'grid-cols-1';
+    // +1 for the search input column
+    const genericFilterGridCols = filterGridCols + 1;
+    const genericFilterGridClass = genericFilterGridCols >= 4
+        ? 'grid-cols-1 md:grid-cols-4'
+        : genericFilterGridCols === 3
+            ? 'grid-cols-1 md:grid-cols-3'
+            : 'grid-cols-1 md:grid-cols-2';
     const showCharts = viewType === 'CHARTS' || viewType === 'BOTH';
     const showTables = viewType === 'TABLES' || viewType === 'BOTH';
     const selectedTimeRangeLabel = reportTimeRangeOptions.find((option) => option.value === reportTimeRange)?.label || reportTimeRange;
@@ -1176,7 +1185,7 @@ export default function ReportsPage() {
             <div className="card p-4 space-y-3">
                 <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
-                    <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>🔍 Analytics Configuration</span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
                 </div>
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     {isSingleTaskView ? (
@@ -1359,7 +1368,14 @@ export default function ReportsPage() {
                             <input type="date" className="input text-sm" value={fundsFilters.dateTo} min={fundsFilters.dateFrom || undefined} onChange={(e) => setFundsFilters((current) => ({ ...current, dateTo: e.target.value }))} />
                         </div>
                     ) : (
-                        <div className={`grid ${filterGridClass} gap-3 flex-1`}>
+                        <div className={`grid ${genericFilterGridClass} gap-3 flex-1`}>
+                            <input
+                                type="text"
+                                className="input text-sm"
+                                placeholder="Search..."
+                                value={analyticsSearch}
+                                onChange={(e) => setAnalyticsSearch(e.target.value)}
+                            />
                             <select className="input text-sm" value={reportTimeRange} onChange={(e) => setReportTimeRange(e.target.value as ReportTimeRange)}>
                                 {reportTimeRangeOptions.map((option) => (
                                     <option key={option.value} value={option.value}>{option.label}</option>

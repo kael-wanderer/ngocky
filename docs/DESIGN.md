@@ -384,8 +384,9 @@ Ca Keo is a kid task and calendar tracker for family scheduling.
   - refine `Week` into a calendar-grid week view instead of a list
   - add shared Calendar user colors under `Settings > Color Settings` using the same color option logic as Ca Keo
 - **Analytics**:
-  - add Ca Keo, Keyboard, and Funds
-  - module visibility should follow `Settings > Desktop Features`
+  - Keyboard, Funds, and Healthbook tabs are now added
+  - Ca Keo analytics is still planned
+  - module visibility follows `Settings > Desktop Features`
 
 ### 15B. Navigation Simplification
 
@@ -484,6 +485,15 @@ Each log is tied to a `HealthPerson`. Fields:
 - **Cost**: VND amount (accepts shorthand `600k`, `2M`); when non-empty, auto-creates a matching `Expense` with `category = Healthcare`, `type = PAY`, `scope = PERSONAL`
 - **Prescription**: free-form prescription text
 - **nextCheckupDate**: optional recommended follow-up date
+- **Notification**: follows the shared `NotificationFields` pattern (`Hours Before`, `Days Before`, `On Date`) with Bell badge (grey/red) and purple notification pills in the log list
+
+#### Log List UI
+
+- Table view with column headers: Type, Date, Location, Doctor, Cost, Alert, Actions
+- Expandable detail row per log (click to expand symptoms, description, prescription)
+- Action icons: grey Edit, blue Duplicate, red Delete (always visible)
+- Bell icon notification badge (grey = off, red = on) with purple pills for offset/date + time
+- Grid view retains card-style layout with Bell badge and purple notification pills
 
 #### File Attachments
 
@@ -578,28 +588,32 @@ Dashboard supports:
 
 ### Category Filter
 
-Multi-select categories on Dashboard:
+Multi-select categories on Dashboard, grouped and ordered:
 
-- `goal`
-- `task`
-- `project`
-- `housework`
-- `calendar`
-- `expense`
-- `assets`
-- `learning`
-- `idea`
+**Personal**: `goal`, `task`, `project`, `idea`, `healthbook`
+
+**Family**: `housework`, `calendar`, `expense`, `assets`
+
+**Hobby**: `keyboard`, `funds`, `learning`
+
+Each group has All/None toggle buttons. Sections render in click-selection order (not a fixed order). Pin Items is always visible and independent of the category filter.
 
 ### Reports Coverage
 
-Reports currently expose chart data for:
+Analytics exposes chart data for:
 
+- projects
 - tasks
 - goals
+- calendar
 - housework
 - expenses
+- assets
+- healthbook
 - learning
 - ideas
+- keyboard
+- funds
 
 ### Analytics Time Filter
 

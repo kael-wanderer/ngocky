@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
@@ -7,15 +7,23 @@ import {
     FolderKanban, Home, Calendar, Wallet,
     AlertTriangle, Target, CheckCircle2, Pin, Package, ChevronDown,
     Lightbulb, Trophy, Microwave, GraduationCap,
+    Filter, Keyboard, HeartPulse, TrendingUp,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-const CATEGORY_OPTIONS = ['goal', 'task', 'project', 'housework', 'calendar', 'expense', 'assets', 'learning', 'idea'] as const;
+// Order: Personal → Family → Hobby
+const CATEGORY_OPTIONS = ['goal', 'task', 'project', 'idea', 'healthbook', 'housework', 'calendar', 'expense', 'assets', 'keyboard', 'funds', 'learning'] as const;
 type Category = typeof CATEGORY_OPTIONS[number];
 const categoryLabels: Record<Category, string> = {
-    goal: 'Goal', task: 'Task', project: 'Project', housework: 'Housework', calendar: 'Calendar',
-    expense: 'Expense', assets: 'Assets', learning: 'Learning', idea: 'Ideas',
+    goal: 'Goals', task: 'Tasks', project: 'Projects', learning: 'Learning', idea: 'Ideas', healthbook: 'Healthbook',
+    housework: 'Housework', calendar: 'Calendar', expense: 'Expenses', assets: 'Assets',
+    keyboard: 'Keyboard', funds: 'Funds',
 };
+const CATEGORY_GROUPS: Array<{ label: string; items: Category[] }> = [
+    { label: 'Personal', items: ['goal', 'task', 'project', 'idea', 'healthbook'] },
+    { label: 'Family', items: ['housework', 'calendar', 'expense', 'assets'] },
+    { label: 'Hobby', items: ['keyboard', 'funds', 'learning'] },
+];
 
 const TIME_OPTIONS = [
     { value: 'TODAY', label: 'Today' },
@@ -42,10 +50,7 @@ const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
     { value: 'OVERDUE', label: 'Overdue' },
 ];
 
-// Section ordering
-type SectionId = 'goal' | 'calendar' | 'project' | 'task' | 'housework' | 'pinned' | 'expense' | 'assets' | 'learning' | 'idea';
-const DEFAULT_SECTION_ORDER: SectionId[] = ['goal', 'calendar', 'project', 'task', 'housework', 'pinned', 'expense', 'assets', 'learning', 'idea'];
-const SECTION_STORAGE_KEY = 'dashboard_section_order';
+type SectionId = Category;
 
 const formatVND = (amount: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(amount);
 const statusBadge = (label: string, tone: 'normal' | 'success' | 'warning' | 'danger' = 'normal') => {
@@ -82,18 +87,7 @@ export default function DashboardPage() {
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('PENDING');
     const [categories, setCategories] = useState<Category[]>([...CATEGORY_OPTIONS]);
     const [autoRefresh, setAutoRefresh] = useState(false);
-    const [sectionOrder, setSectionOrder] = useState<SectionId[]>(() => {
-        try {
-            const saved = localStorage.getItem(SECTION_STORAGE_KEY);
-            if (saved) {
-                const parsed: SectionId[] = JSON.parse(saved);
-                // Merge: add new sections not in saved order
-                const merged = [...parsed, ...DEFAULT_SECTION_ORDER.filter(s => !parsed.includes(s))];
-                return merged;
-            }
-        } catch { /* ignore */ }
-        return DEFAULT_SECTION_ORDER;
-    });
+    const [dashSearch, setDashSearch] = useState('');
 
     const { data, isLoading } = useQuery({
         queryKey: ['dashboard', timeRange, statusFilter],
@@ -117,10 +111,16 @@ export default function DashboardPage() {
     const toggleCategory = (c: Category) => {
         setCategories(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
     };
+    const checkAllGroup = (items: Category[]) => {
+        setCategories(prev => [...prev, ...items.filter(c => !prev.includes(c))]);
+    };
+    const uncheckAllGroup = (items: Category[]) => {
+        setCategories(prev => prev.filter(c => !items.includes(c)));
+    };
 
-    const showPinnedItems = useMemo(() => {
-        return categories.some(c => c === 'goal' || c === 'task' || c === 'project' || c === 'housework' || c === 'calendar' || c === 'assets' || c === 'learning' || c === 'idea');
-    }, [categories]);
+    const searchLower = dashSearch.trim().toLowerCase();
+    const applySearch = (items: any[], ...fields: string[]) =>
+        !searchLower ? items : items.filter((item: any) => fields.some(f => item[f]?.toLowerCase?.().includes(searchLower)));
 
     const overdueByCategory = (type: string): Category => {
         if (type === 'PROJECT') return 'project';
@@ -190,13 +190,13 @@ export default function DashboardPage() {
                     <div className="card p-5 h-full">
                         <div className="flex items-center gap-2 mb-4 pr-7">
                             <Trophy className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
-                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Goal</h3>
+                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Goals</h3>
                         </div>
                         <div className="space-y-3">
-                            {(data?.goals || []).length === 0 && (
+                            {applySearch(data?.goals || [], 'title', 'description').length === 0 && (
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No active goals</p>
                             )}
-                            {(data?.goals || []).map((g: any) => {
+                            {applySearch(data?.goals || [], 'title', 'description').map((g: any) => {
                                 const progressPct = g.targetCount > 0 ? (g.currentCount / g.targetCount) * 100 : 0;
                                 return (
                                     <button key={g.id} className="w-full flex items-center gap-3 text-left hover:bg-gray-50 rounded p-1" onClick={() => navigate(`/goals?editId=${g.id}`)}>
@@ -230,13 +230,13 @@ export default function DashboardPage() {
                     <div className="card p-5 h-full">
                         <div className="flex items-center gap-2 mb-4 pr-7">
                             <Calendar className="w-5 h-5" style={{ color: '#7c3aed' }} />
-                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Events</h3>
+                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Calendar</h3>
                         </div>
                         <div className="space-y-3">
-                            {(data?.upcomingEvents || []).length === 0 && (
+                            {applySearch(data?.upcomingEvents || [], 'title').length === 0 && (
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No events in selected time</p>
                             )}
-                            {(data?.upcomingEvents || []).map((e: any) => (
+                            {applySearch(data?.upcomingEvents || [], 'title').map((e: any) => (
                                 <button key={e.id} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors text-left" onClick={() => navigate(`/calendar?eventId=${e.id}`)}>
                                     <div className="w-1 h-10 rounded-full" style={{ backgroundColor: e.color || 'var(--color-primary)' }} />
                                     <div className="flex-1 min-w-0">
@@ -257,13 +257,13 @@ export default function DashboardPage() {
                     <div className="card p-5 h-full">
                         <div className="flex items-center gap-2 mb-4 pr-7">
                             <FolderKanban className="w-5 h-5" style={{ color: '#d97706' }} />
-                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Project</h3>
+                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Projects</h3>
                         </div>
                         <div className="space-y-3">
-                            {(data?.dueProjects || []).length === 0 && (
+                            {applySearch(data?.dueProjects || [], 'name').length === 0 && (
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No project deadlines in selected time</p>
                             )}
-                            {(data?.dueProjects || []).map((p: any) => (
+                            {applySearch(data?.dueProjects || [], 'name').map((p: any) => (
                                 <button key={p.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => openProjectTask(p.id, p.sampleTaskId)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{p.name}</p>
@@ -291,13 +291,13 @@ export default function DashboardPage() {
                     <div className="card p-5 h-full">
                         <div className="flex items-center gap-2 mb-4 pr-7">
                             <FolderKanban className="w-5 h-5" style={{ color: '#4f46e5' }} />
-                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Task</h3>
+                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Tasks</h3>
                         </div>
                         <div className="space-y-3">
-                            {(data?.dueTasks || []).length === 0 && (
+                            {applySearch(data?.dueTasks || [], 'title').length === 0 && (
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No tasks with deadline in selected time</p>
                             )}
-                            {(data?.dueTasks || []).map((t: any) => (
+                            {applySearch(data?.dueTasks || [], 'title').map((t: any) => (
                                 <button key={t.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => openTaskTarget(t.id, t.projectId)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{t.title}</p>
@@ -330,10 +330,10 @@ export default function DashboardPage() {
                             <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Housework</h3>
                         </div>
                         <div className="space-y-3">
-                            {(data?.dueHousework || []).length === 0 && (
+                            {applySearch(data?.dueHousework || [], 'title').length === 0 && (
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No housework due in selected time</p>
                             )}
-                            {(data?.dueHousework || []).map((h: any) => (
+                            {applySearch(data?.dueHousework || [], 'title').map((h: any) => (
                                 <button key={h.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(`/housework?editId=${h.id}`)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{h.title}</p>
@@ -356,54 +356,19 @@ export default function DashboardPage() {
                     </div>
                 );
 
-            case 'pinned':
-                if (!showPinnedItems) return null;
-                return (
-                    <div className="card p-5 h-full">
-                        <div className="flex items-center gap-2 mb-4 pr-7">
-                            <Pin className="w-5 h-5" style={{ color: '#dc2626' }} />
-                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Pinned Items</h3>
-                        </div>
-                        <div className="space-y-3">
-                            {(data?.pinnedItems || []).length === 0 && (
-                                <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No pinned items</p>
-                            )}
-                            {(data?.pinnedItems || []).map((p: any) => (
-                                <button key={`${p.type}-${p.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1"
-                                    onClick={() => {
-                                        if (p.type === 'GOAL') navigate(`/goals?editId=${p.id}`);
-                                        else if (p.type === 'TASK') openTaskTarget(p.id, p.projectId);
-                                        else if (p.type === 'PROJECT') navigate(`/projects?boardId=${p.id}`);
-                                        else if (p.type === 'HOUSEWORK') navigate(`/housework?editId=${p.id}`);
-                                        else if (p.type === 'CALENDAR') navigate(`/calendar?eventId=${p.id}`);
-                                        else if (p.type === 'ASSET') navigate(p.assetId ? `/assets/${p.assetId}` : '/assets');
-                                        else if (p.type === 'LEARNING') navigate('/learning');
-                                        else if (p.type === 'IDEA') navigate('/ideas');
-                                    }}>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{p.title}</p>
-                                        <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{p.type}{p.meta ? ` · ${p.meta}` : ''}</p>
-                                    </div>
-                                    {p.date && <span className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(p.date), 'MMM d')}</span>}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                );
-
             case 'expense':
                 if (!sectionVisible('expense')) return null;
                 return (
                     <div className="card p-5 h-full">
                         <div className="flex items-center gap-2 mb-4 pr-7">
                             <Wallet className="w-5 h-5" style={{ color: '#d97706' }} />
-                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Expense</h3>
+                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Expenses</h3>
                         </div>
                         <div className="space-y-3">
-                            {(data?.expenses || []).length === 0 && (
+                            {applySearch(data?.expenses || [], 'description').length === 0 && (
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No expenses in selected time</p>
                             )}
-                            {(data?.expenses || []).map((e: any) => (
+                            {applySearch(data?.expenses || [], 'description').map((e: any) => (
                                 <button key={e.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate('/expenses')}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{e.description}</p>
@@ -425,10 +390,10 @@ export default function DashboardPage() {
                             <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Assets</h3>
                         </div>
                         <div className="space-y-3">
-                            {(data?.dueAssets || []).length === 0 && (
+                            {applySearch(data?.dueAssets || [], 'description').length === 0 && (
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No asset records in selected time</p>
                             )}
-                            {(data?.dueAssets || []).map((a: any) => (
+                            {applySearch(data?.dueAssets || [], 'description').map((a: any) => (
                                 <button key={a.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(a.assetId ? `/assets/${a.assetId}` : '/assets')}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{a.asset?.name || 'Asset'}</p>
@@ -450,10 +415,10 @@ export default function DashboardPage() {
                             <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Learning</h3>
                         </div>
                         <div className="space-y-3">
-                            {(data?.dueLearning || []).length === 0 && (
+                            {applySearch(data?.dueLearning || [], 'title').length === 0 && (
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No learning records in selected time</p>
                             )}
-                            {(data?.dueLearning || []).map((l: any) => (
+                            {applySearch(data?.dueLearning || [], 'title').map((l: any) => (
                                 <button key={l.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate('/learning')}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{l.title}</p>
@@ -475,10 +440,10 @@ export default function DashboardPage() {
                             <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Ideas</h3>
                         </div>
                         <div className="space-y-2">
-                            {(data?.recentIdeas || []).length === 0 && (
+                            {applySearch(data?.recentIdeas || [], 'title').length === 0 && (
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No ideas yet</p>
                             )}
-                            {(data?.recentIdeas || []).map((idea: any) => (
+                            {applySearch(data?.recentIdeas || [], 'title').map((idea: any) => (
                                 <button key={idea.id} className="w-full flex items-start justify-between py-1.5 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate('/ideas')}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{idea.title}</p>
@@ -491,18 +456,58 @@ export default function DashboardPage() {
                     </div>
                 );
 
+            case 'keyboard':
+                if (!sectionVisible('keyboard')) return null;
+                return (
+                    <div className="card p-5 h-full">
+                        <div className="flex items-center gap-2 mb-4 pr-7">
+                            <Keyboard className="w-5 h-5" style={{ color: '#6366f1' }} />
+                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Keyboard</h3>
+                        </div>
+                        <button onClick={() => navigate('/keyboard')} className="w-full flex items-center justify-between py-2 px-1 text-sm text-left rounded hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-text-secondary)' }}>
+                            <span>View keyboard collection</span>
+                            <span style={{ color: 'var(--color-primary)' }}>→</span>
+                        </button>
+                    </div>
+                );
+
+            case 'funds':
+                if (!sectionVisible('funds')) return null;
+                return (
+                    <div className="card p-5 h-full">
+                        <div className="flex items-center gap-2 mb-4 pr-7">
+                            <TrendingUp className="w-5 h-5" style={{ color: '#10b981' }} />
+                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Funds</h3>
+                        </div>
+                        <button onClick={() => navigate('/funds')} className="w-full flex items-center justify-between py-2 px-1 text-sm text-left rounded hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-text-secondary)' }}>
+                            <span>View fund transactions</span>
+                            <span style={{ color: 'var(--color-primary)' }}>→</span>
+                        </button>
+                    </div>
+                );
+
+            case 'healthbook':
+                if (!sectionVisible('healthbook')) return null;
+                return (
+                    <div className="card p-5 h-full">
+                        <div className="flex items-center gap-2 mb-4 pr-7">
+                            <HeartPulse className="w-5 h-5" style={{ color: '#ec4899' }} />
+                            <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Healthbook</h3>
+                        </div>
+                        <button onClick={() => navigate('/healthbook')} className="w-full flex items-center justify-between py-2 px-1 text-sm text-left rounded hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-text-secondary)' }}>
+                            <span>View health records</span>
+                            <span style={{ color: 'var(--color-primary)' }}>→</span>
+                        </button>
+                    </div>
+                );
+
             default:
                 return null;
         }
     }
 
-    // Only include sections that have visible content
-    const visibleSections = sectionOrder.filter(id => {
-        if (id === 'pinned') return showPinnedItems;
-        if (id === 'task') return sectionVisible('project');
-        const cat = id as Category;
-        return CATEGORY_OPTIONS.includes(cat) ? sectionVisible(cat) : true;
-    });
+    // Sections appear in click order (categories array order)
+    const visibleSections = categories.filter(c => sectionVisible(c));
 
     if (isLoading) {
         return (
@@ -524,40 +529,57 @@ export default function DashboardPage() {
                     {format(new Date(), 'EEEE, MMMM d, yyyy')}
                 </p>
 
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label className="label">Time</label>
-                        <select className="input" value={timeRange} onChange={(e) => setTimeRange(e.target.value as TimeRange)}>
-                            {TIME_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                        </select>
+                <div className="mt-4 rounded-xl border p-3" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+                    <div className="flex items-center gap-2 mb-3">
+                        <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                        <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
                     </div>
-                    <div>
-                        <label className="label">Status</label>
-                        <select className="input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}>
-                            {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="label">Category</label>
-                        <details className="relative">
-                            <summary className="input list-none cursor-pointer flex items-center justify-between">
-                                <span className="text-sm" style={{ color: 'var(--color-text)' }}>
-                                    {categories.length === CATEGORY_OPTIONS.length ? 'All categories' : categories.length === 0 ? 'No category selected' : `${categories.length} selected`}
-                                </span>
-                                <ChevronDown className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
-                            </summary>
-                            <div className="absolute z-20 mt-2 w-full card p-2 max-h-64 overflow-auto" style={{ border: '1px solid var(--color-border)' }}>
-                                {CATEGORY_OPTIONS.map(c => (
-                                    <label key={c} className="flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-50 cursor-pointer text-sm">
-                                        <input type="checkbox" checked={categories.includes(c)} onChange={() => toggleCategory(c)} />
-                                        <span style={{ color: 'var(--color-text)' }}>{categoryLabels[c]}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </details>
-                    </div>
-                    <div className="flex items-end">
-                        <label className="flex h-[42px] w-full items-center gap-2 rounded-lg border px-3 text-sm" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex-1 min-w-[180px]">
+                            <input
+                                value={dashSearch}
+                                onChange={e => setDashSearch(e.target.value)}
+                                placeholder="Search items…"
+                                className="w-full text-sm border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                                style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                            />
+                        </div>
+                        <div className="min-w-[130px]">
+                            <select className="input" value={timeRange} onChange={(e) => setTimeRange(e.target.value as TimeRange)}>
+                                {TIME_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                            </select>
+                        </div>
+                        <div className="min-w-[140px]">
+                            <details className="relative">
+                                <summary className="input list-none cursor-pointer flex items-center justify-between">
+                                    <span className="text-sm" style={{ color: 'var(--color-text)' }}>
+                                        {categories.length === CATEGORY_OPTIONS.length ? 'All categories' : categories.length === 0 ? 'None' : `${categories.length} selected`}
+                                    </span>
+                                    <ChevronDown className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                                </summary>
+                                <div className="absolute z-20 mt-2 w-56 card p-2 max-h-80 overflow-auto" style={{ border: '1px solid var(--color-border)' }}>
+                                    {CATEGORY_GROUPS.map(group => (
+                                        <div key={group.label}>
+                                            <div className="flex items-center justify-between px-2 pt-2 pb-1">
+                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{group.label}</p>
+                                                <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                    <button type="button" onClick={(e) => { e.preventDefault(); checkAllGroup(group.items); }} className="hover:text-blue-500 transition-colors">All</button>
+                                                    <span>·</span>
+                                                    <button type="button" onClick={(e) => { e.preventDefault(); uncheckAllGroup(group.items); }} className="hover:text-red-500 transition-colors">None</button>
+                                                </div>
+                                            </div>
+                                            {group.items.map(c => (
+                                                <label key={c} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer text-sm">
+                                                    <input type="checkbox" checked={categories.includes(c)} onChange={() => toggleCategory(c)} />
+                                                    <span style={{ color: 'var(--color-text)' }}>{categoryLabels[c]}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            </details>
+                        </div>
+                        <label className="flex items-center gap-2 text-sm cursor-pointer whitespace-nowrap shrink-0" style={{ color: 'var(--color-text)' }}>
                             <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
                             Auto-refresh (60s)
                         </label>
@@ -583,33 +605,66 @@ export default function DashboardPage() {
                 ))}
             </div>
 
-            {/* Overdue */}
-            <div className="card p-5 border border-red-200 bg-red-50/40">
-                <div className="flex items-center gap-2 mb-4">
-                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                    <h3 className="font-semibold text-red-700">Overdue</h3>
+            {/* Overdue + Pin Items side by side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="card p-5 border border-red-200 bg-red-50/40">
+                    <div className="flex items-center gap-2 mb-4">
+                        <AlertTriangle className="w-5 h-5 text-red-600" />
+                        <h3 className="font-semibold text-red-700">Overdue</h3>
+                    </div>
+                    <div className="space-y-3">
+                        {filteredOverdueItems.length === 0 && (
+                            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No overdue items for selected categories.</p>
+                        )}
+                        {filteredOverdueItems.map((o: any) => (
+                            <button key={`${o.type}-${o.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-red-50 rounded px-1"
+                                onClick={() => {
+                                    if (o.type === 'PROJECT') openOverdueProjectItem(o.id, o.projectId);
+                                    else if (o.type === 'TASK') openTaskTarget(o.id, o.projectId);
+                                    else if (o.type === 'HOUSEWORK') navigate(`/housework?editId=${o.id}`);
+                                    else if (o.type === 'CALENDAR') navigate(`/calendar?eventId=${o.id}`);
+                                    else if (o.type === 'ASSET') navigate('/assets');
+                                    else if (o.type === 'LEARNING') navigate('/learning');
+                                }}>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{o.title}</p>
+                                    <p className="text-xs text-red-700">{o.type}{o.meta ? ` · ${o.meta}` : ''}</p>
+                                </div>
+                                {o.date && <span className="text-xs font-semibold whitespace-nowrap text-red-700">{format(new Date(o.date), 'MMM d')}</span>}
+                            </button>
+                        ))}
+                    </div>
                 </div>
-                <div className="space-y-3">
-                    {filteredOverdueItems.length === 0 && (
-                        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No overdue items for selected categories.</p>
-                    )}
-                    {filteredOverdueItems.map((o: any) => (
-                        <button key={`${o.type}-${o.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-red-50 rounded px-1"
-                            onClick={() => {
-                                if (o.type === 'PROJECT') openOverdueProjectItem(o.id, o.projectId);
-                                else if (o.type === 'TASK') openTaskTarget(o.id, o.projectId);
-                                else if (o.type === 'HOUSEWORK') navigate(`/housework?editId=${o.id}`);
-                                else if (o.type === 'CALENDAR') navigate(`/calendar?eventId=${o.id}`);
-                                else if (o.type === 'ASSET') navigate('/assets');
-                                else if (o.type === 'LEARNING') navigate('/learning');
-                            }}>
-                            <div className="min-w-0">
-                                <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{o.title}</p>
-                                <p className="text-xs text-red-700">{o.type}{o.meta ? ` · ${o.meta}` : ''}</p>
-                            </div>
-                            {o.date && <span className="text-xs font-semibold whitespace-nowrap text-red-700">{format(new Date(o.date), 'MMM d')}</span>}
-                        </button>
-                    ))}
+
+                <div className="card p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Pin className="w-5 h-5" style={{ color: '#dc2626' }} />
+                        <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Pin Items</h3>
+                    </div>
+                    <div className="space-y-3">
+                        {(data?.pinnedItems || []).length === 0 && (
+                            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No pinned items</p>
+                        )}
+                        {(data?.pinnedItems || []).map((p: any) => (
+                            <button key={`${p.type}-${p.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1"
+                                onClick={() => {
+                                    if (p.type === 'GOAL') navigate(`/goals?editId=${p.id}`);
+                                    else if (p.type === 'TASK') openTaskTarget(p.id, p.projectId);
+                                    else if (p.type === 'PROJECT') navigate(`/projects?boardId=${p.id}`);
+                                    else if (p.type === 'HOUSEWORK') navigate(`/housework?editId=${p.id}`);
+                                    else if (p.type === 'CALENDAR') navigate(`/calendar?eventId=${p.id}`);
+                                    else if (p.type === 'ASSET') navigate(p.assetId ? `/assets/${p.assetId}` : '/assets');
+                                    else if (p.type === 'LEARNING') navigate('/learning');
+                                    else if (p.type === 'IDEA') navigate('/ideas');
+                                }}>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{p.title}</p>
+                                    <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{p.type}{p.meta ? ` · ${p.meta}` : ''}</p>
+                                </div>
+                                {p.date && <span className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(p.date), 'MMM d')}</span>}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
