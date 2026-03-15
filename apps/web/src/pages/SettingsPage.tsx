@@ -317,6 +317,7 @@ export default function SettingsPage() {
         { id: 'PAPER_MINT', name: 'Paper Mint', colors: ['#4c8b6f', '#d7e4db', '#f3f7f2'] },
         { id: 'AMBER_LEDGER', name: 'Amber Ledger', colors: ['#c17c2f', '#eadfcd', '#fbf6ec'] },
         { id: 'OCEAN_INK', name: 'Ocean Ink', colors: ['#2ea7a0', '#294055', '#0f1722'] },
+        { id: 'MIDNIGHT_PLUM', name: 'Midnight Plum', colors: ['#140d1f', '#c084fc', '#1d1530'] },
     ];
 
     const cakeoUsedColors = useMemo(

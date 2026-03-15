@@ -25,6 +25,9 @@
     --color-border: #374151;
     --color-primary: #818cf8;
     --color-primary-light: #1e1b4b;
+    --color-success: #34d399;
+    --color-warning: #f59e0b;
+    --color-danger: #f87171;
   }
 
   .theme-red-accent {
@@ -110,6 +113,19 @@
     --color-border: #294055;
     --color-primary: #2ea7a0;
     --color-primary-light: #163842;
+    --color-success: #34d399;
+    --color-warning: #f59e0b;
+    --color-danger: #f87171;
+  }
+
+  .theme-midnight-plum {
+    --color-bg: #140d1f;
+    --color-surface: #1d1530;
+    --color-text: #ede6f8;
+    --color-text-secondary: #a892c8;
+    --color-border: #32215a;
+    --color-primary: #c084fc;
+    --color-primary-light: #271840;
     --color-success: #34d399;
     --color-warning: #f59e0b;
     --color-danger: #f87171;
@@ -218,6 +234,11 @@
   .table-container tr:hover td {
     background-color: var(--color-primary-light);
   }
+}
+
+/* Overdue item hover - works across all themes */
+.overdue-item-hover:hover {
+  background-color: color-mix(in srgb, var(--color-danger) 10%, transparent);
 }
 
 /* Scrollbar styling */

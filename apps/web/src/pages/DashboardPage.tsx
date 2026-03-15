@@ -623,17 +623,17 @@ export default function DashboardPage() {
 
             {/* Overdue + Pin Items side by side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="card p-5 border border-red-200 bg-red-50/40">
+                <div className="card p-5" style={{ borderColor: 'color-mix(in srgb, var(--color-danger) 30%, var(--color-border))', backgroundColor: 'color-mix(in srgb, var(--color-danger) 6%, var(--color-surface))' }}>
                     <div className="flex items-center gap-2 mb-4">
-                        <AlertTriangle className="w-5 h-5 text-red-600" />
-                        <h3 className="font-semibold text-red-700">Overdue</h3>
+                        <AlertTriangle className="w-5 h-5" style={{ color: 'var(--color-danger)' }} />
+                        <h3 className="font-semibold" style={{ color: 'var(--color-danger)' }}>Overdue</h3>
                     </div>
                     <div className="space-y-3">
                         {filteredOverdueItems.length === 0 && (
                             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No overdue items for selected categories.</p>
                         )}
                         {filteredOverdueItems.map((o: any) => (
-                            <button key={`${o.type}-${o.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-red-50 rounded px-1"
+                            <button key={`${o.type}-${o.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left overdue-item-hover rounded px-1"
                                 onClick={() => {
                                     if (o.type === 'PROJECT') openOverdueProjectItem(o.id, o.projectId);
                                     else if (o.type === 'TASK') openTaskTarget(o.id, o.projectId);
@@ -644,9 +644,9 @@ export default function DashboardPage() {
                                 }}>
                                 <div className="min-w-0">
                                     <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{o.title}</p>
-                                    <p className="text-xs text-red-700">{o.type}{o.meta ? ` · ${o.meta}` : ''}</p>
+                                    <p className="text-xs" style={{ color: 'var(--color-danger)' }}>{o.type}{o.meta ? ` · ${o.meta}` : ''}</p>
                                 </div>
-                                {o.date && <span className="text-xs font-semibold whitespace-nowrap text-red-700">{format(new Date(o.date), 'MMM d')}</span>}
+                                {o.date && <span className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--color-danger)' }}>{format(new Date(o.date), 'MMM d')}</span>}
                             </button>
                         ))}
                     </div>
