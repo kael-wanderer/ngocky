@@ -440,6 +440,10 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                             ? `Monthly on day ${report.dayOfMonth ?? 1} at ${report.time}`
                                             : normalizeReportFrequency(report.frequency) === 'QUARTERLY'
                                             ? `Quarterly on day ${report.dayOfMonth ?? 1} at ${report.time}`
+                                            : normalizeReportFrequency(report.frequency) === 'WEEKDAY'
+                                            ? `Weekdays (Mon–Fri) at ${report.time}`
+                                            : normalizeReportFrequency(report.frequency) === 'WEEKEND'
+                                            ? `Weekends (Sat–Sun) at ${report.time}`
                                             : `Daily at ${report.time}`}
                                     </span>
                                     <button className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 transition-colors ${report.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`} onClick={() => toggleReportMut.mutate({ id: report.id, active: !report.active })}>
@@ -494,6 +498,10 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                                     ? `Monthly on day ${report.dayOfMonth ?? 1} at ${report.time}`
                                                     : normalizeReportFrequency(report.frequency) === 'QUARTERLY'
                                                     ? `Quarterly on day ${report.dayOfMonth ?? 1} at ${report.time}`
+                                                    : normalizeReportFrequency(report.frequency) === 'WEEKDAY'
+                                                    ? `Weekdays (Mon–Fri) at ${report.time}`
+                                                    : normalizeReportFrequency(report.frequency) === 'WEEKEND'
+                                                    ? `Weekends (Sat–Sun) at ${report.time}`
                                                     : `Daily at ${report.time}`}
                                             </p>
                                         </div>
@@ -723,6 +731,8 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                             <>
                                                 <option value="ONE_TIME">One Time</option>
                                                 <option value="DAILY">Daily</option>
+                                                <option value="WEEKDAY">Weekday (Mon–Fri)</option>
+                                                <option value="WEEKEND">Weekend (Sat–Sun)</option>
                                             </>
                                         ) : (
                                             <>

@@ -122,6 +122,8 @@ enum AlertFrequency {
 enum ReportFrequency {
   ONE_TIME
   DAILY
+  WEEKDAY
+  WEEKEND
   WEEKLY
   MONTHLY
   QUARTERLY

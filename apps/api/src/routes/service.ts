@@ -48,6 +48,8 @@ router.get('/due-reports', async (_req: Request, res: Response, next: NextFuncti
             if (diff < 0 || diff >= TIME_WINDOW) return false;
             if (report.frequency === 'ONE_TIME') return true;
             if (report.frequency === 'DAILY') return true;
+            if (report.frequency === 'WEEKDAY') return currentDay >= 1 && currentDay <= 5; // Mon–Fri
+            if (report.frequency === 'WEEKEND') return currentDay === 0 || currentDay === 6; // Sun or Sat
             if (report.frequency === 'WEEKLY') return currentDay === (report.dayOfWeek ?? 1);
             if (report.frequency === 'MONTHLY') return vnNow.getUTCDate() === (report.dayOfMonth ?? 1);
             if (report.frequency === 'QUARTERLY') {
