@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
@@ -88,6 +88,18 @@ export default function DashboardPage() {
     const [categories, setCategories] = useState<Category[]>([...CATEGORY_OPTIONS]);
     const [autoRefresh, setAutoRefresh] = useState(false);
     const [dashSearch, setDashSearch] = useState('');
+    const [categoryOpen, setCategoryOpen] = useState(false);
+    const categoryRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+                setCategoryOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
 
     const { data, isLoading } = useQuery({
         queryKey: ['dashboard', timeRange, statusFilter],
@@ -545,27 +557,31 @@ export default function DashboardPage() {
                             />
                         </div>
                         <div className="min-w-[130px]">
-                            <select className="input" value={timeRange} onChange={(e) => setTimeRange(e.target.value as TimeRange)}>
+                            <select className="input" value={timeRange} onChange={(e) => setTimeRange(e.target.value as TimeRange)} onMouseDown={() => setCategoryOpen(false)}>
                                 {TIME_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                             </select>
                         </div>
-                        <div className="min-w-[140px]">
-                            <details className="relative">
-                                <summary className="input list-none cursor-pointer flex items-center justify-between">
-                                    <span className="text-sm" style={{ color: 'var(--color-text)' }}>
-                                        {categories.length === CATEGORY_OPTIONS.length ? 'All categories' : categories.length === 0 ? 'None' : `${categories.length} selected`}
-                                    </span>
-                                    <ChevronDown className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
-                                </summary>
+                        <div className="min-w-[140px] relative" ref={categoryRef}>
+                            <button
+                                type="button"
+                                className="input w-full flex items-center justify-between"
+                                onClick={() => setCategoryOpen(o => !o)}
+                            >
+                                <span className="text-sm" style={{ color: 'var(--color-text)' }}>
+                                    {categories.length === CATEGORY_OPTIONS.length ? 'All categories' : categories.length === 0 ? 'None' : `${categories.length} selected`}
+                                </span>
+                                <ChevronDown className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                            </button>
+                            {categoryOpen && (
                                 <div className="absolute z-20 mt-2 w-56 card p-2 max-h-80 overflow-auto" style={{ border: '1px solid var(--color-border)' }}>
                                     {CATEGORY_GROUPS.map(group => (
                                         <div key={group.label}>
                                             <div className="flex items-center justify-between px-2 pt-2 pb-1">
                                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{group.label}</p>
                                                 <div className="flex items-center gap-1 text-[10px] text-gray-400">
-                                                    <button type="button" onClick={(e) => { e.preventDefault(); checkAllGroup(group.items); }} className="hover:text-blue-500 transition-colors">All</button>
+                                                    <button type="button" onClick={() => checkAllGroup(group.items)} className="hover:text-blue-500 transition-colors">All</button>
                                                     <span>·</span>
-                                                    <button type="button" onClick={(e) => { e.preventDefault(); uncheckAllGroup(group.items); }} className="hover:text-red-500 transition-colors">None</button>
+                                                    <button type="button" onClick={() => uncheckAllGroup(group.items)} className="hover:text-red-500 transition-colors">None</button>
                                                 </div>
                                             </div>
                                             {group.items.map(c => (
@@ -577,7 +593,7 @@ export default function DashboardPage() {
                                         </div>
                                     ))}
                                 </div>
-                            </details>
+                            )}
                         </div>
                         <label className="flex items-center gap-2 text-sm cursor-pointer whitespace-nowrap shrink-0" style={{ color: 'var(--color-text)' }}>
                             <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />

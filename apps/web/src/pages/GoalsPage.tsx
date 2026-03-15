@@ -547,6 +547,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             qc.invalidateQueries({ queryKey: ['tasks'] });
             qc.invalidateQueries({ queryKey: ['dashboard'] });
             setEditTask(null);
+            setShowTaskModal(false);
         },
     });
 
