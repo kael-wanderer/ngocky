@@ -1,8 +1,27 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Bell, BellRing, Copy, FileText, Info, LayoutGrid, List, Mail, Pencil, Plus, Send, Trash2, X } from 'lucide-react';
+import { Bell, BellRing, ChevronDown, ChevronUp, Copy, FileText, Info, LayoutGrid, List, Mail, Pencil, Plus, Send, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { FEATURE_GROUPS } from '../config/features';
+
+type SortDir = 'asc' | 'desc';
+function SortHeader({ label, col, sort, onSort, className }: { label: string; col: string; sort: { col: string; dir: SortDir }; onSort: (col: string) => void; className?: string }) {
+    const active = sort.col === col;
+    return (
+        <button className={`flex items-center gap-0.5 hover:opacity-80 transition-opacity ${className ?? ''}`} onClick={() => onSort(col)}>
+            {label}
+            {active ? (sort.dir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />) : <ChevronDown className="w-3 h-3 opacity-30" />}
+        </button>
+    );
+}
+function applySortStr(items: any[], sort: { col: string; dir: SortDir }, getter: (item: any, col: string) => string) {
+    return [...items].sort((a, b) => {
+        const av = getter(a, sort.col).toLowerCase();
+        const bv = getter(b, sort.col).toLowerCase();
+        return sort.dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+}
 
 const CONDITIONS_BY_MODULE: Record<string, { value: string; label: string; hasThreshold?: boolean }[]> = {
     GOAL: [
@@ -40,39 +59,21 @@ const emptyRuleForm = () => ({
     active: true,
 });
 
-const SECTIONS_BY_TYPE: Record<string, { key: string; label: string }[]> = {
-    WEEKLY_SUMMARY: [
-        { key: 'GOALS', label: 'Goals' },
-        { key: 'PROJECT', label: 'Project' },
-        { key: 'TASKS', label: 'Task' },
-        { key: 'HOUSEWORK', label: 'Housework' },
-        { key: 'CALENDAR', label: 'Calendar Events' },
-        { key: 'EXPENSES', label: 'Expenses' },
-        { key: 'ASSETS', label: 'Assets' },
-        { key: 'LEARNING', label: 'Learning' },
-        { key: 'IDEAS', label: 'Ideas' },
-    ],
-    NEXT_WEEK_TASKS: [
-        { key: 'GOALS', label: 'Goals' },
-        { key: 'PROJECT', label: 'Project' },
-        { key: 'TASKS', label: 'Task' },
-        { key: 'HOUSEWORK', label: 'Housework' },
-        { key: 'CALENDAR', label: 'Calendar Events' },
-    ],
-    TODAY_TASKS: [
-        { key: 'GOALS', label: 'Goals' },
-        { key: 'PROJECT', label: 'Project' },
-        { key: 'TASKS', label: 'Task' },
-        { key: 'HOUSEWORK', label: 'Housework' },
-        { key: 'CALENDAR', label: 'Calendar Events' },
-    ],
-    TOMORROW_TASKS: [
-        { key: 'GOALS', label: 'Goals' },
-        { key: 'PROJECT', label: 'Project' },
-        { key: 'TASKS', label: 'Task' },
-        { key: 'HOUSEWORK', label: 'Housework' },
-        { key: 'CALENDAR', label: 'Calendar Events' },
-    ],
+// Section key for each feature flag key
+const FEATURE_KEY_TO_SECTION: Record<string, string> = {
+    featureTasks: 'TASKS',
+    featureProjects: 'PROJECT',
+    featureExpenses: 'EXPENSES',
+    featureGoals: 'GOALS',
+    featureIdeas: 'IDEAS',
+    featureCalendar: 'CALENDAR',
+    featureCaKeo: 'CAKEO',
+    featureHousework: 'HOUSEWORK',
+    featureAssets: 'ASSETS',
+    featureHealthbook: 'HEALTHBOOK',
+    featureKeyboard: 'KEYBOARD',
+    featureFunds: 'FUNDS',
+    featureLearning: 'LEARNING',
 };
 
 const REPORT_TYPE_LABELS: Record<string, string> = {
@@ -83,11 +84,8 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
     TOMORROW_TASKS: 'Tomorrow Tasks',
 };
 
-function getDefaultSections(reportType: string) {
-    if (reportType === 'WEEKLY_SUMMARY') {
-        return ['GOALS', 'PROJECT', 'TASKS', 'HOUSEWORK', 'CALENDAR', 'EXPENSES'];
-    }
-    return (SECTIONS_BY_TYPE[reportType] || []).map(({ key }) => key);
+function getDefaultSections(_reportType?: string) {
+    return ['TASKS', 'CALENDAR', 'CAKEO', 'HOUSEWORK'];
 }
 
 function getDefaultFrequency(reportType: string) {
@@ -127,6 +125,15 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
     const showTabSwitcher = !forcedTab;
     const [rulesListView, setRulesListView] = useState(false);
     const [reportsListView, setReportsListView] = useState(false);
+    const [rulesSort, setRulesSort] = useState<{ col: string; dir: SortDir }>({ col: 'name', dir: 'asc' });
+    const [reportsSort, setReportsSort] = useState<{ col: string; dir: SortDir }>({ col: 'name', dir: 'asc' });
+
+    function toggleRulesSort(col: string) {
+        setRulesSort(s => s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' });
+    }
+    function toggleReportsSort(col: string) {
+        setReportsSort(s => s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' });
+    }
 
     React.useEffect(() => {
         if (forcedTab && activeTab !== forcedTab) {
@@ -338,25 +345,35 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[...Array(3)].map((_, i) => <div key={i} className="card h-40 animate-pulse bg-gray-50" />)}</div>
                     ) : rulesListView ? (
                         <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
-                            {(rules || []).map((rule: any) => (
-                                <div key={rule.id} className={`flex items-center gap-3 px-4 py-3 group hover:bg-gray-50 transition-colors ${!rule.active ? 'opacity-60' : ''}`} onDoubleClick={() => openEditRule(rule)}>
+                            <div className="flex items-center gap-3 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
+                                <span className="w-3.5 shrink-0" />
+                                <SortHeader label="Name" col="name" sort={rulesSort} onSort={toggleRulesSort} className="flex-1" />
+                                <SortHeader label="Module" col="module" sort={rulesSort} onSort={toggleRulesSort} className="w-20 shrink-0" />
+                                <SortHeader label="Status" col="status" sort={rulesSort} onSort={toggleRulesSort} className="w-16 shrink-0" />
+                                <span className="w-36 shrink-0">Schedule</span>
+                                <span className="w-20 shrink-0">Actions</span>
+                            </div>
+                            {applySortStr(rules || [], rulesSort, (r, col) => col === 'name' ? r.name : col === 'module' ? r.moduleType : col === 'status' ? String(r.active) : '').map((rule: any) => (
+                                <div key={rule.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${!rule.active ? 'opacity-60' : ''}`} onDoubleClick={() => openEditRule(rule)}>
                                     <Bell className="w-3.5 h-3.5 shrink-0" style={{ color: rule.active ? 'var(--color-primary)' : undefined }} />
                                     <span className="font-medium text-sm flex-1 line-clamp-1" style={{ color: 'var(--color-text)' }}>{rule.name}</span>
-                                    <span className="text-[10px] font-medium uppercase shrink-0" style={{ color: 'var(--color-primary)' }}>{rule.moduleType}</span>
-                                    <button className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 transition-colors ${rule.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`} onClick={() => toggleRuleMut.mutate({ id: rule.id, active: !rule.active })}>
-                                        {rule.active ? 'ENABLED' : 'DISABLED'}
-                                    </button>
-                                    <span className="text-[11px] shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
+                                    <span className="text-[10px] font-medium uppercase w-20 shrink-0" style={{ color: 'var(--color-primary)' }}>{rule.moduleType}</span>
+                                    <div className="w-16 shrink-0">
+                                        <button className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${rule.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`} onClick={() => toggleRuleMut.mutate({ id: rule.id, active: !rule.active })}>
+                                            {rule.active ? 'ON' : 'OFF'}
+                                        </button>
+                                    </div>
+                                    <span className="text-[11px] w-36 shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
                                         {rule.frequency === 'WEEKLY'
                                             ? `Every ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][rule.dayOfWeek ?? 1]} at ${rule.time || '08:00'}`
                                             : rule.frequency === 'MONTHLY'
                                             ? `Monthly day ${rule.dayOfMonth ?? 1} at ${rule.time || '08:00'}`
                                             : `Daily at ${rule.time || '08:00'}`}
                                     </span>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                        <button className="p-1 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditRule(rule)}><Pencil className="w-3.5 h-3.5" /></button>
-                                        <button className="p-1 hover:bg-gray-100 rounded text-gray-400" onClick={() => duplicateRule(rule)}><Copy className="w-3.5 h-3.5" /></button>
-                                        <button className="p-1 hover:bg-red-50 hover:text-red-500 rounded text-gray-400" onClick={() => { if (confirm('Delete rule?')) deleteRuleMut.mutate(rule.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                    <div className="flex items-center gap-1 w-20 shrink-0">
+                                        <button className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={() => openEditRule(rule)}><Pencil className="w-3.5 h-3.5" /></button>
+                                        <button className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate" onClick={() => duplicateRule(rule)}><Copy className="w-3.5 h-3.5" /></button>
+                                        <button className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete" onClick={() => { if (confirm('Delete rule?')) deleteRuleMut.mutate(rule.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                     </div>
                                 </div>
                             ))}
@@ -426,12 +443,25 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                         <div className="space-y-3">{[...Array(2)].map((_, i) => <div key={i} className="card h-24 animate-pulse bg-gray-50" />)}</div>
                     ) : reportsListView ? (
                         <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
-                            {(reports || []).map((report: any) => (
-                                <div key={report.id} className={`flex items-center gap-3 px-4 py-3 group hover:bg-gray-50 transition-colors ${!report.active ? 'opacity-60' : ''}`} onDoubleClick={() => openEditReport(report)}>
+                            <div className="flex items-center gap-3 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
+                                <span className="w-3.5 shrink-0" />
+                                <SortHeader label="Name" col="name" sort={reportsSort} onSort={toggleReportsSort} className="flex-1" />
+                                <SortHeader label="Type" col="type" sort={reportsSort} onSort={toggleReportsSort} className="w-28 shrink-0" />
+                                <SortHeader label="Status" col="status" sort={reportsSort} onSort={toggleReportsSort} className="w-16 shrink-0" />
+                                <span className="w-40 shrink-0">Schedule</span>
+                                <span className="w-20 shrink-0">Actions</span>
+                            </div>
+                            {applySortStr(reports || [], reportsSort, (r, col) => col === 'name' ? r.name : col === 'type' ? (REPORT_TYPE_LABELS[r.reportType] || r.reportType) : col === 'status' ? String(r.active) : '').map((report: any) => (
+                                <div key={report.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${!report.active ? 'opacity-60' : ''}`} onDoubleClick={() => openEditReport(report)}>
                                     <FileText className={`w-3.5 h-3.5 shrink-0 ${!report.active ? 'text-gray-400' : 'text-purple-600'}`} />
                                     <span className="font-medium text-sm flex-1 line-clamp-1" style={{ color: 'var(--color-text)' }}>{report.name}</span>
-                                    <span className="text-[10px] font-medium uppercase shrink-0" style={{ color: 'var(--color-primary)' }}>{REPORT_TYPE_LABELS[report.reportType] || report.reportType}</span>
-                                    <span className="text-[11px] shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
+                                    <span className="text-[10px] font-medium uppercase w-28 shrink-0" style={{ color: 'var(--color-primary)' }}>{REPORT_TYPE_LABELS[report.reportType] || report.reportType}</span>
+                                    <div className="w-16 shrink-0">
+                                        <button className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${report.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`} onClick={() => toggleReportMut.mutate({ id: report.id, active: !report.active })}>
+                                            {report.active ? 'ON' : 'OFF'}
+                                        </button>
+                                    </div>
+                                    <span className="text-[11px] w-40 shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
                                         {normalizeReportFrequency(report.frequency) === 'ONE_TIME'
                                             ? `One time at ${report.time}`
                                             : normalizeReportFrequency(report.frequency) === 'WEEKLY'
@@ -441,18 +471,15 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                             : normalizeReportFrequency(report.frequency) === 'QUARTERLY'
                                             ? `Quarterly on day ${report.dayOfMonth ?? 1} at ${report.time}`
                                             : normalizeReportFrequency(report.frequency) === 'WEEKDAY'
-                                            ? `Weekdays (Mon–Fri) at ${report.time}`
+                                            ? `Weekday at ${report.time}`
                                             : normalizeReportFrequency(report.frequency) === 'WEEKEND'
-                                            ? `Weekends (Sat–Sun) at ${report.time}`
+                                            ? `Weekend at ${report.time}`
                                             : `Daily at ${report.time}`}
                                     </span>
-                                    <button className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 transition-colors ${report.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`} onClick={() => toggleReportMut.mutate({ id: report.id, active: !report.active })}>
-                                        {report.active ? 'ENABLED' : 'DISABLED'}
-                                    </button>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                        <button className="p-1 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditReport(report)}><Pencil className="w-3.5 h-3.5" /></button>
-                                        <button className="p-1 hover:bg-gray-100 rounded text-gray-400" onClick={() => duplicateReport(report)}><Copy className="w-3.5 h-3.5" /></button>
-                                        <button className="p-1 hover:bg-red-50 hover:text-red-500 rounded text-gray-400" onClick={() => { if (confirm('Delete schedule?')) deleteReportMut.mutate(report.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                    <div className="flex items-center gap-1 w-20 shrink-0">
+                                        <button className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={() => openEditReport(report)}><Pencil className="w-3.5 h-3.5" /></button>
+                                        <button className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate" onClick={() => duplicateReport(report)}><Copy className="w-3.5 h-3.5" /></button>
+                                        <button className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete" onClick={() => { if (confirm('Delete schedule?')) deleteReportMut.mutate(report.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                     </div>
                                 </div>
                             ))}
@@ -499,9 +526,9 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                                     : normalizeReportFrequency(report.frequency) === 'QUARTERLY'
                                                     ? `Quarterly on day ${report.dayOfMonth ?? 1} at ${report.time}`
                                                     : normalizeReportFrequency(report.frequency) === 'WEEKDAY'
-                                                    ? `Weekdays (Mon–Fri) at ${report.time}`
+                                                    ? `Weekday at ${report.time}`
                                                     : normalizeReportFrequency(report.frequency) === 'WEEKEND'
-                                                    ? `Weekends (Sat–Sun) at ${report.time}`
+                                                    ? `Weekend at ${report.time}`
                                                     : `Daily at ${report.time}`}
                                             </p>
                                         </div>
@@ -731,8 +758,8 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                             <>
                                                 <option value="ONE_TIME">One Time</option>
                                                 <option value="DAILY">Daily</option>
-                                                <option value="WEEKDAY">Weekday (Mon–Fri)</option>
-                                                <option value="WEEKEND">Weekend (Sat–Sun)</option>
+                                                <option value="WEEKDAY">Weekday</option>
+                                                <option value="WEEKEND">Weekend</option>
                                             </>
                                         ) : (
                                             <>
@@ -775,27 +802,42 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 )}
                                 <div className="col-span-2">
                                     <label className="label">Include Sections <span className="text-xs font-normal" style={{ color: 'var(--color-text-secondary)' }}>(checked items are included)</span></label>
-                                    <div className="grid grid-cols-2 gap-2 mt-1">
-                                        {(SECTIONS_BY_TYPE[reportForm.reportType] || []).map(({ key, label }) => {
-                                            const checked = reportForm.sections.includes(key);
+                                    <div className="space-y-3 mt-1">
+                                        {FEATURE_GROUPS.map((group) => {
+                                            const enabledItems = group.items.filter((item) => {
+                                                const flag = item.key as string;
+                                                return profile?.[flag] !== false;
+                                            });
+                                            if (enabledItems.length === 0) return null;
                                             return (
-                                                <label key={key} className="flex items-center gap-2 text-xs cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={checked}
-                                                        onChange={(e) => {
-                                                            let current = [...reportForm.sections];
-                                                            if (e.target.checked) {
-                                                                current = [...new Set([...current, key])];
-                                                            } else {
-                                                                current = current.filter(k => k !== key);
-                                                            }
-                                                            setReportForm({ ...reportForm, sections: current });
-                                                        }}
-                                                        className="rounded"
-                                                    />
-                                                    <span style={{ color: 'var(--color-text)' }}>{label}</span>
-                                                </label>
+                                                <div key={group.id}>
+                                                    <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>{group.label}</p>
+                                                    <div className="grid grid-cols-2 gap-1.5">
+                                                        {enabledItems.map((item) => {
+                                                            const key = FEATURE_KEY_TO_SECTION[item.key] ?? item.key.toUpperCase();
+                                                            const checked = reportForm.sections.includes(key);
+                                                            return (
+                                                                <label key={key} className="flex items-center gap-2 text-xs cursor-pointer">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={checked}
+                                                                        onChange={(e) => {
+                                                                            let current = [...reportForm.sections];
+                                                                            if (e.target.checked) {
+                                                                                current = [...new Set([...current, key])];
+                                                                            } else {
+                                                                                current = current.filter(k => k !== key);
+                                                                            }
+                                                                            setReportForm({ ...reportForm, sections: current });
+                                                                        }}
+                                                                        className="rounded"
+                                                                    />
+                                                                    <span style={{ color: 'var(--color-text)' }}>{item.label}</span>
+                                                                </label>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
                                             );
                                         })}
                                     </div>

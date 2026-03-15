@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, Coins, Filter, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Coins, Copy, Filter, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../api/client';
 import PaginationControls from '../components/PaginationControls';
@@ -27,8 +27,8 @@ const columns = [
     { key: 'scope', label: 'Scope' },
     { key: 'category', label: 'Category' },
     { key: 'condition', label: 'Condition' },
-    { key: 'description', label: 'Description' },
     { key: 'amount', label: 'Amount' },
+    { key: 'description', label: 'Description' },
 ] as const;
 
 type SortKey = typeof columns[number]['key'];
@@ -130,6 +130,7 @@ export default function FundsPage() {
     const [showImport, setShowImport] = useState(false);
     const [editingFund, setEditingFund] = useState<any>(null);
     const [filters, setFilters] = useState({ ...DEFAULT_FUNDS_FILTERS });
+    const [search, setSearch] = useState('');
     const [form, setForm] = useState(emptyForm());
     const [sortBy, setSortBy] = useState<SortKey>('date');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
@@ -229,6 +230,17 @@ export default function FundsPage() {
         });
     }, [funds, sortBy, sortOrder]);
 
+    const displayedFunds = useMemo(() => {
+        if (!search.trim()) return sortedFunds;
+        const q = search.trim().toLowerCase();
+        return sortedFunds.filter((f: any) =>
+            (f.description || '').toLowerCase().includes(q) ||
+            (f.type || '').toLowerCase().includes(q) ||
+            (f.scope || '').toLowerCase().includes(q) ||
+            (f.category || '').toLowerCase().includes(q)
+        );
+    }, [sortedFunds, search]);
+
     const summary = useMemo(() => {
         const buy = funds.filter((item: any) => item.type === 'BUY').reduce((sum: number, item: any) => sum + item.amount, 0);
         const sell = funds.filter((item: any) => item.type === 'SELL').reduce((sum: number, item: any) => sum + item.amount, 0);
@@ -315,6 +327,18 @@ export default function FundsPage() {
         if (window.confirm('Delete this fund transaction?')) deleteMut.mutate(id);
     }
 
+    function duplicateFund(fund: any) {
+        createMut.mutate({
+            type: fund.type,
+            scope: fund.scope,
+            category: fund.category,
+            condition: fund.condition || null,
+            description: fund.description ? `${fund.description} (Copy)` : null,
+            amount: fund.amount,
+            date: fund.date,
+        });
+    }
+
     return (
         <div className="space-y-6 pb-20 lg:pb-0">
             <div className="flex items-center justify-between flex-wrap gap-3">
@@ -337,7 +361,8 @@ export default function FundsPage() {
                     <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
                     <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-8 gap-3">
+                    <input type="text" className="input text-sm" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
                     <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>
                         <option value="">All Types</option>
                         {typeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -522,7 +547,7 @@ export default function FundsPage() {
                             <div className="text-2xl font-bold" style={{ color: '#2563eb' }}>{formatAmount(summary.topUp)}</div>
                         </div>
                         <div className="card p-4">
-                            <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Net ({funds.length} items)</div>
+                            <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Remain Budget ({funds.length} items)</div>
                             <div className="text-2xl font-bold" style={{ color: summary.net < 0 ? 'var(--color-danger)' : 'var(--color-success)' }}>{formatAmount(summary.net)}</div>
                         </div>
                     </div>
@@ -540,10 +565,11 @@ export default function FundsPage() {
                                                 </button>
                                             </th>
                                         ))}
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {sortedFunds.map((fund: any, index: number) => {
+                                    {displayedFunds.map((fund: any, index: number) => {
                                         const tone = fund.type === 'BUY' ? 'var(--color-danger)' : fund.type === 'SELL' ? 'var(--color-success)' : '#2563eb';
                                         return (
                                             <tr
@@ -560,18 +586,23 @@ export default function FundsPage() {
                                                 <td><span className="badge badge-warning">{scopeOptions.find((option) => option.value === fund.scope)?.label || fund.scope}</span></td>
                                                 <td><span className="badge-success">{categoryOptions.find((option) => option.value === fund.category)?.label || fund.category}</span></td>
                                                 <td><span className="badge badge-secondary">{conditionOptions.find((option) => option.value === fund.condition)?.label || fund.condition || '—'}</span></td>
+                                                <td className="text-right font-semibold" style={{ color: tone }}>{formatAmount(fund.amount)}</td>
                                                 <td>
                                                     <div className="font-medium" style={{ color: 'var(--color-text)' }}>{fund.description}</div>
-                                                    <div className="flex items-center gap-2 mt-2">
-                                                        <button type="button" className="inline-flex items-center gap-1 text-sm hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={(e) => { e.stopPropagation(); openEdit(fund); }}>
-                                                            <Pencil className="w-3.5 h-3.5" /> Edit
+                                                </td>
+                                                <td>
+                                                    <div className="flex items-center gap-1">
+                                                        <button type="button" className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={(e) => { e.stopPropagation(); openEdit(fund); }}>
+                                                            <Pencil className="w-3.5 h-3.5" />
                                                         </button>
-                                                        <button type="button" className="inline-flex items-center gap-1 text-sm hover:opacity-80" style={{ color: 'var(--color-danger)' }} onClick={(e) => { e.stopPropagation(); handleDelete(fund.id); }}>
-                                                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                                                        <button type="button" className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate" onClick={(e) => { e.stopPropagation(); duplicateFund(fund); }}>
+                                                            <Copy className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button type="button" className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete" onClick={(e) => { e.stopPropagation(); handleDelete(fund.id); }}>
+                                                            <Trash2 className="w-3.5 h-3.5" />
                                                         </button>
                                                     </div>
                                                 </td>
-                                                <td className="text-right font-semibold" style={{ color: tone }}>{formatAmount(fund.amount)}</td>
                                             </tr>
                                         );
                                     })}

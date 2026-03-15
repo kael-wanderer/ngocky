@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Calendar, Copy, LayoutGrid, Lightbulb, List, Pencil, Pin, Plus, Tag, Trash2, X } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Copy, LayoutGrid, Lightbulb, List, Pencil, Pin, Plus, Tag, Trash2, X } from 'lucide-react';
+
+type SortDir = 'asc' | 'desc';
+function SortHeader({ label, col, sort, onSort, className }: { label: string; col: string; sort: { col: string; dir: SortDir }; onSort: (col: string) => void; className?: string }) {
+    const active = sort.col === col;
+    return (
+        <button className={`flex items-center gap-0.5 hover:opacity-80 transition-opacity ${className ?? ''}`} onClick={() => onSort(col)}>
+            {label}
+            {active ? (sort.dir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />) : <ChevronDown className="w-3 h-3 opacity-30" />}
+        </button>
+    );
+}
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
 
@@ -21,6 +32,10 @@ export default function IdeasPage() {
     const [logForm, setLogForm] = useState(emptyLogForm());
     const [tagInput, setTagInput] = useState('');
     const [logListView, setLogListView] = useState<'grid' | 'list'>('grid');
+    const [logsSort, setLogsSort] = useState<{ col: string; dir: SortDir }>({ col: 'title', dir: 'asc' });
+    function toggleLogsSort(col: string) {
+        setLogsSort(s => s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' });
+    }
 
     const { data: topics, isLoading } = useQuery({
         queryKey: ['idea_topics'],
@@ -265,33 +280,47 @@ export default function IdeasPage() {
 
                             {logListView === 'list' ? (
                                 <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
-                                    {logs.map((log: any) => {
+                                    <div className="flex items-center gap-3 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
+                                        <SortHeader label="Title" col="title" sort={logsSort} onSort={toggleLogsSort} className="flex-1" />
+                                        <span className="w-32 shrink-0">Category / Field</span>
+                                        <SortHeader label="Status" col="status" sort={logsSort} onSort={toggleLogsSort} className="w-16 shrink-0" />
+                                        <SortHeader label="Date" col="date" sort={logsSort} onSort={toggleLogsSort} className="w-20 shrink-0" />
+                                        <span className="w-20 shrink-0">Actions</span>
+                                    </div>
+                                    {[...logs].sort((a: any, b: any) => {
+                                        const { col, dir } = logsSort;
+                                        let av = '', bv = '';
+                                        if (col === 'title') { av = a.title; bv = b.title; }
+                                        else if (col === 'status') { av = a.status; bv = b.status; }
+                                        else if (col === 'date') { av = a.createdAt; bv = b.createdAt; }
+                                        return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+                                    }).map((log: any) => {
                                         const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
                                         const canManage = !sharedOwnerName;
                                         return (
-                                            <div key={log.id} className={`flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors group ${canManage ? 'cursor-pointer' : ''}`} onClick={() => canManage && openEditLog(log)}>
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{log.title}</span>
-                                                        {log.category && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-purple-50 text-purple-600">{log.category}</span>}
-                                                        {log.field && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">{log.field}</span>}
-                                                        {log.pinToDashboard && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
+                                            <div key={log.id} className={`flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors ${canManage ? 'cursor-pointer' : ''}`} onClick={() => canManage && openEditLog(log)}>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{log.title}</span>
+                                                        {log.pinToDashboard && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 shrink-0">Pinned</span>}
                                                     </div>
-                                                    <div className="flex items-center gap-2 mt-0.5">
-                                                        <span className="text-[9px] font-bold text-emerald-600 uppercase">{log.status}</span>
-                                                        <span className="text-[9px]" style={{ color: 'var(--color-text-secondary)' }}>{new Date(log.createdAt).toLocaleDateString()}</span>
-                                                        {(log.tags || []).length > 0 && (
-                                                            <span className="text-[9px] flex items-center gap-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                                                <Tag className="w-2 h-2" /> {log.tags.join(', ')}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                    {(log.tags || []).length > 0 && (
+                                                        <span className="text-[9px] flex items-center gap-1 mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+                                                            <Tag className="w-2 h-2" /> {log.tags.join(', ')}
+                                                        </span>
+                                                    )}
                                                 </div>
+                                                <div className="flex items-center gap-1 w-32 shrink-0 flex-wrap">
+                                                    {log.category && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-purple-50 text-purple-600">{log.category}</span>}
+                                                    {log.field && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">{log.field}</span>}
+                                                </div>
+                                                <span className="text-[9px] font-bold text-emerald-600 uppercase w-16 shrink-0">{log.status}</span>
+                                                <span className="text-[9px] w-20 shrink-0" style={{ color: 'var(--color-text-secondary)' }}>{new Date(log.createdAt).toLocaleDateString()}</span>
                                                 {canManage && (
-                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                                        <button className={`p-1 ${log.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} onClick={(e) => { e.stopPropagation(); togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard }); }}><Pin className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1 hover:text-indigo-500" onClick={(e) => { e.stopPropagation(); openEditLog(log); }}><Pencil className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1 hover:text-red-500" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    <div className="flex items-center gap-1 w-20 shrink-0">
+                                                        <button className={`p-1 rounded transition-colors ${log.pinToDashboard ? 'text-amber-500 bg-amber-50' : 'text-gray-400 hover:bg-amber-50 hover:text-amber-500'}`} title="Pin" onClick={(e) => { e.stopPropagation(); togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard }); }}><Pin className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={(e) => { e.stopPropagation(); openEditLog(log); }}><Pencil className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                                     </div>
                                                 )}
                                             </div>

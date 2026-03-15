@@ -35,6 +35,8 @@ const applyTheme = (theme?: string) => {
     else if (theme === 'AMBER_LEDGER') document.documentElement.classList.add('theme-amber-ledger');
     else if (theme === 'OCEAN_INK') document.documentElement.classList.add('theme-ocean-ink');
     else if (theme === 'MIDNIGHT_PLUM') document.documentElement.classList.add('theme-midnight-plum');
+    else if (theme === 'SAKURA') document.documentElement.classList.add('theme-sakura');
+    else if (theme === 'FOREST_NIGHT') document.documentElement.classList.add('theme-forest-night');
 };
 
 export const useAuthStore = create<AuthState>((set) => ({

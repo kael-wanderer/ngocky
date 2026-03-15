@@ -318,6 +318,8 @@ export default function SettingsPage() {
         { id: 'AMBER_LEDGER', name: 'Amber Ledger', colors: ['#c17c2f', '#eadfcd', '#fbf6ec'] },
         { id: 'OCEAN_INK', name: 'Ocean Ink', colors: ['#2ea7a0', '#294055', '#0f1722'] },
         { id: 'MIDNIGHT_PLUM', name: 'Midnight Plum', colors: ['#140d1f', '#c084fc', '#1d1530'] },
+        { id: 'SAKURA', name: 'Sakura', colors: ['#fff8f9', '#e8457a', '#fde8ef'] },
+        { id: 'FOREST_NIGHT', name: 'Forest Night', colors: ['#0d1f17', '#4ade80', '#132a1e'] },
     ];
 
     const cakeoUsedColors = useMemo(

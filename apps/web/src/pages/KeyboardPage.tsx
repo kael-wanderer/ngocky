@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { ArrowDown, ArrowUp, Filter, Keyboard, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Filter, Keyboard, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
 import PaginationControls from '../components/PaginationControls';
 import { parseCompactAmountInput } from '../utils/amount';
 import MultiSelectFilter from '../components/MultiSelectFilter';
@@ -262,6 +262,9 @@ export default function KeyboardPage() {
     function openNew() { setEditing(null); setForm(emptyForm()); setShowModal(true); }
     function openEdit(item: KeyboardItem) { setEditing(item); setForm(formFromItem(item)); setShowModal(true); }
     function closeModal() { setShowModal(false); setEditing(null); }
+    function duplicateItem(item: KeyboardItem) {
+        createMut.mutate({ ...formToBody(formFromItem(item)), name: `${item.name} (Copy)` });
+    }
     function submitForm() {
         if (!form.name) return;
         if (form.price && Number.isNaN(parseAmountInput(form.price))) {
@@ -499,7 +502,7 @@ export default function KeyboardPage() {
                                         {renderSortIcon('note')}
                                     </button>
                                 </th>
-                                <th className="w-16" />
+                                <th className="px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-16">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -531,19 +534,22 @@ export default function KeyboardPage() {
                                     </td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.description ?? ''}>{item.description || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td
-                                        className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300"
+                                        className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300 whitespace-nowrap"
                                         style={item.price != null ? { color: getKeyboardPriceColor(item.category, item.price) } : undefined}
                                     >
                                         {item.price != null ? formatVND(item.price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
                                     </td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.note ?? ''}>{item.note || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                                     <td className="px-3 py-2">
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
-                                            <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
-                                                <Pencil className="w-3.5 h-3.5 text-gray-400" />
+                                        <div className="flex items-center gap-1">
+                                            <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit">
+                                                <Pencil className="w-3.5 h-3.5" />
                                             </button>
-                                            <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this keyboard?')) deleteMut.mutate(item.id); }} className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20">
-                                                <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
+                                            <button onClick={(e) => { e.stopPropagation(); duplicateItem(item); }} className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate">
+                                                <Copy className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this keyboard?')) deleteMut.mutate(item.id); }} className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete">
+                                                <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
                                     </td>

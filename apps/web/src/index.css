@@ -131,6 +131,34 @@
     --color-danger: #f87171;
   }
 
+  /* Light: warm peach/rose */
+  .theme-sakura {
+    --color-bg: #fff8f9;
+    --color-surface: #ffffff;
+    --color-text: #3d1a24;
+    --color-text-secondary: #9d5c6e;
+    --color-border: #f9cdd7;
+    --color-primary: #e8457a;
+    --color-primary-light: #fde8ef;
+    --color-success: #16a34a;
+    --color-warning: #d97706;
+    --color-danger: #dc2626;
+  }
+
+  /* Dark: deep forest green */
+  .theme-forest-night {
+    --color-bg: #0d1f17;
+    --color-surface: #132a1e;
+    --color-text: #d4edda;
+    --color-text-secondary: #7eb89a;
+    --color-border: #1e4030;
+    --color-primary: #4ade80;
+    --color-primary-light: #0f2d1c;
+    --color-success: #34d399;
+    --color-warning: #f59e0b;
+    --color-danger: #f87171;
+  }
+
   body {
     background-color: var(--color-bg);
     color: var(--color-text);

@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { BookOpen, CheckCircle2, Clock, Copy, GraduationCap, LayoutGrid, List, Pencil, Pin, Plus, Trash2, X } from 'lucide-react';
+import { BookOpen, CheckCircle2, ChevronDown, ChevronUp, Clock, Copy, GraduationCap, LayoutGrid, List, Pencil, Pin, Plus, Trash2, X } from 'lucide-react';
+
+type SortDir = 'asc' | 'desc';
+function SortHeader({ label, col, sort, onSort, className }: { label: string; col: string; sort: { col: string; dir: SortDir }; onSort: (col: string) => void; className?: string }) {
+    const active = sort.col === col;
+    return (
+        <button className={`flex items-center gap-0.5 hover:opacity-80 transition-opacity ${className ?? ''}`} onClick={() => onSort(col)}>
+            {label}
+            {active ? (sort.dir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />) : <ChevronDown className="w-3 h-3 opacity-30" />}
+        </button>
+    );
+}
 import { format } from 'date-fns';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useAuthStore } from '../stores/auth';
@@ -45,6 +56,10 @@ export default function LearningPage() {
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [editingHistory, setEditingHistory] = useState<any>(null);
     const [listView, setListView] = useState(false);
+    const [historiesSort, setHistoriesSort] = useState<{ col: string; dir: SortDir }>({ col: 'title', dir: 'asc' });
+    function toggleHistoriesSort(col: string) {
+        setHistoriesSort(s => s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' });
+    }
     const [topicForm, setTopicForm] = useState(emptyTopicForm());
     const [historyForm, setHistoryForm] = useState(emptyHistoryForm());
 
@@ -300,24 +315,39 @@ export default function LearningPage() {
                                     <div className="text-center py-10 opacity-40"><p className="text-xs">No histories recorded for this topic.</p></div>
                                 ) : listView ? (
                                     <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
-                                        {histories.map((history: any) => {
+                                        <div className="flex items-center gap-3 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
+                                            <SortHeader label="Status" col="status" sort={historiesSort} onSort={toggleHistoriesSort} className="w-20 shrink-0" />
+                                            <SortHeader label="Title" col="title" sort={historiesSort} onSort={toggleHistoriesSort} className="flex-1" />
+                                            <SortHeader label="Deadline" col="deadline" sort={historiesSort} onSort={toggleHistoriesSort} className="w-28 shrink-0" />
+                                            <SortHeader label="Progress" col="progress" sort={historiesSort} onSort={toggleHistoriesSort} className="w-12 shrink-0" />
+                                            <span className="w-24 shrink-0">Actions</span>
+                                        </div>
+                                        {[...histories].sort((a: any, b: any) => {
+                                            const { col, dir } = historiesSort;
+                                            let av = '', bv = '';
+                                            if (col === 'status') { av = a.status; bv = b.status; }
+                                            else if (col === 'title') { av = a.title; bv = b.title; }
+                                            else if (col === 'deadline') { av = a.deadline ?? ''; bv = b.deadline ?? ''; }
+                                            else if (col === 'progress') { return dir === 'asc' ? a.progress - b.progress : b.progress - a.progress; }
+                                            return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+                                        }).map((history: any) => {
                                             const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
                                             const canManage = !sharedOwnerName;
                                             return (
-                                            <div key={history.id} className="flex items-center gap-3 px-4 py-3 group hover:bg-gray-50 transition-colors" onDoubleClick={() => canManage && openEditHistory(history)}>
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${getStatusColor(history.status)}`}>{history.status.replace('_', ' ')}</span>
+                                            <div key={history.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors" onDoubleClick={() => canManage && openEditHistory(history)}>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-20 shrink-0 ${getStatusColor(history.status)}`}>{history.status.replace('_', ' ')}</span>
                                                 <span className="font-medium text-sm flex-1 line-clamp-1" style={{ color: 'var(--color-text)' }}>{history.title}</span>
-                                                <div className="flex items-center gap-1.5 text-[11px] shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
+                                                <div className="flex items-center gap-1.5 text-[11px] w-28 shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
                                                     <Clock className="w-3 h-3" />
                                                     {history.deadline ? new Date(history.deadline).toLocaleDateString() : 'No deadline'}
                                                 </div>
-                                                <span className="text-[11px] shrink-0 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{history.progress}%</span>
+                                                <span className="text-[11px] w-12 shrink-0 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{history.progress}%</span>
                                                 {canManage && (
-                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                                        <button className={`p-1 rounded ${history.pinToDashboard ? 'text-amber-500' : 'hover:bg-amber-50 hover:text-amber-500 text-gray-400'}`} onClick={() => togglePinHistoryMut.mutate({ id: history.id, pinToDashboard: !history.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1 hover:bg-gray-100 rounded text-gray-400" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditHistory(history)}><Pencil className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1 hover:bg-red-50 hover:text-red-500 rounded text-gray-400" onClick={() => { if (window.confirm('Delete this history?')) deleteHistoryMut.mutate(history.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    <div className="flex items-center gap-1 w-24 shrink-0">
+                                                        <button className={`p-1 rounded transition-colors ${history.pinToDashboard ? 'text-amber-500 bg-amber-50' : 'text-gray-400 hover:bg-amber-50 hover:text-amber-500'}`} title="Pin" onClick={() => togglePinHistoryMut.mutate({ id: history.id, pinToDashboard: !history.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={() => openEditHistory(history)}><Pencil className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete" onClick={() => { if (window.confirm('Delete this history?')) deleteHistoryMut.mutate(history.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                                     </div>
                                                 )}
                                             </div>
