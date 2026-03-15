@@ -502,7 +502,41 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                     category: item.category,
                     status: item.status,
                     tags: item.tags,
-                    createdAt: item.createdAt,
+                        createdAt: item.createdAt,
+                    })));
+            }
+            case 'healthbook': {
+                const items = await prisma.healthLog.findMany({
+                    where: {
+                        AND: [
+                            {
+                                OR: [
+                                    { userId },
+                                    { person: { isShared: true } },
+                                ],
+                            },
+                            buildDateFilter(req, 'date', 'createdAt'),
+                            ...(type ? [{ type: type as any }] : []),
+                        ],
+                    },
+                    include: {
+                        person: { select: { name: true } },
+                    },
+                    orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+                    take: 200,
+                });
+                return sendSuccess(res, items.map((item) => ({
+                    id: item.id,
+                    person: item.person.name,
+                    type: item.type,
+                    date: item.date,
+                    doctor: item.doctor,
+                    location: item.location,
+                    cost: item.cost,
+                    nextCheckupDate: item.nextCheckupDate,
+                    linkedExpenseId: item.linkedExpenseId,
+                    linkedCalendarEventId: item.linkedCalendarEventId,
+                    updatedAt: item.updatedAt,
                 })));
             }
             default:
@@ -987,6 +1021,107 @@ router.get('/ideas-status', async (req: Request, res: Response, next: NextFuncti
             _count: { _all: true },
         });
         sendSuccess(res, result.map((r) => ({ status: r.status, count: r._count._all })));
+    } catch (err) { next(err); }
+});
+
+router.get('/healthbook-overview', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.userId;
+        const visiblePersonWhere = {
+            OR: [
+                { userId },
+                { isShared: true },
+            ],
+        };
+        const visibleLogWhere = {
+            AND: [
+                {
+                    OR: [
+                        { userId },
+                        { person: { isShared: true } },
+                    ],
+                },
+                buildDateFilter(req, 'date', 'createdAt'),
+            ],
+        } as any;
+        const now = new Date();
+
+        const [totalPersons, totalLogs, totalCostAgg, upcomingCheckups] = await Promise.all([
+            prisma.healthPerson.count({ where: visiblePersonWhere }),
+            prisma.healthLog.count({ where: visibleLogWhere }),
+            prisma.healthLog.aggregate({
+                where: visibleLogWhere,
+                _sum: { cost: true },
+            }),
+            prisma.healthLog.count({
+                where: {
+                    ...visibleLogWhere,
+                    nextCheckupDate: { gte: now },
+                },
+            }),
+        ]);
+
+        sendSuccess(res, {
+            totalPersons,
+            totalLogs,
+            upcomingCheckups,
+            totalCost: totalCostAgg._sum.cost ?? 0,
+        });
+    } catch (err) { next(err); }
+});
+
+router.get('/healthbook-log-types', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.userId;
+        const logs = await prisma.healthLog.findMany({
+            where: {
+                AND: [
+                    {
+                        OR: [
+                            { userId },
+                            { person: { isShared: true } },
+                        ],
+                    },
+                    buildDateFilter(req, 'date', 'createdAt'),
+                ],
+            },
+            select: { type: true },
+        });
+        const grouped = new Map<string, number>();
+        logs.forEach((log) => {
+            grouped.set(log.type, (grouped.get(log.type) || 0) + 1);
+        });
+        sendSuccess(res, Array.from(grouped.entries()).map(([type, count]) => ({ type, count })));
+    } catch (err) { next(err); }
+});
+
+router.get('/healthbook-monthly-activity', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.userId;
+        const logs = await prisma.healthLog.findMany({
+            where: {
+                AND: [
+                    {
+                        OR: [
+                            { userId },
+                            { person: { isShared: true } },
+                        ],
+                    },
+                    buildDateFilter(req, 'date', 'createdAt'),
+                ],
+            },
+            select: { date: true, cost: true },
+            orderBy: { date: 'asc' },
+        });
+        const grouped = new Map<string, { month: string; count: number; totalCost: number }>();
+        logs.forEach((log) => {
+            const month = `${log.date.getFullYear()}-${String(log.date.getMonth() + 1).padStart(2, '0')}`;
+            const current = grouped.get(month) ?? { month, count: 0, totalCost: 0 };
+            current.count += 1;
+            current.totalCost += Number(log.cost || 0);
+            grouped.set(month, current);
+        });
+        sendSuccess(res, Array.from(grouped.values()));
     } catch (err) { next(err); }
 });
 

@@ -311,12 +311,12 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     <BellRing className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTab === 'RULES' ? 'Notifications' : 'Schedule Action'}</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTab === 'RULES' ? 'Notifications' : 'Schedule Report'}</h2>
                 </div>
                 {showTabSwitcher && (
                     <div className="flex bg-gray-100 p-1 rounded-lg self-start sm:self-auto">
                         <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'RULES' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('RULES')} style={activeTab === 'RULES' ? { color: 'var(--color-primary)' } : {}}>Notification Settings</button>
-                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'REPORTS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('REPORTS')} style={activeTab === 'REPORTS' ? { color: 'var(--color-primary)' } : {}}>Schedule Action</button>
+                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'REPORTS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('REPORTS')} style={activeTab === 'REPORTS' ? { color: 'var(--color-primary)' } : {}}>Schedule Report</button>
                     </div>
                 )}
             </div>
@@ -324,7 +324,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
                 <Info className="w-5 h-5 text-blue-500 flex-shrink-0" />
                 <div className="text-xs text-blue-800 leading-relaxed">
-                    <strong>Schedule Action:</strong> Actions are delivered via your notification channel configured in Settings. Alert rules and scheduled actions can be edited or duplicated directly from this page.
+                    <strong>Schedule Report:</strong> Reports are delivered via your notification channel configured in Settings. Alert rules and scheduled reports can be edited or duplicated directly from this page.
                 </div>
             </div>
 
@@ -711,7 +711,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) closeReportModal(); }}>
                     <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingReport ? 'Edit Action' : 'Schedule Action'}</h3>
+                            <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingReport ? 'Edit Report' : 'Schedule Report'}</h3>
                             <button onClick={closeReportModal}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
@@ -877,7 +877,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createReportMut.isPending || updateReportMut.isPending}>
-                                        {editingReport ? 'Save' : 'Schedule Action'}
+                                        {editingReport ? 'Save' : 'Schedule Report'}
                                     </button>
                                 </div>
                             </div>

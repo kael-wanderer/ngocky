@@ -533,6 +533,18 @@ export default function ReportsPage() {
         queryKey: ['reports', 'learning-topics', baseQuery],
         queryFn: async () => (await api.get(`/reports/learning-topics${reportQuery}`)).data.data,
     });
+    const { data: healthbookOverview } = useQuery({
+        queryKey: ['reports', 'healthbook-overview', baseQuery],
+        queryFn: async () => (await api.get(`/reports/healthbook-overview${reportQuery}`)).data.data,
+    });
+    const { data: healthbookLogTypes } = useQuery({
+        queryKey: ['reports', 'healthbook-log-types', baseQuery],
+        queryFn: async () => (await api.get(`/reports/healthbook-log-types${reportQuery}`)).data.data,
+    });
+    const { data: healthbookMonthlyActivity } = useQuery({
+        queryKey: ['reports', 'healthbook-monthly-activity', baseQuery],
+        queryFn: async () => (await api.get(`/reports/healthbook-monthly-activity${reportQuery}`)).data.data,
+    });
 
     const { data: ideaStatus } = useQuery({
         queryKey: ['reports', 'idea-status', baseQuery],
@@ -578,6 +590,10 @@ export default function ReportsPage() {
     const { data: rawLearning } = useQuery({
         queryKey: ['reports', 'raw-learning', baseQuery],
         queryFn: async () => (await api.get(`/reports/raw-records?module=learning&${baseQuery}`)).data.data,
+    });
+    const { data: rawHealthbook } = useQuery({
+        queryKey: ['reports', 'raw-healthbook', baseQuery],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=healthbook&${baseQuery}`)).data.data,
     });
     const { data: rawIdeas } = useQuery({
         queryKey: ['reports', 'raw-ideas', baseQuery],
@@ -879,6 +895,19 @@ export default function ReportsPage() {
             ],
             rows: rawLearning || [],
         },
+        healthbook: {
+            title: 'Health Logs',
+            columns: [
+                { key: 'date', label: 'Date', render: (value: any) => formatDisplayDate(value) },
+                { key: 'person', label: 'Person' },
+                { key: 'type', label: 'Type' },
+                { key: 'doctor', label: 'Doctor' },
+                { key: 'location', label: 'Location' },
+                { key: 'cost', label: 'Cost', render: (value: any) => value != null ? formatVND(Number(value || 0)) : '—' },
+                { key: 'nextCheckupDate', label: 'Next Checkup', render: (value: any) => formatDisplayDate(value) },
+            ],
+            rows: rawHealthbook || [],
+        },
         keyboard: {
             title: 'Keyboard Items',
             columns: [
@@ -979,6 +1008,20 @@ export default function ReportsPage() {
         learning: [
             { title: 'Learning by Status', columns: [{ key: 'status', label: 'Status' }, { key: 'count', label: 'Count' }], rows: learningStatus || [] },
             { title: 'Learning by Topic', columns: [{ key: 'topic', label: 'Topic' }, { key: 'count', label: 'Count' }], rows: learningTopics || [] },
+        ],
+        healthbook: [
+            {
+                title: 'Healthbook Overview',
+                columns: [{ key: 'label', label: 'Metric' }, { key: 'value', label: 'Value' }],
+                rows: healthbookOverview ? [
+                    { label: 'People', value: healthbookOverview.totalPersons },
+                    { label: 'Logs', value: healthbookOverview.totalLogs },
+                    { label: 'Upcoming Checkups', value: healthbookOverview.upcomingCheckups },
+                    { label: 'Total Cost', value: formatVND(Number(healthbookOverview.totalCost || 0)) },
+                ] : [],
+            },
+            { title: 'Health Logs by Type', columns: [{ key: 'type', label: 'Type' }, { key: 'count', label: 'Count' }], rows: healthbookLogTypes || [] },
+            { title: 'Health Monthly Activity', columns: [{ key: 'month', label: 'Month' }, { key: 'count', label: 'Logs' }, { key: 'totalCost', label: 'Total Cost', render: (value: any) => formatVND(Number(value || 0)) }], rows: healthbookMonthlyActivity || [] },
         ],
         keyboard: [
             {
@@ -1083,7 +1126,7 @@ export default function ReportsPage() {
                     </style>
                 </head>
                 <body>
-                    <h1>NgocKy Analytics Export</h1>
+                    <h1>NgocKy Report Export</h1>
                     ${summaryTable}
                     ${sectionsHtml}
                 </body>
@@ -1112,7 +1155,7 @@ export default function ReportsPage() {
         printWindow.document.write(`
             <html>
                 <head>
-                    <title>NgocKy Analytics Export</title>
+                    <title>NgocKy Report Export</title>
                     ${styles}
                     <style>
                         body { font-family: Arial, sans-serif; padding: 24px; background: #ffffff; color: #111827; }
@@ -1124,7 +1167,7 @@ export default function ReportsPage() {
                 </head>
                 <body>
                     <div class="print-header">
-                        <h1>NgocKy Analytics Export</h1>
+                        <h1>NgocKy Report Export</h1>
                         <div class="print-meta">
                             <div><strong>Time Filter:</strong> ${escapeHtml(selectedTimeRangeLabel)}</div>
                             <div><strong>Date Range:</strong> ${escapeHtml(selectedDateRangeLabel)}</div>
@@ -1185,7 +1228,7 @@ export default function ReportsPage() {
             <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
                     <BarChart3 className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Analytics</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Report</h2>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                     <button
@@ -1924,6 +1967,69 @@ export default function ReportsPage() {
                                 { key: 'maintenanceCount', label: 'Maintenance Logs' },
                             ]}
                             rows={rawAssets || []}
+                        />
+                    )}
+                </div>
+            )}
+
+            {selectedTabs.includes('healthbook') && (
+                <div className="space-y-6">
+                    {showCharts && (
+                        <>
+                            <div className="grid gap-4 md:grid-cols-4">
+                                {[
+                                    { label: 'People', value: healthbookOverview?.totalPersons ?? 0, color: '#4f46e5' },
+                                    { label: 'Logs', value: healthbookOverview?.totalLogs ?? 0, color: '#0891b2' },
+                                    { label: 'Upcoming Checkups', value: healthbookOverview?.upcomingCheckups ?? 0, color: '#d97706' },
+                                    { label: 'Total Cost', value: formatVND(Number(healthbookOverview?.totalCost || 0)), color: '#059669' },
+                                ].map((item) => (
+                                    <div key={item.label} className="card p-6 text-center">
+                                        <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>{item.label}</p>
+                                        <p className="text-2xl font-bold" style={{ color: item.color }}>{item.value}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <div className="card p-5">
+                                    <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Health Logs by Type</h3>
+                                    <ResponsiveContainer width="100%" height={280}>
+                                        <PieChart>
+                                            <Pie data={healthbookLogTypes || []} dataKey="count" nameKey="type" cx="50%" cy="50%" outerRadius={100} label>
+                                                {(healthbookLogTypes || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                            </Pie>
+                                            <Tooltip />
+                                            <Legend />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="card p-5">
+                                    <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Monthly Health Activity</h3>
+                                    <ResponsiveContainer width="100%" height={280}>
+                                        <BarChart data={healthbookMonthlyActivity || []}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                            <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                                            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill="#0f766e" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                    {showTables && (
+                        <DataTableCard
+                            title="Health Logs"
+                            columns={[
+                                { key: 'date', label: 'Date', render: (value) => formatDisplayDate(value) },
+                                { key: 'person', label: 'Person' },
+                                { key: 'type', label: 'Type' },
+                                { key: 'doctor', label: 'Doctor' },
+                                { key: 'location', label: 'Location' },
+                                { key: 'cost', label: 'Cost', render: (value) => value != null ? formatVND(Number(value || 0)) : '—' },
+                                { key: 'nextCheckupDate', label: 'Next Checkup', render: (value) => formatDisplayDate(value) },
+                            ]}
+                            rows={rawHealthbook || []}
                         />
                     )}
                 </div>

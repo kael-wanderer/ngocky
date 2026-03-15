@@ -16,7 +16,7 @@ export const FEATURE_FLAGS = {
 
 export const MOBILE_NAV_OPTIONS = [
     { to: '/', label: 'Dashboard' },
-    { to: '/reports', label: 'Analytics' },
+    { to: '/reports', label: 'Report' },
     { to: '/tasks', label: 'Tasks' },
     { to: '/projects', label: 'Projects' },
     { to: '/expenses', label: 'Expenses' },

@@ -10,7 +10,7 @@ import {
 
 const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/reports', icon: BarChart3, label: 'Analytics' },
+    { to: '/reports', icon: BarChart3, label: 'Report' },
     { to: '/tasks', icon: ClipboardList, label: 'Tasks' },
     { to: '/projects', icon: FolderKanban, label: 'Projects' },
     { to: '/expenses', icon: Wallet, label: 'Expenses' },
@@ -24,7 +24,7 @@ const navItems = [
     { to: '/keyboard', icon: Keyboard, label: 'Keyboard' },
     { to: '/funds', icon: Coins, label: 'Funds' },
     { to: '/learning', icon: GraduationCap, label: 'Learning' },
-    { to: '/scheduled-reports', icon: FileText, label: 'Schedule Action' },
+    { to: '/scheduled-reports', icon: FileText, label: 'Schedule Report' },
     { to: '/notifications', icon: BellRing, label: 'Notifications' },
     { to: '/settings', icon: Settings, label: 'User Settings' },
 ];
