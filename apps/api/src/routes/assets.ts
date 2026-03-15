@@ -93,6 +93,7 @@ async function createMaintenanceExpense(tx: Prisma.TransactionClient, payload: a
             amount,
             note: payload.description || null,
             isShared: false,
+            sourceModule: 'Asset',
             userId,
         },
     });

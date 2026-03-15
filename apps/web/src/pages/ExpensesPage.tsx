@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, Wallet, Filter, FileSpreadsheet, FileText, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Wallet, Filter, FileSpreadsheet, FileText, Pencil, Plus, Trash2, Copy, X } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
@@ -91,6 +91,7 @@ export default function ExpensesPage() {
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(25);
+    const [expenseSearch, setExpenseSearch] = useState('');
 
     const effectiveRange = filters.timePreset === 'CUSTOM'
         ? { dateFrom: filters.dateFrom, dateTo: filters.dateTo }
@@ -166,6 +167,15 @@ export default function ExpensesPage() {
         });
     }, [expenses, sortBy, sortOrder]);
 
+    const displayedExpenses = useMemo(() => {
+        if (!expenseSearch.trim()) return sortedExpenses;
+        const q = expenseSearch.toLowerCase();
+        return sortedExpenses.filter((e: any) =>
+            [e.description, e.category, e.scope, e.note, e.user?.name, e.payment]
+                .some((v) => v && String(v).toLowerCase().includes(q))
+        );
+    }, [sortedExpenses, expenseSearch]);
+
     const summary = useMemo(() => {
         const income = expenses.filter((item: any) => item.type === 'RECEIVE').reduce((sum: number, item: any) => sum + item.amount, 0);
         const payment = expenses.filter((item: any) => item.type === 'PAY').reduce((sum: number, item: any) => sum + item.amount, 0);
@@ -179,7 +189,7 @@ export default function ExpensesPage() {
         : `${effectiveRange.dateFrom} → ${effectiveRange.dateTo}`;
 
     function handleExportExcel() {
-        const rows = sortedExpenses.map((expense: any) => ({
+        const rows = displayedExpenses.map((expense: any) => ({
             Date: format(new Date(expense.date), 'MMM d, yyyy'),
             User: expense.user?.name || '',
             Type: expense.type === 'RECEIVE' ? 'Receive' : 'Pay',
@@ -353,6 +363,20 @@ export default function ExpensesPage() {
         if (window.confirm('Delete this expense item?')) deleteMut.mutate(id);
     }
 
+    function handleDuplicate(expense: any) {
+        createMut.mutate({
+            description: expense.description,
+            amount: expense.amount,
+            type: expense.type,
+            isShared: expense.isShared,
+            category: expense.category,
+            payment: expense.payment,
+            scope: expense.scope,
+            date: format(new Date(expense.date), 'yyyy-MM-dd\'T\'00:00:00'),
+            note: expense.note || '',
+        });
+    }
+
     function renderSortIcon(column: SortKey) {
         if (sortBy !== column) return <ArrowUp className="w-3.5 h-3.5 opacity-30" />;
         return sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />;
@@ -395,35 +419,48 @@ export default function ExpensesPage() {
                     <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
                     <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-                    <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value, category: filters.category && !((e.target.value || form.type) === 'RECEIVE' ? receiveCategories : payCategories).includes(filters.category) ? '' : filters.category })}>
-                        <option value="">All Types</option>
-                        {typeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </select>
-                    <select className="input text-sm" value={filters.scope} onChange={(e) => setFilters({ ...filters, scope: e.target.value })}>
-                        <option value="">All Scopes</option>
-                        {scopeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </select>
-                    <select className="input text-sm" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
-                        <option value="">All Categories</option>
-                        {(filters.type === 'RECEIVE' ? receiveCategories : filters.type === 'PAY' ? payCategories : allCategories).map((category) => <option key={category} value={category}>{category}</option>)}
-                    </select>
-                    <select className="input text-sm" value={filters.timePreset} onChange={(e) => handleTimePresetChange(e.target.value as TimePreset)}>
-                        {timeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </select>
-                    <input
-                        type="date"
-                        className={`input text-sm ${filters.timePreset !== 'CUSTOM' ? 'invisible pointer-events-none' : ''}`}
-                        value={filters.timePreset === 'CUSTOM' ? filters.dateFrom : ''}
-                        onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                    />
-                    <input
-                        type="date"
-                        className={`input text-sm ${filters.timePreset !== 'CUSTOM' ? 'invisible pointer-events-none' : ''}`}
-                        value={filters.timePreset === 'CUSTOM' ? filters.dateTo : ''}
-                        min={filters.timePreset === 'CUSTOM' ? (filters.dateFrom || undefined) : undefined}
-                        onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                    />
+                <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+                        <input
+                            type="text"
+                            className="input text-sm md:col-span-2"
+                            placeholder="Search expenses..."
+                            value={expenseSearch}
+                            onChange={(e) => setExpenseSearch(e.target.value)}
+                        />
+                        <select className="input text-sm" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value, category: filters.category && !((e.target.value || form.type) === 'RECEIVE' ? receiveCategories : payCategories).includes(filters.category) ? '' : filters.category })}>
+                            <option value="">All Types</option>
+                            {typeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                        <select className="input text-sm" value={filters.scope} onChange={(e) => setFilters({ ...filters, scope: e.target.value })}>
+                            <option value="">All Scopes</option>
+                            {scopeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                        <select className="input text-sm" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
+                            <option value="">All Categories</option>
+                            {(filters.type === 'RECEIVE' ? receiveCategories : filters.type === 'PAY' ? payCategories : allCategories).map((category) => <option key={category} value={category}>{category}</option>)}
+                        </select>
+                        <select className="input text-sm" value={filters.timePreset} onChange={(e) => handleTimePresetChange(e.target.value as TimePreset)}>
+                            {timeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                    </div>
+                    {filters.timePreset === 'CUSTOM' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-sm">
+                            <input
+                                type="date"
+                                className="input text-sm"
+                                value={filters.dateFrom}
+                                onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                            />
+                            <input
+                                type="date"
+                                className="input text-sm"
+                                value={filters.dateTo}
+                                min={filters.dateFrom || undefined}
+                                onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -554,10 +591,11 @@ export default function ExpensesPage() {
                                                 </button>
                                             </th>
                                         ))}
+                                        <th className="text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {sortedExpenses.map((expense: any, index: number) => {
+                                    {displayedExpenses.map((expense: any, index: number) => {
                                         const isReceive = expense.type === 'RECEIVE';
                                         const canEdit = expense.userId === user?.id;
                                         const sharedOwnerName = getSharedOwnerName(expense, user?.id);
@@ -570,7 +608,14 @@ export default function ExpensesPage() {
                                                 <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(expense.date), 'MMM d, yyyy')}</td>
                                                 <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{expense.user?.name || '-'}</td>
                                                 <td><span className={`badge ${isReceive ? 'badge-success' : 'badge-danger'}`}>{isReceive ? 'Receive' : 'Pay'}</span></td>
-                                                <td><ScopeBadge scope={expense.scope} /></td>
+                                                <td>
+                                                    <div className="flex items-center gap-1 flex-wrap">
+                                                        <ScopeBadge scope={expense.scope} />
+                                                        {expense.sourceModule && (
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-slate-100 text-slate-500">{expense.sourceModule}</span>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td><span className="badge-primary">{expense.category || '-'}</span></td>
                                                 <td><span className="badge-primary">{paymentOptions.find((option) => option.value === expense.payment)?.label || expense.payment || '-'}</span></td>
                                                 <td>
@@ -580,19 +625,18 @@ export default function ExpensesPage() {
                                                         {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
                                                         {expense.note && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{expense.note}</span>}
                                                     </div>
-                                                    {canEdit && (
-                                                        <div className="flex items-center gap-2 mt-2">
-                                                            <button type="button" className="inline-flex items-center gap-1 text-sm hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={(e) => { e.stopPropagation(); openEdit(expense); }}>
-                                                                <Pencil className="w-3.5 h-3.5" /> Edit
-                                                            </button>
-                                                            <button type="button" className="inline-flex items-center gap-1 text-sm hover:opacity-80" style={{ color: 'var(--color-danger)' }} onClick={(e) => { e.stopPropagation(); handleDelete(expense.id); }}>
-                                                                <Trash2 className="w-3.5 h-3.5" /> Delete
-                                                            </button>
-                                                        </div>
-                                                    )}
                                                 </td>
                                                 <td className="text-right font-semibold" style={{ color: isReceive ? 'var(--color-success)' : 'var(--color-danger)' }}>
                                                     {formatAmount(expense.amount)}
+                                                </td>
+                                                <td className="px-3 py-2.5">
+                                                    {canEdit && (
+                                                        <div className="flex items-center gap-1 justify-end">
+                                                            <button type="button" onClick={(e) => { e.stopPropagation(); openEdit(expense); }} className="p-1 text-gray-400 hover:text-gray-600" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                                            <button type="button" onClick={(e) => { e.stopPropagation(); handleDuplicate(expense); }} className="p-1 text-blue-500 hover:text-blue-600" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                                                            <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(expense.id); }} className="p-1 text-red-500 hover:text-red-600" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                        </div>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );

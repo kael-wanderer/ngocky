@@ -5,11 +5,12 @@ import { format } from 'date-fns';
 import {
     ArrowLeft, Plus, Edit2, Trash2, HeartPulse, User, Phone, Shield,
     Paperclip, Upload, X, FileText, Image, ChevronDown, ChevronUp, Eye,
-    LayoutGrid, List, Filter,
+    LayoutGrid, List, Filter, Bell, Copy,
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
 import { getFundsDateRange } from '../config/fundsFilters';
+import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -77,6 +78,11 @@ interface HealthLog {
     nextCheckupDate?: string;
     linkedExpenseId?: string | null;
     linkedCalendarEventId?: string | null;
+    notificationEnabled?: boolean;
+    reminderOffsetValue?: number;
+    reminderOffsetUnit?: string;
+    notificationDate?: string;
+    notificationTime?: string;
     userId: string;
     files: HealthFile[];
     createdAt: string;
@@ -134,6 +140,7 @@ const EMPTY_LOG = {
     date: new Date().toISOString().slice(0, 10),
     type: 'DOCTOR_VISIT', location: '', doctor: '', symptoms: '',
     description: '', cost: '', prescription: '', nextCheckupDate: '', addExpense: false, addToCalendar: false,
+    ...emptyNotification,
 };
 
 function parseAmount(val: string): number | undefined {
@@ -166,6 +173,22 @@ function formatFileSize(bytes: number) {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function formatLogNotificationBadges(log: HealthLog): string[] {
+    if (!log.notificationEnabled) return [];
+    const time = log.notificationTime || '';
+    if (log.reminderOffsetUnit === 'ON_DATE' && log.notificationDate)
+        return [format(new Date(log.notificationDate), 'MMM dd, yyyy'), ...(time ? [time] : [])];
+    if (log.reminderOffsetUnit === 'HOURS') {
+        const label = `${log.reminderOffsetValue} hour${log.reminderOffsetValue !== 1 ? 's' : ''} before`;
+        return [label, ...(time ? [time] : [])];
+    }
+    if (log.reminderOffsetUnit === 'DAYS') {
+        const label = `${log.reminderOffsetValue} day${log.reminderOffsetValue !== 1 ? 's' : ''} before`;
+        return [label, ...(time ? [time] : [])];
+    }
+    return [];
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -546,6 +569,7 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
         nextCheckupDate: editing.nextCheckupDate?.slice(0, 10) ?? '',
         addExpense: !!editing.linkedExpenseId,
         addToCalendar: !!editing.linkedCalendarEventId,
+        ...loadNotificationState(editing as any),
     } : { ...EMPTY_LOG });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -568,6 +592,7 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                 date: new Date(form.date).toISOString(),
                 cost: costVal,
                 nextCheckupDate: form.nextCheckupDate ? new Date(form.nextCheckupDate).toISOString() : null,
+                ...buildNotificationPayload(form as any),
             };
             if (editing) { await api.patch(`/healthbook/${personId}/logs/${editing.id}`, body); }
             else { await api.post(`/healthbook/${personId}/logs`, body); }
@@ -696,6 +721,8 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                         </div>
                     </div>
 
+                    <NotificationFields form={form as any} setForm={setForm as any} />
+
                     {error && <p className="text-sm text-red-500">{error}</p>}
                 </div>
                 <div className="flex justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
@@ -761,6 +788,27 @@ export default function HealthbookPage() {
         onSuccess: () => qc.invalidateQueries({ queryKey: ['healthbook-logs', personId] }),
     });
 
+    const createLog = useMutation({
+        mutationFn: (data: any) => api.post(`/healthbook/${personId}/logs`, data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['healthbook-logs', personId] }),
+    });
+
+    const handleDuplicateLog = (log: HealthLog) => {
+        createLog.mutate({
+            date: format(new Date(log.date), "yyyy-MM-dd'T'00:00:00.000'Z'"),
+            type: log.type,
+            location: log.location || '',
+            doctor: log.doctor || '',
+            symptoms: log.symptoms || '',
+            description: log.description || '',
+            cost: log.cost ?? undefined,
+            prescription: log.prescription || '',
+            nextCheckupDate: log.nextCheckupDate ? new Date(log.nextCheckupDate).toISOString() : null,
+            addExpense: false,
+            addToCalendar: false,
+        });
+    };
+
     const deletePersonFile = useMutation({
         mutationFn: (fileId: string) => api.delete(`/healthbook/files/person/${fileId}`),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['healthbook-person', personId] }),
@@ -780,6 +828,34 @@ export default function HealthbookPage() {
     };
 
     const isOwner = (record: { userId: string }) => record.userId === user?.id;
+
+    // ── Filtered logs (must be before any early return — Rules of Hooks) ──────
+
+    const allLogs = logsQuery.data ?? [];
+    const logs = useMemo(() => {
+        const search = logSearch.trim().toLowerCase();
+        const dateRange = logDateFilter === 'ALL' ? null : getFundsDateRange(logDateFilter);
+        return allLogs.filter((log) => {
+            if (logTypeFilter !== 'ALL' && log.type !== logTypeFilter) return false;
+            if (search) {
+                const haystack = [log.doctor || '', log.location || '', log.description || '', log.symptoms || ''].join(' ').toLowerCase();
+                if (!haystack.includes(search)) return false;
+            }
+            if (dateRange) {
+                const t = new Date(log.date).getTime();
+                if (t < dateRange.start.getTime() || t > dateRange.end.getTime()) return false;
+            }
+            const cost = log.cost ?? null;
+            switch (logCostFilter) {
+                case 'LT_500K': if (!(cost != null && cost < 500_000)) return false; break;
+                case 'BETWEEN_500K_2M': if (!(cost != null && cost >= 500_000 && cost < 2_000_000)) return false; break;
+                case 'BETWEEN_2M_5M': if (!(cost != null && cost >= 2_000_000 && cost < 5_000_000)) return false; break;
+                case 'GT_5M': if (!(cost != null && cost >= 5_000_000)) return false; break;
+                default: break;
+            }
+            return true;
+        });
+    }, [allLogs, logSearch, logTypeFilter, logDateFilter, logCostFilter]);
 
     // ── List View ────────────────────────────────────────────────────────────
 
@@ -876,31 +952,6 @@ export default function HealthbookPage() {
     // ── Detail View ──────────────────────────────────────────────────────────
 
     const person = personQuery.data;
-    const allLogs = logsQuery.data ?? [];
-    const logs = useMemo(() => {
-        const search = logSearch.trim().toLowerCase();
-        const dateRange = logDateFilter === 'ALL' ? null : getFundsDateRange(logDateFilter);
-        return allLogs.filter((log) => {
-            if (logTypeFilter !== 'ALL' && log.type !== logTypeFilter) return false;
-            if (search) {
-                const haystack = [log.doctor || '', log.location || '', log.description || '', log.symptoms || ''].join(' ').toLowerCase();
-                if (!haystack.includes(search)) return false;
-            }
-            if (dateRange) {
-                const t = new Date(log.date).getTime();
-                if (t < dateRange.start.getTime() || t > dateRange.end.getTime()) return false;
-            }
-            const cost = log.cost ?? null;
-            switch (logCostFilter) {
-                case 'LT_500K': if (!(cost != null && cost < 500_000)) return false; break;
-                case 'BETWEEN_500K_2M': if (!(cost != null && cost >= 500_000 && cost < 2_000_000)) return false; break;
-                case 'BETWEEN_2M_5M': if (!(cost != null && cost >= 2_000_000 && cost < 5_000_000)) return false; break;
-                case 'GT_5M': if (!(cost != null && cost >= 5_000_000)) return false; break;
-                default: break;
-            }
-            return true;
-        });
-    }, [allLogs, logSearch, logTypeFilter, logDateFilter, logCostFilter]);
 
     if (personQuery.isLoading) return <p className="text-sm text-gray-500 p-4">Loading…</p>;
     if (!person) return <p className="text-sm text-red-500 p-4">Person not found.</p>;
@@ -1070,114 +1121,152 @@ export default function HealthbookPage() {
             )}
 
             {logView === 'list' ? (
-                <div className="space-y-3">
+                <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: 'var(--color-border)' }}>
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Location</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Doctor</th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Cost</th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Alert</th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {logs.map((log) => {
+                                const expanded = expandedLogs.has(log.id);
+                                const notifBadges = formatLogNotificationBadges(log);
+                                return (
+                                    <React.Fragment key={log.id}>
+                                        <tr className="border-b cursor-pointer transition-colors hover:bg-gray-50/50"
+                                            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                                            onClick={() => toggleLog(log.id)}>
+                                            <td className="px-4 py-3">
+                                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${logTypeBadgeClass(log.type)}`}>{logTypeLabel(log.type)}</span>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm whitespace-nowrap" style={{ color: 'var(--color-text)' }}>{format(new Date(log.date), 'MMM d, yyyy')}</td>
+                                            <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{log.location || '—'}</td>
+                                            <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{log.doctor ? `Dr. ${log.doctor}` : '—'}</td>
+                                            <td className="px-4 py-3 text-sm text-right whitespace-nowrap">
+                                                {log.cost != null
+                                                    ? <span className="font-medium text-red-500">{log.cost.toLocaleString('vi-VN')} ₫</span>
+                                                    : <span className="text-gray-400">—</span>}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center justify-center gap-1 flex-wrap">
+                                                    <Bell className={`w-3.5 h-3.5 flex-shrink-0 ${log.notificationEnabled ? 'text-red-500' : 'text-gray-300'}`} />
+                                                    {notifBadges.map((b, i) => (
+                                                        <span key={i} className="text-xs px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium whitespace-nowrap">{b}</span>
+                                                    ))}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                                                    {isOwner(log) && (
+                                                        <>
+                                                            <button onClick={() => setLogModal({ open: true, editing: log })} className="p-1 rounded hover:bg-gray-100" title="Edit">
+                                                                <Edit2 className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+                                                            </button>
+                                                            <button onClick={() => handleDuplicateLog(log)} className="p-1 rounded hover:bg-blue-50" title="Duplicate">
+                                                                <Copy className="w-3.5 h-3.5 text-blue-500 hover:text-blue-600" />
+                                                            </button>
+                                                            <button onClick={() => setDeleteConfirm({ id: log.id, kind: 'log' })} className="p-1 rounded hover:bg-red-50" title="Delete">
+                                                                <Trash2 className="w-3.5 h-3.5 text-red-500 hover:text-red-600" />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {expanded && (
+                                            <tr style={{ backgroundColor: 'var(--color-bg)' }}>
+                                                <td colSpan={7} className="px-5 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
+                                                    <div className="space-y-2">
+                                                        {log.symptoms && <InfoRow label="Symptoms" value={log.symptoms} />}
+                                                        {log.description && <InfoRow label="Diagnosis / Notes" value={log.description} />}
+                                                        {log.prescription && <InfoRow label="Prescription" value={log.prescription} />}
+                                                        {log.nextCheckupDate && <InfoRow label="Next Checkup" value={format(new Date(log.nextCheckupDate), 'MMM d, yyyy')} />}
+                                                        <div className="pt-3 border-t mt-2" style={{ borderColor: 'var(--color-border)' }}>
+                                                            <div className="flex items-center gap-2 mb-3">
+                                                                <Paperclip className="w-3.5 h-3.5 text-gray-400" />
+                                                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Prescription / Files</span>
+                                                                {isOwner(log) && (
+                                                                    <div className="ml-auto">
+                                                                        <FileUploader url={`/healthbook/${personId}/logs/${log.id}/files`} onUploaded={() => qc.invalidateQueries({ queryKey: ['healthbook-logs', personId] })} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            {log.files.length === 0 && <p className="text-xs text-gray-400 italic">No files attached — upload prescriptions or lab results here.</p>}
+                                                            <div className="space-y-1.5">
+                                                                {log.files.map((f) => (
+                                                                    <FileItem key={f.id} file={f} kind="log" onDelete={() => deleteLogFile.mutate(f.id)} />
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {logs.map((log) => {
-                        const expanded = expandedLogs.has(log.id);
+                        const notifBadges = formatLogNotificationBadges(log);
                         return (
-                            <div key={log.id} className="rounded-2xl border overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-                                {/* Log header - always visible */}
-                                <div className="flex items-start gap-3 px-5 py-4 cursor-pointer" onClick={() => toggleLog(log.id)}>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${logTypeBadgeClass(log.type)}`}>{logTypeLabel(log.type)}</span>
-                                            <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{format(new Date(log.date), 'MMM d, yyyy')}</span>
-                                            {log.location && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>· {log.location}</span>}
-                                            {log.doctor && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>· Dr. {log.doctor}</span>}
-                                        </div>
-                                        {log.symptoms && !expanded && <p className="text-xs mt-1 truncate" style={{ color: 'var(--color-text-secondary)' }}>{log.symptoms}</p>}
+                            <div key={log.id} className="rounded-2xl border p-4 flex flex-col gap-2" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+                                <div className="flex items-start justify-between gap-2">
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${logTypeBadgeClass(log.type)}`}>{logTypeLabel(log.type)}</span>
+                                    <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(log.date), 'MMM d, yyyy')}</span>
+                                </div>
+                                {log.notificationEnabled && (
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                        <Bell className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                                        {notifBadges.map((b, i) => (
+                                            <span key={i} className="text-xs px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium">{b}</span>
+                                        ))}
                                     </div>
-                                    <div className="flex items-center gap-1 flex-shrink-0">
-                                        {log.files.length > 0 && !expanded && (
+                                )}
+                                {log.doctor && <p className="text-xs font-medium" style={{ color: 'var(--color-primary)' }}>Dr. {log.doctor}</p>}
+                                {log.location && <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{log.location}</p>}
+                                {log.symptoms && <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>{log.symptoms}</p>}
+                                {log.description && <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text)' }}>{log.description}</p>}
+                                <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                                    <div className="flex items-center gap-2">
+                                        {log.cost != null && <span className="text-xs font-semibold text-red-500">{log.cost.toLocaleString('vi-VN')} ₫</span>}
+                                        {log.files.length > 0 && (
                                             <span className="flex items-center gap-0.5 text-xs text-gray-400">
                                                 <Paperclip className="w-3 h-3" />{log.files.length}
                                             </span>
                                         )}
-                                        {log.cost != null && (
-                                            <span className="text-xs font-medium text-red-500">{log.cost.toLocaleString('vi-VN')} ₫</span>
+                                        {log.nextCheckupDate && (
+                                            <span className="text-xs text-orange-500">Next: {format(new Date(log.nextCheckupDate), 'MMM d')}</span>
                                         )}
-                                        {isOwner(log) && (
-                                            <>
-                                                <button onClick={(e) => { e.stopPropagation(); setLogModal({ open: true, editing: log }); }} className="p-1.5 rounded-lg hover:bg-gray-100" title="Edit">
-                                                    <Edit2 className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
-                                                </button>
-                                                <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ id: log.id, kind: 'log' }); }} className="p-1.5 rounded-lg hover:bg-red-50" title="Delete">
-                                                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                                                </button>
-                                            </>
-                                        )}
-                                        {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                                     </div>
-                                </div>
-
-                                {/* Expanded details */}
-                                {expanded && (
-                                    <div className="border-t px-5 py-4 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
-                                        {log.symptoms && <InfoRow label="Symptoms" value={log.symptoms} />}
-                                        {log.description && <InfoRow label="Diagnosis / Notes" value={log.description} />}
-                                        {log.prescription && <InfoRow label="Prescription" value={log.prescription} />}
-                                        {log.nextCheckupDate && <InfoRow label="Next Checkup" value={format(new Date(log.nextCheckupDate), 'MMM d, yyyy')} />}
-
-                                        {/* Log files — prescription & docs */}
-                                        <div className="pt-3 border-t mt-2" style={{ borderColor: 'var(--color-border)' }}>
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <Paperclip className="w-3.5 h-3.5 text-gray-400" />
-                                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Prescription / Files</span>
-                                                {isOwner(log) && (
-                                                    <div className="ml-auto">
-                                                        <FileUploader url={`/healthbook/${personId}/logs/${log.id}/files`} onUploaded={() => qc.invalidateQueries({ queryKey: ['healthbook-logs', personId] })} />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {log.files.length === 0 && <p className="text-xs text-gray-400 italic">No files attached — upload prescriptions or lab results here.</p>}
-                                            <div className="space-y-1.5">
-                                                {log.files.map((f) => (
-                                                    <FileItem key={f.id} file={f} kind="log" onDelete={() => deleteLogFile.mutate(f.id)} />
-                                                ))}
-                                            </div>
+                                    {isOwner(log) && (
+                                        <div className="flex items-center gap-1">
+                                            <button onClick={() => setLogModal({ open: true, editing: log })} className="p-1 rounded hover:bg-gray-100" title="Edit">
+                                                <Edit2 className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+                                            </button>
+                                            <button onClick={() => handleDuplicateLog(log)} className="p-1 rounded hover:bg-blue-50" title="Duplicate">
+                                                <Copy className="w-3.5 h-3.5 text-blue-500 hover:text-blue-600" />
+                                            </button>
+                                            <button onClick={() => setDeleteConfirm({ id: log.id, kind: 'log' })} className="p-1 rounded hover:bg-red-50" title="Delete">
+                                                <Trash2 className="w-3.5 h-3.5 text-red-500 hover:text-red-600" />
+                                            </button>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         );
                     })}
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {logs.map((log) => (
-                        <div key={log.id} className="rounded-2xl border p-4 flex flex-col gap-2" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-                            <div className="flex items-start justify-between gap-2">
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${logTypeBadgeClass(log.type)}`}>{logTypeLabel(log.type)}</span>
-                                <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(log.date), 'MMM d, yyyy')}</span>
-                            </div>
-                            {log.doctor && <p className="text-xs font-medium" style={{ color: 'var(--color-primary)' }}>Dr. {log.doctor}</p>}
-                            {log.location && <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{log.location}</p>}
-                            {log.symptoms && <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>{log.symptoms}</p>}
-                            {log.description && <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text)' }}>{log.description}</p>}
-                            <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
-                                <div className="flex items-center gap-2">
-                                    {log.cost != null && <span className="text-xs font-semibold text-red-500">{log.cost.toLocaleString('vi-VN')} ₫</span>}
-                                    {log.files.length > 0 && (
-                                        <span className="flex items-center gap-0.5 text-xs text-gray-400">
-                                            <Paperclip className="w-3 h-3" />{log.files.length}
-                                        </span>
-                                    )}
-                                    {log.nextCheckupDate && (
-                                        <span className="text-xs text-orange-500">Next: {format(new Date(log.nextCheckupDate), 'MMM d')}</span>
-                                    )}
-                                </div>
-                                {isOwner(log) && (
-                                    <div className="flex items-center gap-1">
-                                        <button onClick={() => setLogModal({ open: true, editing: log })} className="p-1.5 rounded-lg hover:bg-gray-100" title="Edit">
-                                            <Edit2 className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
-                                        </button>
-                                        <button onClick={() => setDeleteConfirm({ id: log.id, kind: 'log' })} className="p-1.5 rounded-lg hover:bg-red-50" title="Delete">
-                                            <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
                 </div>
             )}
 

@@ -622,18 +622,18 @@ export default function HouseworkPage() {
                 <>
                     <button
                         onClick={(e) => { e.stopPropagation(); updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } }); }}
-                        className={`p-2 rounded-lg transition-colors ${item.pinToDashboard ? 'text-amber-500 hover:bg-amber-50' : 'hover:bg-gray-100'}`}
+                        className={`p-1 transition-colors ${item.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`}
                         title="Pin item"
                     >
                         <Pin className="w-4 h-4" />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); duplicateItem(item); }} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Duplicate">
+                    <button onClick={(e) => { e.stopPropagation(); duplicateItem(item); }} className="p-1 text-blue-500 hover:text-blue-600 transition-colors" title="Duplicate">
                         <Copy className="w-4 h-4" />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Edit item">
+                    <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 text-gray-400 hover:text-gray-600 transition-colors" title="Edit item">
                         <Pencil className="w-4 h-4" />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors" title="Delete item">
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-1 text-red-500 hover:text-red-600 transition-colors" title="Delete item">
                         <Trash2 className="w-4 h-4" />
                     </button>
                 </>
@@ -757,7 +757,7 @@ export default function HouseworkPage() {
                         {canManage && item.status !== 'DONE' && item.active !== false && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); completeMut.mutate(item.id); }}
-                                className="px-2 py-1 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
+                                className="p-1 text-xs font-medium px-2 rounded text-green-600 bg-green-50 hover:bg-green-100"
                             >
                                 Done
                             </button>

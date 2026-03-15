@@ -115,6 +115,7 @@ async function createHealthExpense(cost: number, date: Date, description: string
             category: 'Healthcare',
             amount: cost,
             isShared: false,
+            sourceModule: 'Health',
             userId,
         },
     });

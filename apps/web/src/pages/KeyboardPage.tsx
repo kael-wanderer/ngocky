@@ -365,6 +365,15 @@ export default function KeyboardPage() {
 
             {/* Filter bar */}
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-3">
+                    <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                    <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
+                    {activeFilterCount > 0 && (
+                        <button onClick={() => setFilters((current) => ({ ...current, categories: [], tags: [], colors: [], priceRanges: [] }))} className="ml-auto text-xs text-gray-400 hover:text-red-500">
+                            Clear
+                        </button>
+                    )}
+                </div>
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="min-w-[220px] flex-[1.4]">
                         <input
@@ -374,11 +383,6 @@ export default function KeyboardPage() {
                             className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         />
                     </div>
-                    {activeFilterCount > 0 && (
-                        <button onClick={() => setFilters((current) => ({ ...current, categories: [], tags: [], colors: [], priceRanges: [] }))} className="shrink-0 text-xs text-gray-400 hover:text-red-500">
-                            Clear
-                        </button>
-                    )}
                     <MultiSelectFilter
                         className="min-w-[150px] flex-1"
                         label="Category"

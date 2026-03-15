@@ -8,7 +8,8 @@
       "Bash(find /Users/cong.bui/Kael/20-Projects/NgocKy/apps/web/src -name *.tsx)",
       "Read(//Users/cong.bui/Kael/20-Projects/NgocKy/**)",
       "Bash(grep -v \"^\\\\.$\")",
-      "Bash(grep -v \"^\\\\.\\\\.$\")"
+      "Bash(grep -v \"^\\\\.\\\\.$\")",
+      "Bash(head -20 grep -rn \"bottom.*nav\\\\|MobileNav\\\\|z-40\\\\|z-30\\\\|fixed.*bottom\\\\|bottom-0\" /Users/cong.bui/Kael/20-Projects/NgocKy/apps/web/src/components/ --include=*.tsx -l)"
     ]
   }
 }

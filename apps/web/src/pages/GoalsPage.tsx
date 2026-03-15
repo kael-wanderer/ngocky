@@ -111,6 +111,23 @@ function formatNotification(item: any): string | null {
     return null;
 }
 
+function formatTaskNotificationBadges(task: any): string[] {
+    if (!task.notificationEnabled) return [];
+    const time = task.notificationTime || '';
+    if (task.reminderOffsetUnit === 'ON_DATE' && task.notificationDate) {
+        return [format(new Date(task.notificationDate), 'MMM dd, yyyy'), ...(time ? [time] : [])];
+    }
+    if (task.reminderOffsetUnit === 'HOURS') {
+        const label = `${task.reminderOffsetValue} hour${task.reminderOffsetValue !== 1 ? 's' : ''} before`;
+        return [label, ...(time ? [time] : [])];
+    }
+    if (task.reminderOffsetUnit === 'DAYS') {
+        const label = `${task.reminderOffsetValue} day${task.reminderOffsetValue !== 1 ? 's' : ''} before`;
+        return [label, ...(time ? [time] : [])];
+    }
+    return [];
+}
+
 function formatTaskRepeat(task: any): string | null {
     if (!task.repeatFrequency) return null;
     const repeat = task.repeatFrequency.charAt(0) + task.repeatFrequency.slice(1).toLowerCase();
@@ -430,12 +447,17 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const [duration, setDuration] = useState<number | ''>('');
     const [quantity, setQuantity] = useState(1);
     const [periodFilter, setPeriodFilter] = useState<SharedGoalPeriodFilter>(DEFAULT_GOAL_PERIOD_FILTER);
+    const [goalSearch, setGoalSearch] = useState('');
+    const [goalTrackingFilter, setGoalTrackingFilter] = useState<'ALL' | 'BY_FREQUENCY' | 'BY_QUANTITY'>('ALL');
+    const [goalSortKey, setGoalSortKey] = useState<'title' | 'periodType' | 'trackingType' | 'progress'>('title');
+    const [goalSortDir, setGoalSortDir] = useState<'asc' | 'desc'>('asc');
     const [taskFilters, setTaskFilters] = useState<{
         dueDate: TaskDueDateFilter;
         type: TaskTypeFilter;
         priority: TaskPriorityFilter;
         status: TaskStatusFilter;
     }>({ ...DEFAULT_TASK_FILTERS });
+    const [taskSearch, setTaskSearch] = useState('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [taskViewMode, setTaskViewMode] = useState<'grid' | 'list'>('list');
     const [taskSortBy, setTaskSortBy] = useState<TaskSortKey>('dueDate');
@@ -550,24 +572,70 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const selectedGoal = goals.find((g: any) => g.id === checkInGoalId);
 
     const filteredGoals = useMemo(() => {
-        if (periodFilter === 'ALL') return goals;
-        return goals.filter((goal: any) => goal.periodType === periodFilter);
-    }, [goals, periodFilter]);
+        const q = goalSearch.trim().toLowerCase();
+        return goals.filter((goal: any) => {
+            if (periodFilter !== 'ALL' && goal.periodType !== periodFilter) return false;
+            if (goalTrackingFilter !== 'ALL' && goal.trackingType !== goalTrackingFilter) return false;
+            if (q) {
+                const haystack = [goal.title, goal.description].filter(Boolean).join(' ').toLowerCase();
+                if (!haystack.includes(q)) return false;
+            }
+            return true;
+        });
+    }, [goals, periodFilter, goalSearch, goalTrackingFilter]);
 
-    const filteredTasks = useMemo(() =>
-        tasks.filter((task: any) => {
+    const sortedGoals = useMemo(() => {
+        return [...filteredGoals].sort((a, b) => {
+            let left: any;
+            let right: any;
+            switch (goalSortKey) {
+                case 'title': left = a.title?.toLowerCase() || ''; right = b.title?.toLowerCase() || ''; break;
+                case 'periodType': left = a.periodType || ''; right = b.periodType || ''; break;
+                case 'trackingType': left = a.trackingType || ''; right = b.trackingType || ''; break;
+                case 'progress':
+                    left = a.targetCount > 0 ? a.currentCount / a.targetCount : 0;
+                    right = b.targetCount > 0 ? b.currentCount / b.targetCount : 0;
+                    break;
+                default: left = ''; right = '';
+            }
+            const result = typeof left === 'number' && typeof right === 'number'
+                ? left - right
+                : String(left).localeCompare(String(right));
+            return goalSortDir === 'asc' ? result : -result;
+        });
+    }, [filteredGoals, goalSortKey, goalSortDir]);
+
+    function toggleGoalSort(key: typeof goalSortKey) {
+        if (goalSortKey === key) { setGoalSortDir(d => d === 'asc' ? 'desc' : 'asc'); return; }
+        setGoalSortKey(key);
+        setGoalSortDir('asc');
+    }
+
+    const filteredTasks = useMemo(() => {
+        const q = taskSearch.trim().toLowerCase();
+        return tasks.filter((task: any) => {
             if (taskFilters.type !== 'ALL' && task.taskType !== taskFilters.type) return false;
             if (taskFilters.priority !== 'ALL' && task.priority !== taskFilters.priority) return false;
             if (taskFilters.status !== 'ALL' && task.status !== taskFilters.status) return false;
 
             const dueRange = getTaskDueDateRange(taskFilters.dueDate);
-            if (!dueRange) return true;
-            if (!task.dueDate) return false;
+            if (dueRange) {
+                if (!task.dueDate) return false;
+                if (!isWithinInterval(new Date(task.dueDate), dueRange)) return false;
+            }
 
-            const dueDate = new Date(task.dueDate);
-            return isWithinInterval(dueDate, dueRange);
-        }),
-    [tasks, taskFilters]);
+            if (q) {
+                const haystack = [
+                    task.title, task.description, task.taskType, task.status,
+                    task.priority, task.expenseCategory, task.notes,
+                    task.user?.name,
+                ].filter(Boolean).join(' ').toLowerCase();
+                if (!haystack.includes(q)) return false;
+            }
+
+            return true;
+        });
+    }, [tasks, taskFilters, taskSearch]);
 
     const sortedTasks = useMemo(() => {
         const getValue = (task: any, key: TaskSortKey) => {
@@ -915,21 +983,35 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
 
             {activeTab === 'GOALS' ? (
                 <>
-                    <div className="flex items-center justify-between flex-wrap gap-3">
-                        <div className="flex items-center gap-2">
-                            <select className="input" value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value as SharedGoalPeriodFilter)}>
+                    <div className="card p-4">
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                            <div className="flex items-center gap-2">
+                                <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                                <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
+                                    <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
+                                    <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
+                                </div>
+                                <button className="btn-primary whitespace-nowrap" onClick={() => { setGoalForm({ ...goalEmptyForm }); setShowCreate(true); }}>
+                                    <Plus className="w-4 h-4" /> New Goal
+                                </button>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <input className="input text-sm" placeholder="Search goals..." value={goalSearch} onChange={(e) => setGoalSearch(e.target.value)} />
+                            <select className="input text-sm" value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value as SharedGoalPeriodFilter)}>
                                 {GOAL_PERIOD_FILTER_OPTIONS.map((option) => (
                                     <option key={option.value} value={option.value}>{option.label}</option>
                                 ))}
                             </select>
-                            <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
-                                <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
-                                <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
-                            </div>
+                            <select className="input text-sm" value={goalTrackingFilter} onChange={(e) => setGoalTrackingFilter(e.target.value as any)}>
+                                <option value="ALL">All Tracking Types</option>
+                                <option value="BY_FREQUENCY">Count-based</option>
+                                <option value="BY_QUANTITY">Amount-based</option>
+                            </select>
                         </div>
-                        <button className="btn-primary whitespace-nowrap" onClick={() => { setGoalForm({ ...goalEmptyForm }); setShowCreate(true); }}>
-                            <Plus className="w-4 h-4" /> New Goal
-                        </button>
                     </div>
 
                     {goalsLoading ? (
@@ -942,7 +1024,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                         </div>
                     ) : viewMode === 'grid' ? (
                         <div className="grid gap-4 md:grid-cols-2">
-                            {filteredGoals.map((goal: any) => {
+                            {sortedGoals.map((goal: any) => {
                                 const sharedOwnerName = getSharedOwnerName(goal, user?.id);
                                 const progressPct = goal.targetCount > 0 ? (goal.currentCount / goal.targetCount) * 100 : 0;
                                 const barPct = Math.min(100, progressPct);
@@ -958,18 +1040,18 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                             <div className="flex-1 min-w-0 pr-2">
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <h4 className="font-semibold" style={{ color: 'var(--color-text)' }}>{goal.title}</h4>
-                                                    <button
-                                                        type="button"
-                                                        className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
-                                                        onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { active: !goal.active } }); }}
-                                                    >
-                                                        {goal.active ? 'ENABLED' : 'DISABLED'}
-                                                    </button>
                                                     {goal.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                                                     {goal.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                                                 </div>
                                                 {goal.description && <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>{goal.description}</p>}
                                                 <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                    <button
+                                                        type="button"
+                                                        className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
+                                                        onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { active: !goal.active } }); }}
+                                                    >
+                                                        {goal.active ? 'ENABLED' : 'DISABLED'}
+                                                    </button>
                                                     <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-100" style={{ color: 'var(--color-text-secondary)' }}>{goal.trackingType === 'BY_FREQUENCY' ? 'Count-based' : 'Amount-based'}</span>
                                                     <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{goal.periodType}</span>
                                                 </div>
@@ -978,18 +1060,11 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-1 flex-shrink-0">
-                                                <button
-                                                    type="button"
-                                                    className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
-                                                    onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { active: !goal.active } }); }}
-                                                >
-                                                    {goal.active ? 'ENABLED' : 'DISABLED'}
-                                                </button>
-                                                <button onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } }); }} className={`p-1 transition-colors ${goal.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); openEditGoal(goal); }} className="p-1 hover:text-indigo-500 transition-colors" title="Edit goal"><Pencil className="w-3.5 h-3.5" /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); openDuplicateGoal(goal); }} className="p-1 hover:text-sky-500 transition-colors" title="Duplicate goal"><Copy className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } }); }} className={`p-1 transition-colors ${goal.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); openEditGoal(goal); }} className="p-1 text-gray-400 hover:text-gray-600 transition-colors" title="Edit goal"><Pencil className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); openDuplicateGoal(goal); }} className="p-1 text-blue-500 hover:text-blue-600 transition-colors" title="Duplicate goal"><Copy className="w-3.5 h-3.5" /></button>
                                                 <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Recalculate count from actual check-in history?')) resetMut.mutate(goal.id); }} className="p-1 hover:text-blue-500 transition-colors" title="Fix/recalculate count" disabled={resetMut.isPending}><span className="text-xs leading-none">🔄</span></button>
-                                                <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this goal and ALL its check-ins? This cannot be undone.')) deleteGoalMut.mutate(goal.id); }} className="p-1 hover:text-red-500 transition-colors" title="Delete goal"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this goal and ALL its check-ins? This cannot be undone.')) deleteGoalMut.mutate(goal.id); }} className="p-1 text-red-500 hover:text-red-600 transition-colors" title="Delete goal"><Trash2 className="w-3.5 h-3.5" /></button>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 mb-3">
@@ -1012,55 +1087,103 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                             })}
                         </div>
                     ) : (
-                        <div className="card divide-y">
-                            {filteredGoals.map((goal: any) => {
-                                const sharedOwnerName = getSharedOwnerName(goal, user?.id);
-                                const progressPct = goal.targetCount > 0 ? (goal.currentCount / goal.targetCount) * 100 : 0;
-                                const barPct = Math.min(100, progressPct);
-                                const completed = goal.currentCount >= goal.targetCount;
-                                const overachieved = progressPct > 100;
-                                const notifText = formatNotification(goal);
-                                return (
-                                    <div key={goal.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => openEditGoal(goal)}>
-                                        <div className="w-44 flex-shrink-0">
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                <span className="font-medium text-sm truncate" style={{ color: 'var(--color-text)' }}>{goal.title}</span>
-                                                <button
-                                                    type="button"
-                                                    className={`text-[10px] font-bold px-2 py-1 rounded transition-colors flex-shrink-0 ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
-                                                    onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { active: !goal.active } }); }}
-                                                >
-                                                    {goal.active ? 'ENABLED' : 'DISABLED'}
+                        <div className="card overflow-hidden">
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleGoalSort('title')}>
+                                                    Title {goalSortKey === 'title' ? (goalSortDir === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />) : <ArrowUp className="w-3.5 h-3.5 opacity-30" />}
                                                 </button>
-                                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 font-medium capitalize flex-shrink-0" style={{ color: 'var(--color-text-secondary)' }}>{goal.periodType.charAt(0) + goal.periodType.slice(1).toLowerCase()}</span>
-                                                {goal.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold flex-shrink-0">Shared</span>}
-                                                {goal.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold flex-shrink-0">Pinned</span>}
-                                            </div>
-                                            {sharedOwnerName && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
-                                        </div>
-                                        <div className="w-56 flex-shrink-0">
-                                            <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>{goal.description || '—'}</p>
-                                        </div>
-                                        <div className="w-48 flex-shrink-0 flex items-center gap-2">
-                                            <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                                                <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${barPct}%`, background: overachieved ? 'linear-gradient(90deg, #059669, #34d399)' : completed ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #4f46e5, #7c3aed)' }} />
-                                            </div>
-                                            <span className="text-xs whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }}>{goal.currentCount}/{goal.targetCount} {goal.unit}</span>
-                                            <span className="text-xs font-semibold whitespace-nowrap" style={{ color: overachieved ? '#7c3aed' : completed ? '#059669' : 'var(--color-primary)' }}>{Math.round(progressPct)}%</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            {notifText && <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}><Bell className="w-3 h-3 flex-shrink-0" />{notifText}</span>}
-                                        </div>
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                            <button onClick={(e) => { e.stopPropagation(); openCheckIn(goal.id); }} disabled={!goal.active} className="p-1.5 rounded-md hover:bg-emerald-50 hover:text-emerald-600 transition-colors" title="Check-in"><Check className="w-3.5 h-3.5" /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } }); }} className={`p-1.5 rounded-md transition-colors ${goal.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); openEditGoal(goal); }} className="p-1.5 rounded-md hover:text-indigo-500 transition-colors" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); openDuplicateGoal(goal); }} className="p-1.5 rounded-md hover:text-sky-500 transition-colors" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this goal and ALL its check-ins? This cannot be undone.')) deleteGoalMut.mutate(goal.id); }} className="p-1.5 rounded-md hover:text-red-500 transition-colors" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                            </th>
+                                            <th>
+                                                <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleGoalSort('periodType')}>
+                                                    Reset Period {goalSortKey === 'periodType' ? (goalSortDir === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />) : <ArrowUp className="w-3.5 h-3.5 opacity-30" />}
+                                                </button>
+                                            </th>
+                                            <th>
+                                                <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleGoalSort('trackingType')}>
+                                                    Track By {goalSortKey === 'trackingType' ? (goalSortDir === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />) : <ArrowUp className="w-3.5 h-3.5 opacity-30" />}
+                                                </button>
+                                            </th>
+                                            <th>
+                                                <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleGoalSort('progress')}>
+                                                    Progress {goalSortKey === 'progress' ? (goalSortDir === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />) : <ArrowUp className="w-3.5 h-3.5 opacity-30" />}
+                                                </button>
+                                            </th>
+                                            <th>Alert</th>
+                                            <th className="text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {sortedGoals.map((goal: any) => {
+                                            const sharedOwnerName = getSharedOwnerName(goal, user?.id);
+                                            const progressPct = goal.targetCount > 0 ? (goal.currentCount / goal.targetCount) * 100 : 0;
+                                            const barPct = Math.min(100, progressPct);
+                                            const completed = goal.currentCount >= goal.targetCount;
+                                            const overachieved = progressPct > 100;
+                                            const notifText = formatNotification(goal);
+                                            return (
+                                                <tr key={goal.id} className="cursor-pointer hover:bg-gray-50" onClick={() => openEditGoal(goal)}>
+                                                    <td className="px-3 py-2.5">
+                                                        <div className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{goal.title}</div>
+                                                        <div className="flex items-center gap-1 mt-1 flex-wrap">
+                                                            <button
+                                                                type="button"
+                                                                className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
+                                                                onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { active: !goal.active } }); }}
+                                                            >
+                                                                {goal.active ? 'ENABLED' : 'DISABLED'}
+                                                            </button>
+                                                            {goal.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
+                                                            {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
+                                                        </div>
+                                                        {goal.description && <p className="text-xs mt-0.5 truncate max-w-xs" style={{ color: 'var(--color-text-secondary)' }}>{goal.description}</p>}
+                                                    </td>
+                                                    <td className="px-3 py-2.5">
+                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 font-medium capitalize" style={{ color: 'var(--color-text-secondary)' }}>
+                                                            {goal.periodType.charAt(0) + goal.periodType.slice(1).toLowerCase()}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-2.5">
+                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium">
+                                                            {goal.trackingType === 'BY_FREQUENCY' ? 'Count-based' : 'Amount-based'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-2.5">
+                                                        <div className="flex items-center gap-2 min-w-[160px]">
+                                                            <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                                                                <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${barPct}%`, background: overachieved ? 'linear-gradient(90deg, #059669, #34d399)' : completed ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #4f46e5, #7c3aed)' }} />
+                                                            </div>
+                                                            <span className="text-xs whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }}>{goal.currentCount}/{goal.targetCount} {goal.unit}</span>
+                                                            <span className="text-xs font-semibold whitespace-nowrap" style={{ color: overachieved ? '#7c3aed' : completed ? '#059669' : 'var(--color-primary)' }}>{Math.round(progressPct)}%</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-3 py-2.5">
+                                                        {notifText ? (
+                                                            <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+                                                                <Bell className="w-3 h-3 text-red-500 flex-shrink-0" />{notifText}
+                                                            </span>
+                                                        ) : (
+                                                            <Bell className="w-3 h-3 text-gray-300" />
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-2.5">
+                                                        <div className="flex items-center gap-1 justify-end">
+                                                            <button onClick={(e) => { e.stopPropagation(); openCheckIn(goal.id); }} disabled={!goal.active} className="p-1 text-green-600 hover:text-green-700 disabled:opacity-30" title="Check-in"><Check className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } }); }} className={`p-1 ${goal.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} title="Pin"><Pin className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); openEditGoal(goal); }} className="p-1 text-gray-400 hover:text-gray-600" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); openDuplicateGoal(goal); }} className="p-1 text-blue-500 hover:text-blue-600" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this goal and ALL its check-ins? This cannot be undone.')) deleteGoalMut.mutate(goal.id); }} className="p-1 text-red-500 hover:text-red-600" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
                 </>
@@ -1072,6 +1195,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                             <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
                         </div>
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
+                            <input className="input text-sm" placeholder="Search tasks..." value={taskSearch} onChange={(e) => setTaskSearch(e.target.value)} />
                             <select className="input text-sm min-w-[180px]" value={taskFilters.dueDate} onChange={(e) => setTaskFilters((current) => ({ ...current, dueDate: e.target.value as TaskDueDateFilter }))}>
                                 {TASK_DUE_DATE_FILTER_OPTIONS.map((option) => (
                                     <option key={option.value} value={option.value}>{option.label}</option>
@@ -1092,29 +1216,6 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                     <option key={option.value} value={option.value}>{option.label}</option>
                                 ))}
                             </select>
-                            {taskViewMode === 'grid' ? (
-                                <select className="input text-sm min-w-[180px]" value={taskGridSort} onChange={(e) => setTaskGridSort(e.target.value as TaskGridSortOption)}>
-                                    <option value="TITLE_ASC">Sort: Name (A-Z)</option>
-                                    <option value="TITLE_DESC">Sort: Name (Z-A)</option>
-                                    <option value="DUE_ASC">Sort: Due Date ASC</option>
-                                    <option value="DUE_DESC">Sort: Due Date DESC</option>
-                                </select>
-                            ) : (
-                                <select className="input text-sm min-w-[180px]" value={getTaskListSortValue()} onChange={(e) => handleTaskListSortChange(e.target.value as TaskListSortOption)}>
-                                    <option value="TITLE_ASC">Sort: Name (A-Z)</option>
-                                    <option value="TITLE_DESC">Sort: Name (Z-A)</option>
-                                    <option value="TYPE_ASC">Sort: Type (A-Z)</option>
-                                    <option value="TYPE_DESC">Sort: Type (Z-A)</option>
-                                    <option value="STATUS_ASC">Sort: Status (A-Z)</option>
-                                    <option value="STATUS_DESC">Sort: Status (Z-A)</option>
-                                    <option value="PRIORITY_ASC">Sort: Priority (ASC)</option>
-                                    <option value="PRIORITY_DESC">Sort: Priority (DESC)</option>
-                                    <option value="DUE_ASC">Sort: Due Date ASC</option>
-                                    <option value="DUE_DESC">Sort: Due Date DESC</option>
-                                    <option value="CALENDAR_ASC">Sort: Calendar (ASC)</option>
-                                    <option value="CALENDAR_DESC">Sort: Calendar (DESC)</option>
-                                </select>
-                            )}
                         </div>
                     </div>
 
@@ -1156,7 +1257,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                         </th>
                                         <th className="px-3 py-2.5 font-semibold text-xs hidden lg:table-cell" style={{ color: 'var(--color-text-secondary)' }}>
                                             <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleTaskSort('dueDate')}>
-                                                Due {renderTaskSortIcon('dueDate')}
+                                                Due Date {renderTaskSortIcon('dueDate')}
                                             </button>
                                         </th>
                                         <th className="px-3 py-2.5 font-semibold text-xs hidden xl:table-cell" style={{ color: 'var(--color-text-secondary)' }}>
@@ -1180,24 +1281,19 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                             <tr key={task.id} className={`border-b last:border-0 hover:bg-gray-50 transition-colors group ${canManage ? 'cursor-pointer' : ''}`} style={{ borderColor: 'var(--color-border)' }} onClick={() => canManage && openEditTask(task)}>
                                                 <td className="px-4 py-2.5">
                                                     <div className="flex items-center gap-2">
-                                                        {canManage && !isDone && !isArchived ? (
-                                                            <button onClick={(e) => { e.stopPropagation(); completeTaskMut.mutate(task.id); }} className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 hover:border-green-500 hover:bg-green-50" style={{ borderColor: 'var(--color-border)' }} title="Mark done" />
-                                                        ) : (
-                                                            <div className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center" style={{ background: isDone ? '#d1fae5' : 'var(--color-border)' }}>
-                                                                {isDone && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
-                                                            </div>
-                                                        )}
                                                         <span className={`font-medium ${isDone || isArchived ? 'line-through opacity-50' : ''}`} style={{ color: 'var(--color-text)' }}>{task.title}</span>
-                                                        {task.pinToDashboard && <Pin className="w-3 h-3 text-amber-500 flex-shrink-0" />}
                                                     </div>
                                                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${dueBadge.tone === 'danger' ? 'bg-red-50 text-red-600' : dueBadge.tone === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
                                                             {dueBadge.label}
                                                         </span>
-                                                        {formatNotification(task) && (
-                                                            <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-purple-50 text-purple-600">
-                                                                {formatNotification(task)}
-                                                            </span>
+                                                        {task.notificationEnabled && (
+                                                            <>
+                                                                <Bell className="w-3 h-3 flex-shrink-0 text-red-500" />
+                                                                {formatTaskNotificationBadges(task).map((badge, i) => (
+                                                                    <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded bg-purple-50 text-purple-600">{badge}</span>
+                                                                ))}
+                                                            </>
                                                         )}
                                                         {hasAutoExpense && (
                                                             <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-600">
@@ -1241,12 +1337,16 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                 </td>
                                                 <td className="px-3 py-2.5">
                                                     {canManage && (
-                                                        <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button onClick={(e) => { e.stopPropagation(); openEditTask(task); }} className="p-1 hover:text-indigo-500" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
-                                                            {isDone || isArchived ? (
-                                                                <button className="p-1 hover:text-blue-500 text-xs" onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: task.id, body: { status: 'PLANNED' } }); }} title="Reopen"><RefreshCcw className="w-3.5 h-3.5" /></button>
-                                                            ) : null}
-                                                            <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this task?')) deleteTaskMut.mutate(task.id); }} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                        <div className="flex items-center gap-1 justify-end">
+                                                            {!isDone && !isArchived ? (
+                                                                <button onClick={(e) => { e.stopPropagation(); completeTaskMut.mutate(task.id); }} className="p-1 text-xs font-medium px-2 rounded text-green-600 bg-green-50 hover:bg-green-100" title="Mark done">Done</button>
+                                                            ) : (
+                                                                <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: task.id, body: { status: 'PLANNED' } }); }} className="p-1 text-xs font-medium px-2 rounded text-orange-600 bg-orange-50 hover:bg-orange-100" title="Reopen">Reopen</button>
+                                                            )}
+                                                            <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: task.id, body: { pinToDashboard: !task.pinToDashboard } }); }} className={`p-1 ${task.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} title="Pin"><Pin className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); openEditTask(task); }} className="p-1 text-gray-400 hover:text-gray-600" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); openDuplicateTask(task); }} className="p-1 text-blue-500 hover:text-blue-600" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this task?')) deleteTaskMut.mutate(task.id); }} className="p-1 text-red-500 hover:text-red-600" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
                                                         </div>
                                                     )}
                                                 </td>
@@ -1294,10 +1394,13 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                     <span className={`text-[10px] font-bold px-2 py-1 rounded ${dueBadge.tone === 'danger' ? 'bg-red-50 text-red-600' : dueBadge.tone === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
                                                         {dueBadge.label}
                                                     </span>
-                                                    {notifText && (
-                                                        <span className="text-[10px] font-medium px-2 py-1 rounded bg-purple-50 text-purple-600">
-                                                            {notifText}
-                                                        </span>
+                                                    {task.notificationEnabled && (
+                                                        <>
+                                                            <Bell className="w-3 h-3 flex-shrink-0 text-red-500" />
+                                                            {formatTaskNotificationBadges(task).map((badge, i) => (
+                                                                <span key={i} className="text-[10px] font-medium px-2 py-1 rounded bg-purple-50 text-purple-600">{badge}</span>
+                                                            ))}
+                                                        </>
                                                     )}
                                                     {hasAutoExpense && (
                                                         <span className="text-[10px] font-medium px-2 py-1 rounded bg-emerald-50 text-emerald-600">
@@ -1372,11 +1475,11 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                 <button className="btn-primary text-xs py-1.5 px-3" onClick={() => completeTaskMut.mutate(task.id)} disabled={completeTaskMut.isPending}>
                                                     <CheckCircle2 className="w-3.5 h-3.5" /> Mark Done
                                                 </button>
-                                            ) : (
-                                                <button className="btn-ghost text-xs py-1.5 px-3" onClick={() => updateTaskMut.mutate({ id: task.id, body: { status: 'PLANNED' } })}>
-                                                    Reopen
+                                            ) : canManage ? (
+                                                <button className="text-xs py-1.5 px-3 rounded-lg font-medium inline-flex items-center gap-1.5 transition-colors" style={{ background: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa' }} onClick={() => updateTaskMut.mutate({ id: task.id, body: { status: 'PLANNED' } })}>
+                                                    <RefreshCcw className="w-3.5 h-3.5" /> Reopen
                                                 </button>
-                                            )}
+                                            ) : null}
                                         </div>
                                     </div>
                                 );
@@ -1452,8 +1555,8 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             )}
 
             {checkInGoalId && selectedGoal && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/40 p-4 pb-24 sm:items-center sm:pb-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setCheckInGoalId(null); }}>
-                    <div className="card w-full max-w-sm animate-slide-up overflow-y-auto p-6 max-h-[calc(100dvh-2rem)]" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 pb-24 sm:items-center sm:pb-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setCheckInGoalId(null); }}>
+                    <div className="card w-full max-w-sm animate-slide-up overflow-y-auto p-6 max-h-[calc(100dvh-8rem)]" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-1">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Check-in</h3>
                             <button onClick={() => setCheckInGoalId(null)}><X className="w-5 h-5" /></button>

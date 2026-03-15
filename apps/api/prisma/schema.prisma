@@ -675,6 +675,7 @@ model Expense {
   scope       ExpenseScope @default(PERSONAL)
   note        String?
   recurring   Boolean      @default(false)
+  sourceModule String?
   userId      String
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -982,9 +983,16 @@ model HealthLog {
   description     String?
   cost            Float?
   prescription    String?
-  nextCheckupDate       DateTime?
-  linkedExpenseId       String?
-  linkedCalendarEventId String?
+  nextCheckupDate           DateTime?
+  linkedExpenseId           String?
+  linkedCalendarEventId     String?
+  notificationEnabled       Boolean      @default(false)
+  reminderOffsetValue       Int?
+  reminderOffsetUnit        ReminderUnit?
+  notificationDate          DateTime?
+  notificationTime          String?
+  lastNotificationSentAt    DateTime?
+  notificationCooldownHours Int          @default(24)
   userId                String
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt

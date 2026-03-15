@@ -13,7 +13,7 @@ export type SharedTaskFilters = {
 };
 
 export const DEFAULT_TASK_FILTERS: SharedTaskFilters = {
-    dueDate: 'ALL',
+    dueDate: 'THIS_MONTH',
     type: 'ALL',
     priority: 'ALL',
     status: 'ALL',

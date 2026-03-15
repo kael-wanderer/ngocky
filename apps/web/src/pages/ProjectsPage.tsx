@@ -1,14 +1,42 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, Trash2, Pencil, RefreshCw, Copy, Pin } from 'lucide-react';
+import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, Trash2, Pencil, RefreshCw, Copy, Pin, Filter, ArrowUp, ArrowDown, ChevronsUpDown, Bell } from 'lucide-react';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
-import { format } from 'date-fns';
+import { format, startOfToday } from 'date-fns';
 import { useAuthStore } from '../stores/auth';
 import { useSearchParams } from 'react-router-dom';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+
+function getTaskDeadlineBadge(task: any) {
+    if (!task.deadline) return { label: 'No deadline', tone: 'neutral' as const };
+    const d = new Date(task.deadline);
+    const today = startOfToday();
+    const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    if (dDay < today && task.status !== 'DONE') return { label: `Overdue · ${format(d, 'MMM d, yyyy')}`, tone: 'danger' as const };
+    if (dDay.getTime() === today.getTime()) return { label: `Today · ${format(d, 'MMM d')}`, tone: 'warning' as const };
+    return { label: format(d, 'MMM d, yyyy'), tone: 'neutral' as const };
+}
+
+function formatProjectTaskNotification(item: any): string[] {
+    if (!item.notificationEnabled) return [];
+    const time = item.notificationTime || '';
+    if (item.reminderOffsetUnit === 'ON_DATE' && item.notificationDate) {
+        const d = new Date(item.notificationDate);
+        return [format(d, 'MMM dd, yyyy'), ...(time ? [time] : [])];
+    }
+    if (item.reminderOffsetUnit === 'HOURS') {
+        const label = `${item.reminderOffsetValue} hour${item.reminderOffsetValue !== 1 ? 's' : ''} before`;
+        return [label, ...(time ? [time] : [])];
+    }
+    if (item.reminderOffsetUnit === 'DAYS') {
+        const label = `${item.reminderOffsetValue} day${item.reminderOffsetValue !== 1 ? 's' : ''} before`;
+        return [label, ...(time ? [time] : [])];
+    }
+    return [];
+}
 
 const STATUS_COLS = ['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED'] as const;
 const statusLabels: Record<string, string> = { PLANNED: 'Planned', IN_PROGRESS: 'In Progress', DONE: 'Done', ARCHIVED: 'Archived' };
@@ -151,7 +179,11 @@ export default function ProjectsPage() {
     const taskIdParam = searchParams.get('taskId');
     const selectedBoardId = boardIdParam;
     const [boardListView, setBoardListView] = useState<'grid' | 'list'>('grid');
+    const [boardListSortKey, setBoardListSortKey] = useState<string>('');
+    const [boardListSortDir, setBoardListSortDir] = useState<'asc' | 'desc'>('asc');
     const [view, setView] = useState<'kanban' | 'list'>('kanban');
+    const [taskListSortKey, setTaskListSortKey] = useState<string>('');
+    const [taskListSortDir, setTaskListSortDir] = useState<'asc' | 'desc'>('asc');
     const [showCreateBoard, setShowCreateBoard] = useState(false);
     const [editingBoard, setEditingBoard] = useState<any>(null);
     const [showCreateTask, setShowCreateTask] = useState(false);
@@ -159,8 +191,15 @@ export default function ProjectsPage() {
     const [optimisticTasks, setOptimisticTasks] = useState<any[] | null>(null);
     const [openingBoardId, setOpeningBoardId] = useState<string | null>(null);
 
+    const [boardSearch, setBoardSearch] = useState('');
+    const [boardDateFilter, setBoardDateFilter] = useState<'ALL' | 'THIS_WEEK' | 'THIS_MONTH' | 'LAST_MONTH' | 'THIS_YEAR'>('ALL');
+    const [boardTypeFilter, setBoardTypeFilter] = useState<'ALL' | 'PERSONAL' | 'WORK' | 'FOR_FUN' | 'STUDY'>('ALL');
     const [boardStatusFilter, setBoardStatusFilter] = useState<'ALL' | 'PLAN' | 'WORKING' | 'COMPLETED'>('ALL');
-    const [boardSort, setBoardSort] = useState<'default' | 'name_asc' | 'updated_desc'>('default');
+    const [taskSearch, setTaskSearch] = useState('');
+    const [taskTypeFilter, setTaskTypeFilter] = useState<'ALL' | 'TASK' | 'BUG' | 'FEATURE' | 'STORY' | 'EPIC'>('ALL');
+    const [taskPriorityFilter, setTaskPriorityFilter] = useState<'ALL' | 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'>('ALL');
+    const [taskStatusFilter, setTaskStatusFilter] = useState<'ALL' | 'PLANNED' | 'IN_PROGRESS' | 'DONE' | 'ARCHIVED'>('ALL');
+    const [hideDone, setHideDone] = useState(false);
     const [boardForm, setBoardForm] = useState({ name: '', description: '', type: 'PERSONAL', boardStatus: 'PLAN', isShared: false, pinToDashboard: false });
     const [taskForm, setTaskForm] = useState({ ...emptyTaskForm });
     const todayStart = new Date();
@@ -267,12 +306,44 @@ export default function ProjectsPage() {
     };
 
 
-    const visibleBoards = (() => {
-        const filtered = boardStatusFilter === 'ALL' ? (boards || []) : (boards || []).filter((b: any) => b.boardStatus === boardStatusFilter);
-        if (boardSort === 'name_asc') return [...filtered].sort((a: any, b: any) => a.name.localeCompare(b.name));
-        if (boardSort === 'updated_desc') return [...filtered].sort((a: any, b: any) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime());
-        return filtered;
-    })();
+    const visibleBoards = useMemo(() => {
+        const q = boardSearch.trim().toLowerCase();
+        const now = new Date();
+        return (boards || []).filter((b: any) => {
+            if (boardStatusFilter !== 'ALL' && b.boardStatus !== boardStatusFilter) return false;
+            if (boardTypeFilter !== 'ALL' && b.type !== boardTypeFilter) return false;
+            if (boardDateFilter !== 'ALL') {
+                const d = new Date(b.createdAt);
+                if (boardDateFilter === 'THIS_WEEK') {
+                    const start = new Date(now); start.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1)); start.setHours(0,0,0,0);
+                    if (d < start) return false;
+                } else if (boardDateFilter === 'THIS_MONTH') {
+                    if (d.getFullYear() !== now.getFullYear() || d.getMonth() !== now.getMonth()) return false;
+                } else if (boardDateFilter === 'LAST_MONTH') {
+                    const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    if (d.getFullYear() !== lm.getFullYear() || d.getMonth() !== lm.getMonth()) return false;
+                } else if (boardDateFilter === 'THIS_YEAR') {
+                    if (d.getFullYear() !== now.getFullYear()) return false;
+                }
+            }
+            if (q) {
+                const hay = [b.name, b.description, b.type, b.boardStatus].filter(Boolean).join(' ').toLowerCase();
+                if (!hay.includes(q)) return false;
+            }
+            return true;
+        }).sort((a: any, b: any) => {
+            if (!boardListSortKey) return 0;
+            let valA: any, valB: any;
+            if (boardListSortKey === 'name') { valA = a.name || ''; valB = b.name || ''; }
+            else if (boardListSortKey === 'description') { valA = a.description || ''; valB = b.description || ''; }
+            else if (boardListSortKey === 'tasks') { valA = a._count?.tasks || 0; valB = b._count?.tasks || 0; }
+            else if (boardListSortKey === 'type') { valA = a.type || ''; valB = b.type || ''; }
+            else if (boardListSortKey === 'updated') { valA = new Date(a.updatedAt).getTime(); valB = new Date(b.updatedAt).getTime(); }
+            else if (boardListSortKey === 'status') { valA = a.boardStatus || ''; valB = b.boardStatus || ''; }
+            const cmp = typeof valA === 'number' ? valA - valB : String(valA).localeCompare(String(valB));
+            return boardListSortDir === 'asc' ? cmp : -cmp;
+        });
+    }, [boards, boardSearch, boardDateFilter, boardTypeFilter, boardStatusFilter, boardListSortKey, boardListSortDir]);
 
     const refreshBoard = () => {
         if (!selectedBoardId) return;
@@ -325,6 +396,21 @@ export default function ProjectsPage() {
     const tasks = optimisticTasks || activeBoard?.tasks || [];
     const activeBoardSharedOwnerName = getSharedOwnerName(activeBoard, user?.id);
 
+    const filteredTasks = useMemo(() => {
+        const q = taskSearch.trim().toLowerCase();
+        return tasks.filter((t: any) => {
+            if (taskTypeFilter !== 'ALL' && t.type !== taskTypeFilter) return false;
+            if (taskPriorityFilter !== 'ALL' && t.priority !== taskPriorityFilter) return false;
+            if (taskStatusFilter !== 'ALL' && t.status !== taskStatusFilter) return false;
+            if (hideDone && (t.status === 'DONE' || t.status === 'ARCHIVED')) return false;
+            if (q) {
+                const hay = [t.title, t.description, t.category, t.type, t.status, t.priority].filter(Boolean).join(' ').toLowerCase();
+                if (!hay.includes(q)) return false;
+            }
+            return true;
+        });
+    }, [tasks, taskSearch, taskTypeFilter, taskPriorityFilter, taskStatusFilter, hideDone]);
+
     const openTaskEditor = (task: any) => {
         setEditingTask(task);
         setTaskForm(buildTaskForm(task));
@@ -366,17 +452,6 @@ export default function ProjectsPage() {
                         <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Project Boards</h2>
                     </div>
                     <div className="flex items-center gap-2">
-                        <select className="input" value={boardStatusFilter} onChange={(e) => setBoardStatusFilter(e.target.value as any)}>
-                            <option value="ALL">All</option>
-                            <option value="PLAN">Plan</option>
-                            <option value="WORKING">Working</option>
-                            <option value="COMPLETED">Completed</option>
-                        </select>
-                        <select className="input" value={boardSort} onChange={(e) => setBoardSort(e.target.value as any)}>
-                            <option value="default">Default order</option>
-                            <option value="name_asc">Name A–Z</option>
-                            <option value="updated_desc">Last updated</option>
-                        </select>
                         <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
                             <button onClick={() => setBoardListView('grid')} className={`p-1.5 rounded-md transition-colors ${boardListView === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
                             <button onClick={() => setBoardListView('list')} className={`p-1.5 rounded-md transition-colors ${boardListView === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
@@ -385,110 +460,153 @@ export default function ProjectsPage() {
                     </div>
                 </div>
 
+                <div className="card p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                        <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                        <input className="input text-sm" placeholder="Search projects..." value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                        <select className="input text-sm" value={boardDateFilter} onChange={(e) => setBoardDateFilter(e.target.value as any)}>
+                            <option value="ALL">All Time</option>
+                            <option value="THIS_WEEK">This Week</option>
+                            <option value="THIS_MONTH">This Month</option>
+                            <option value="LAST_MONTH">Last Month</option>
+                            <option value="THIS_YEAR">This Year</option>
+                        </select>
+                        <select className="input text-sm" value={boardTypeFilter} onChange={(e) => setBoardTypeFilter(e.target.value as any)}>
+                            <option value="ALL">All Types</option>
+                            <option value="PERSONAL">Personal</option>
+                            <option value="WORK">Work</option>
+                            <option value="FOR_FUN">For Fun</option>
+                            <option value="STUDY">Study</option>
+                        </select>
+                        <select className="input text-sm" value={boardStatusFilter} onChange={(e) => setBoardStatusFilter(e.target.value as any)}>
+                            <option value="ALL">All Statuses</option>
+                            <option value="PLAN">Plan</option>
+                            <option value="WORKING">Working</option>
+                            <option value="COMPLETED">Completed</option>
+                        </select>
+                    </div>
+                </div>
+
                 {boardsLoading ? (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {[...Array(3)].map((_, i) => <div key={i} className="card h-32 animate-pulse bg-gray-100" />)}
                     </div>
                 ) : (
-                    <div className={boardListView === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-4' : 'card divide-y overflow-hidden'}>
-                        {visibleBoards?.map((b: any) => (
-                            boardListView === 'grid' ? (
-                                /* ── Grid card ── */
-                                (() => {
-                                    const sharedOwnerName = getSharedOwnerName(b, user?.id);
-                                    return (
-                                        <div
-                                            key={b.id}
-                                            className="card p-5 transition-all group hover:shadow-lg cursor-pointer"
-                                            onMouseEnter={() => {
-                                                qc.prefetchQuery({
-                                                    queryKey: ['project_board', b.id],
-                                                    queryFn: async () => (await api.get(`/projects/${b.id}`)).data.data,
-                                                });
-                                            }}
-                                            onClick={() => openBoard(b.id)}
-                                        >
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h3 className="font-bold text-lg" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
-                                                <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
-                                                    <button onClick={(e) => { e.stopPropagation(); updateBoardMut.mutate({ id: b.id, data: { pinToDashboard: !b.pinToDashboard } }); }} className={`p-1 ${b.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin board"><Pin className="w-4 h-4" /></button>
-                                                    <button onClick={(e) => { e.stopPropagation(); setBoardForm({ name: b.name || '', description: b.description || '', type: b.type || 'PERSONAL', boardStatus: b.boardStatus || 'PLAN', isShared: !!b.isShared, pinToDashboard: !!b.pinToDashboard }); setEditingBoard(b); }} className="p-1 hover:text-indigo-500" title="Edit board"><Pencil className="w-4 h-4" /></button>
-                                                    {b.ownerId === user?.id && <button onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id, b.name); }} className="p-1 hover:text-red-500" title="Delete board"><Trash2 className="w-4 h-4" /></button>}
-                                                </div>
+                    <>{boardListView === 'grid' ? (
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {visibleBoards?.map((b: any) => {
+                                const sharedOwnerName = getSharedOwnerName(b, user?.id);
+                                return (
+                                    <div
+                                        key={b.id}
+                                        className="card p-5 transition-all group hover:shadow-lg cursor-pointer"
+                                        onMouseEnter={() => { qc.prefetchQuery({ queryKey: ['project_board', b.id], queryFn: async () => (await api.get(`/projects/${b.id}`)).data.data }); }}
+                                        onClick={() => openBoard(b.id)}
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="font-bold text-lg" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
+                                            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
+                                                <button onClick={(e) => { e.stopPropagation(); updateBoardMut.mutate({ id: b.id, data: { pinToDashboard: !b.pinToDashboard } }); }} className={`p-1 ${b.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin board"><Pin className="w-4 h-4" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); setBoardForm({ name: b.name || '', description: b.description || '', type: b.type || 'PERSONAL', boardStatus: b.boardStatus || 'PLAN', isShared: !!b.isShared, pinToDashboard: !!b.pinToDashboard }); setEditingBoard(b); }} className="p-1 hover:text-indigo-500" title="Edit board"><Pencil className="w-4 h-4" /></button>
+                                                {b.ownerId === user?.id && <button onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id, b.name); }} className="p-1 hover:text-red-500" title="Delete board"><Trash2 className="w-4 h-4" /></button>}
                                             </div>
-                                            <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>{b.description || 'No description provided.'}</p>
-                                            <div className="space-y-2 mt-auto pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{b._count?.tasks || 0} tasks</span>
-                                                        {b.hasOverdueTasks && (
-                                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-700">
-                                                                Overdue{b.overdueTaskCount ? ` (${b.overdueTaskCount})` : ''}
-                                                            </span>
-                                                        )}
-                                                        {b.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
-                                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{String(b.type || 'PERSONAL').replace('_', ' ')}</span>
-                                                        {b.boardStatus && <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${boardStatusColors[b.boardStatus]}20`, color: boardStatusColors[b.boardStatus] }}>{boardStatusLabels[b.boardStatus]}</span>}
-                                                        {b.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
+                                        </div>
+                                        <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-text-secondary)' }}>{b.description || 'No description provided.'}</p>
+                                        <div className="space-y-2 mt-auto pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{b._count?.tasks || 0} tasks</span>
+                                                    {b.hasOverdueTasks && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-700">Overdue{b.overdueTaskCount ? ` (${b.overdueTaskCount})` : ''}</span>}
+                                                    {b.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
+                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{String(b.type || 'PERSONAL').replace('_', ' ')}</span>
+                                                    {b.boardStatus && <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${boardStatusColors[b.boardStatus]}20`, color: boardStatusColors[b.boardStatus] }}>{boardStatusLabels[b.boardStatus]}</span>}
+                                                    {b.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
+                                                </div>
+                                                <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>Updated {format(new Date(b.updatedAt), 'MMM d')}</span>
+                                            </div>
+                                            {sharedOwnerName && <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="card overflow-hidden">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b text-left" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
+                                        {([
+                                            { key: 'name', label: 'Name' },
+                                            { key: 'description', label: 'Description' },
+                                            { key: 'tasks', label: 'Tasks' },
+                                            { key: 'type', label: 'Type' },
+                                            { key: 'updated', label: 'Updated' },
+                                            { key: 'status', label: 'Status' },
+                                        ] as const).map(({ key, label }) => {
+                                            const active = boardListSortKey === key;
+                                            return (
+                                                <th key={key} className="px-4 py-2.5 font-semibold text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                                    <button type="button" className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity" style={{ color: active ? 'var(--color-primary)' : undefined }}
+                                                        onClick={() => { if (boardListSortKey === key) setBoardListSortDir(d => d === 'asc' ? 'desc' : 'asc'); else { setBoardListSortKey(key); setBoardListSortDir('asc'); } }}>
+                                                        {label}
+                                                        {active ? boardListSortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" /> : <ChevronsUpDown className="w-3 h-3 opacity-30" />}
+                                                    </button>
+                                                </th>
+                                            );
+                                        })}
+                                        <th className="px-4 py-2.5 font-semibold text-xs text-right" style={{ color: 'var(--color-text-secondary)' }}>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {visibleBoards?.map((b: any) => {
+                                        const sharedOwnerName = getSharedOwnerName(b, user?.id);
+                                        return (
+                                            <tr key={b.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors group cursor-pointer" style={{ borderColor: 'var(--color-border)' }}
+                                                onMouseEnter={() => { qc.prefetchQuery({ queryKey: ['project_board', b.id], queryFn: async () => (await api.get(`/projects/${b.id}`)).data.data }); }}
+                                                onClick={() => openBoard(b.id)}>
+                                                <td className="px-4 py-2.5">
+                                                    <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{b.name}</span>
+                                                    {sharedOwnerName && <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
+                                                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                                        {b.isShared && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
+                                                        {b.pinToDashboard && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
                                                     </div>
-                                                    <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>Updated {format(new Date(b.updatedAt), 'MMM d')}</span>
-                                                </div>
-                                                {sharedOwnerName && (
-                                                    <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })()
-                            ) : (
-                                /* ── List row ── */
-                                (() => {
-                                    const sharedOwnerName = getSharedOwnerName(b, user?.id);
-                                    return (
-                                        <div
-                                            key={b.id}
-                                            className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors group cursor-pointer"
-                                            onMouseEnter={() => {
-                                                qc.prefetchQuery({
-                                                    queryKey: ['project_board', b.id],
-                                                    queryFn: async () => (await api.get(`/projects/${b.id}`)).data.data,
-                                                });
-                                            }}
-                                            onClick={() => openBoard(b.id)}
-                                        >
-                                    {/* Col 1: name */}
-                                    <div className="w-44 flex-shrink-0">
-                                        <h3 className="font-bold text-sm truncate" style={{ color: 'var(--color-text)' }}>{b.name}</h3>
-                                    </div>
-                                    {/* Col 2: description */}
-                                    <div className="w-64 flex-shrink-0">
-                                        <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>{b.description || '—'}</p>
-                                    </div>
-                                    {/* Col 3: task count + shared + type + pinned + updated */}
-                                    <div className="flex-1 flex items-center gap-2 flex-wrap">
-                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{b._count?.tasks || 0} tasks</span>
-                                        {b.hasOverdueTasks && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-700">Overdue{b.overdueTaskCount ? ` (${b.overdueTaskCount})` : ''}</span>}
-                                        {b.isShared && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Shared</span>}
-                                        {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
-                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{String(b.type || 'PERSONAL').replace('_', ' ')}</span>
-                                        {b.pinToDashboard && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pinned</span>}
-                                        <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Updated {format(new Date(b.updatedAt), 'MMM d')}</span>
-                                    </div>
-                                    {/* Col 4: status badge + hover actions */}
-                                    <div className="flex items-center gap-2 flex-shrink-0">
-                                        {b.boardStatus && <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full" style={{ backgroundColor: `${boardStatusColors[b.boardStatus]}20`, color: boardStatusColors[b.boardStatus] }}>{boardStatusLabels[b.boardStatus]}</span>}
-                                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
-                                            <button onClick={(e) => { e.stopPropagation(); updateBoardMut.mutate({ id: b.id, data: { pinToDashboard: !b.pinToDashboard } }); }} className={`p-1 ${b.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`} title="Pin"><Pin className="w-3.5 h-3.5" /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); setBoardForm({ name: b.name || '', description: b.description || '', type: b.type || 'PERSONAL', boardStatus: b.boardStatus || 'PLAN', isShared: !!b.isShared, pinToDashboard: !!b.pinToDashboard }); setEditingBoard(b); }} className="p-1 hover:text-indigo-500" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
-                                            {b.ownerId === user?.id && <button onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id, b.name); }} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>}
-                                        </div>
-                                    </div>
-                                </div>
-                                    );
-                                })()
-                            )
-                        ))}
-                    </div>
+                                                </td>
+                                                <td className="px-4 py-2.5 max-w-[200px]">
+                                                    <span className="text-xs truncate block" style={{ color: 'var(--color-text-secondary)' }}>{b.description || '—'}</span>
+                                                </td>
+                                                <td className="px-4 py-2.5">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{b._count?.tasks || 0}</span>
+                                                        {b.hasOverdueTasks && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-50 text-red-700">Overdue</span>}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-2.5">
+                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{String(b.type || 'PERSONAL').replace('_', ' ')}</span>
+                                                </td>
+                                                <td className="px-4 py-2.5">
+                                                    <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(b.updatedAt), 'MMM d, yyyy')}</span>
+                                                </td>
+                                                <td className="px-4 py-2.5">
+                                                    {b.boardStatus && <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full" style={{ backgroundColor: `${boardStatusColors[b.boardStatus]}20`, color: boardStatusColors[b.boardStatus] }}>{boardStatusLabels[b.boardStatus]}</span>}
+                                                </td>
+                                                <td className="px-4 py-2.5">
+                                                    <div className="flex items-center gap-1 justify-end">
+                                                        <button onClick={(e) => { e.stopPropagation(); updateBoardMut.mutate({ id: b.id, data: { pinToDashboard: !b.pinToDashboard } }); }} className={`p-1 ${b.pinToDashboard ? 'text-amber-500' : 'text-gray-300 hover:text-amber-500'}`} title="Pin"><Pin className="w-3.5 h-3.5" /></button>
+                                                        <button onClick={(e) => { e.stopPropagation(); setBoardForm({ name: b.name || '', description: b.description || '', type: b.type || 'PERSONAL', boardStatus: b.boardStatus || 'PLAN', isShared: !!b.isShared, pinToDashboard: !!b.pinToDashboard }); setEditingBoard(b); }} className="p-1 text-gray-400 hover:text-gray-600" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                                        {b.ownerId === user?.id && <button onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id, b.name); }} className="p-1 text-red-500 hover:text-red-600" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}</>
                 )}
 
                 {editingBoard && (
@@ -819,12 +937,56 @@ export default function ProjectsPage() {
 
             {(activeBoardLoading || activeBoardFetching || openingBoardId === selectedBoardId || !activeBoard) ? (
                 <div className="animate-pulse space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="card h-20" />)}</div>
-            ) : view === 'kanban' ? (
+            ) : (<>
+                {/* ── Filter bar ── */}
+                <div className="card p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                        <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <input className="input text-sm flex-1 min-w-[160px]" placeholder="Search tasks..." value={taskSearch} onChange={(e) => setTaskSearch(e.target.value)} />
+                        <select className="input text-sm w-36" value={taskTypeFilter} onChange={(e) => setTaskTypeFilter(e.target.value as any)}>
+                            <option value="ALL">All Types</option>
+                            <option value="TASK">Task</option>
+                            <option value="BUG">Bug</option>
+                            <option value="FEATURE">Feature</option>
+                            <option value="STORY">Story</option>
+                            <option value="EPIC">Epic</option>
+                        </select>
+                        <select className="input text-sm w-36" value={taskPriorityFilter} onChange={(e) => setTaskPriorityFilter(e.target.value as any)}>
+                            <option value="ALL">All Priorities</option>
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="URGENT">Urgent</option>
+                        </select>
+                        {view === 'list' && (
+                            <select className="input text-sm w-36" value={taskStatusFilter} onChange={(e) => setTaskStatusFilter(e.target.value as any)}>
+                                <option value="ALL">All Statuses</option>
+                                <option value="PLANNED">Planned</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="DONE">Done</option>
+                                <option value="ARCHIVED">Archived</option>
+                            </select>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => setHideDone(h => !h)}
+                            className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${hideDone ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                        >
+                            <span className={`w-2 h-2 rounded-full ${hideDone ? 'bg-indigo-500' : 'bg-gray-300'}`} />
+                            Hide Done
+                        </button>
+                    </div>
+                </div>
+
+                {view === 'kanban' ? (
                 <DndContext sensors={sensors} onDragEnd={handleKanbanDragEnd}>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {STATUS_COLS.map((status) => (
-                            <KanbanColumn key={status} status={status} count={tasks.filter((t: any) => t.status === status).length}>
-                                {tasks.filter((t: any) => t.status === status).map((t: any) => (
+                        {STATUS_COLS.filter(status => !(hideDone && (status === 'DONE' || status === 'ARCHIVED'))).map((status) => (
+                            <KanbanColumn key={status} status={status} count={filteredTasks.filter((t: any) => t.status === status).length}>
+                                {filteredTasks.filter((t: any) => t.status === status).map((t: any) => (
                                     <DraggableTaskCard
                                         key={t.id}
                                         task={t}
@@ -836,46 +998,93 @@ export default function ProjectsPage() {
                                         onDelete={handleDeleteTask}
                                     />
                                 ))}
-                                {tasks.filter((t: any) => t.status === status).length === 0 && (
+                                {filteredTasks.filter((t: any) => t.status === status).length === 0 && (
                                     <p className="text-[10px] text-center italic py-4" style={{ color: 'var(--color-text-secondary)' }}>Drop tasks here</p>
                                 )}
                             </KanbanColumn>
                         ))}
                     </div>
                 </DndContext>
-            ) : (
+                ) : (
                 <div className="card overflow-hidden">
                     <div className="table-container">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>Title</th><th>Type</th><th>Status</th><th>Priority</th><th>Category</th><th>Deadline</th><th>Actions</th>
+                                <tr className="border-b text-left" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
+                                    {(['title', 'type', 'status', 'priority', 'category', 'deadline'] as const).map((col) => {
+                                        const label = col === 'deadline' ? 'Deadline' : col.charAt(0).toUpperCase() + col.slice(1);
+                                        const active = taskListSortKey === col;
+                                        return (
+                                            <th key={col} className="px-4 py-2.5 font-semibold text-xs" style={{ color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}>
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity"
+                                                    onClick={() => {
+                                                        if (taskListSortKey === col) setTaskListSortDir(d => d === 'asc' ? 'desc' : 'asc');
+                                                        else { setTaskListSortKey(col); setTaskListSortDir('asc'); }
+                                                    }}
+                                                >
+                                                    {label}
+                                                    {active
+                                                        ? taskListSortDir === 'asc'
+                                                            ? <ArrowUp className="w-3 h-3" />
+                                                            : <ArrowDown className="w-3 h-3" />
+                                                        : <ChevronsUpDown className="w-3 h-3 opacity-30" />
+                                                    }
+                                                </button>
+                                            </th>
+                                        );
+                                    })}
+                                    <th className="px-4 py-2.5 font-semibold text-xs text-right" style={{ color: 'var(--color-text-secondary)' }}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {tasks.map((t: any) => (
-                                    <tr key={t.id} className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => {
-                                        openTaskEditor(t);
-                                    }}>
-                                        <td className="font-medium">{t.title}</td>
-                                        <td><span className="badge" style={{ backgroundColor: `${taskTypeColors[t.type || 'TASK']}20`, color: taskTypeColors[t.type || 'TASK'] }}>{taskTypeLabels[t.type || 'TASK']}</span></td>
-                                        <td><span className="badge" style={{ backgroundColor: `${statusColors[t.status]}20`, color: statusColors[t.status] }}>{statusLabels[t.status]}</span></td>
-                                        <td><span className="badge" style={{ backgroundColor: `${priorityColors[t.priority]}20`, color: priorityColors[t.priority] }}>{t.priority}</span></td>
-                                        <td>
+                                {[...filteredTasks].sort((a: any, b: any) => {
+                                    if (!taskListSortKey) return 0;
+                                    const valA = taskListSortKey === 'deadline' ? (a.deadline ? new Date(a.deadline).getTime() : Infinity) : (a[taskListSortKey] || '');
+                                    const valB = taskListSortKey === 'deadline' ? (b.deadline ? new Date(b.deadline).getTime() : Infinity) : (b[taskListSortKey] || '');
+                                    const cmp = typeof valA === 'number' ? valA - valB : String(valA).localeCompare(String(valB));
+                                    return taskListSortDir === 'asc' ? cmp : -cmp;
+                                }).map((t: any) => (
+                                    <tr key={t.id} className="border-b last:border-0 cursor-pointer hover:bg-gray-50 transition-colors group" style={{ borderColor: 'var(--color-border)' }} onClick={() => openTaskEditor(t)}>
+                                        <td className="px-4 py-2.5">
+                                            <span className={`font-medium text-sm ${t.status === 'DONE' || t.status === 'ARCHIVED' ? 'line-through opacity-50' : ''}`} style={{ color: 'var(--color-text)' }}>{t.title}</span>
+                                            {(() => {
+                                                const notifBadges = formatProjectTaskNotification(t);
+                                                return (
+                                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                        <Bell className={`w-3 h-3 flex-shrink-0 ${t.notificationEnabled ? 'text-red-500' : 'text-gray-300'}`} />
+                                                        {notifBadges.map((badge, i) => (
+                                                            <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded bg-purple-50 text-purple-600">{badge}</span>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            })()}
+                                        </td>
+                                        <td className="px-4 py-2.5"><span className="badge" style={{ backgroundColor: `${taskTypeColors[t.type || 'TASK']}20`, color: taskTypeColors[t.type || 'TASK'] }}>{taskTypeLabels[t.type || 'TASK']}</span></td>
+                                        <td className="px-4 py-2.5"><span className="badge" style={{ backgroundColor: `${statusColors[t.status]}20`, color: statusColors[t.status] }}>{statusLabels[t.status]}</span></td>
+                                        <td className="px-4 py-2.5"><span className="badge" style={{ backgroundColor: `${priorityColors[t.priority]}20`, color: priorityColors[t.priority] }}>{t.priority}</span></td>
+                                        <td className="px-4 py-2.5">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span>{t.category || '-'}</span>
+                                                <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{t.category || '-'}</span>
                                                 {t.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
-                                                {getSharedOwnerName(t, user?.id) && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {getSharedOwnerName(t, user?.id)}</span>}
-                                                {t.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                                             </div>
                                         </td>
-                                        <td style={{ color: t.deadline && new Date(t.deadline) < todayStart ? '#dc2626' : undefined }}>
-                                            {t.deadline ? format(new Date(t.deadline), 'MMM d, yyyy') : '-'}
+                                        <td className="px-4 py-2.5" style={{ color: t.deadline && new Date(t.deadline) < todayStart ? '#dc2626' : 'var(--color-text-secondary)' }}>
+                                            <span className="text-xs">{t.deadline ? format(new Date(t.deadline), 'MMM d, yyyy') : '-'}</span>
                                         </td>
-                                        <td>
-                                            <button onClick={(e) => { e.stopPropagation(); duplicateTask(t); }} className="p-1 hover:text-sky-500"><Copy className="w-4 h-4" /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: t.id, data: { pinToDashboard: !t.pinToDashboard } }); }} className={`p-1 ${t.pinToDashboard ? 'text-amber-500' : 'hover:text-amber-500'}`}><Pin className="w-4 h-4" /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(t.id); }} className="p-1 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                                        <td className="px-4 py-2.5">
+                                            <div className="flex items-center gap-1 justify-end">
+                                                {t.status !== 'DONE' && t.status !== 'ARCHIVED' ? (
+                                                    <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: t.id, data: { status: 'DONE' } }); }} className="p-1 text-xs font-medium px-2 rounded text-green-600 bg-green-50 hover:bg-green-100" title="Mark done">Done</button>
+                                                ) : (
+                                                    <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: t.id, data: { status: 'PLANNED' } }); }} className="p-1 text-xs font-medium px-2 rounded text-orange-600 bg-orange-50 hover:bg-orange-100" title="Reopen">Reopen</button>
+                                                )}
+                                                <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: t.id, data: { pinToDashboard: !t.pinToDashboard } }); }} className={`p-1 ${t.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} title="Pin"><Pin className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); openTaskEditor(t); }} className="p-1 text-gray-400 hover:text-gray-600" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); duplicateTask(t); }} className="p-1 text-blue-500 hover:text-blue-600" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(t.id); }} className="p-1 text-red-500 hover:text-red-600" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -883,7 +1092,8 @@ export default function ProjectsPage() {
                         </table>
                     </div>
                 </div>
-            )}
+                )}
+            </>)}
         </div>
     );
 }

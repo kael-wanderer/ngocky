@@ -53,6 +53,7 @@ async function createExpenseFromTask(tx: Prisma.TransactionClient, task: {
             note: 'Automated task item',
             scope: task.scope || 'PERSONAL',
             isShared: false,
+            sourceModule: 'Task',
             userId: task.userId,
         },
     });

@@ -167,6 +167,15 @@ export const createHealthPersonSchema = z.object({
 
 export const updateHealthPersonSchema = createHealthPersonSchema.partial();
 
+const healthLogNotificationFields = {
+    notificationEnabled: z.boolean().optional(),
+    reminderOffsetValue: z.number().int().positive().nullable().optional(),
+    reminderOffsetUnit: z.enum(['MINUTES', 'HOURS', 'DAYS', 'ON_DATE']).nullable().optional(),
+    notificationDate: z.string().datetime().nullable().optional(),
+    notificationTime: z.string().nullable().optional(),
+    notificationCooldownHours: z.number().int().nonnegative().optional(),
+};
+
 export const createHealthLogSchema = z.object({
     date: z.string().datetime(),
     type: z.enum(['REGULAR_CHECKUP', 'DOCTOR_VISIT', 'EMERGENCY', 'VACCINATION', 'PRESCRIPTION', 'LAB_RESULT', 'OTHER']).optional(),
@@ -179,6 +188,7 @@ export const createHealthLogSchema = z.object({
     nextCheckupDate: z.string().datetime().nullable().optional(),
     addExpense: z.boolean().optional(),
     addToCalendar: z.boolean().optional(),
+    ...healthLogNotificationFields,
 }).superRefine((data, ctx) => {
     if (data.addExpense && (data.cost == null || data.cost <= 0)) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['cost'], message: 'Cost is required when "Add expense" is checked' });
@@ -197,4 +207,5 @@ export const updateHealthLogSchema = z.object({
     nextCheckupDate: z.string().datetime().nullable().optional(),
     addExpense: z.boolean().optional(),
     addToCalendar: z.boolean().optional(),
+    ...healthLogNotificationFields,
 });

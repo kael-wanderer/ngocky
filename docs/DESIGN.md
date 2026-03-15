@@ -43,6 +43,13 @@ Initial standalone task capabilities:
 - optional dashboard pinning
 - manual drag reorder with persisted `sortOrder`
 
+Task list view UI:
+
+- Filter bar with: keyword search (searches all fields), due date filter (default **This Month**), type filter, priority filter, status filter. Sort dropdown removed.
+- Every column header (Title, Description, Type, Status, Priority, Due Date, Calendar) has an up/down sort arrow indicator.
+- Action icons are always visible and colour-coded: green **Done** pill / orange **Reopen** pill, amber **Pin**, grey **Edit**, blue **Duplicate**, red **Delete**.
+- Task title cell shows due date badge, notification badge, and auto-expense badge as inline pills below the title.
+
 Payment-task UI note:
 
 - payment tasks keep internal status for completion/reopen flow
@@ -68,6 +75,19 @@ Allows organizing tasks into distinct boards with a modern Kanban view.
 - **Task Sharing**: Individual tasks can also be marked as shared so they appear to all users even when the board itself is not shared.
 - **Task Reminders**: Tasks can enable reminders with an offset before `deadline`.
 - **Navigation**: Uses a project selection flow first, then enters the board view with breadcrumb navigation.
+
+#### Board List UI
+
+- Filter bar with: keyword search, time filter (This Week / This Month / Last Month / This Year), type filter (Personal / Work / For Fun / Study), status filter (Plan / Working / Completed).
+- List view uses a sortable table; every column header (Name, Description, Tasks, Type, Updated, Status) has an up/down sort arrow indicator.
+- Action icons in list rows are always visible: amber Pin, grey Edit, red Delete.
+
+#### Board Task UI (Kanban & List)
+
+- Filter bar above both views with: keyword search, Type filter, Priority filter, Status filter (list only), and a **Hide Done** toggle that collapses the Done and Archived columns from Kanban view.
+- List view uses a sortable table; every column header (Title, Type, Status, Priority, Category, Deadline) has an up/down sort arrow indicator.
+- Task title cell shows a **Bell icon** (grey = off, red = on) and, when enabled, purple notification badges: date + time for ON_DATE mode, offset label + time for DAYS/HOURS mode.
+- Action icons are always visible and colour-coded: green **Done** pill / orange **Reopen** pill, amber **Pin**, grey **Edit**, blue **Duplicate**, red **Delete**.
 
 ### 4. Expense Tracking
 

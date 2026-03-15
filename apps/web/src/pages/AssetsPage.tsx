@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { ArrowDown, ArrowUp, Calendar, Copy, Filter, LayoutGrid, List, Microwave, Pencil, Pin, Plus, Trash2, Wrench, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Bell, Calendar, Copy, Filter, LayoutGrid, List, Microwave, Pencil, Pin, Plus, Trash2, Wrench, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { useNavigate, useParams } from 'react-router-dom';
 import MultiSelectFilter from '../components/MultiSelectFilter';
@@ -68,7 +68,33 @@ type MaintenanceRecord = {
     linkedExpenseId?: string | null;
     notificationEnabled?: boolean;
     reminderOffsetDays?: number | null;
+    reminderOffsetValue?: number | null;
+    reminderOffsetUnit?: string | null;
+    notificationDate?: string | null;
+    notificationTime?: string | null;
 };
+
+function formatRecordNotificationBadges(record: MaintenanceRecord): string[] {
+    if (!record.notificationEnabled) return [];
+    const time = record.notificationTime || '';
+    if (record.reminderOffsetUnit === 'ON_DATE' && record.notificationDate) {
+        const d = new Date(record.notificationDate);
+        return [format(d, 'MMM dd, yyyy'), ...(time ? [time] : [])];
+    }
+    if (record.reminderOffsetUnit === 'HOURS') {
+        const label = `${record.reminderOffsetValue ?? ''} hour${record.reminderOffsetValue !== 1 ? 's' : ''} before`;
+        return [label, ...(time ? [time] : [])];
+    }
+    if (record.reminderOffsetUnit === 'DAYS') {
+        const label = `${record.reminderOffsetValue ?? ''} day${record.reminderOffsetValue !== 1 ? 's' : ''} before`;
+        return [label, ...(time ? [time] : [])];
+    }
+    // fallback: legacy reminderOffsetDays
+    if (record.reminderOffsetDays != null) {
+        return [`${record.reminderOffsetDays}d before`];
+    }
+    return [];
+}
 
 type RecordSortKey = 'time' | 'cost' | 'serviceType' | 'kilometers' | 'vendor' | 'description' | 'nextRecommendedDate' | 'linkedEventId';
 type RecordDateFilter = 'ALL' | 'THIS_MONTH' | 'LAST_MONTH' | 'THIS_QUARTER' | 'LAST_QUARTER' | 'THIS_YEAR' | 'LAST_YEAR';
@@ -754,6 +780,10 @@ export default function AssetsPage() {
                                                                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 font-medium" style={{ color: 'var(--color-text-secondary)' }}>
                                                                         {new Date(record.serviceDate).toLocaleDateString()}
                                                                     </span>
+                                                                    <Bell className={`w-3 h-3 flex-shrink-0 ${record.notificationEnabled ? 'text-red-500' : 'text-gray-300'}`} />
+                                                                    {formatRecordNotificationBadges(record).map((badge, i) => (
+                                                                        <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded bg-purple-50 text-purple-600">{badge}</span>
+                                                                    ))}
                                                                 </div>
                                                                 <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{record.description}</p>
                                                                 {record.vendor && (
@@ -762,21 +792,18 @@ export default function AssetsPage() {
                                                                 {record.kilometers != null && (
                                                                     <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-text-secondary)' }}>🛞 {record.kilometers.toLocaleString()} km</p>
                                                                 )}
-                                                                <div className="flex items-center gap-2 mt-2">
-                                                                    <button type="button" className={`inline-flex items-center gap-1 text-xs hover:opacity-80 ${record.pinToDashboard ? 'text-amber-600' : ''}`} onClick={() => updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: record.id, body: { pinToDashboard: !record.pinToDashboard } })}>
-                                                                        <Pin className="w-3.5 h-3.5" /> {record.pinToDashboard ? 'Pinned' : 'Pin'}
+                                                                <div className="flex items-center gap-1 mt-2">
+                                                                    <button type="button" className={`p-1 transition-colors ${record.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} onClick={() => updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: record.id, body: { pinToDashboard: !record.pinToDashboard } })} title="Pin">
+                                                                        <Pin className="w-3.5 h-3.5" />
                                                                     </button>
-                                                                    <span className={`inline-flex items-center gap-1 text-xs ${record.notificationEnabled ? 'text-indigo-700' : 'text-gray-400'}`}>
-                                                                        <Calendar className="w-3.5 h-3.5" /> Notify
-                                                                    </span>
-                                                                    <button type="button" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={() => openEditRecord(record)}>
-                                                                        <Pencil className="w-3.5 h-3.5" /> Edit
+                                                                    <button type="button" className="p-1 text-gray-400 hover:text-gray-600 transition-colors" onClick={() => openEditRecord(record)} title="Edit">
+                                                                        <Pencil className="w-3.5 h-3.5" />
                                                                     </button>
-                                                                    <button type="button" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={() => duplicateRecord(record)}>
-                                                                        <Copy className="w-3.5 h-3.5" /> Duplicate
+                                                                    <button type="button" className="p-1 text-blue-500 hover:text-blue-600 transition-colors" onClick={() => duplicateRecord(record)} title="Duplicate">
+                                                                        <Copy className="w-3.5 h-3.5" />
                                                                     </button>
-                                                                    <button type="button" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--color-danger)' }} onClick={() => handleDeleteRecord(record.id)}>
-                                                                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                                                                    <button type="button" className="p-1 text-red-500 hover:text-red-600 transition-colors" onClick={() => handleDeleteRecord(record.id)} title="Delete">
+                                                                        <Trash2 className="w-3.5 h-3.5" />
                                                                     </button>
                                                                 </div>
                                                             </div>
@@ -794,11 +821,6 @@ export default function AssetsPage() {
                                                                 {record.linkedEventId && (
                                                                     <span className="text-[10px] font-medium mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700">
                                                                         <Calendar className="w-3 h-3" /> Asset Calendar
-                                                                    </span>
-                                                                )}
-                                                                {record.notificationEnabled && (
-                                                                    <span className="text-[10px] font-medium mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
-                                                                        <Calendar className="w-3 h-3" /> Notify {record.reminderOffsetDays ?? 0}d before
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -861,8 +883,16 @@ export default function AssetsPage() {
                                                                 <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                                                                     {new Date(record.serviceDate).toLocaleDateString()}
                                                                 </div>
-                                                                <div className="text-sm font-semibold truncate" style={{ color: 'var(--color-text)' }}>
-                                                                    {record.serviceType || 'Maintenance'}
+                                                                <div>
+                                                                    <div className="text-sm font-semibold truncate" style={{ color: 'var(--color-text)' }}>
+                                                                        {record.serviceType || 'Maintenance'}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                                                                        <Bell className={`w-3 h-3 flex-shrink-0 ${record.notificationEnabled ? 'text-red-500' : 'text-gray-300'}`} />
+                                                                        {formatRecordNotificationBadges(record).map((badge, i) => (
+                                                                            <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded bg-purple-50 text-purple-600">{badge}</span>
+                                                                        ))}
+                                                                    </div>
                                                                 </div>
                                                                 <div className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
                                                                     {selectedAsset.type === 'Vehicle' && record.kilometers != null ? `${record.kilometers.toLocaleString()} km` : '—'}
@@ -899,20 +929,17 @@ export default function AssetsPage() {
                                                                 {!(typeof record.cost === 'number' && record.cost > 0) && (
                                                                     <span className="text-sm text-left" style={{ color: 'var(--color-text-secondary)' }}>—</span>
                                                                 )}
-                                                                <div className="flex items-center gap-3">
-                                                                    <button type="button" className={`inline-flex items-center gap-1 text-xs hover:opacity-80 ${record.pinToDashboard ? 'text-amber-600' : ''}`} onClick={() => updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: record.id, body: { pinToDashboard: !record.pinToDashboard } })}>
-                                                                        <Pin className="w-3.5 h-3.5" /> {record.pinToDashboard ? 'Pinned' : 'Pin'}
+                                                                <div className="flex items-center gap-1">
+                                                                    <button type="button" className={`p-1 transition-colors ${record.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} onClick={() => updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: record.id, body: { pinToDashboard: !record.pinToDashboard } })} title="Pin">
+                                                                        <Pin className="w-3.5 h-3.5" />
                                                                     </button>
-                                                                    <span className={`inline-flex items-center gap-1 text-xs ${record.notificationEnabled ? 'text-indigo-700' : 'text-gray-400'}`}>
-                                                                        <Calendar className="w-3.5 h-3.5" /> Notify
-                                                                    </span>
-                                                                    <button type="button" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={() => openEditRecord(record)}>
+                                                                    <button type="button" className="p-1 text-gray-400 hover:text-gray-600 transition-colors" onClick={() => openEditRecord(record)} title="Edit">
                                                                         <Pencil className="w-3.5 h-3.5" />
                                                                     </button>
-                                                                    <button type="button" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--color-text-secondary)' }} onClick={() => duplicateRecord(record)}>
+                                                                    <button type="button" className="p-1 text-blue-500 hover:text-blue-600 transition-colors" onClick={() => duplicateRecord(record)} title="Duplicate">
                                                                         <Copy className="w-3.5 h-3.5" />
                                                                     </button>
-                                                                    <button type="button" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--color-danger)' }} onClick={() => handleDeleteRecord(record.id)}>
+                                                                    <button type="button" className="p-1 text-red-500 hover:text-red-600 transition-colors" onClick={() => handleDeleteRecord(record.id)} title="Delete">
                                                                         <Trash2 className="w-3.5 h-3.5" />
                                                                     </button>
                                                                 </div>
