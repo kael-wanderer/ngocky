@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin, LayoutGrid, List, Copy, Filter, ArrowUp, ArrowDown } from 'lucide-react';
+import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin, LayoutGrid, List, Copy, Filter, ArrowUp, ArrowDown, Bell } from 'lucide-react';
 import { addMonths, addWeeks, endOfMonth, endOfWeek, format, isWithinInterval, startOfMonth, startOfToday, startOfWeek } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
@@ -128,6 +128,23 @@ function formatNotification(item: any): string | null {
     if (item.reminderOffsetUnit === 'HOURS') return `${item.reminderOffsetValue} hour${item.reminderOffsetValue !== 1 ? 's' : ''} before`;
     if (item.reminderOffsetUnit === 'DAYS') return `${item.reminderOffsetValue} day${item.reminderOffsetValue !== 1 ? 's' : ''} before`;
     return null;
+}
+
+function formatNotificationBadges(item: any): string[] {
+    if (!item.notificationEnabled) return [];
+    const time = item.notificationTime || '';
+    if (item.reminderOffsetUnit === 'ON_DATE' && item.notificationDate) {
+        return [format(new Date(item.notificationDate), 'MMM dd, yyyy'), ...(time ? [time] : [])];
+    }
+    if (item.reminderOffsetUnit === 'HOURS') {
+        const label = `${item.reminderOffsetValue} hour${item.reminderOffsetValue !== 1 ? 's' : ''} before`;
+        return [label, ...(time ? [time] : [])];
+    }
+    if (item.reminderOffsetUnit === 'DAYS') {
+        const label = `${item.reminderOffsetValue} day${item.reminderOffsetValue !== 1 ? 's' : ''} before`;
+        return [label, ...(time ? [time] : [])];
+    }
+    return [];
 }
 
 function RecurrenceRuleFields({ form, setForm }: { form: HouseworkFormState; setForm: React.Dispatch<React.SetStateAction<HouseworkFormState>> }) {
@@ -321,6 +338,7 @@ export default function HouseworkPage() {
     const [sortBy, setSortBy] = useState<HouseworkSortKey>('nextDueDate');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [gridSort, setGridSort] = useState<HouseworkGridSort>('DUE_ASC');
+    const [hwSearch, setHwSearch] = useState('');
     const editIdParam = searchParams.get('editId');
 
     const { data, isLoading } = useQuery({
@@ -468,8 +486,10 @@ export default function HouseworkPage() {
     const nextMonthStart = addMonths(thisMonthStart, 1);
     const nextMonthEnd = endOfMonth(nextMonthStart);
 
-    const filteredItems = useMemo(() =>
-        items.filter((item: any) => {
+    const filteredItems = useMemo(() => {
+        const q = hwSearch.toLowerCase();
+        return items.filter((item: any) => {
+            if (q && !item.title?.toLowerCase().includes(q) && !item.description?.toLowerCase().includes(q)) return false;
             if (filters.frequency !== 'ALL' && item.frequencyType !== filters.frequency) return false;
             const status = item.status === 'ARCHIVED' ? 'PLANNED' : item.status || 'PLANNED';
             if (filters.status !== 'ALL' && status !== filters.status) return false;
@@ -480,8 +500,8 @@ export default function HouseworkPage() {
 
             const dueDate = new Date(item.nextDueDate);
             return isWithinInterval(dueDate, dueRange);
-        }),
-    [items, filters]);
+        });
+    }, [items, filters, hwSearch]);
 
     const sortedItems = useMemo(() => {
         return [...filteredItems].sort((a, b) => {
@@ -647,6 +667,7 @@ export default function HouseworkPage() {
         const sharedOwnerName = getSharedOwnerName(item, user?.id);
         const canManage = !sharedOwnerName;
         const notification = formatNotification(item);
+        const notifBadges = formatNotificationBadges(item);
 
         return (
             <div
@@ -660,6 +681,14 @@ export default function HouseworkPage() {
                             <h3 className="font-bold text-lg truncate" style={{ color: 'var(--color-text)' }}>{item.title}</h3>
                             {item.nextDueDate && new Date(item.nextDueDate) < today && item.status !== 'DONE' && <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />}
                         </div>
+                        {notifBadges.length > 0 && (
+                            <div className="flex items-center gap-1 flex-wrap mt-1">
+                                <Bell className={`w-3 h-3 flex-shrink-0 ${item.notificationEnabled ? 'text-red-500' : 'text-gray-300'}`} />
+                                {notifBadges.map((b, i) => (
+                                    <span key={i} className="text-xs px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium whitespace-nowrap">{b}</span>
+                                ))}
+                            </div>
+                        )}
                         {sharedOwnerName && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
                     </div>
                     {renderActions(item, canManage)}
@@ -711,6 +740,7 @@ export default function HouseworkPage() {
     const renderListItem = (item: any) => {
         const dueBadge = getDueBadge(item);
         const notification = formatNotification(item);
+        const notifBadges = formatNotificationBadges(item);
         const sharedOwnerName = getSharedOwnerName(item, user?.id);
         const canManage = !sharedOwnerName;
 
@@ -723,6 +753,14 @@ export default function HouseworkPage() {
                 <td className="py-3 px-4">
                     <div className="min-w-[180px]">
                         <p className="font-semibold" style={{ color: 'var(--color-text)' }}>{item.title}</p>
+                        {notifBadges.length > 0 && (
+                            <div className="flex items-center gap-1 flex-wrap mt-1">
+                                <Bell className={`w-3 h-3 flex-shrink-0 ${item.notificationEnabled ? 'text-red-500' : 'text-gray-300'}`} />
+                                {notifBadges.map((b, i) => (
+                                    <span key={i} className="text-xs px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium whitespace-nowrap">{b}</span>
+                                ))}
+                            </div>
+                        )}
                         {sharedOwnerName && <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
                     </div>
                 </td>
@@ -795,6 +833,13 @@ export default function HouseworkPage() {
                     <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Filters</h3>
                 </div>
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
+                    <input
+                        type="text"
+                        className="input"
+                        placeholder="Search items…"
+                        value={hwSearch}
+                        onChange={(e) => setHwSearch(e.target.value)}
+                    />
                     <select className="input" value={filters.dueDate} onChange={(e) => setFilters((prev) => ({ ...prev, dueDate: e.target.value as HouseworkDueDateFilter }))}>
                         {HOUSEWORK_DUE_DATE_FILTER_OPTIONS.map((option) => (
                             <option key={option.value} value={option.value}>{option.label}</option>
@@ -809,31 +854,6 @@ export default function HouseworkPage() {
                             <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
                     </select>
-                    {viewMode === 'grid' ? (
-                        <select className="input" value={gridSort} onChange={(e) => setGridSort(e.target.value as HouseworkGridSort)}>
-                            <option value="TITLE_ASC">Sort: Name (A-Z)</option>
-                            <option value="TITLE_DESC">Sort: Name (Z-A)</option>
-                            <option value="DUE_ASC">Sort: Due Date (ASC)</option>
-                            <option value="DUE_DESC">Sort: Due Date (DESC)</option>
-                        </select>
-                    ) : (
-                        <select className="input" value={getHouseworkListSortValue()} onChange={(e) => handleHouseworkListSortChange(e.target.value as HouseworkListSortOption)}>
-                            <option value="TITLE_ASC">Sort: Name (A-Z)</option>
-                            <option value="TITLE_DESC">Sort: Name (Z-A)</option>
-                            <option value="DESCRIPTION_ASC">Sort: Description (A-Z)</option>
-                            <option value="DESCRIPTION_DESC">Sort: Description (Z-A)</option>
-                            <option value="FREQUENCY_ASC">Sort: Frequency (A-Z)</option>
-                            <option value="FREQUENCY_DESC">Sort: Frequency (Z-A)</option>
-                            <option value="STATUS_ASC">Sort: Status (A-Z)</option>
-                            <option value="STATUS_DESC">Sort: Status (Z-A)</option>
-                            <option value="DUE_ASC">Sort: Due Date (ASC)</option>
-                            <option value="DUE_DESC">Sort: Due Date (DESC)</option>
-                            <option value="NOTIFICATION_ASC">Sort: Notification (ASC)</option>
-                            <option value="NOTIFICATION_DESC">Sort: Notification (DESC)</option>
-                            <option value="OPTIONS_ASC">Sort: Options (ASC)</option>
-                            <option value="OPTIONS_DESC">Sort: Options (DESC)</option>
-                        </select>
-                    )}
                 </div>
             </div>
 
