@@ -981,10 +981,12 @@ model HealthLog {
   description     String?
   cost            Float?
   prescription    String?
-  nextCheckupDate DateTime?
-  userId          String
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  nextCheckupDate       DateTime?
+  linkedExpenseId       String?
+  linkedCalendarEventId String?
+  userId                String
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   person HealthPerson  @relation(fields: [personId], references: [id], onDelete: Cascade)
   user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)

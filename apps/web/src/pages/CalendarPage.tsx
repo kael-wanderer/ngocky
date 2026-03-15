@@ -641,7 +641,8 @@ export default function CalendarPage() {
                                             {e._source === 'task' && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#eef2ff', color: '#4338ca' }}>Task</span>}
                                             {e._source === 'housework' && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#ecfdf5', color: '#059669' }}>Housework</span>}
                                             {!e._source && e.category === 'ASSET' && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#ecfeff', color: '#0f766e' }}>Asset</span>}
-                                            {!e._source && e.category !== 'ASSET' && (
+                                            {!e._source && e.category === 'HEALTHBOOK' && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#fdf2f8', color: '#db2777' }}>Healthbook</span>}
+                                            {!e._source && e.category !== 'ASSET' && e.category !== 'HEALTHBOOK' && (
                                                 (() => {
                                                     const badge = getCalendarTypeBadge(e.type);
                                                     return (
@@ -774,7 +775,10 @@ export default function CalendarPage() {
                                                     onClick={(ev) => { ev.stopPropagation(); handleEventClick(e); }}
                                                 >
                                                     <div className="px-1 py-0.5 overflow-hidden h-full">
-                                                        {!e._source && (
+                                                        {!e._source && e.category === 'HEALTHBOOK' && (
+                                                            <span className="mb-0.5 inline-flex rounded-full px-1 py-[1px] text-[9px] font-semibold leading-none" style={{ backgroundColor: '#fdf2f8', color: '#db2777' }}>Healthbook</span>
+                                                        )}
+                                                        {!e._source && e.category !== 'HEALTHBOOK' && (
                                                             (() => {
                                                                 const badge = getCalendarTypeBadge(e.type);
                                                                 return (
@@ -804,7 +808,10 @@ export default function CalendarPage() {
                                                 style={{ top: 2, backgroundColor: e.displayColor || e.color || 'var(--color-primary)' }}
                                                 onClick={(ev) => { ev.stopPropagation(); handleEventClick(e); }}
                                             >
-                                                {!e._source && (
+                                                {!e._source && e.category === 'HEALTHBOOK' && (
+                                                    <span className="mb-0.5 inline-flex rounded-full px-1 py-[1px] text-[9px] font-semibold leading-none" style={{ backgroundColor: '#fdf2f8', color: '#db2777' }}>Healthbook</span>
+                                                )}
+                                                {!e._source && e.category !== 'HEALTHBOOK' && (
                                                     (() => {
                                                         const badge = getCalendarTypeBadge(e.type);
                                                         return (

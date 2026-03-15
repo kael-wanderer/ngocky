@@ -176,6 +176,7 @@ export const createHealthLogSchema = z.object({
     prescription: z.string().optional(),
     nextCheckupDate: z.string().datetime().nullable().optional(),
     addExpense: z.boolean().optional(),
+    addToCalendar: z.boolean().optional(),
 }).superRefine((data, ctx) => {
     if (data.addExpense && (data.cost == null || data.cost <= 0)) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['cost'], message: 'Cost is required when "Add expense" is checked' });
@@ -193,4 +194,5 @@ export const updateHealthLogSchema = z.object({
     prescription: z.string().optional(),
     nextCheckupDate: z.string().datetime().nullable().optional(),
     addExpense: z.boolean().optional(),
+    addToCalendar: z.boolean().optional(),
 });

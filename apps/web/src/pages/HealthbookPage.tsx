@@ -73,6 +73,8 @@ interface HealthLog {
     cost?: number;
     prescription?: string;
     nextCheckupDate?: string;
+    linkedExpenseId?: string | null;
+    linkedCalendarEventId?: string | null;
     userId: string;
     files: HealthFile[];
     createdAt: string;
@@ -518,7 +520,9 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
         type: editing.type, location: editing.location ?? '', doctor: editing.doctor ?? '',
         symptoms: editing.symptoms ?? '', description: editing.description ?? '',
         cost: editing.cost != null ? String(editing.cost) : '', prescription: editing.prescription ?? '',
-        nextCheckupDate: editing.nextCheckupDate?.slice(0, 10) ?? '', addExpense: false, addToCalendar: false,
+        nextCheckupDate: editing.nextCheckupDate?.slice(0, 10) ?? '',
+        addExpense: !!editing.linkedExpenseId,
+        addToCalendar: !!editing.linkedCalendarEventId,
     } : { ...EMPTY_LOG });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -527,12 +531,12 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
     const handleSubmit = async () => {
         if (!form.date) { setError('Date is required'); return; }
         if (form.addExpense && !form.cost) { setError('Cost is required when "Add expense" is checked'); return; }
-        if (form.addToCalendar) {
-            if (!form.nextCheckupDate) { setError('Next Checkup Date is required when "Add to Calendar" is checked'); return; }
+        if (form.nextCheckupDate) {
+            const logDate = new Date(form.date); logDate.setHours(0, 0, 0, 0);
             const checkup = new Date(form.nextCheckupDate);
-            const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-            if (checkup <= todayStart) { setError('Next Checkup Date must be in the future'); return; }
+            if (checkup <= logDate) { setError('Next Checkup Date must be after the log date'); return; }
         }
+        if (form.addToCalendar && !form.nextCheckupDate) { setError('Next Checkup Date is required when "Add to Calendar" is checked'); return; }
         setSaving(true); setError('');
         try {
             const costVal = parseAmount(form.cost);
@@ -650,14 +654,22 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                         <input type="checkbox" id="addExpense" checked={form.addExpense} onChange={(e) => set('addExpense', e.target.checked)} className="rounded mt-0.5" />
                         <div>
                             <label htmlFor="addExpense" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add expense</label>
-                            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Creates a Family / Healthcare / Bank Transfer expense with the cost above</p>
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+                                {editing?.linkedExpenseId
+                                    ? 'Expense already linked — uncheck to delete it'
+                                    : 'Creates a Family / Healthcare / Bank Transfer expense with the cost above'}
+                            </p>
                         </div>
                     </div>
                     <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.addToCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.addToCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
                         <input type="checkbox" id="addToCalendar" checked={form.addToCalendar} onChange={(e) => set('addToCalendar', e.target.checked)} className="rounded mt-0.5" />
                         <div>
                             <label htmlFor="addToCalendar" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add to Calendar</label>
-                            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Creates a Meeting event on the Next Checkup Date (09:00–12:00). Requires a future date.</p>
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+                                {editing?.linkedCalendarEventId
+                                    ? 'Calendar event already linked — uncheck to delete it'
+                                    : 'Creates a Meeting event on the Next Checkup Date (09:00–12:00). Requires a future date.'}
+                            </p>
                         </div>
                     </div>
 

@@ -79,13 +79,14 @@ function dateAtHourUTC(dateISO: string, hour: number, tz: string): Date {
 
 async function createCheckupCalendarEvent(
     nextCheckupDate: string, personName: string, location: string | undefined,
-    description: string | undefined, userId: string,
-): Promise<void> {
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } });
+    description: string | undefined, userId: string, tx?: any,
+): Promise<string | null> {
+    const db = tx ?? prisma;
+    const user = await db.user.findUnique({ where: { id: userId }, select: { timezone: true } });
     const tz = user?.timezone ?? 'Asia/Ho_Chi_Minh';
     const dateOnly = nextCheckupDate.slice(0, 10);
     const title = `Next checkup – ${personName}${location ? ` at ${location}` : ''}`;
-    await prisma.calendarEvent.create({
+    const event = await db.calendarEvent.create({
         data: {
             title,
             type: 'MEETING',
@@ -94,14 +95,17 @@ async function createCheckupCalendarEvent(
             endDate: dateAtHourUTC(dateOnly, 12, tz),
             allDay: false,
             isShared: true,
+            category: 'HEALTHBOOK',
             createdById: userId,
         },
     });
+    return event.id;
 }
 
-async function createHealthExpense(cost: number, date: Date, description: string, userId: string) {
-    if (!Number.isFinite(cost) || cost <= 0) return;
-    await prisma.expense.create({
+async function createHealthExpense(cost: number, date: Date, description: string, userId: string, tx?: any): Promise<string | null> {
+    if (!Number.isFinite(cost) || cost <= 0) return null;
+    const db = tx ?? prisma;
+    const expense = await db.expense.create({
         data: {
             description: description || 'Healthcare',
             type: 'PAY',
@@ -114,6 +118,7 @@ async function createHealthExpense(cost: number, date: Date, description: string
             userId,
         },
     });
+    return expense.id;
 }
 
 // ─── File serve/delete (must be before /:personId) ───────────────────────────
@@ -302,22 +307,31 @@ router.post('/:personId/logs', validate(createHealthLogSchema), async (req: Requ
         const personId = paramStr(req, 'personId');
         const { addExpense, addToCalendar, ...logData } = req.body;
         const person = await prisma.healthPerson.findUnique({ where: { id: personId }, select: { name: true } });
-        const log = await prisma.healthLog.create({
-            data: {
-                ...logData,
-                date: new Date(req.body.date),
-                nextCheckupDate: req.body.nextCheckupDate ? new Date(req.body.nextCheckupDate) : null,
-                personId,
-                userId: req.user!.userId,
-            },
-            include: { files: true },
+        const userId = req.user!.userId;
+        const cost = req.body.cost ? Number(req.body.cost) : 0;
+
+        const log = await prisma.$transaction(async (tx) => {
+            let linkedExpenseId: string | null = null;
+            let linkedCalendarEventId: string | null = null;
+            if (addExpense && cost > 0) {
+                linkedExpenseId = await createHealthExpense(cost, new Date(req.body.date), req.body.description || 'Healthcare', userId, tx);
+            }
+            if (addToCalendar && req.body.nextCheckupDate) {
+                linkedCalendarEventId = await createCheckupCalendarEvent(req.body.nextCheckupDate, person?.name ?? 'Unknown', req.body.location, req.body.description, userId, tx);
+            }
+            return tx.healthLog.create({
+                data: {
+                    ...logData,
+                    date: new Date(req.body.date),
+                    nextCheckupDate: req.body.nextCheckupDate ? new Date(req.body.nextCheckupDate) : null,
+                    linkedExpenseId,
+                    linkedCalendarEventId,
+                    personId,
+                    userId,
+                },
+                include: { files: true },
+            });
         });
-        if (addExpense && req.body.cost) {
-            await createHealthExpense(Number(req.body.cost), new Date(req.body.date), req.body.description || 'Healthcare', req.user!.userId);
-        }
-        if (addToCalendar && req.body.nextCheckupDate) {
-            await createCheckupCalendarEvent(req.body.nextCheckupDate, person?.name ?? 'Unknown', req.body.location, req.body.description, req.user!.userId);
-        }
         sendCreated(res, log);
     } catch (err) { next(err); }
 });
@@ -326,15 +340,42 @@ router.patch('/:personId/logs/:logId', validate(updateHealthLogSchema), async (r
     try {
         const personId = paramStr(req, 'personId');
         const logId = paramStr(req, 'logId');
-        await assertLogOwner(logId, personId, req.user!.userId);
-        const { addExpense: _ae, addToCalendar, ...logUpdateData } = req.body;
+        const existing = await assertLogOwner(logId, personId, req.user!.userId);
+        const { addExpense, addToCalendar, ...logUpdateData } = req.body;
+        const userId = req.user!.userId;
+
+        const updateData: any = {
+            ...logUpdateData,
+            date: req.body.date ? new Date(req.body.date) : undefined,
+            nextCheckupDate: req.body.nextCheckupDate === null ? null : req.body.nextCheckupDate ? new Date(req.body.nextCheckupDate) : undefined,
+        };
+
+        // Handle expense toggle
+        if (addExpense === true && !existing.linkedExpenseId) {
+            const cost = req.body.cost ? Number(req.body.cost) : (existing.cost ?? 0);
+            const expId = await createHealthExpense(cost, new Date(req.body.date ?? existing.date), req.body.description ?? existing.description ?? 'Healthcare', userId);
+            updateData.linkedExpenseId = expId;
+        } else if (addExpense === false && existing.linkedExpenseId) {
+            try { await prisma.expense.delete({ where: { id: existing.linkedExpenseId } }); } catch { /* already deleted */ }
+            updateData.linkedExpenseId = null;
+        }
+
+        // Handle calendar toggle
+        if (addToCalendar === true && !existing.linkedCalendarEventId) {
+            const person = await prisma.healthPerson.findUnique({ where: { id: personId }, select: { name: true } });
+            const checkupDate = req.body.nextCheckupDate ?? existing.nextCheckupDate?.toISOString();
+            if (checkupDate) {
+                const evId = await createCheckupCalendarEvent(checkupDate, person?.name ?? 'Unknown', req.body.location ?? existing.location ?? undefined, req.body.description ?? existing.description ?? undefined, userId);
+                updateData.linkedCalendarEventId = evId;
+            }
+        } else if (addToCalendar === false && existing.linkedCalendarEventId) {
+            try { await prisma.calendarEvent.delete({ where: { id: existing.linkedCalendarEventId } }); } catch { /* already deleted */ }
+            updateData.linkedCalendarEventId = null;
+        }
+
         const updated = await prisma.healthLog.update({
             where: { id: logId },
-            data: {
-                ...logUpdateData,
-                date: req.body.date ? new Date(req.body.date) : undefined,
-                nextCheckupDate: req.body.nextCheckupDate === null ? null : req.body.nextCheckupDate ? new Date(req.body.nextCheckupDate) : undefined,
-            },
+            data: updateData,
             include: { files: true },
         });
         sendSuccess(res, updated);
