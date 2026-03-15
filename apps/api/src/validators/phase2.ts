@@ -43,6 +43,8 @@ const maintenanceRecordSchemaBase = z.object({
     notificationDate: z.string().datetime().nullable().optional(),
     notificationTime: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional(),
     pinToDashboard: z.boolean().optional(),
+    addToCalendar: z.boolean().optional(),
+    addExpense: z.boolean().optional(),
 });
 
 export const createMaintenanceRecordSchema = maintenanceRecordSchemaBase.superRefine(notificationRefinement);

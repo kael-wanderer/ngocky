@@ -1,13 +1,15 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
     ArrowLeft, Plus, Edit2, Trash2, HeartPulse, User, Phone, Shield,
     Paperclip, Upload, X, FileText, Image, ChevronDown, ChevronUp, Eye,
+    LayoutGrid, List, Filter,
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
+import { getFundsDateRange } from '../config/fundsFilters';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -92,6 +94,27 @@ const LOG_TYPES: { value: string; label: string }[] = [
     { value: 'PRESCRIPTION', label: 'Prescription' },
     { value: 'LAB_RESULT', label: 'Lab Result' },
     { value: 'OTHER', label: 'Other' },
+];
+
+type LogDateFilter = 'ALL' | 'THIS_MONTH' | 'LAST_MONTH' | 'THIS_QUARTER' | 'LAST_QUARTER' | 'THIS_YEAR' | 'LAST_YEAR';
+type LogCostFilter = 'ALL' | 'LT_500K' | 'BETWEEN_500K_2M' | 'BETWEEN_2M_5M' | 'GT_5M';
+
+const LOG_DATE_FILTER_OPTIONS: Array<{ value: LogDateFilter; label: string }> = [
+    { value: 'ALL', label: 'All' },
+    { value: 'THIS_MONTH', label: 'This Month' },
+    { value: 'LAST_MONTH', label: 'Last Month' },
+    { value: 'THIS_QUARTER', label: 'This Quarter' },
+    { value: 'LAST_QUARTER', label: 'Last Quarter' },
+    { value: 'THIS_YEAR', label: 'This Year' },
+    { value: 'LAST_YEAR', label: 'Last Year' },
+];
+
+const LOG_COST_FILTER_OPTIONS: Array<{ value: LogCostFilter; label: string }> = [
+    { value: 'ALL', label: 'All' },
+    { value: 'LT_500K', label: '< 500K' },
+    { value: 'BETWEEN_500K_2M', label: '500K to 2M' },
+    { value: 'BETWEEN_2M_5M', label: '2M to 5M' },
+    { value: 'GT_5M', label: 'Over 5M' },
 ];
 
 const EMPTY_PERSON = {
@@ -485,9 +508,9 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
                             <textarea rows={3} className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)', resize: 'vertical' }}
                                 value={form.notes} onChange={(e) => set('notes', e.target.value)} />
                         </div>
-                        <div className="flex items-center gap-2">
-                            <input type="checkbox" id="isShared" checked={form.isShared} onChange={(e) => set('isShared', e.target.checked)} className="rounded" />
-                            <label htmlFor="isShared" className="text-sm" style={{ color: 'var(--color-text)' }}>Share with all family members</label>
+                        <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => set('isShared', !form.isShared)}>
+                            <input type="checkbox" checked={form.isShared} onChange={(e) => set('isShared', e.target.checked)} onClick={(e) => e.stopPropagation()} className="mt-0.5 rounded" />
+                            <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this person's health record visible to all family members</p></div>
                         </div>
                     </div>
 
@@ -700,6 +723,11 @@ export default function HealthbookPage() {
     const [logModal, setLogModal] = useState<{ open: boolean; editing?: HealthLog }>({ open: false });
     const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; kind: 'person' | 'log' } | null>(null);
     const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+    const [logSearch, setLogSearch] = useState('');
+    const [logTypeFilter, setLogTypeFilter] = useState<string>('ALL');
+    const [logDateFilter, setLogDateFilter] = useState<LogDateFilter>('ALL');
+    const [logCostFilter, setLogCostFilter] = useState<LogCostFilter>('ALL');
+    const [logView, setLogView] = useState<'list' | 'grid'>('list');
 
     // ── Queries ──────────────────────────────────────────────────────────────
 
@@ -848,7 +876,31 @@ export default function HealthbookPage() {
     // ── Detail View ──────────────────────────────────────────────────────────
 
     const person = personQuery.data;
-    const logs = logsQuery.data ?? [];
+    const allLogs = logsQuery.data ?? [];
+    const logs = useMemo(() => {
+        const search = logSearch.trim().toLowerCase();
+        const dateRange = logDateFilter === 'ALL' ? null : getFundsDateRange(logDateFilter);
+        return allLogs.filter((log) => {
+            if (logTypeFilter !== 'ALL' && log.type !== logTypeFilter) return false;
+            if (search) {
+                const haystack = [log.doctor || '', log.location || '', log.description || '', log.symptoms || ''].join(' ').toLowerCase();
+                if (!haystack.includes(search)) return false;
+            }
+            if (dateRange) {
+                const t = new Date(log.date).getTime();
+                if (t < dateRange.start.getTime() || t > dateRange.end.getTime()) return false;
+            }
+            const cost = log.cost ?? null;
+            switch (logCostFilter) {
+                case 'LT_500K': if (!(cost != null && cost < 500_000)) return false; break;
+                case 'BETWEEN_500K_2M': if (!(cost != null && cost >= 500_000 && cost < 2_000_000)) return false; break;
+                case 'BETWEEN_2M_5M': if (!(cost != null && cost >= 2_000_000 && cost < 5_000_000)) return false; break;
+                case 'GT_5M': if (!(cost != null && cost >= 5_000_000)) return false; break;
+                default: break;
+            }
+            return true;
+        });
+    }, [allLogs, logSearch, logTypeFilter, logDateFilter, logCostFilter]);
 
     if (personQuery.isLoading) return <p className="text-sm text-gray-500 p-4">Loading…</p>;
     if (!person) return <p className="text-sm text-red-500 p-4">Person not found.</p>;
@@ -939,95 +991,195 @@ export default function HealthbookPage() {
                 </div>
             </div>
 
-            {/* Medical History */}
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold" style={{ color: 'var(--color-text)' }}>Medical History</h2>
-                <button onClick={() => setLogModal({ open: true })}
-                    className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg text-white font-medium transition-colors"
-                    style={{ backgroundColor: 'var(--color-primary)' }}>
-                    <Plus className="w-4 h-4" /> Add Log
-                </button>
+            {/* Medical History filters */}
+            <div className="space-y-2 mb-4">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                        <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                        <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
+                    </div>
+                    <button onClick={() => setLogModal({ open: true })}
+                        className="btn-primary py-1.5 px-3 text-xs shrink-0 flex items-center gap-1.5">
+                        <Plus className="w-3.5 h-3.5" /> Add Log
+                    </button>
+                </div>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex flex-wrap items-center gap-3 flex-1">
+                        <div className="min-w-[220px] flex-[1.2]">
+                            <input
+                                value={logSearch}
+                                onChange={(e) => setLogSearch(e.target.value)}
+                                placeholder="Search by doctor, location..."
+                                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            />
+                        </div>
+                        <select
+                            value={logTypeFilter}
+                            onChange={(e) => setLogTypeFilter(e.target.value)}
+                            className="min-w-[150px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                        >
+                            <option value="ALL">All types</option>
+                            {LOG_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                        </select>
+                        <select
+                            value={logDateFilter}
+                            onChange={(e) => setLogDateFilter(e.target.value as LogDateFilter)}
+                            className="min-w-[150px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                        >
+                            {LOG_DATE_FILTER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.value === 'ALL' ? 'All dates' : o.label}</option>)}
+                        </select>
+                        <select
+                            value={logCostFilter}
+                            onChange={(e) => setLogCostFilter(e.target.value as LogCostFilter)}
+                            className="min-w-[150px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                        >
+                            {LOG_COST_FILTER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.value === 'ALL' ? 'All costs' : o.label}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                        <button
+                            className={`p-1.5 rounded-md transition-colors ${logView === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                            onClick={() => setLogView('grid')}
+                            title="Grid view"
+                        >
+                            <LayoutGrid className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
+                        </button>
+                        <button
+                            className={`p-1.5 rounded-md transition-colors ${logView === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                            onClick={() => setLogView('list')}
+                            title="List view"
+                        >
+                            <List className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {logsQuery.isLoading && <p className="text-sm text-gray-500">Loading…</p>}
 
-            {!logsQuery.isLoading && logs.length === 0 && (
+            {!logsQuery.isLoading && allLogs.length === 0 && (
                 <div className="text-center py-10 rounded-2xl border" style={{ borderColor: 'var(--color-border)' }}>
                     <p className="text-sm text-gray-400">No medical history yet.</p>
                 </div>
             )}
 
-            <div className="space-y-3">
-                {logs.map((log) => {
-                    const expanded = expandedLogs.has(log.id);
-                    return (
-                        <div key={log.id} className="rounded-2xl border overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-                            {/* Log header - always visible */}
-                            <div className="flex items-start gap-3 px-5 py-4 cursor-pointer" onClick={() => toggleLog(log.id)}>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${logTypeBadgeClass(log.type)}`}>{logTypeLabel(log.type)}</span>
-                                        <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{format(new Date(log.date), 'MMM d, yyyy')}</span>
-                                        {log.location && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>· {log.location}</span>}
-                                        {log.doctor && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>· Dr. {log.doctor}</span>}
+            {!logsQuery.isLoading && allLogs.length > 0 && logs.length === 0 && (
+                <div className="text-center py-10 rounded-2xl border" style={{ borderColor: 'var(--color-border)' }}>
+                    <p className="text-sm text-gray-400">No logs match the selected filter.</p>
+                </div>
+            )}
+
+            {logView === 'list' ? (
+                <div className="space-y-3">
+                    {logs.map((log) => {
+                        const expanded = expandedLogs.has(log.id);
+                        return (
+                            <div key={log.id} className="rounded-2xl border overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+                                {/* Log header - always visible */}
+                                <div className="flex items-start gap-3 px-5 py-4 cursor-pointer" onClick={() => toggleLog(log.id)}>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${logTypeBadgeClass(log.type)}`}>{logTypeLabel(log.type)}</span>
+                                            <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{format(new Date(log.date), 'MMM d, yyyy')}</span>
+                                            {log.location && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>· {log.location}</span>}
+                                            {log.doctor && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>· Dr. {log.doctor}</span>}
+                                        </div>
+                                        {log.symptoms && !expanded && <p className="text-xs mt-1 truncate" style={{ color: 'var(--color-text-secondary)' }}>{log.symptoms}</p>}
                                     </div>
-                                    {log.symptoms && !expanded && <p className="text-xs mt-1 truncate" style={{ color: 'var(--color-text-secondary)' }}>{log.symptoms}</p>}
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                        {log.files.length > 0 && !expanded && (
+                                            <span className="flex items-center gap-0.5 text-xs text-gray-400">
+                                                <Paperclip className="w-3 h-3" />{log.files.length}
+                                            </span>
+                                        )}
+                                        {log.cost != null && (
+                                            <span className="text-xs font-medium text-red-500">{log.cost.toLocaleString('vi-VN')} ₫</span>
+                                        )}
+                                        {isOwner(log) && (
+                                            <>
+                                                <button onClick={(e) => { e.stopPropagation(); setLogModal({ open: true, editing: log }); }} className="p-1.5 rounded-lg hover:bg-gray-100" title="Edit">
+                                                    <Edit2 className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ id: log.id, kind: 'log' }); }} className="p-1.5 rounded-lg hover:bg-red-50" title="Delete">
+                                                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                                                </button>
+                                            </>
+                                        )}
+                                        {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-1 flex-shrink-0">
-                                    {log.files.length > 0 && !expanded && (
+
+                                {/* Expanded details */}
+                                {expanded && (
+                                    <div className="border-t px-5 py-4 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
+                                        {log.symptoms && <InfoRow label="Symptoms" value={log.symptoms} />}
+                                        {log.description && <InfoRow label="Diagnosis / Notes" value={log.description} />}
+                                        {log.prescription && <InfoRow label="Prescription" value={log.prescription} />}
+                                        {log.nextCheckupDate && <InfoRow label="Next Checkup" value={format(new Date(log.nextCheckupDate), 'MMM d, yyyy')} />}
+
+                                        {/* Log files — prescription & docs */}
+                                        <div className="pt-3 border-t mt-2" style={{ borderColor: 'var(--color-border)' }}>
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <Paperclip className="w-3.5 h-3.5 text-gray-400" />
+                                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Prescription / Files</span>
+                                                {isOwner(log) && (
+                                                    <div className="ml-auto">
+                                                        <FileUploader url={`/healthbook/${personId}/logs/${log.id}/files`} onUploaded={() => qc.invalidateQueries({ queryKey: ['healthbook-logs', personId] })} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {log.files.length === 0 && <p className="text-xs text-gray-400 italic">No files attached — upload prescriptions or lab results here.</p>}
+                                            <div className="space-y-1.5">
+                                                {log.files.map((f) => (
+                                                    <FileItem key={f.id} file={f} kind="log" onDelete={() => deleteLogFile.mutate(f.id)} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {logs.map((log) => (
+                        <div key={log.id} className="rounded-2xl border p-4 flex flex-col gap-2" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+                            <div className="flex items-start justify-between gap-2">
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${logTypeBadgeClass(log.type)}`}>{logTypeLabel(log.type)}</span>
+                                <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(log.date), 'MMM d, yyyy')}</span>
+                            </div>
+                            {log.doctor && <p className="text-xs font-medium" style={{ color: 'var(--color-primary)' }}>Dr. {log.doctor}</p>}
+                            {log.location && <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{log.location}</p>}
+                            {log.symptoms && <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>{log.symptoms}</p>}
+                            {log.description && <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text)' }}>{log.description}</p>}
+                            <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                                <div className="flex items-center gap-2">
+                                    {log.cost != null && <span className="text-xs font-semibold text-red-500">{log.cost.toLocaleString('vi-VN')} ₫</span>}
+                                    {log.files.length > 0 && (
                                         <span className="flex items-center gap-0.5 text-xs text-gray-400">
                                             <Paperclip className="w-3 h-3" />{log.files.length}
                                         </span>
                                     )}
-                                    {log.cost != null && (
-                                        <span className="text-xs font-medium text-red-500">{log.cost.toLocaleString('vi-VN')} ₫</span>
+                                    {log.nextCheckupDate && (
+                                        <span className="text-xs text-orange-500">Next: {format(new Date(log.nextCheckupDate), 'MMM d')}</span>
                                     )}
-                                    {isOwner(log) && (
-                                        <>
-                                            <button onClick={(e) => { e.stopPropagation(); setLogModal({ open: true, editing: log }); }} className="p-1.5 rounded-lg hover:bg-gray-100" title="Edit">
-                                                <Edit2 className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
-                                            </button>
-                                            <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ id: log.id, kind: 'log' }); }} className="p-1.5 rounded-lg hover:bg-red-50" title="Delete">
-                                                <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                                            </button>
-                                        </>
-                                    )}
-                                    {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                                 </div>
-                            </div>
-
-                            {/* Expanded details */}
-                            {expanded && (
-                                <div className="border-t px-5 py-4 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
-                                    {log.symptoms && <InfoRow label="Symptoms" value={log.symptoms} />}
-                                    {log.description && <InfoRow label="Diagnosis / Notes" value={log.description} />}
-                                    {log.prescription && <InfoRow label="Prescription" value={log.prescription} />}
-                                    {log.nextCheckupDate && <InfoRow label="Next Checkup" value={format(new Date(log.nextCheckupDate), 'MMM d, yyyy')} />}
-
-                                    {/* Log files — prescription & docs */}
-                                    <div className="pt-3 border-t mt-2" style={{ borderColor: 'var(--color-border)' }}>
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <Paperclip className="w-3.5 h-3.5 text-gray-400" />
-                                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Prescription / Files</span>
-                                            {isOwner(log) && (
-                                                <div className="ml-auto">
-                                                    <FileUploader url={`/healthbook/${personId}/logs/${log.id}/files`} onUploaded={() => qc.invalidateQueries({ queryKey: ['healthbook-logs', personId] })} />
-                                                </div>
-                                            )}
-                                        </div>
-                                        {log.files.length === 0 && <p className="text-xs text-gray-400 italic">No files attached — upload prescriptions or lab results here.</p>}
-                                        <div className="space-y-1.5">
-                                            {log.files.map((f) => (
-                                                <FileItem key={f.id} file={f} kind="log" onDelete={() => deleteLogFile.mutate(f.id)} />
-                                            ))}
-                                        </div>
+                                {isOwner(log) && (
+                                    <div className="flex items-center gap-1">
+                                        <button onClick={() => setLogModal({ open: true, editing: log })} className="p-1.5 rounded-lg hover:bg-gray-100" title="Edit">
+                                            <Edit2 className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
+                                        </button>
+                                        <button onClick={() => setDeleteConfirm({ id: log.id, kind: 'log' })} className="p-1.5 rounded-lg hover:bg-red-50" title="Delete">
+                                            <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                                        </button>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
-                    );
-                })}
-            </div>
+                    ))}
+                </div>
+            )}
 
             {/* Modals */}
             {personModal.open && (

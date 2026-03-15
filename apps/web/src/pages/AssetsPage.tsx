@@ -35,6 +35,8 @@ const emptyRecordForm = () => ({
     kilometers: '',
     ...emptyNotification,
     pinToDashboard: false,
+    addToCalendar: false,
+    addExpense: false,
 });
 
 const formatVND = (amount: number) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(amount)} VND`;
@@ -63,6 +65,7 @@ type MaintenanceRecord = {
     kilometers?: number | null;
     pinToDashboard?: boolean;
     linkedEventId?: string | null;
+    linkedExpenseId?: string | null;
     notificationEnabled?: boolean;
     reminderOffsetDays?: number | null;
 };
@@ -425,6 +428,8 @@ export default function AssetsPage() {
             kilometers: record.kilometers != null ? String(record.kilometers) : '',
             ...loadNotificationState(record as any),
             pinToDashboard: !!record.pinToDashboard,
+            addToCalendar: !!record.linkedEventId,
+            addExpense: !!record.linkedExpenseId,
         });
         setShowRecordModal(true);
     }
@@ -990,10 +995,10 @@ export default function AssetsPage() {
                                     <textarea className="input" rows={2} value={assetForm.note} onChange={(e) => setAssetForm({ ...assetForm, note: e.target.value })} placeholder="Any additional details..." />
                                 </div>
                             </div>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={assetForm.isShared} onChange={(e) => setAssetForm({ ...assetForm, isShared: e.target.checked })} />
-                                Share with all users
-                            </label>
+                            <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: assetForm.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: assetForm.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setAssetForm({ ...assetForm, isShared: !assetForm.isShared })}>
+                                <input type="checkbox" checked={assetForm.isShared} onChange={(e) => setAssetForm({ ...assetForm, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this asset visible to all family members</p></div>
+                            </div>
                             <div className="flex items-center justify-between gap-3 pt-2">
                                 <div>
                                     {editingAsset && (
@@ -1027,7 +1032,7 @@ export default function AssetsPage() {
 
             {showRecordModal && selectedAsset && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) closeRecordModal(); }}>
-                    <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                    <div className="card p-6 w-full max-w-xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingRecord ? 'Edit Maintenance Log' : 'Add Maintenance Log'}</h3>
                             <button onClick={closeRecordModal}><X className="w-5 h-5" /></button>
@@ -1066,10 +1071,52 @@ export default function AssetsPage() {
                                 )}
                             </div>
                             <NotificationFields form={recordForm as any} setForm={setRecordForm as any} />
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={(recordForm as any).pinToDashboard || false} onChange={(e) => setRecordForm({ ...(recordForm as any), pinToDashboard: e.target.checked })} />
-                                Pin to dashboard
-                            </label>
+                            <div className="space-y-3">
+                                <div
+                                    className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer"
+                                    style={{ borderColor: (recordForm as any).addToCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: (recordForm as any).addToCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent', opacity: !recordForm.nextRecommendedDate ? 0.5 : 1 }}
+                                    onClick={() => recordForm.nextRecommendedDate && setRecordForm({ ...(recordForm as any), addToCalendar: !(recordForm as any).addToCalendar })}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={(recordForm as any).addToCalendar || false}
+                                        disabled={!recordForm.nextRecommendedDate}
+                                        onChange={(e) => setRecordForm({ ...(recordForm as any), addToCalendar: e.target.checked })}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="mt-0.5"
+                                    />
+                                    <div>
+                                        <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Add to Calendar</p>
+                                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                                            {!recordForm.nextRecommendedDate ? 'Requires a next recommended date' : editingRecord?.linkedEventId ? 'Already linked — uncheck to remove it' : 'Creates a calendar event on the next recommended date'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div
+                                    className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer"
+                                    style={{ borderColor: (recordForm as any).addExpense ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: (recordForm as any).addExpense ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent', opacity: !recordForm.cost ? 0.5 : 1 }}
+                                    onClick={() => recordForm.cost && setRecordForm({ ...(recordForm as any), addExpense: !(recordForm as any).addExpense })}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={(recordForm as any).addExpense || false}
+                                        disabled={!recordForm.cost}
+                                        onChange={(e) => setRecordForm({ ...(recordForm as any), addExpense: e.target.checked })}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="mt-0.5"
+                                    />
+                                    <div>
+                                        <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Add expense</p>
+                                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                                            {!recordForm.cost ? 'Requires a cost' : editingRecord?.linkedExpenseId ? 'Already linked — uncheck to remove it' : 'Creates an expense entry for this service'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: (recordForm as any).pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: (recordForm as any).pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setRecordForm({ ...(recordForm as any), pinToDashboard: !(recordForm as any).pinToDashboard })}>
+                                <input type="checkbox" checked={(recordForm as any).pinToDashboard || false} onChange={(e) => setRecordForm({ ...(recordForm as any), pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this log entry in the Dashboard pin area</p></div>
+                            </div>
                             <div className="flex items-center justify-between gap-3 pt-2">
                                 <div>
                                     {editingRecord && (

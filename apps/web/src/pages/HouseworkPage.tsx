@@ -268,31 +268,23 @@ function HouseworkForm({
 
             <NotificationFields form={form} setForm={setForm} />
 
-            <div className="grid grid-cols-2 gap-3">
-                <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} />
-                    Share with all users
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} />
-                    Pin to dashboard
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                    <input
-                        type="checkbox"
-                        checked={form.showOnCalendar}
-                        disabled={!form.nextDueDate}
-                        onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })}
-                    />
-                    Add to Calendar
-                </label>
+            <div className="space-y-3">
+                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, isShared: !form.isShared })}>
+                    <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this item visible to all family members</p></div>
+                </div>
+                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}>
+                    <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this item in the Dashboard pin area</p></div>
+                </div>
+                <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.showOnCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.showOnCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent', opacity: !form.nextDueDate ? 0.5 : 1 }}>
+                    <input type="checkbox" id="houseworkShowOnCalendar" checked={form.showOnCalendar} disabled={!form.nextDueDate} onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })} className="rounded mt-0.5" />
+                    <div>
+                        <label htmlFor="houseworkShowOnCalendar" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add to Calendar</label>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>{form.nextDueDate ? 'Creates a calendar event on the next due date' : 'Requires a due date'}</p>
+                    </div>
+                </div>
             </div>
-
-            {!form.nextDueDate && (
-                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                    Add to Calendar requires a due date.
-                </p>
-            )}
 
             <div className="flex items-center justify-between gap-3 pt-2">
                 <div>

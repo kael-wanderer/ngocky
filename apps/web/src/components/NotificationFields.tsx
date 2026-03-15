@@ -80,14 +80,23 @@ export default function NotificationFields<T extends NotificationState>({
 }) {
     return (
         <>
-            <label className="flex items-center gap-2 text-sm">
+            <div
+                className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer"
+                style={{ borderColor: form.notificationEnabled ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.notificationEnabled ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}
+                onClick={() => setForm({ ...form, notificationEnabled: !form.notificationEnabled })}
+            >
                 <input
                     type="checkbox"
                     checked={form.notificationEnabled}
                     onChange={(e) => setForm({ ...form, notificationEnabled: e.target.checked })}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-0.5"
                 />
-                Notification
-            </label>
+                <div>
+                    <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Notification</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Sends a reminder notification at your chosen date and time</p>
+                </div>
+            </div>
             {form.notificationEnabled && (
                 <div className="space-y-3">
                     <div>

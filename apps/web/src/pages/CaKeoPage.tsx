@@ -419,9 +419,13 @@ export default function CaKeoPage() {
                                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                                         <input type="checkbox" checked={form.allDay} onChange={(e) => setForm({ ...form, allDay: e.target.checked })} className="rounded" /> All day
                                     </label>
-                                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <input type="checkbox" checked={form.showOnCalendar} onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })} className="rounded" /> Show on main Calendar
-                                    </label>
+                                    <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.showOnCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.showOnCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
+                                        <input type="checkbox" id="cakeoShowOnCalendar" checked={form.showOnCalendar} onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })} className="rounded mt-0.5" />
+                                        <div>
+                                            <label htmlFor="cakeoShowOnCalendar" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add to Calendar</label>
+                                            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Shows this item on the main Calendar view</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             {!form.color && (

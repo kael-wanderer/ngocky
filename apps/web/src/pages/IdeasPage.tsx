@@ -384,10 +384,10 @@ export default function IdeasPage() {
                                 <label className="label">Description</label>
                                 <textarea className="input" rows={3} value={topicForm.description} onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })} />
                             </div>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={topicForm.isShared} onChange={(e) => setTopicForm({ ...topicForm, isShared: e.target.checked })} />
-                                Share with all users
-                            </label>
+                            <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: topicForm.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: topicForm.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setTopicForm({ ...topicForm, isShared: !topicForm.isShared })}>
+                                <input type="checkbox" checked={topicForm.isShared} onChange={(e) => setTopicForm({ ...topicForm, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this topic visible to all family members</p></div>
+                            </div>
                             <div className="flex items-center justify-between gap-3 pt-2">
                                 <div>
                                     {editingTopic && (

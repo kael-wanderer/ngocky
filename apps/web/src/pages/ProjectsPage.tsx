@@ -526,14 +526,14 @@ export default function ProjectsPage() {
                                         </select>
                                     </div>
                                 </div>
-                                <label className="flex items-center gap-2 text-sm">
-                                    <input type="checkbox" checked={boardForm.isShared} onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })} />
-                                    Share with all family users
-                                </label>
-                                <label className="flex items-center gap-2 text-sm">
-                                    <input type="checkbox" checked={boardForm.pinToDashboard} onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })} />
-                                    Pin to dashboard
-                                </label>
+                                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: boardForm.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: boardForm.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setBoardForm({ ...boardForm, isShared: !boardForm.isShared })}>
+                                    <input type="checkbox" checked={boardForm.isShared} onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this project board visible to all family members</p></div>
+                                </div>
+                                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: boardForm.pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: boardForm.pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setBoardForm({ ...boardForm, pinToDashboard: !boardForm.pinToDashboard })}>
+                                    <input type="checkbox" checked={boardForm.pinToDashboard} onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this board in the Dashboard pin area</p></div>
+                                </div>
                                 <div className="flex items-center justify-between gap-3 pt-2">
                                     <button
                                         type="button"
@@ -596,14 +596,14 @@ export default function ProjectsPage() {
                                         </select>
                                     </div>
                                 </div>
-                                <label className="flex items-center gap-2 text-sm">
-                                    <input type="checkbox" checked={boardForm.isShared} onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })} />
-                                    Share with all family users
-                                </label>
-                                <label className="flex items-center gap-2 text-sm">
-                                    <input type="checkbox" checked={boardForm.pinToDashboard} onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })} />
-                                    Pin to dashboard
-                                </label>
+                                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: boardForm.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: boardForm.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setBoardForm({ ...boardForm, isShared: !boardForm.isShared })}>
+                                    <input type="checkbox" checked={boardForm.isShared} onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this project board visible to all family members</p></div>
+                                </div>
+                                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: boardForm.pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: boardForm.pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setBoardForm({ ...boardForm, pinToDashboard: !boardForm.pinToDashboard })}>
+                                    <input type="checkbox" checked={boardForm.pinToDashboard} onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this board in the Dashboard pin area</p></div>
+                                </div>
                                 <button type="submit" className="btn-primary w-full" disabled={createBoardMut.isPending}>
                                     {createBoardMut.isPending ? 'Creating...' : 'Create Board'}
                                 </button>
@@ -686,14 +686,14 @@ export default function ProjectsPage() {
                                     </select>
                                 </div>
                             </div>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={boardForm.isShared} onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })} />
-                                Share with all family users
-                            </label>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={boardForm.pinToDashboard} onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })} />
-                                Pin to dashboard
-                            </label>
+                            <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: boardForm.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: boardForm.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setBoardForm({ ...boardForm, isShared: !boardForm.isShared })}>
+                                <input type="checkbox" checked={boardForm.isShared} onChange={(e) => setBoardForm({ ...boardForm, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this project board visible to all family members</p></div>
+                            </div>
+                            <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: boardForm.pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: boardForm.pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setBoardForm({ ...boardForm, pinToDashboard: !boardForm.pinToDashboard })}>
+                                <input type="checkbox" checked={boardForm.pinToDashboard} onChange={(e) => setBoardForm({ ...boardForm, pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this board in the Dashboard pin area</p></div>
+                            </div>
                             <div className="flex items-center justify-between gap-3 pt-2">
                                 <button
                                     type="button"
@@ -777,14 +777,10 @@ export default function ProjectsPage() {
                                 />
                                 Share with all users
                             </label>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input
-                                    type="checkbox"
-                                    checked={taskForm.pinToDashboard}
-                                    onChange={(e) => setTaskForm({ ...taskForm, pinToDashboard: e.target.checked })}
-                                />
-                                Pin to dashboard
-                            </label>
+                            <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: taskForm.pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: taskForm.pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setTaskForm({ ...taskForm, pinToDashboard: !taskForm.pinToDashboard })}>
+                                <input type="checkbox" checked={taskForm.pinToDashboard} onChange={(e) => setTaskForm({ ...taskForm, pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this task in the Dashboard pin area</p></div>
+                            </div>
                             <NotificationFields form={taskForm} setForm={setTaskForm} />
                             <div className="flex items-center justify-between gap-3 pt-2">
                                 <div>

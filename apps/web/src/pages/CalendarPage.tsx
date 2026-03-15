@@ -535,19 +535,20 @@ export default function CalendarPage() {
                                     <input type="date" min={form.startDate || format(new Date(), 'yyyy-MM-dd')} className="input" value={form.repeatUntil} onChange={(e) => setForm({ ...form, repeatUntil: e.target.value })} />
                                 </div>
                             )}
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.allDay} onChange={(e) => setForm({ ...form, allDay: e.target.checked })} className="rounded" /> All day</label>
-                                <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} className="rounded" /> Shared</label>
-                                <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} className="rounded" /> Pin to dashboard</label>
-                                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={form.notificationEnabled}
-                                        onChange={(e) => setForm({ ...form, notificationEnabled: e.target.checked })}
-                                        className="rounded"
-                                    />
-                                    Notification
-                                </label>
+                            <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.allDay} onChange={(e) => setForm({ ...form, allDay: e.target.checked })} className="rounded" /> All day</label>
+                            <div className="space-y-3">
+                                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, isShared: !form.isShared })}>
+                                    <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this event visible to all family members</p></div>
+                                </div>
+                                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}>
+                                    <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this event in the Dashboard pin area</p></div>
+                                </div>
+                                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.notificationEnabled ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.notificationEnabled ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, notificationEnabled: !form.notificationEnabled })}>
+                                    <input type="checkbox" checked={form.notificationEnabled} onChange={(e) => setForm({ ...form, notificationEnabled: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Notification</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Sends a reminder notification at your chosen date and time</p></div>
+                                </div>
                             </div>
                             {form.notificationEnabled && <NotificationFields form={form} setForm={setForm} />}
                             {formError && (

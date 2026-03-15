@@ -590,6 +590,7 @@ model MaintenanceRecord {
   cost                    Float?
   vendor                  String?
   nextRecommendedDate     DateTime?
+  linkedExpenseId         String?
   kilometers              Int?
   notificationEnabled     Boolean      @default(false)
   reminderOffsetValue     Int?

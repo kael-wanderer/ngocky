@@ -77,13 +77,13 @@ async function syncMaintenanceCalendarEvent(tx: Prisma.TransactionClient, asset:
     return event.id;
 }
 
-async function createMaintenanceExpense(tx: Prisma.TransactionClient, payload: any, userId: string) {
-    if (payload.cost == null) return;
+async function createMaintenanceExpense(tx: Prisma.TransactionClient, payload: any, userId: string): Promise<string | null> {
+    if (payload.cost == null) return null;
 
     const amount = Number(payload.cost);
-    if (!Number.isFinite(amount) || amount <= 0) return;
+    if (!Number.isFinite(amount) || amount <= 0) return null;
 
-    await tx.expense.create({
+    const expense = await tx.expense.create({
         data: {
             description: payload.serviceType?.trim() || 'Maintenance',
             type: 'PAY',
@@ -96,6 +96,7 @@ async function createMaintenanceExpense(tx: Prisma.TransactionClient, payload: a
             userId,
         },
     });
+    return expense.id;
 }
 
 // ─── Assets ─────────────────────────────────────────────────────────────────
@@ -208,30 +209,37 @@ router.post('/:id/maintenance', validate(createMaintenanceRecordBodySchema), asy
         });
         if (!asset) throw new NotFoundError('Asset not found');
 
+        const { addToCalendar, addExpense, ...recordBody } = req.body;
         const record = await prisma.$transaction(async (tx) => {
-            const reminderFields = resolveReminderFields(req.body, {
-                anchorDate: req.body.nextRecommendedDate,
+            const reminderFields = resolveReminderFields(recordBody, {
+                anchorDate: recordBody.nextRecommendedDate,
                 anchorLabel: 'next recommended date',
             });
             const created = await tx.maintenanceRecord.create({
                 data: {
-                    ...req.body,
+                    ...recordBody,
                     ...reminderFields,
-                    serviceDate: new Date(req.body.serviceDate),
-                    nextRecommendedDate: req.body.nextRecommendedDate ? new Date(req.body.nextRecommendedDate) : undefined,
+                    serviceDate: new Date(recordBody.serviceDate),
+                    nextRecommendedDate: recordBody.nextRecommendedDate ? new Date(recordBody.nextRecommendedDate) : undefined,
                     userId: req.user!.userId,
                     assetId,
                 },
             });
 
-            await createMaintenanceExpense(tx, created, req.user!.userId);
+            let linkedExpenseId: string | null = null;
+            if (addExpense) {
+                linkedExpenseId = await createMaintenanceExpense(tx, created, req.user!.userId);
+            }
 
-            const linkedEventId = await syncMaintenanceCalendarEvent(tx, asset, created, req.user!.userId, null);
-            if (!linkedEventId) return created;
+            let linkedEventId: string | null = null;
+            if (addToCalendar) {
+                linkedEventId = await syncMaintenanceCalendarEvent(tx, asset, created, req.user!.userId, null);
+            }
 
+            if (!linkedEventId && !linkedExpenseId) return created;
             return tx.maintenanceRecord.update({
                 where: { id: created.id },
-                data: { linkedEventId },
+                data: { linkedEventId: linkedEventId ?? undefined, linkedExpenseId: linkedExpenseId ?? undefined },
             });
         });
         sendCreated(res, record);
@@ -268,48 +276,53 @@ router.patch('/:assetId/maintenance/:recordId', validate(updateMaintenanceRecord
         });
         if (!asset) throw new NotFoundError('Asset not found');
 
+        const { addToCalendar, addExpense, ...updateBody } = req.body;
         const updated = await prisma.$transaction(async (tx) => {
             const nextState = {
                 ...record,
-                ...req.body,
-                serviceDate: req.body.serviceDate ? new Date(req.body.serviceDate) : record.serviceDate,
-                nextRecommendedDate: req.body.nextRecommendedDate === null
+                ...updateBody,
+                serviceDate: updateBody.serviceDate ? new Date(updateBody.serviceDate) : record.serviceDate,
+                nextRecommendedDate: updateBody.nextRecommendedDate === null
                     ? null
-                    : req.body.nextRecommendedDate
-                        ? new Date(req.body.nextRecommendedDate)
+                    : updateBody.nextRecommendedDate
+                        ? new Date(updateBody.nextRecommendedDate)
                         : record.nextRecommendedDate,
-                notificationDate: req.body.notificationDate === null
+                notificationDate: updateBody.notificationDate === null
                     ? null
-                    : req.body.notificationDate
-                        ? new Date(req.body.notificationDate)
+                    : updateBody.notificationDate
+                        ? new Date(updateBody.notificationDate)
                         : record.notificationDate,
             };
-            const reminderFields = resolveReminderFields(
-                nextState,
-                {
-                    anchorDate: nextState.nextRecommendedDate,
-                    anchorLabel: 'next recommended date',
-                    current: record,
-                },
-            );
+            const reminderFields = resolveReminderFields(nextState, { anchorDate: nextState.nextRecommendedDate, anchorLabel: 'next recommended date', current: record });
             Object.assign(nextState, reminderFields);
 
-            const linkedEventId = await syncMaintenanceCalendarEvent(
-                tx,
-                asset,
-                nextState,
-                req.user!.userId,
-                record.linkedEventId,
-            );
+            // Calendar event: explicit toggle or keep existing sync
+            let linkedEventId: string | null | undefined = undefined;
+            if (addToCalendar === false && record.linkedEventId) {
+                try { await tx.calendarEvent.delete({ where: { id: record.linkedEventId } }); } catch { /* already gone */ }
+                linkedEventId = null;
+            } else if (addToCalendar === true || (addToCalendar === undefined && record.linkedEventId)) {
+                linkedEventId = await syncMaintenanceCalendarEvent(tx, asset, nextState, req.user!.userId, record.linkedEventId);
+            }
+
+            // Expense: explicit toggle
+            let linkedExpenseId: string | null | undefined = undefined;
+            if (addExpense === true && !record.linkedExpenseId) {
+                linkedExpenseId = await createMaintenanceExpense(tx, nextState, req.user!.userId);
+            } else if (addExpense === false && record.linkedExpenseId) {
+                try { await tx.expense.delete({ where: { id: record.linkedExpenseId } }); } catch { /* already gone */ }
+                linkedExpenseId = null;
+            }
 
             return tx.maintenanceRecord.update({
                 where: { id: recordId },
                 data: {
-                    ...req.body,
+                    ...updateBody,
                     ...reminderFields,
-                    serviceDate: req.body.serviceDate ? new Date(req.body.serviceDate) : undefined,
-                    nextRecommendedDate: req.body.nextRecommendedDate === null ? null : req.body.nextRecommendedDate ? new Date(req.body.nextRecommendedDate) : undefined,
-                    linkedEventId,
+                    serviceDate: updateBody.serviceDate ? new Date(updateBody.serviceDate) : undefined,
+                    nextRecommendedDate: updateBody.nextRecommendedDate === null ? null : updateBody.nextRecommendedDate ? new Date(updateBody.nextRecommendedDate) : undefined,
+                    ...(linkedEventId !== undefined && { linkedEventId }),
+                    ...(linkedExpenseId !== undefined && { linkedExpenseId }),
                 },
             });
         });
@@ -329,7 +342,10 @@ router.delete('/:assetId/maintenance/:recordId', async (req: Request, res: Respo
 
         await prisma.$transaction(async (tx) => {
             if (record.linkedEventId) {
-                await tx.calendarEvent.delete({ where: { id: record.linkedEventId } });
+                try { await tx.calendarEvent.delete({ where: { id: record.linkedEventId } }); } catch { /* already gone */ }
+            }
+            if ((record as any).linkedExpenseId) {
+                try { await tx.expense.delete({ where: { id: (record as any).linkedExpenseId } }); } catch { /* already gone */ }
             }
             await tx.maintenanceRecord.delete({ where: { id: recordId } });
         });
