@@ -82,7 +82,7 @@ router.get('/due-reports', async (_req: Request, res: Response, next: NextFuncti
 /**
  * GET /api/service/report-data/:reportId
  * Returns assembled data for a specific ScheduledReport.
- * Supports WEEKLY_SUMMARY, NEXT_WEEK_TASKS, TODAY_TASKS, and TOMORROW_TASKS.
+ * Supports WEEKLY_SUMMARY, THIS_WEEK_TASKS, NEXT_WEEK_TASKS, TODAY_TASKS, and TOMORROW_TASKS.
  */
 router.get('/report-data/:reportId', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -132,7 +132,7 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
         if (report.reportType === 'WEEKLY_SUMMARY' || report.reportType === 'SUMMARY') {
             const { start, end } = getWeekRange(0);
 
-            const [goals, projectTasks, standaloneTasks, housework, calendar, expenses, assets, learning, ideas] = await Promise.all([
+            const [goals, projectTasks, standaloneTasks, housework, calendar, expenses, assets, learning, ideas, cakeo, healthbook, keyboards, funds] = await Promise.all([
                 prisma.goal.findMany({
                     where: { userId, active: true },
                     orderBy: { sortOrder: 'asc' },
@@ -174,6 +174,46 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                 prisma.idea.findMany({
                     where: { userId, updatedAt: { gte: start, lte: end } },
                     orderBy: { updatedAt: 'desc' },
+                    take: 20,
+                }),
+                prisma.caKeo.findMany({
+                    where: {
+                        ownerId: userId,
+                        OR: [
+                            { startDate: { gte: start, lte: end } },
+                            { endDate: { gte: start, lte: end } },
+                            {
+                                AND: [
+                                    { startDate: { lte: end } },
+                                    { endDate: { gte: start } },
+                                ],
+                            },
+                        ],
+                    },
+                    include: { assigner: { select: { name: true } } },
+                    orderBy: [{ startDate: 'asc' }, { endDate: 'asc' }, { createdAt: 'desc' }],
+                    take: 20,
+                }),
+                prisma.healthLog.findMany({
+                    where: {
+                        userId,
+                        OR: [
+                            { date: { gte: start, lte: end } },
+                            { nextCheckupDate: { gte: start, lte: end } },
+                        ],
+                    },
+                    include: { person: { select: { name: true } } },
+                    orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+                    take: 20,
+                }),
+                prisma.keyboard.findMany({
+                    where: { ownerId: userId, createdAt: { gte: start, lte: end } },
+                    orderBy: { createdAt: 'desc' },
+                    take: 20,
+                }),
+                prisma.fundTransaction.findMany({
+                    where: { userId, date: { gte: start, lte: end } },
+                    orderBy: { date: 'desc' },
                     take: 20,
                 }),
             ]);
@@ -226,6 +266,42 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                     status: i.status,
                     updatedAt: i.updatedAt,
                 })),
+                cakeo: cakeo.map(item => ({
+                    title: item.title,
+                    type: item.type,
+                    category: item.category,
+                    status: item.status,
+                    assigner: item.assigner?.name || null,
+                    startDate: item.startDate,
+                    endDate: item.endDate,
+                    allDay: item.allDay,
+                })),
+                healthbook: healthbook.map(log => ({
+                    person: log.person.name,
+                    type: log.type,
+                    date: log.date,
+                    doctor: log.doctor,
+                    location: log.location,
+                    cost: log.cost,
+                    nextCheckupDate: log.nextCheckupDate,
+                })),
+                keyboard: keyboards.map(item => ({
+                    name: item.name,
+                    category: item.category,
+                    tag: item.tag,
+                    color: item.color,
+                    price: item.price,
+                    createdAt: item.createdAt,
+                })),
+                funds: funds.map(item => ({
+                    date: item.date,
+                    type: item.type,
+                    scope: item.scope,
+                    category: item.category,
+                    condition: item.condition,
+                    description: item.description,
+                    amount: item.amount,
+                })),
                 expenses: {
                     totalPaid: Math.round(totalPaid),
                     totalReceived: Math.round(totalReceived),
@@ -251,7 +327,7 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                         ? getWeekRange(0)
                         : getWeekRange(1);
 
-            const [goals, project, tasks, housework, calendar] = await Promise.all([
+            const [goals, project, tasks, housework, calendar, expenses, cakeo, assets, healthbook, keyboards, funds, learning, ideas] = await Promise.all([
                 prisma.goal.findMany({
                     where: { userId, active: true },
                     orderBy: { sortOrder: 'asc' },
@@ -272,6 +348,72 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                 prisma.calendarEvent.findMany({
                     where: { createdById: userId, startDate: { gte: start, lte: end } },
                     orderBy: { startDate: 'asc' },
+                }),
+                prisma.expense.findMany({
+                    where: { userId, date: { gte: start, lte: end } },
+                    orderBy: { date: 'desc' },
+                }),
+                prisma.caKeo.findMany({
+                    where: {
+                        ownerId: userId,
+                        OR: [
+                            { startDate: { gte: start, lte: end } },
+                            { endDate: { gte: start, lte: end } },
+                            {
+                                AND: [
+                                    { startDate: { lte: end } },
+                                    { endDate: { gte: start } },
+                                ],
+                            },
+                        ],
+                    },
+                    include: { assigner: { select: { name: true } } },
+                    orderBy: [{ startDate: 'asc' }, { endDate: 'asc' }, { createdAt: 'desc' }],
+                }),
+                prisma.maintenanceRecord.findMany({
+                    where: {
+                        userId,
+                        OR: [
+                            { serviceDate: { gte: start, lte: end } },
+                            { nextRecommendedDate: { gte: start, lte: end } },
+                        ],
+                    },
+                    include: { asset: { select: { name: true } } },
+                    orderBy: [{ nextRecommendedDate: 'asc' }, { serviceDate: 'desc' }],
+                }),
+                prisma.healthLog.findMany({
+                    where: {
+                        userId,
+                        OR: [
+                            { date: { gte: start, lte: end } },
+                            { nextCheckupDate: { gte: start, lte: end } },
+                        ],
+                    },
+                    include: { person: { select: { name: true } } },
+                    orderBy: [{ nextCheckupDate: 'asc' }, { date: 'desc' }],
+                }),
+                prisma.keyboard.findMany({
+                    where: { ownerId: userId, createdAt: { gte: start, lte: end } },
+                    orderBy: { createdAt: 'desc' },
+                }),
+                prisma.fundTransaction.findMany({
+                    where: { userId, date: { gte: start, lte: end } },
+                    orderBy: { date: 'desc' },
+                }),
+                prisma.learningItem.findMany({
+                    where: {
+                        userId,
+                        OR: [
+                            { deadline: { gte: start, lte: end } },
+                            { updatedAt: { gte: start, lte: end } },
+                        ],
+                    },
+                    include: { topic: { select: { title: true } } },
+                    orderBy: [{ deadline: 'asc' }, { updatedAt: 'desc' }],
+                }),
+                prisma.idea.findMany({
+                    where: { userId, updatedAt: { gte: start, lte: end } },
+                    orderBy: { updatedAt: 'desc' },
                 }),
             ]);
 
@@ -313,8 +455,72 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                     dueDate: t.dueDate,
                     status: t.status,
                 })),
+                expenses: expenses.map(e => ({
+                    description: e.description,
+                    amount: e.amount,
+                    type: e.type,
+                    category: e.category,
+                    date: e.date,
+                })),
+                cakeo: cakeo.map(item => ({
+                    title: item.title,
+                    type: item.type,
+                    category: item.category,
+                    status: item.status,
+                    assigner: item.assigner?.name || null,
+                    startDate: item.startDate,
+                    endDate: item.endDate,
+                    allDay: item.allDay,
+                })),
                 housework: housework.map(h => ({ title: h.title, dueDate: h.nextDueDate, frequencyType: h.frequencyType })),
                 calendar: calendar.map(e => ({ title: e.title, startDate: e.startDate, location: e.location, allDay: e.allDay })),
+                assets: assets.map(a => ({
+                    asset: a.asset.name,
+                    serviceType: a.serviceType,
+                    description: a.description,
+                    serviceDate: a.serviceDate,
+                    nextRecommendedDate: a.nextRecommendedDate,
+                    cost: a.cost,
+                })),
+                healthbook: healthbook.map(log => ({
+                    person: log.person.name,
+                    type: log.type,
+                    date: log.date,
+                    doctor: log.doctor,
+                    location: log.location,
+                    cost: log.cost,
+                    nextCheckupDate: log.nextCheckupDate,
+                })),
+                keyboard: keyboards.map(item => ({
+                    name: item.name,
+                    category: item.category,
+                    tag: item.tag,
+                    color: item.color,
+                    price: item.price,
+                    createdAt: item.createdAt,
+                })),
+                funds: funds.map(item => ({
+                    date: item.date,
+                    type: item.type,
+                    scope: item.scope,
+                    category: item.category,
+                    condition: item.condition,
+                    description: item.description,
+                    amount: item.amount,
+                })),
+                learning: learning.map(l => ({
+                    title: l.title,
+                    topic: l.topic?.title || null,
+                    status: l.status,
+                    progress: l.progress,
+                    deadline: l.deadline,
+                })),
+                ideas: ideas.map(i => ({
+                    title: i.title,
+                    category: i.category,
+                    status: i.status,
+                    updatedAt: i.updatedAt,
+                })),
             });
         }
 
