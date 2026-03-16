@@ -79,6 +79,7 @@ const FEATURE_KEY_TO_SECTION: Record<string, string> = {
 const REPORT_TYPE_LABELS: Record<string, string> = {
     WEEKLY_SUMMARY: 'Weekly Summary',
     SUMMARY: 'Weekly Summary',
+    THIS_WEEK_TASKS: 'This Week Tasks',
     NEXT_WEEK_TASKS: 'Next Week Tasks',
     TODAY_TASKS: 'Today Tasks',
     TOMORROW_TASKS: 'Tomorrow Tasks',
@@ -90,6 +91,7 @@ function getDefaultSections(_reportType?: string) {
 
 function getDefaultFrequency(reportType: string) {
     if (reportType === 'TODAY_TASKS' || reportType === 'TOMORROW_TASKS') return 'ONE_TIME';
+    if (reportType === 'THIS_WEEK_TASKS') return 'WEEKLY';
     return 'WEEKLY';
 }
 
@@ -731,7 +733,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
-                                    <label className="label">Action Type</label>
+                                    <label className="label">Report Type</label>
                                     <select
                                         className="input"
                                         value={reportForm.reportType}
@@ -746,6 +748,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                         }}
                                     >
                                         <option value="WEEKLY_SUMMARY">Weekly Summary</option>
+                                        <option value="THIS_WEEK_TASKS">This Week Tasks</option>
                                         <option value="NEXT_WEEK_TASKS">Next Week Tasks</option>
                                         <option value="TODAY_TASKS">Today Tasks</option>
                                         <option value="TOMORROW_TASKS">Tomorrow Tasks</option>
@@ -754,7 +757,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 <div>
                                     <label className="label">Frequency</label>
                                     <select className="input" value={reportForm.frequency} onChange={(e) => setReportForm({ ...reportForm, frequency: e.target.value })}>
-                                        {reportForm.reportType === 'TODAY_TASKS' || reportForm.reportType === 'TOMORROW_TASKS' ? (
+                                        {(reportForm.reportType === 'TODAY_TASKS' || reportForm.reportType === 'TOMORROW_TASKS') ? (
                                             <>
                                                 <option value="ONE_TIME">One Time</option>
                                                 <option value="DAILY">Daily</option>
@@ -801,7 +804,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                     </div>
                                 )}
                                 <div className="col-span-2">
-                                    <label className="label">Include Sections <span className="text-xs font-normal" style={{ color: 'var(--color-text-secondary)' }}>(checked items are included)</span></label>
+                                    <label className="label">Include Module <span className="text-xs font-normal" style={{ color: 'var(--color-text-secondary)' }}>(checked items are included)</span></label>
                                     <div className="space-y-3 mt-1">
                                         {FEATURE_GROUPS.map((group) => {
                                             const enabledItems = group.items.filter((item) => {
@@ -846,15 +849,19 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                             <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                                 Delivered via your notification channel in Settings.
                             </p>
-                            <label className="flex items-center gap-2 text-sm cursor-pointer">
+                            <div className="rounded-lg border p-3 flex items-start gap-3" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
                                 <input
+                                    id="report-active"
                                     type="checkbox"
                                     checked={reportForm.active}
                                     onChange={(e) => setReportForm({ ...reportForm, active: e.target.checked })}
-                                    className="rounded"
+                                    className="rounded mt-0.5"
                                 />
-                                <span style={{ color: 'var(--color-text)' }}>Enable schedule</span>
-                            </label>
+                                <label htmlFor="report-active" className="cursor-pointer flex-1">
+                                    <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Enable</span>
+                                    <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>When enabled, this report will be sent automatically on the configured schedule.</p>
+                                </label>
+                            </div>
                             <div className="flex items-center justify-between gap-3 pt-2">
                                 <div>
                                     {editingReport && (

@@ -242,12 +242,14 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
             });
         }
 
-        if (report.reportType === 'NEXT_WEEK_TASKS' || report.reportType === 'TODAY_TASKS' || report.reportType === 'TOMORROW_TASKS') {
+        if (report.reportType === 'THIS_WEEK_TASKS' || report.reportType === 'NEXT_WEEK_TASKS' || report.reportType === 'TODAY_TASKS' || report.reportType === 'TOMORROW_TASKS') {
             const { start, end } = report.reportType === 'TODAY_TASKS'
                 ? getDayRange(0)
                 : report.reportType === 'TOMORROW_TASKS'
                     ? getDayRange(1)
-                    : getWeekRange(1);
+                    : report.reportType === 'THIS_WEEK_TASKS'
+                        ? getWeekRange(0)
+                        : getWeekRange(1);
 
             const [goals, project, tasks, housework, calendar] = await Promise.all([
                 prisma.goal.findMany({
@@ -295,7 +297,7 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                         if (report.reportType === 'TODAY_TASKS' || report.reportType === 'TOMORROW_TASKS') {
                             return !goal.completed;
                         }
-                        return goal.dueDate >= start && goal.dueDate <= end;
+                        return goal.dueDate >= start && goal.dueDate <= end;  // THIS_WEEK_TASKS and NEXT_WEEK_TASKS
                     }),
                 project: project.map(t => ({
                     title: t.title,
