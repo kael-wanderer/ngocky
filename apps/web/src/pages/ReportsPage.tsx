@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
 import { FEATURE_GROUPS, getFeatureFlags } from '../config/features';
@@ -305,35 +306,35 @@ function sameTabIds(left: AnalyticsTabId[], right: AnalyticsTabId[]) {
 export default function ReportsPage() {
     const reportContentRef = useRef<HTMLDivElement>(null);
     const { user } = useAuthStore();
-    const [selectionMode, setSelectionMode] = useState<AnalyticsSelectionMode>('single');
-    const [singleSelectedTab, setSingleSelectedTab] = useState<AnalyticsTabId | 'all'>('calendar');
-    const [multiSelectedTabs, setMultiSelectedTabs] = useState<AnalyticsTabId[]>(['calendar']);
-    const [reportTimeRange, setReportTimeRange] = useState<ReportTimeRange>('THIS_WEEK');
-    const [viewType, setViewType] = useState<AnalyticsViewType>('BOTH');
-    const [filters, setFilters] = useState({ type: '', scope: '', category: '', dateFrom: '', dateTo: '' });
+    const [selectionMode, setSelectionMode] = useLocalStorage<AnalyticsSelectionMode>('ngocky:reports:selectionMode', 'single');
+    const [singleSelectedTab, setSingleSelectedTab] = useLocalStorage<AnalyticsTabId | 'all'>('ngocky:reports:singleTab', 'calendar');
+    const [multiSelectedTabs, setMultiSelectedTabs] = useLocalStorage<AnalyticsTabId[]>('ngocky:reports:multiTabs', ['calendar']);
+    const [reportTimeRange, setReportTimeRange] = useLocalStorage<ReportTimeRange>('ngocky:reports:timeRange', 'THIS_WEEK');
+    const [viewType, setViewType] = useLocalStorage<AnalyticsViewType>('ngocky:reports:viewType', 'BOTH');
+    const [filters, setFilters] = useLocalStorage('ngocky:reports:filters', { type: '', scope: '', category: '', dateFrom: '', dateTo: '' });
     const [analyticsSearch, setAnalyticsSearch] = useState('');
-    const [goalPeriodFilter, setGoalPeriodFilter] = useState<SharedGoalPeriodFilter>(DEFAULT_GOAL_PERIOD_FILTER);
-    const [taskFilters, setTaskFilters] = useState<{
+    const [goalPeriodFilter, setGoalPeriodFilter] = useLocalStorage<SharedGoalPeriodFilter>('ngocky:reports:goalPeriodFilter', DEFAULT_GOAL_PERIOD_FILTER);
+    const [taskFilters, setTaskFilters] = useLocalStorage<{
         dueDate: AnalyticsTaskDueDateFilter;
         type: AnalyticsTaskTypeFilter;
         priority: AnalyticsTaskPriorityFilter;
         status: AnalyticsTaskStatusFilter;
-    }>({ ...DEFAULT_TASK_FILTERS });
-    const [expenseFilters, setExpenseFilters] = useState({ ...DEFAULT_EXPENSE_FILTERS });
-    const [houseworkFilters, setHouseworkFilters] = useState<{
+    }>('ngocky:reports:taskFilters', { ...DEFAULT_TASK_FILTERS });
+    const [expenseFilters, setExpenseFilters] = useLocalStorage('ngocky:reports:expenseFilters', { ...DEFAULT_EXPENSE_FILTERS });
+    const [houseworkFilters, setHouseworkFilters] = useLocalStorage<{
         dueDate: AnalyticsHouseworkDueDateFilter;
         frequency: AnalyticsHouseworkFrequencyFilter;
         status: AnalyticsHouseworkStatusFilter;
-    }>({ ...DEFAULT_HOUSEWORK_FILTERS });
-    const [cakeoFilters, setCakeoFilters] = useState<{
+    }>('ngocky:reports:houseworkFilters', { ...DEFAULT_HOUSEWORK_FILTERS });
+    const [cakeoFilters, setCakeoFilters] = useLocalStorage<{
         date: AnalyticsCaKeoDateFilter;
         type: AnalyticsCaKeoTypeFilter;
         status: AnalyticsCaKeoStatusFilter;
         assignerId: string;
         category: string;
-    }>({ ...DEFAULT_CAKEO_FILTERS });
-    const [keyboardFilters, setKeyboardFilters] = useState({ ...DEFAULT_KEYBOARD_FILTERS });
-    const [fundsFilters, setFundsFilters] = useState({ ...DEFAULT_FUNDS_FILTERS });
+    }>('ngocky:reports:cakeoFilters', { ...DEFAULT_CAKEO_FILTERS });
+    const [keyboardFilters, setKeyboardFilters] = useLocalStorage('ngocky:reports:keyboardFilters', { ...DEFAULT_KEYBOARD_FILTERS });
+    const [fundsFilters, setFundsFilters] = useLocalStorage('ngocky:reports:fundsFilters', { ...DEFAULT_FUNDS_FILTERS });
 
     const selectedRange = useMemo(() => {
         if (reportTimeRange === 'CUSTOM') return null;

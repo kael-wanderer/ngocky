@@ -188,6 +188,7 @@ export const createHealthLogSchema = z.object({
     nextCheckupDate: z.string().datetime().nullable().optional(),
     addExpense: z.boolean().optional(),
     addToCalendar: z.boolean().optional(),
+    pinToDashboard: z.boolean().optional(),
     ...healthLogNotificationFields,
 }).superRefine((data, ctx) => {
     if (data.addExpense && (data.cost == null || data.cost <= 0)) {
@@ -207,5 +208,6 @@ export const updateHealthLogSchema = z.object({
     nextCheckupDate: z.string().datetime().nullable().optional(),
     addExpense: z.boolean().optional(),
     addToCalendar: z.boolean().optional(),
+    pinToDashboard: z.boolean().optional(),
     ...healthLogNotificationFields,
 });

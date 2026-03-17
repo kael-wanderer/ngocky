@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import {
     Trophy, Plus, X, Check, Trash2, AlertCircle, Pencil, Copy, Pin,
-    LayoutGrid, List, Bell, ClipboardList, CheckCircle2, RefreshCcw, ArrowUp, ArrowDown, Filter,
+    LayoutGrid, List, Bell, ClipboardList, CheckCircle2, RefreshCcw, ArrowUp, ArrowDown, Filter, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useSearchParams } from 'react-router-dom';
@@ -154,10 +155,22 @@ function GoalForm({
     loading: boolean;
     isEdit: boolean;
 }) {
+    const [optionsOpen, setOptionsOpen] = useState(false);
     return (
         <form onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, ...buildNotificationPayload(form) }); }} className="space-y-4">
             <div>
-                <label className="label">Goal Title <span className="text-red-500">*</span></label>
+                <div className="flex items-center justify-between mb-1">
+                    <label className="label mb-0">Goal Title <span className="text-red-500">*</span></label>
+                    <button
+                        type="button"
+                        title={form.pinToDashboard ? 'Unpin from dashboard' : 'Pin to dashboard'}
+                        onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}
+                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 hover:border-amber-300 hover:text-amber-400'}`}
+                        style={form.pinToDashboard ? {} : { color: 'var(--color-text-secondary)' }}
+                    >
+                        <Pin className="w-3.5 h-3.5" />
+                    </button>
+                </div>
                 <input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required placeholder="e.g. Go to gym" />
             </div>
             <div>
@@ -193,16 +206,25 @@ function GoalForm({
                     <option value="QUARTERLY">Quarterly</option>
                 </select>
             </div>
-            <div className="grid grid-cols-1 gap-2">
-                <NotificationFields form={form} setForm={setForm} />
-                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, isShared: !form.isShared })}>
-                    <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
-                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this item visible to all family members</p></div>
-                </div>
-                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}>
-                    <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
-                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this item in the Dashboard pin area</p></div>
-                </div>
+            <div className="rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
+                <button
+                    type="button"
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium"
+                    style={{ color: 'var(--color-text)' }}
+                    onClick={() => setOptionsOpen((o) => !o)}
+                >
+                    <span>Options</span>
+                    {optionsOpen ? <ChevronUp className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />}
+                </button>
+                {optionsOpen && (
+                    <div className="border-t px-3 pb-3 pt-2 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
+                        <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, isShared: !form.isShared })}>
+                            <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                            <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this item visible to all family members</p></div>
+                        </div>
+                        <NotificationFields form={form} setForm={setForm} />
+                    </div>
+                )}
             </div>
             <div className="flex items-center justify-between gap-3 pt-2">
                 <div>
@@ -242,6 +264,7 @@ function TaskForm({
     loading: boolean;
     isEdit: boolean;
 }) {
+    const [optionsOpen, setOptionsOpen] = useState(false);
     return (
         <form onSubmit={(e) => {
             e.preventDefault();
@@ -249,13 +272,13 @@ function TaskForm({
                 title: form.title,
                 description: form.description,
                 taskType: form.taskType,
-                amount: form.taskType === 'PAYMENT' ? parseCompactAmountInput(form.amount) : null,
-                expenseCategory: form.taskType === 'PAYMENT' ? form.expenseCategory : null,
-                scope: form.taskType === 'PAYMENT' ? form.scope : 'PERSONAL',
+                amount: form.amount ? parseCompactAmountInput(form.amount) : null,
+                expenseCategory: form.expenseCategory || null,
+                scope: form.scope || 'PERSONAL',
                 isShared: form.isShared,
                 pinToDashboard: form.pinToDashboard,
                 showOnCalendar: !!form.showOnCalendar && !!form.dueDate,
-                createExpenseAutomatically: form.taskType === 'PAYMENT' ? form.createExpenseAutomatically : false,
+                createExpenseAutomatically: form.createExpenseAutomatically,
                 priority: form.priority,
                 status: form.status,
                 repeatFrequency: form.repeatFrequency || null,
@@ -269,7 +292,18 @@ function TaskForm({
             onSubmit(payload);
         }} className="space-y-4">
             <div>
-                <label className="label">Task Title <span className="text-red-500">*</span></label>
+                <div className="flex items-center justify-between mb-1">
+                    <label className="label mb-0">Task Title <span className="text-red-500">*</span></label>
+                    <button
+                        type="button"
+                        title={form.pinToDashboard ? 'Unpin from dashboard' : 'Pin to dashboard'}
+                        onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}
+                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 hover:border-amber-300 hover:text-amber-400'}`}
+                        style={form.pinToDashboard ? {} : { color: 'var(--color-text-secondary)' }}
+                    >
+                        <Pin className="w-3.5 h-3.5" />
+                    </button>
+                </div>
                 <input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required placeholder="e.g. Pay electricity bill" />
             </div>
             <div>
@@ -279,45 +313,42 @@ function TaskForm({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label className="label">Type</label>
-                    <select className="input" value={form.taskType} onChange={(e) => setForm({
-                        ...form,
-                        taskType: e.target.value,
-                        amount: e.target.value === 'PAYMENT' ? form.amount : '',
-                        expenseCategory: e.target.value === 'PAYMENT' ? form.expenseCategory : DEFAULT_PAY_CATEGORY,
-                        scope: e.target.value === 'PAYMENT' ? form.scope : 'PERSONAL',
-                        createExpenseAutomatically: e.target.value === 'PAYMENT' ? form.createExpenseAutomatically : false,
-                    })}>
+                    <select className="input" value={form.taskType} onChange={(e) => setForm({ ...form, taskType: e.target.value })}>
                         <option value="TASK">Task</option>
                         <option value="PAYMENT">Payment</option>
                     </select>
                 </div>
-                {form.taskType === 'PAYMENT' && (
-                    <div>
-                        <label className="label">Amount <span className="text-red-500">*</span></label>
-                        <input className="input" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="e.g. 600k or 2M" required />
-                    </div>
-                )}
-            </div>
-            {form.taskType === 'PAYMENT' && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <label className="label">Category <span className="text-red-500">*</span></label>
-                        <select className="input" value={form.expenseCategory} onChange={(e) => setForm({ ...form, expenseCategory: e.target.value })} required>
-                            {expensePayCategories.map((category: string) => (
-                                <option key={category} value={category}>{category}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="label">Scope <span className="text-red-500">*</span></label>
-                        <select className="input" value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })} required>
-                            {expenseScopeOptions.map((scope: { value: string; label: string }) => (
-                                <option key={scope.value} value={scope.value}>{scope.label}</option>
-                            ))}
-                        </select>
-                    </div>
+                <div>
+                    <label className="label">
+                        {form.taskType === 'PAYMENT' ? <>Amount <span className="text-red-500">*</span></> : 'Cost'}
+                    </label>
+                    <input
+                        className="input"
+                        value={form.amount}
+                        onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                        placeholder="e.g. 600k or 2M"
+                        required={form.taskType === 'PAYMENT'}
+                    />
                 </div>
-            )}
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                    <label className="label">Category{form.taskType === 'PAYMENT' && <span className="text-red-500"> *</span>}</label>
+                    <select className="input" value={form.expenseCategory} onChange={(e) => setForm({ ...form, expenseCategory: e.target.value })} required={form.taskType === 'PAYMENT'}>
+                        {expensePayCategories.map((category: string) => (
+                            <option key={category} value={category}>{category}</option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <label className="label">Scope{form.taskType === 'PAYMENT' && <span className="text-red-500"> *</span>}</label>
+                    <select className="input" value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })} required={form.taskType === 'PAYMENT'}>
+                        {expenseScopeOptions.map((scope: { value: string; label: string }) => (
+                            <option key={scope.value} value={scope.value}>{scope.label}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="label">Due Date</label>
@@ -378,30 +409,39 @@ function TaskForm({
                     <input type="date" min={form.dueDate || format(new Date(), 'yyyy-MM-dd')} className="input" value={form.repeatUntil} onChange={(e) => setForm({ ...form, repeatUntil: e.target.value })} />
                 </div>
             )}
-            <div className="space-y-3">
-                <NotificationFields form={form} setForm={setForm} />
-                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, isShared: !form.isShared })}>
-                    <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
-                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this item visible to all family members</p></div>
-                </div>
-                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}>
-                    <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
-                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this item in the Dashboard pin area</p></div>
-                </div>
-                <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.showOnCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.showOnCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent', opacity: !form.dueDate ? 0.5 : 1 }}>
-                    <input type="checkbox" id="goalShowOnCalendar" checked={form.showOnCalendar} disabled={!form.dueDate} onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })} className="rounded mt-0.5" />
-                    <div>
-                        <label htmlFor="goalShowOnCalendar" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add to Calendar</label>
-                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>{form.dueDate ? 'Creates a calendar event on the due date' : 'Requires a due date'}</p>
+            <div className="rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
+                <button
+                    type="button"
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium"
+                    style={{ color: 'var(--color-text)' }}
+                    onClick={() => setOptionsOpen((o) => !o)}
+                >
+                    <span>Options</span>
+                    {optionsOpen ? <ChevronUp className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />}
+                </button>
+                {optionsOpen && (
+                    <div className="border-t px-3 pb-3 pt-2 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
+                        <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.showOnCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.showOnCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent', opacity: !form.dueDate ? 0.5 : 1 }}>
+                            <input type="checkbox" id="taskShowOnCalendar" checked={form.showOnCalendar} disabled={!form.dueDate} onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })} className="rounded mt-0.5" />
+                            <div>
+                                <label htmlFor="taskShowOnCalendar" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add to Calendar</label>
+                                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>{form.dueDate ? 'Creates a calendar event on the due date' : 'Requires a due date'}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, isShared: !form.isShared })}>
+                            <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                            <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this item visible to all family members</p></div>
+                        </div>
+                        <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.createExpenseAutomatically ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.createExpenseAutomatically ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
+                            <input type="checkbox" id="taskCreateExpense" checked={form.createExpenseAutomatically} onChange={(e) => setForm({ ...form, createExpenseAutomatically: e.target.checked })} className="rounded mt-0.5" />
+                            <div>
+                                <label htmlFor="taskCreateExpense" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add expense</label>
+                                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Automatically creates an expense entry when the task is completed</p>
+                            </div>
+                        </div>
+                        <NotificationFields form={form} setForm={setForm} />
                     </div>
-                </div>
-                <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.createExpenseAutomatically ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.createExpenseAutomatically ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
-                    <input type="checkbox" id="goalCreateExpense" checked={form.createExpenseAutomatically} onChange={(e) => setForm({ ...form, createExpenseAutomatically: e.target.checked })} className="rounded mt-0.5" />
-                    <div>
-                        <label htmlFor="goalCreateExpense" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add expense</label>
-                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Automatically creates an expense entry when the task is completed</p>
-                    </div>
-                </div>
+                )}
             </div>
             <div className="flex items-center justify-between gap-3 pt-2">
                 <div>
@@ -446,22 +486,22 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const [dateError, setDateError] = useState('');
     const [duration, setDuration] = useState<number | ''>('');
     const [quantity, setQuantity] = useState(1);
-    const [periodFilter, setPeriodFilter] = useState<SharedGoalPeriodFilter>(DEFAULT_GOAL_PERIOD_FILTER);
+    const [periodFilter, setPeriodFilter] = useLocalStorage<SharedGoalPeriodFilter>('ngocky:goals:periodFilter', DEFAULT_GOAL_PERIOD_FILTER);
     const [goalSearch, setGoalSearch] = useState('');
-    const [goalTrackingFilter, setGoalTrackingFilter] = useState<'ALL' | 'BY_FREQUENCY' | 'BY_QUANTITY'>('ALL');
+    const [goalTrackingFilter, setGoalTrackingFilter] = useLocalStorage<'ALL' | 'BY_FREQUENCY' | 'BY_QUANTITY'>('ngocky:goals:trackingFilter', 'ALL');
     const [goalSortKey, setGoalSortKey] = useState<'title' | 'periodType' | 'trackingType' | 'progress'>('title');
     const [goalSortDir, setGoalSortDir] = useState<'asc' | 'desc'>('asc');
-    const [taskFilters, setTaskFilters] = useState<{
+    const [taskFilters, setTaskFilters] = useLocalStorage<{
         dueDate: TaskDueDateFilter;
         type: TaskTypeFilter;
         priority: TaskPriorityFilter;
         status: TaskStatusFilter;
-    }>({ ...DEFAULT_TASK_FILTERS });
+    }>('ngocky:tasks:filters', { ...DEFAULT_TASK_FILTERS });
     const [taskSearch, setTaskSearch] = useState('');
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [taskViewMode, setTaskViewMode] = useState<'grid' | 'list'>('list');
-    const [taskSortBy, setTaskSortBy] = useState<TaskSortKey>('dueDate');
-    const [taskSortOrder, setTaskSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>('ngocky:goals:viewMode', 'grid');
+    const [taskViewMode, setTaskViewMode] = useLocalStorage<'grid' | 'list'>('ngocky:tasks:viewMode', 'list');
+    const [taskSortBy, setTaskSortBy] = useLocalStorage<TaskSortKey>('ngocky:tasks:sortBy', 'dueDate');
+    const [taskSortOrder, setTaskSortOrder] = useLocalStorage<'asc' | 'desc'>('ngocky:tasks:sortOrder', 'asc');
     const [taskGridSort, setTaskGridSort] = useState<TaskGridSortOption>('DUE_ASC');
     const [goalForm, setGoalForm] = useState({ ...goalEmptyForm });
     const [taskForm, setTaskForm] = useState({ ...taskEmptyForm });
@@ -1197,13 +1237,13 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                         </div>
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
                             <input className="input text-sm" placeholder="Search tasks..." value={taskSearch} onChange={(e) => setTaskSearch(e.target.value)} />
-                            <select className="input text-sm min-w-[180px]" value={taskFilters.dueDate} onChange={(e) => setTaskFilters((current) => ({ ...current, dueDate: e.target.value as TaskDueDateFilter }))}>
-                                {TASK_DUE_DATE_FILTER_OPTIONS.map((option) => (
+                            <select className="input text-sm min-w-[180px]" value={taskFilters.type} onChange={(e) => setTaskFilters((current) => ({ ...current, type: e.target.value as TaskTypeFilter }))}>
+                                {TASK_TYPE_FILTER_OPTIONS.map((option) => (
                                     <option key={option.value} value={option.value}>{option.label}</option>
                                 ))}
                             </select>
-                            <select className="input text-sm min-w-[180px]" value={taskFilters.type} onChange={(e) => setTaskFilters((current) => ({ ...current, type: e.target.value as TaskTypeFilter }))}>
-                                {TASK_TYPE_FILTER_OPTIONS.map((option) => (
+                            <select className="input text-sm min-w-[180px]" value={taskFilters.status} onChange={(e) => setTaskFilters((current) => ({ ...current, status: e.target.value as TaskStatusFilter }))}>
+                                {TASK_STATUS_FILTER_OPTIONS.map((option) => (
                                     <option key={option.value} value={option.value}>{option.label}</option>
                                 ))}
                             </select>
@@ -1212,8 +1252,8 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                     <option key={option.value} value={option.value}>{option.label}</option>
                                 ))}
                             </select>
-                            <select className="input text-sm min-w-[180px]" value={taskFilters.status} onChange={(e) => setTaskFilters((current) => ({ ...current, status: e.target.value as TaskStatusFilter }))}>
-                                {TASK_STATUS_FILTER_OPTIONS.map((option) => (
+                            <select className="input text-sm min-w-[180px]" value={taskFilters.dueDate} onChange={(e) => setTaskFilters((current) => ({ ...current, dueDate: e.target.value as TaskDueDateFilter }))}>
+                                {TASK_DUE_DATE_FILTER_OPTIONS.map((option) => (
                                     <option key={option.value} value={option.value}>{option.label}</option>
                                 ))}
                             </select>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import api from '../api/client';
 import { BookOpen, CheckCircle2, ChevronDown, ChevronUp, Clock, Copy, GraduationCap, LayoutGrid, List, Pencil, Pin, Plus, Trash2, X } from 'lucide-react';
 
@@ -55,8 +56,8 @@ export default function LearningPage() {
     const [editingTopic, setEditingTopic] = useState<any>(null);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [editingHistory, setEditingHistory] = useState<any>(null);
-    const [listView, setListView] = useState(false);
-    const [historiesSort, setHistoriesSort] = useState<{ col: string; dir: SortDir }>({ col: 'title', dir: 'asc' });
+    const [listView, setListView] = useLocalStorage('ngocky:learning:listView', false);
+    const [historiesSort, setHistoriesSort] = useLocalStorage<{ col: string; dir: SortDir }>('ngocky:learning:historiesSort', { col: 'title', dir: 'asc' });
     function toggleHistoriesSort(col: string) {
         setHistoriesSort(s => s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' });
     }
@@ -334,7 +335,7 @@ export default function LearningPage() {
                                             const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
                                             const canManage = !sharedOwnerName;
                                             return (
-                                            <div key={history.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors" onDoubleClick={() => canManage && openEditHistory(history)}>
+                                            <div key={history.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => canManage && openEditHistory(history)}>
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-20 shrink-0 ${getStatusColor(history.status)}`}>{history.status.replace('_', ' ')}</span>
                                                 <span className="font-medium text-sm flex-1 line-clamp-1" style={{ color: 'var(--color-text)' }}>{history.title}</span>
                                                 <div className="flex items-center gap-1.5 text-[11px] w-28 shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
@@ -343,7 +344,7 @@ export default function LearningPage() {
                                                 </div>
                                                 <span className="text-[11px] w-12 shrink-0 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{history.progress}%</span>
                                                 {canManage && (
-                                                    <div className="flex items-center gap-1 w-24 shrink-0">
+                                                    <div className="flex items-center gap-1 w-24 shrink-0" onClick={(e) => e.stopPropagation()}>
                                                         <button className={`p-1 rounded transition-colors ${history.pinToDashboard ? 'text-amber-500 bg-amber-50' : 'text-gray-400 hover:bg-amber-50 hover:text-amber-500'}`} title="Pin" onClick={() => togglePinHistoryMut.mutate({ id: history.id, pinToDashboard: !history.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
                                                         <button className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
                                                         <button className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={() => openEditHistory(history)}><Pencil className="w-3.5 h-3.5" /></button>
@@ -359,11 +360,11 @@ export default function LearningPage() {
                                             const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
                                             const canManage = !sharedOwnerName;
                                             return (
-                                            <div key={history.id} className="card p-5 group flex flex-col h-full" onDoubleClick={() => canManage && openEditHistory(history)}>
+                                            <div key={history.id} className="card p-5 group flex flex-col h-full cursor-pointer" onClick={() => canManage && openEditHistory(history)}>
                                                 <div className="flex items-start justify-between mb-2">
                                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getStatusColor(history.status)}`}>{history.status.replace('_', ' ')}</span>
                                                     {canManage && (
-                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                                                             <button className={`p-1.5 rounded ${history.pinToDashboard ? 'text-amber-500' : 'hover:bg-amber-50 hover:text-amber-500 text-gray-400'}`} onClick={() => togglePinHistoryMut.mutate({ id: history.id, pinToDashboard: !history.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
                                                             <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
                                                             <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditHistory(history)}><Pencil className="w-3.5 h-3.5" /></button>

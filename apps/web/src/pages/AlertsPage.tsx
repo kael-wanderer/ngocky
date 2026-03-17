@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import api from '../api/client';
 import { Bell, BellRing, ChevronDown, ChevronUp, Copy, FileText, Info, LayoutGrid, List, Mail, Pencil, Plus, Send, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -125,10 +126,10 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
     const [ruleForm, setRuleForm] = useState(emptyRuleForm());
     const [reportForm, setReportForm] = useState(emptyReportForm());
     const showTabSwitcher = !forcedTab;
-    const [rulesListView, setRulesListView] = useState(false);
-    const [reportsListView, setReportsListView] = useState(false);
-    const [rulesSort, setRulesSort] = useState<{ col: string; dir: SortDir }>({ col: 'name', dir: 'asc' });
-    const [reportsSort, setReportsSort] = useState<{ col: string; dir: SortDir }>({ col: 'name', dir: 'asc' });
+    const [rulesListView, setRulesListView] = useLocalStorage('ngocky:alerts:rulesListView', false);
+    const [reportsListView, setReportsListView] = useLocalStorage('ngocky:alerts:reportsListView', false);
+    const [rulesSort, setRulesSort] = useLocalStorage<{ col: string; dir: SortDir }>('ngocky:alerts:rulesSort', { col: 'name', dir: 'asc' });
+    const [reportsSort, setReportsSort] = useLocalStorage<{ col: string; dir: SortDir }>('ngocky:alerts:reportsSort', { col: 'name', dir: 'asc' });
 
     function toggleRulesSort(col: string) {
         setRulesSort(s => s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' });
@@ -356,7 +357,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 <span className="w-20 shrink-0">Actions</span>
                             </div>
                             {applySortStr(rules || [], rulesSort, (r, col) => col === 'name' ? r.name : col === 'module' ? r.moduleType : col === 'status' ? String(r.active) : '').map((rule: any) => (
-                                <div key={rule.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${!rule.active ? 'opacity-60' : ''}`} onDoubleClick={() => openEditRule(rule)}>
+                                <div key={rule.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${!rule.active ? 'opacity-60' : ''}`} onClick={() => openEditRule(rule)}>
                                     <Bell className="w-3.5 h-3.5 shrink-0" style={{ color: rule.active ? 'var(--color-primary)' : undefined }} />
                                     <span className="font-medium text-sm flex-1 line-clamp-1" style={{ color: 'var(--color-text)' }}>{rule.name}</span>
                                     <span className="text-[10px] font-medium uppercase w-20 shrink-0" style={{ color: 'var(--color-primary)' }}>{rule.moduleType}</span>
@@ -372,7 +373,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                             ? `Monthly day ${rule.dayOfMonth ?? 1} at ${rule.time || '08:00'}`
                                             : `Daily at ${rule.time || '08:00'}`}
                                     </span>
-                                    <div className="flex items-center gap-1 w-20 shrink-0">
+                                    <div className="flex items-center gap-1 w-20 shrink-0" onClick={(e) => e.stopPropagation()}>
                                         <button className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={() => openEditRule(rule)}><Pencil className="w-3.5 h-3.5" /></button>
                                         <button className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate" onClick={() => duplicateRule(rule)}><Copy className="w-3.5 h-3.5" /></button>
                                         <button className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete" onClick={() => { if (confirm('Delete rule?')) deleteRuleMut.mutate(rule.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
@@ -386,7 +387,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 <div
                                     key={rule.id}
                                     className={`card p-5 group transition-all ${!rule.active ? 'opacity-60 bg-gray-50' : ''}`}
-                                    onDoubleClick={() => openEditRule(rule)}
+                                    onClick={() => openEditRule(rule)}
                                 >
                                     <div className="flex items-start justify-between mb-4">
                                         <div className={`p-2 rounded-lg ${!rule.active ? 'bg-gray-200' : 'bg-primary/10'}`}>
@@ -454,7 +455,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 <span className="w-20 shrink-0">Actions</span>
                             </div>
                             {applySortStr(reports || [], reportsSort, (r, col) => col === 'name' ? r.name : col === 'type' ? (REPORT_TYPE_LABELS[r.reportType] || r.reportType) : col === 'status' ? String(r.active) : '').map((report: any) => (
-                                <div key={report.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${!report.active ? 'opacity-60' : ''}`} onDoubleClick={() => openEditReport(report)}>
+                                <div key={report.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${!report.active ? 'opacity-60' : ''}`} onClick={() => openEditReport(report)}>
                                     <FileText className={`w-3.5 h-3.5 shrink-0 ${!report.active ? 'text-gray-400' : 'text-purple-600'}`} />
                                     <span className="font-medium text-sm flex-1 line-clamp-1" style={{ color: 'var(--color-text)' }}>{report.name}</span>
                                     <span className="text-[10px] font-medium uppercase w-28 shrink-0" style={{ color: 'var(--color-primary)' }}>{REPORT_TYPE_LABELS[report.reportType] || report.reportType}</span>
@@ -478,7 +479,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                             ? `Weekend at ${report.time}`
                                             : `Daily at ${report.time}`}
                                     </span>
-                                    <div className="flex items-center gap-1 w-20 shrink-0">
+                                    <div className="flex items-center gap-1 w-20 shrink-0" onClick={(e) => e.stopPropagation()}>
                                         <button className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={() => openEditReport(report)}><Pencil className="w-3.5 h-3.5" /></button>
                                         <button className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate" onClick={() => duplicateReport(report)}><Copy className="w-3.5 h-3.5" /></button>
                                         <button className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete" onClick={() => { if (confirm('Delete schedule?')) deleteReportMut.mutate(report.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
@@ -492,7 +493,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 <div
                                     key={report.id}
                                     className={`card p-5 group flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${!report.active ? 'opacity-60 bg-gray-50' : ''}`}
-                                    onDoubleClick={() => openEditReport(report)}
+                                    onClick={() => openEditReport(report)}
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className={`p-3 rounded-xl ${!report.active ? 'bg-gray-200' : 'bg-purple-50'}`}>

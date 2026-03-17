@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import api from '../api/client';
-import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, Trash2, Pencil, RefreshCw, Copy, Pin, Filter, ArrowUp, ArrowDown, ChevronsUpDown, Bell } from 'lucide-react';
+import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, Trash2, Pencil, RefreshCw, Copy, Pin, Filter, ArrowUp, ArrowDown, ChevronsUpDown, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { format, startOfToday } from 'date-fns';
+import { parseCompactAmountInput } from '../utils/amount';
 import { useAuthStore } from '../stores/auth';
 import { useSearchParams } from 'react-router-dom';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
@@ -56,6 +58,9 @@ const emptyTaskForm = {
     category: '',
     isShared: false,
     pinToDashboard: false,
+    cost: '',
+    showOnCalendar: false,
+    createExpenseAutomatically: false,
     ...emptyNotification,
 };
 
@@ -74,6 +79,9 @@ function buildTaskForm(task: any) {
         deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
         isShared: !!task.isShared,
         pinToDashboard: !!task.pinToDashboard,
+        cost: task.cost ? String(task.cost) : '',
+        showOnCalendar: !!task.showOnCalendar,
+        createExpenseAutomatically: !!task.createExpenseAutomatically,
         ...loadNotificationState(task),
     };
 }
@@ -178,12 +186,12 @@ export default function ProjectsPage() {
     const boardIdParam = searchParams.get('boardId');
     const taskIdParam = searchParams.get('taskId');
     const selectedBoardId = boardIdParam;
-    const [boardListView, setBoardListView] = useState<'grid' | 'list'>('grid');
-    const [boardListSortKey, setBoardListSortKey] = useState<string>('');
-    const [boardListSortDir, setBoardListSortDir] = useState<'asc' | 'desc'>('asc');
-    const [view, setView] = useState<'kanban' | 'list'>('kanban');
-    const [taskListSortKey, setTaskListSortKey] = useState<string>('');
-    const [taskListSortDir, setTaskListSortDir] = useState<'asc' | 'desc'>('asc');
+    const [boardListView, setBoardListView] = useLocalStorage<'grid' | 'list'>('ngocky:projects:boardListView', 'grid');
+    const [boardListSortKey, setBoardListSortKey] = useLocalStorage<string>('ngocky:projects:boardListSortKey', '');
+    const [boardListSortDir, setBoardListSortDir] = useLocalStorage<'asc' | 'desc'>('ngocky:projects:boardListSortDir', 'asc');
+    const [view, setView] = useLocalStorage<'kanban' | 'list'>('ngocky:projects:view', 'kanban');
+    const [taskListSortKey, setTaskListSortKey] = useLocalStorage<string>('ngocky:projects:taskListSortKey', '');
+    const [taskListSortDir, setTaskListSortDir] = useLocalStorage<'asc' | 'desc'>('ngocky:projects:taskListSortDir', 'asc');
     const [showCreateBoard, setShowCreateBoard] = useState(false);
     const [editingBoard, setEditingBoard] = useState<any>(null);
     const [showCreateTask, setShowCreateTask] = useState(false);
@@ -192,16 +200,17 @@ export default function ProjectsPage() {
     const [openingBoardId, setOpeningBoardId] = useState<string | null>(null);
 
     const [boardSearch, setBoardSearch] = useState('');
-    const [boardDateFilter, setBoardDateFilter] = useState<'ALL' | 'THIS_WEEK' | 'THIS_MONTH' | 'LAST_MONTH' | 'THIS_YEAR'>('ALL');
-    const [boardTypeFilter, setBoardTypeFilter] = useState<'ALL' | 'PERSONAL' | 'WORK' | 'FOR_FUN' | 'STUDY'>('ALL');
-    const [boardStatusFilter, setBoardStatusFilter] = useState<'ALL' | 'PLAN' | 'WORKING' | 'COMPLETED'>('ALL');
+    const [boardDateFilter, setBoardDateFilter] = useLocalStorage<'ALL' | 'THIS_WEEK' | 'THIS_MONTH' | 'LAST_MONTH' | 'THIS_YEAR'>('ngocky:projects:boardDateFilter', 'ALL');
+    const [boardTypeFilter, setBoardTypeFilter] = useLocalStorage<'ALL' | 'PERSONAL' | 'WORK' | 'FOR_FUN' | 'STUDY'>('ngocky:projects:boardTypeFilter', 'ALL');
+    const [boardStatusFilter, setBoardStatusFilter] = useLocalStorage<'ALL' | 'PLAN' | 'WORKING' | 'COMPLETED'>('ngocky:projects:boardStatusFilter', 'ALL');
     const [taskSearch, setTaskSearch] = useState('');
-    const [taskTypeFilter, setTaskTypeFilter] = useState<'ALL' | 'TASK' | 'BUG' | 'FEATURE' | 'STORY' | 'EPIC'>('ALL');
-    const [taskPriorityFilter, setTaskPriorityFilter] = useState<'ALL' | 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'>('ALL');
-    const [taskStatusFilter, setTaskStatusFilter] = useState<'ALL' | 'PLANNED' | 'IN_PROGRESS' | 'DONE' | 'ARCHIVED'>('ALL');
-    const [hideDone, setHideDone] = useState(false);
+    const [taskTypeFilter, setTaskTypeFilter] = useLocalStorage<'ALL' | 'TASK' | 'BUG' | 'FEATURE' | 'STORY' | 'EPIC'>('ngocky:projects:taskTypeFilter', 'ALL');
+    const [taskPriorityFilter, setTaskPriorityFilter] = useLocalStorage<'ALL' | 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'>('ngocky:projects:taskPriorityFilter', 'ALL');
+    const [taskStatusFilter, setTaskStatusFilter] = useLocalStorage<'ALL' | 'PLANNED' | 'IN_PROGRESS' | 'DONE' | 'ARCHIVED'>('ngocky:projects:taskStatusFilter', 'ALL');
+    const [hideDone, setHideDone] = useLocalStorage('ngocky:projects:hideDone', false);
     const [boardForm, setBoardForm] = useState({ name: '', description: '', type: 'PERSONAL', boardStatus: 'PLAN', isShared: false, pinToDashboard: false });
     const [taskForm, setTaskForm] = useState({ ...emptyTaskForm });
+    const [taskOptionsOpen, setTaskOptionsOpen] = useState(false);
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
@@ -355,6 +364,7 @@ export default function ProjectsPage() {
         setShowCreateTask(false);
         setEditingTask(null);
         setTaskForm({ ...emptyTaskForm });
+        setTaskOptionsOpen(false);
         if (taskIdParam) {
             const next = new URLSearchParams(searchParams);
             next.delete('taskId');
@@ -374,8 +384,11 @@ export default function ProjectsPage() {
             deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
             isShared: !!task.isShared,
             pinToDashboard: !!task.pinToDashboard,
+            cost: task.cost ? String(task.cost) : '',
+            showOnCalendar: !!task.showOnCalendar,
+            createExpenseAutomatically: !!task.createExpenseAutomatically,
             ...loadNotificationState(task),
-        });
+        } as typeof emptyTaskForm);
         setShowCreateTask(true);
     };
 
@@ -384,7 +397,7 @@ export default function ProjectsPage() {
         const task = activeBoard.tasks.find((t: any) => t.id === taskIdParam);
         if (!task) return;
         setEditingTask(task);
-        setTaskForm(buildTaskForm(task));
+        setTaskForm(buildTaskForm(task) as typeof emptyTaskForm);
     }, [taskIdParam, activeBoard]);
 
     useEffect(() => {
@@ -413,7 +426,7 @@ export default function ProjectsPage() {
 
     const openTaskEditor = (task: any) => {
         setEditingTask(task);
-        setTaskForm(buildTaskForm(task));
+        setTaskForm(buildTaskForm(task) as typeof emptyTaskForm);
     };
 
     const handleKanbanDragEnd = (event: DragEndEvent) => {
@@ -849,7 +862,12 @@ export default function ProjectsPage() {
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
-                            const body: any = { ...taskForm, projectId: selectedBoardId, ...buildNotificationPayload(taskForm) };
+                            const body: any = {
+                                ...taskForm,
+                                projectId: selectedBoardId,
+                                cost: taskForm.cost ? parseCompactAmountInput(taskForm.cost) : null,
+                                ...buildNotificationPayload(taskForm),
+                            };
                             if (body.deadline) body.deadline = new Date(body.deadline).toISOString();
                             else delete body.deadline;
 
@@ -859,8 +877,36 @@ export default function ProjectsPage() {
                                 createTaskMut.mutate(body);
                             }
                         }} className="space-y-4">
-                            <div><label className="label">Title <span className="text-red-500">*</span></label><input className="input" required value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} /></div>
+                            {/* Title + Pin icon */}
+                            <div>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="label mb-0">Title <span className="text-red-500">*</span></label>
+                                    <button
+                                        type="button"
+                                        title={taskForm.pinToDashboard ? 'Unpin from dashboard' : 'Pin to dashboard'}
+                                        onClick={() => setTaskForm({ ...taskForm, pinToDashboard: !taskForm.pinToDashboard })}
+                                        className={`p-1.5 rounded-lg border transition-colors ${taskForm.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 hover:border-amber-300 hover:text-amber-400'}`}
+                                        style={taskForm.pinToDashboard ? {} : { color: 'var(--color-text-secondary)' }}
+                                    >
+                                        <Pin className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                                <input className="input" required value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} />
+                            </div>
                             <div><label className="label">Description</label><textarea className="input" rows={2} value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} /></div>
+                            {/* Cost */}
+                            <div>
+                                <label className="label">
+                                    Cost{taskForm.createExpenseAutomatically && <span className="text-red-500"> *</span>}
+                                </label>
+                                <input
+                                    className="input"
+                                    value={taskForm.cost}
+                                    onChange={(e) => setTaskForm({ ...taskForm, cost: e.target.value })}
+                                    placeholder="e.g. 600k or 2M"
+                                    required={taskForm.createExpenseAutomatically}
+                                />
+                            </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="label">Type</label>
@@ -887,19 +933,41 @@ export default function ProjectsPage() {
                                 </div>
                                 <div><label className="label">Deadline</label><input type="date" className="input" value={taskForm.deadline} onChange={(e) => setTaskForm({ ...taskForm, deadline: e.target.value })} /></div>
                             </div>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input
-                                    type="checkbox"
-                                    checked={taskForm.isShared}
-                                    onChange={(e) => setTaskForm({ ...taskForm, isShared: e.target.checked })}
-                                />
-                                Share with all users
-                            </label>
-                            <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: taskForm.pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: taskForm.pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setTaskForm({ ...taskForm, pinToDashboard: !taskForm.pinToDashboard })}>
-                                <input type="checkbox" checked={taskForm.pinToDashboard} onChange={(e) => setTaskForm({ ...taskForm, pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
-                                <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this task in the Dashboard pin area</p></div>
+                            {/* Options (collapsible) */}
+                            <div className="rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
+                                <button
+                                    type="button"
+                                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium"
+                                    style={{ color: 'var(--color-text)' }}
+                                    onClick={() => setTaskOptionsOpen((o) => !o)}
+                                >
+                                    <span>Options</span>
+                                    {taskOptionsOpen ? <ChevronUp className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />}
+                                </button>
+                                {taskOptionsOpen && (
+                                    <div className="border-t px-3 pb-3 pt-2 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
+                                        <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: taskForm.showOnCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: taskForm.showOnCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent', opacity: !taskForm.deadline ? 0.5 : 1 }}>
+                                            <input type="checkbox" id="ptShowOnCalendar" checked={taskForm.showOnCalendar} disabled={!taskForm.deadline} onChange={(e) => setTaskForm({ ...taskForm, showOnCalendar: e.target.checked })} className="rounded mt-0.5" />
+                                            <div>
+                                                <label htmlFor="ptShowOnCalendar" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add to Calendar</label>
+                                                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>{taskForm.deadline ? 'Creates a calendar event on the deadline' : 'Requires a deadline'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: taskForm.createExpenseAutomatically ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: taskForm.createExpenseAutomatically ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
+                                            <input type="checkbox" id="ptCreateExpense" checked={taskForm.createExpenseAutomatically} onChange={(e) => setTaskForm({ ...taskForm, createExpenseAutomatically: e.target.checked })} className="rounded mt-0.5" />
+                                            <div>
+                                                <label htmlFor="ptCreateExpense" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add expense</label>
+                                                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Automatically creates an expense entry when the task is marked Done</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: taskForm.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: taskForm.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setTaskForm({ ...taskForm, isShared: !taskForm.isShared })}>
+                                            <input type="checkbox" checked={taskForm.isShared} onChange={(e) => setTaskForm({ ...taskForm, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                            <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this task visible to all family members</p></div>
+                                        </div>
+                                        <NotificationFields form={taskForm} setForm={setTaskForm} />
+                                    </div>
+                                )}
                             </div>
-                            <NotificationFields form={taskForm} setForm={setTaskForm} />
                             <div className="flex items-center justify-between gap-3 pt-2">
                                 <div>
                                     {editingTask && (

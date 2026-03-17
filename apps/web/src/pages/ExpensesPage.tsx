@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import { ArrowDown, ArrowUp, Wallet, Filter, FileSpreadsheet, FileText, Pencil, Plus, Trash2, Copy, X } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../api/client';
@@ -85,12 +86,12 @@ export default function ExpensesPage() {
     const exportContentRef = useRef<HTMLDivElement>(null);
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState<any>(null);
-    const [filters, setFilters] = useState({ ...DEFAULT_EXPENSE_FILTERS });
+    const [filters, setFilters] = useLocalStorage('ngocky:expenses:filters', { ...DEFAULT_EXPENSE_FILTERS });
     const [form, setForm] = useState(emptyForm());
-    const [sortBy, setSortBy] = useState<SortKey>('date');
-    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+    const [sortBy, setSortBy] = useLocalStorage<SortKey>('ngocky:expenses:sortBy', 'date');
+    const [sortOrder, setSortOrder] = useLocalStorage<SortOrder>('ngocky:expenses:sortOrder', 'desc');
     const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(25);
+    const [pageSize, setPageSize] = useLocalStorage('ngocky:expenses:pageSize', 25);
     const [expenseSearch, setExpenseSearch] = useState('');
 
     const effectiveRange = filters.timePreset === 'CUSTOM'

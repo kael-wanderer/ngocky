@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import api from '../api/client';
-import { ArrowDown, ArrowUp, Bell, Calendar, Copy, Filter, LayoutGrid, List, Microwave, Pencil, Pin, Plus, Trash2, Wrench, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Bell, Calendar, Copy, Filter, LayoutGrid, List, Microwave, Pencil, Pin, Plus, Trash2, Wrench, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { useNavigate, useParams } from 'react-router-dom';
 import MultiSelectFilter from '../components/MultiSelectFilter';
@@ -220,16 +221,17 @@ export default function AssetsPage() {
     const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
     const [showRecordModal, setShowRecordModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState<MaintenanceRecord | null>(null);
+    const [recordOptionsOpen, setRecordOptionsOpen] = useState(false);
     const [assetForm, setAssetForm] = useState(emptyAssetForm());
     const [recordForm, setRecordForm] = useState(emptyRecordForm());
-    const [recordSortBy, setRecordSortBy] = useState<RecordSortKey>('time');
-    const [recordSortOrder, setRecordSortOrder] = useState<'asc' | 'desc'>('desc');
-    const [assetListView, setAssetListView] = useState<'grid' | 'list'>('grid');
-    const [recordViewMode, setRecordViewMode] = useState<'grid' | 'list'>('grid');
+    const [recordSortBy, setRecordSortBy] = useLocalStorage<RecordSortKey>('ngocky:assets:recordSortBy', 'time');
+    const [recordSortOrder, setRecordSortOrder] = useLocalStorage<'asc' | 'desc'>('ngocky:assets:recordSortOrder', 'desc');
+    const [assetListView, setAssetListView] = useLocalStorage<'grid' | 'list'>('ngocky:assets:listView', 'grid');
+    const [recordViewMode, setRecordViewMode] = useLocalStorage<'grid' | 'list'>('ngocky:assets:recordViewMode', 'grid');
     const [recordSearch, setRecordSearch] = useState('');
-    const [recordDateFilter, setRecordDateFilter] = useState<RecordDateFilter>('ALL');
-    const [recordNextFilter, setRecordNextFilter] = useState<RecordNextFilter>('ALL');
-    const [recordPriceFilter, setRecordPriceFilter] = useState<RecordPriceFilter>('ALL');
+    const [recordDateFilter, setRecordDateFilter] = useLocalStorage<RecordDateFilter>('ngocky:assets:recordDateFilter', 'ALL');
+    const [recordNextFilter, setRecordNextFilter] = useLocalStorage<RecordNextFilter>('ngocky:assets:recordNextFilter', 'ALL');
+    const [recordPriceFilter, setRecordPriceFilter] = useLocalStorage<RecordPriceFilter>('ngocky:assets:recordPriceFilter', 'ALL');
     const [recordOpenFilter, setRecordOpenFilter] = useState<RecordFilterDropdownKey>(null);
 
     const { data: assets, isLoading: assetsLoading } = useQuery({
@@ -464,6 +466,7 @@ export default function AssetsPage() {
         setShowRecordModal(false);
         setEditingRecord(null);
         setRecordForm(emptyRecordForm());
+        setRecordOptionsOpen(false);
     }
 
     function duplicateRecord(record: MaintenanceRecord) {
@@ -772,7 +775,7 @@ export default function AssetsPage() {
                                         ) : recordViewMode === 'grid' ? (
                                             <div className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
                                                 {filteredRecords.map((record: MaintenanceRecord) => (
-                                                    <div key={record.id} className="py-4 first:pt-0" onDoubleClick={() => canManage && openEditRecord(record)}>
+                                                    <div key={record.id} className="py-4 first:pt-0" onClick={() => canManage && openEditRecord(record)}>
                                                         <div className="flex items-start justify-between gap-4">
                                                             <div>
                                                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -792,7 +795,7 @@ export default function AssetsPage() {
                                                                 {record.kilometers != null && (
                                                                     <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-text-secondary)' }}>🛞 {record.kilometers.toLocaleString()} km</p>
                                                                 )}
-                                                                <div className="flex items-center gap-1 mt-2">
+                                                                <div className="flex items-center gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
                                                                     <button type="button" className={`p-1 transition-colors ${record.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} onClick={() => updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: record.id, body: { pinToDashboard: !record.pinToDashboard } })} title="Pin">
                                                                         <Pin className="w-3.5 h-3.5" />
                                                                     </button>
@@ -877,7 +880,7 @@ export default function AssetsPage() {
                                                     </div>
                                                 </div>
                                                 {filteredRecords.map((record: MaintenanceRecord) => (
-                                                    <div key={record.id} className="py-3 first:pt-0" onDoubleClick={() => canManage && openEditRecord(record)}>
+                                                    <div key={record.id} className="py-3 first:pt-0" onClick={() => canManage && openEditRecord(record)}>
                                                         <div className="flex items-center justify-between gap-4">
                                                             <div className="min-w-0 flex-1 grid grid-cols-[110px_220px_120px_140px_minmax(220px,1fr)] gap-3 items-center">
                                                                 <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -929,7 +932,7 @@ export default function AssetsPage() {
                                                                 {!(typeof record.cost === 'number' && record.cost > 0) && (
                                                                     <span className="text-sm text-left" style={{ color: 'var(--color-text-secondary)' }}>—</span>
                                                                 )}
-                                                                <div className="flex items-center gap-1">
+                                                                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                                                     <button type="button" className={`p-1 transition-colors ${record.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} onClick={() => updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: record.id, body: { pinToDashboard: !record.pinToDashboard } })} title="Pin">
                                                                         <Pin className="w-3.5 h-3.5" />
                                                                     </button>
@@ -1066,7 +1069,14 @@ export default function AssetsPage() {
                         </div>
                         <form onSubmit={handleRecordSubmit} className="space-y-4">
                             <div>
-                                <label className="label">Service Type <span className="text-red-500">*</span></label>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="label mb-0">Service Type <span className="text-red-500">*</span></label>
+                                    <button type="button" onClick={() => setRecordForm({ ...(recordForm as any), pinToDashboard: !(recordForm as any).pinToDashboard })}
+                                        className={`p-1.5 rounded-lg border transition-colors ${(recordForm as any).pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 text-gray-400 hover:text-gray-600'}`}
+                                        title="Pin to dashboard">
+                                        <Pin className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
                                 <input className="input" value={recordForm.serviceType} onChange={(e) => setRecordForm({ ...recordForm, serviceType: e.target.value })} placeholder="Oil Change, Repair, etc." required />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -1097,52 +1107,59 @@ export default function AssetsPage() {
                                     </div>
                                 )}
                             </div>
-                            <NotificationFields form={recordForm as any} setForm={setRecordForm as any} />
-                            <div className="space-y-3">
-                                <div
-                                    className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer"
-                                    style={{ borderColor: (recordForm as any).addToCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: (recordForm as any).addToCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent', opacity: !recordForm.nextRecommendedDate ? 0.5 : 1 }}
-                                    onClick={() => recordForm.nextRecommendedDate && setRecordForm({ ...(recordForm as any), addToCalendar: !(recordForm as any).addToCalendar })}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={(recordForm as any).addToCalendar || false}
-                                        disabled={!recordForm.nextRecommendedDate}
-                                        onChange={(e) => setRecordForm({ ...(recordForm as any), addToCalendar: e.target.checked })}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="mt-0.5"
-                                    />
-                                    <div>
-                                        <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Add to Calendar</p>
-                                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
-                                            {!recordForm.nextRecommendedDate ? 'Requires a next recommended date' : editingRecord?.linkedEventId ? 'Already linked — uncheck to remove it' : 'Creates a calendar event on the next recommended date'}
-                                        </p>
+                            {/* Options */}
+                            <div className="rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
+                                <button type="button" onClick={() => setRecordOptionsOpen(o => !o)}
+                                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium"
+                                    style={{ color: 'var(--color-text)' }}>
+                                    <span>Options</span>
+                                    {recordOptionsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                </button>
+                                {recordOptionsOpen && (
+                                    <div className="border-t px-3 pb-3 pt-2 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
+                                        <div
+                                            className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer"
+                                            style={{ borderColor: (recordForm as any).addToCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: (recordForm as any).addToCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent', opacity: !recordForm.nextRecommendedDate ? 0.5 : 1 }}
+                                            onClick={() => recordForm.nextRecommendedDate && setRecordForm({ ...(recordForm as any), addToCalendar: !(recordForm as any).addToCalendar })}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={(recordForm as any).addToCalendar || false}
+                                                disabled={!recordForm.nextRecommendedDate}
+                                                onChange={(e) => setRecordForm({ ...(recordForm as any), addToCalendar: e.target.checked })}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="mt-0.5"
+                                            />
+                                            <div>
+                                                <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Add to Calendar</p>
+                                                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                                                    {!recordForm.nextRecommendedDate ? 'Requires a next recommended date' : editingRecord?.linkedEventId ? 'Already linked — uncheck to remove it' : 'Creates a calendar event on the next recommended date'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div
+                                            className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer"
+                                            style={{ borderColor: (recordForm as any).addExpense ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: (recordForm as any).addExpense ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent', opacity: !recordForm.cost ? 0.5 : 1 }}
+                                            onClick={() => recordForm.cost && setRecordForm({ ...(recordForm as any), addExpense: !(recordForm as any).addExpense })}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={(recordForm as any).addExpense || false}
+                                                disabled={!recordForm.cost}
+                                                onChange={(e) => setRecordForm({ ...(recordForm as any), addExpense: e.target.checked })}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="mt-0.5"
+                                            />
+                                            <div>
+                                                <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Add expense</p>
+                                                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                                                    {!recordForm.cost ? 'Requires a cost' : editingRecord?.linkedExpenseId ? 'Already linked — uncheck to remove it' : 'Creates an expense entry for this service'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <NotificationFields form={recordForm as any} setForm={setRecordForm as any} />
                                     </div>
-                                </div>
-                                <div
-                                    className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer"
-                                    style={{ borderColor: (recordForm as any).addExpense ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: (recordForm as any).addExpense ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent', opacity: !recordForm.cost ? 0.5 : 1 }}
-                                    onClick={() => recordForm.cost && setRecordForm({ ...(recordForm as any), addExpense: !(recordForm as any).addExpense })}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={(recordForm as any).addExpense || false}
-                                        disabled={!recordForm.cost}
-                                        onChange={(e) => setRecordForm({ ...(recordForm as any), addExpense: e.target.checked })}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="mt-0.5"
-                                    />
-                                    <div>
-                                        <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Add expense</p>
-                                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
-                                            {!recordForm.cost ? 'Requires a cost' : editingRecord?.linkedExpenseId ? 'Already linked — uncheck to remove it' : 'Creates an expense entry for this service'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: (recordForm as any).pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: (recordForm as any).pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setRecordForm({ ...(recordForm as any), pinToDashboard: !(recordForm as any).pinToDashboard })}>
-                                <input type="checkbox" checked={(recordForm as any).pinToDashboard || false} onChange={(e) => setRecordForm({ ...(recordForm as any), pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
-                                <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this log entry in the Dashboard pin area</p></div>
+                                )}
                             </div>
                             <div className="flex items-center justify-between gap-3 pt-2">
                                 <div>

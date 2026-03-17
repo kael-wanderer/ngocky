@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Baby, Plus, X, ChevronLeft, ChevronRight, Pencil, Trash2,
-    Filter, List, Calendar as CalIcon, LayoutGrid, Palette,
+    Filter, List, Calendar as CalIcon, LayoutGrid, Palette, Pin, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import {
     format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay,
@@ -72,6 +72,7 @@ const emptyForm = () => ({
     color: '',
     showOnCalendar: true,
     isShared: true,
+    pinToDashboard: false,
     ...emptyNotification,
 });
 
@@ -89,6 +90,7 @@ export default function CaKeoPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [form, setForm] = useState(emptyForm());
     const [formError, setFormError] = useState('');
+    const [optionsOpen, setOptionsOpen] = useState(false);
     const [filters, setFilters] = useState({
         ...DEFAULT_CAKEO_FILTERS,
         date: DEFAULT_CAKEO_FILTERS.date as CaKeoDateFilter,
@@ -220,6 +222,7 @@ export default function CaKeoPage() {
     function openEdit(item: any) {
         setEditingItem(item);
         setFormError('');
+        setOptionsOpen(false);
         setForm({
             title: item.title || '',
             description: item.description || '',
@@ -235,6 +238,7 @@ export default function CaKeoPage() {
             color: item.color || '',
             showOnCalendar: item.showOnCalendar !== false,
             isShared: item.isShared !== false,
+            pinToDashboard: !!item.pinToDashboard,
             ...loadNotificationState(item),
         });
         setShowModal(true);
@@ -244,6 +248,7 @@ export default function CaKeoPage() {
         setShowModal(false);
         setEditingItem(null);
         setForm(emptyForm());
+        setOptionsOpen(false);
         clearSelection();
     }
 
@@ -351,7 +356,14 @@ export default function CaKeoPage() {
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="label">Title <span className="text-red-500">*</span></label>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="label mb-0">Title <span className="text-red-500">*</span></label>
+                                    <button type="button" onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}
+                                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 text-gray-400 hover:text-gray-600'}`}
+                                        title="Pin to dashboard">
+                                        <Pin className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
                                 <input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                             </div>
                             <div className="grid grid-cols-3 gap-3">
@@ -375,12 +387,24 @@ export default function CaKeoPage() {
                                     </select>
                                 </div>
                             </div>
-                            <div>
-                                <label className="label">Assign To</label>
-                                <select className="input" value={form.assignerId} onChange={(e) => setForm({ ...form, assignerId: e.target.value })}>
-                                    <option value="">Unassigned</option>
-                                    {users.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                                </select>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="label">Assign To</label>
+                                    <select className="input" value={form.assignerId} onChange={(e) => setForm({ ...form, assignerId: e.target.value })}>
+                                        <option value="">Unassigned</option>
+                                        {users.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <ColorPicker
+                                        value={form.color}
+                                        fallbackColor={getAssigneeColor(form.assignerId || null)}
+                                        onChange={(color) => setForm({ ...form, color })}
+                                        onClear={() => setForm({ ...form, color: '' })}
+                                        label="Color"
+                                        storageKey="cakeo-recent-colors"
+                                    />
+                                </div>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
@@ -404,37 +428,39 @@ export default function CaKeoPage() {
                                 <label className="label">Description</label>
                                 <textarea className="input" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <ColorPicker
-                                        value={form.color}
-                                        fallbackColor={getAssigneeColor(form.assignerId || null)}
-                                        onChange={(color) => setForm({ ...form, color })}
-                                        onClear={() => setForm({ ...form, color: '' })}
-                                        label="Color"
-                                        storageKey="cakeo-recent-colors"
-                                    />
-                                </div>
-                                <div className="space-y-2 pt-5">
-                                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <input type="checkbox" checked={form.allDay} onChange={(e) => setForm({ ...form, allDay: e.target.checked })} className="rounded" /> All day
-                                    </label>
-                                    <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.showOnCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.showOnCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
-                                        <input type="checkbox" id="cakeoShowOnCalendar" checked={form.showOnCalendar} onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })} className="rounded mt-0.5" />
-                                        <div>
-                                            <label htmlFor="cakeoShowOnCalendar" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add to Calendar</label>
-                                            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Shows this item on the main Calendar view</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {!form.color && (
-                                <p className="text-xs -mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                    Using the global Ca Keo color by default. Picking a color here creates a local override.
-                                </p>
-                            )}
                             {formError && <p className="text-sm text-red-500">{formError}</p>}
-                            <NotificationFields form={form} setForm={setForm} />
+                            {/* Options */}
+                            <div className="rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
+                                <button type="button" onClick={() => setOptionsOpen(o => !o)}
+                                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium"
+                                    style={{ color: 'var(--color-text)' }}>
+                                    <span>Options</span>
+                                    {optionsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                </button>
+                                {optionsOpen && (
+                                    <div className="border-t px-3 pb-3 pt-2 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
+                                        <label className="flex items-center gap-2 text-sm cursor-pointer py-1">
+                                            <input type="checkbox" checked={form.allDay} onChange={(e) => setForm({ ...form, allDay: e.target.checked })} className="rounded" />
+                                            <span style={{ color: 'var(--color-text)' }}>All day</span>
+                                        </label>
+                                        <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.showOnCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.showOnCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
+                                            <input type="checkbox" id="cakeoShowOnCalendar" checked={form.showOnCalendar} onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })} className="rounded mt-0.5" />
+                                            <label htmlFor="cakeoShowOnCalendar" className="cursor-pointer flex-1">
+                                                <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Add to Calendar</span>
+                                                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Shows this item on the main Calendar view</p>
+                                            </label>
+                                        </div>
+                                        <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
+                                            <input type="checkbox" id="cakeoIsShared" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} className="rounded mt-0.5" />
+                                            <label htmlFor="cakeoIsShared" className="cursor-pointer flex-1">
+                                                <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</span>
+                                                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>All users can see and edit this item</p>
+                                            </label>
+                                        </div>
+                                        <NotificationFields form={form} setForm={setForm} />
+                                    </div>
+                                )}
+                            </div>
                             <div className="flex items-center justify-between gap-3 pt-2">
                                 <div>
                                     {editingItem && (
@@ -587,7 +613,7 @@ export default function CaKeoPage() {
                                             <tr><td colSpan={7} className="text-center py-8 text-sm" style={{ color: 'var(--color-text-secondary)' }}>No items found</td></tr>
                                         )}
                                         {filteredItems.map((item: any) => (
-                                            <tr key={item.id} className="group hover:bg-gray-50 cursor-pointer" onDoubleClick={() => openEdit(item)}>
+                                            <tr key={item.id} className="group hover:bg-gray-50 cursor-pointer" onClick={() => openEdit(item)}>
                                                 <td>
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-1.5 h-5 rounded-sm flex-shrink-0" style={{ backgroundColor: getAssigneeColor(item.assignerId) }} />
@@ -677,7 +703,7 @@ function CaKeoCard({ item, assigneeColor, displayColor, onEdit, onDelete, compac
         <div
             className="p-3 rounded-lg border-l-4 cursor-pointer hover:shadow-sm transition-shadow"
             style={{ borderColor: displayColor, backgroundColor: 'var(--color-bg)' }}
-            onDoubleClick={() => onEdit(item)}
+            onClick={() => onEdit(item)}
         >
             <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">

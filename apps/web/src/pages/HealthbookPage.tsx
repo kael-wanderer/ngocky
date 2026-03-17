@@ -1,11 +1,12 @@
 import React, { useRef, useState, useMemo } from 'react';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
     ArrowLeft, Plus, Edit2, Trash2, HeartPulse, User, Phone, Shield,
     Paperclip, Upload, X, FileText, Image, ChevronDown, ChevronUp, Eye,
-    LayoutGrid, List, Filter, Bell, Copy,
+    LayoutGrid, List, Filter, Bell, Copy, Pin,
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
@@ -78,6 +79,7 @@ interface HealthLog {
     nextCheckupDate?: string;
     linkedExpenseId?: string | null;
     linkedCalendarEventId?: string | null;
+    pinToDashboard?: boolean;
     notificationEnabled?: boolean;
     reminderOffsetValue?: number;
     reminderOffsetUnit?: string;
@@ -140,6 +142,7 @@ const EMPTY_LOG = {
     date: new Date().toISOString().slice(0, 10),
     type: 'DOCTOR_VISIT', location: '', doctor: '', symptoms: '',
     description: '', cost: '', prescription: '', nextCheckupDate: '', addExpense: false, addToCalendar: false,
+    pinToDashboard: false,
     ...emptyNotification,
 };
 
@@ -561,6 +564,7 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
         mutationFn: (fileId: string) => api.delete(`/healthbook/files/log/${fileId}`),
         onSuccess: (_, fileId) => setFiles((prev) => prev.filter((f) => f.id !== fileId)),
     });
+    const [optionsOpen, setOptionsOpen] = useState(false);
     const [form, setForm] = useState(editing ? {
         date: editing.date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
         type: editing.type, location: editing.location ?? '', doctor: editing.doctor ?? '',
@@ -569,6 +573,7 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
         nextCheckupDate: editing.nextCheckupDate?.slice(0, 10) ?? '',
         addExpense: !!editing.linkedExpenseId,
         addToCalendar: !!editing.linkedCalendarEventId,
+        pinToDashboard: !!editing.pinToDashboard,
         ...loadNotificationState(editing as any),
     } : { ...EMPTY_LOG });
     const [saving, setSaving] = useState(false);
@@ -610,7 +615,14 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                 style={{ backgroundColor: 'var(--color-surface)' }}>
                 <div className="flex items-center gap-3 px-6 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
                     <h2 className="font-semibold text-base" style={{ color: 'var(--color-text)' }}>{editing ? 'Edit Log' : 'Add Medical Log'}</h2>
-                    <button onClick={onClose} className="ml-auto p-1 rounded hover:bg-gray-100"><X className="w-4 h-4" /></button>
+                    <div className="ml-auto flex items-center gap-2">
+                        <button type="button" onClick={() => set('pinToDashboard', !(form as any).pinToDashboard)}
+                            className={`p-1.5 rounded-lg border transition-colors ${(form as any).pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 text-gray-400 hover:text-gray-600'}`}
+                            title="Pin to dashboard">
+                            <Pin className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={onClose} className="p-1 rounded hover:bg-gray-100"><X className="w-4 h-4" /></button>
+                    </div>
                 </div>
                 <div className="px-6 py-4 space-y-4">
                     <div className="grid grid-cols-2 gap-3">
@@ -698,30 +710,42 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                                 value={form.nextCheckupDate} onChange={(e) => set('nextCheckupDate', e.target.value)} />
                         </div>
                     </div>
-                    <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.addExpense ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.addExpense ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
-                        <input type="checkbox" id="addExpense" checked={form.addExpense} onChange={(e) => set('addExpense', e.target.checked)} className="rounded mt-0.5" />
-                        <div>
-                            <label htmlFor="addExpense" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add expense</label>
-                            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
-                                {editing?.linkedExpenseId
-                                    ? 'Expense already linked — uncheck to delete it'
-                                    : 'Creates a Family / Healthcare / Bank Transfer expense with the cost above'}
-                            </p>
-                        </div>
+                    {/* Options */}
+                    <div className="rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
+                        <button type="button" onClick={() => setOptionsOpen(o => !o)}
+                            className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium"
+                            style={{ color: 'var(--color-text)' }}>
+                            <span>Options</span>
+                            {optionsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                        {optionsOpen && (
+                            <div className="border-t px-3 pb-3 pt-2 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
+                                <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.addToCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.addToCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
+                                    <input type="checkbox" id="addToCalendar" checked={form.addToCalendar} onChange={(e) => set('addToCalendar', e.target.checked)} className="rounded mt-0.5" />
+                                    <label htmlFor="addToCalendar" className="cursor-pointer flex-1">
+                                        <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Add to Calendar</span>
+                                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+                                            {editing?.linkedCalendarEventId
+                                                ? 'Calendar event already linked — uncheck to delete it'
+                                                : 'Creates a Meeting event on the Next Checkup Date (09:00–12:00). Requires a future date.'}
+                                        </p>
+                                    </label>
+                                </div>
+                                <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.addExpense ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.addExpense ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
+                                    <input type="checkbox" id="addExpense" checked={form.addExpense} onChange={(e) => set('addExpense', e.target.checked)} className="rounded mt-0.5" />
+                                    <label htmlFor="addExpense" className="cursor-pointer flex-1">
+                                        <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Add expense</span>
+                                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+                                            {editing?.linkedExpenseId
+                                                ? 'Expense already linked — uncheck to delete it'
+                                                : 'Creates a Family / Healthcare / Bank Transfer expense with the cost above'}
+                                        </p>
+                                    </label>
+                                </div>
+                                <NotificationFields form={form as any} setForm={setForm as any} />
+                            </div>
+                        )}
                     </div>
-                    <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.addToCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.addToCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}>
-                        <input type="checkbox" id="addToCalendar" checked={form.addToCalendar} onChange={(e) => set('addToCalendar', e.target.checked)} className="rounded mt-0.5" />
-                        <div>
-                            <label htmlFor="addToCalendar" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add to Calendar</label>
-                            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
-                                {editing?.linkedCalendarEventId
-                                    ? 'Calendar event already linked — uncheck to delete it'
-                                    : 'Creates a Meeting event on the Next Checkup Date (09:00–12:00). Requires a future date.'}
-                            </p>
-                        </div>
-                    </div>
-
-                    <NotificationFields form={form as any} setForm={setForm as any} />
 
                     {error && <p className="text-sm text-red-500">{error}</p>}
                 </div>
@@ -752,10 +776,10 @@ export default function HealthbookPage() {
     const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
     const [personFilesOpen, setPersonFilesOpen] = useState(false);
     const [logSearch, setLogSearch] = useState('');
-    const [logTypeFilter, setLogTypeFilter] = useState<string>('ALL');
-    const [logDateFilter, setLogDateFilter] = useState<LogDateFilter>('ALL');
-    const [logCostFilter, setLogCostFilter] = useState<LogCostFilter>('ALL');
-    const [logView, setLogView] = useState<'list' | 'grid'>('list');
+    const [logTypeFilter, setLogTypeFilter] = useLocalStorage<string>('ngocky:healthbook:logTypeFilter', 'ALL');
+    const [logDateFilter, setLogDateFilter] = useLocalStorage<LogDateFilter>('ngocky:healthbook:logDateFilter', 'ALL');
+    const [logCostFilter, setLogCostFilter] = useLocalStorage<LogCostFilter>('ngocky:healthbook:logCostFilter', 'ALL');
+    const [logView, setLogView] = useLocalStorage<'list' | 'grid'>('ngocky:healthbook:logView', 'list');
 
     // ── Queries ──────────────────────────────────────────────────────────────
 
@@ -1152,8 +1176,9 @@ export default function HealthbookPage() {
                                 const notifBadges = formatLogNotificationBadges(log);
                                 return (
                                     <React.Fragment key={log.id}>
-                                        <tr className="border-b transition-colors hover:bg-gray-50/50"
-                                            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+                                        <tr className="border-b transition-colors hover:bg-gray-50/50 cursor-pointer"
+                                            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                                            onClick={() => setLogModal({ open: true, editing: log })}>
                                             <td className="px-4 py-3">
                                                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${logTypeBadgeClass(log.type)}`}>{logTypeLabel(log.type)}</span>
                                             </td>
@@ -1190,7 +1215,7 @@ export default function HealthbookPage() {
                                                             </>
                                                         )}
                                                     </div>
-                                                    <button onClick={() => toggleLog(log.id)} className="p-1 rounded hover:bg-gray-100 cursor-pointer" title={expanded ? 'Collapse' : 'Expand'}>
+                                                    <button onClick={(e) => { e.stopPropagation(); toggleLog(log.id); }} className="p-1 rounded hover:bg-gray-100 cursor-pointer" title={expanded ? 'Collapse' : 'Expand'}>
                                                         {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                                                     </button>
                                                 </div>
@@ -1236,7 +1261,7 @@ export default function HealthbookPage() {
                     {logs.map((log) => {
                         const notifBadges = formatLogNotificationBadges(log);
                         return (
-                            <div key={log.id} className="rounded-2xl border p-4 flex flex-col gap-2" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+                            <div key={log.id} className="rounded-2xl border p-4 flex flex-col gap-2 cursor-pointer" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} onClick={() => setLogModal({ open: true, editing: log })}>
                                 <div className="flex items-start justify-between gap-2">
                                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${logTypeBadgeClass(log.type)}`}>{logTypeLabel(log.type)}</span>
                                     <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(log.date), 'MMM d, yyyy')}</span>
@@ -1266,7 +1291,7 @@ export default function HealthbookPage() {
                                         )}
                                     </div>
                                     {isOwner(log) && (
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                             <button onClick={() => setLogModal({ open: true, editing: log })} className="p-1 rounded hover:bg-gray-100" title="Edit">
                                                 <Edit2 className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
                                             </button>

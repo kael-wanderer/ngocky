@@ -1,0 +1,1 @@
+ALTER TABLE "HealthLog" ADD COLUMN "pinToDashboard" BOOLEAN NOT NULL DEFAULT false;

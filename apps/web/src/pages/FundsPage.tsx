@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import { ArrowDown, ArrowUp, Coins, Copy, Filter, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../api/client';
@@ -129,13 +130,13 @@ export default function FundsPage() {
     const [showModal, setShowModal] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [editingFund, setEditingFund] = useState<any>(null);
-    const [filters, setFilters] = useState({ ...DEFAULT_FUNDS_FILTERS });
+    const [filters, setFilters] = useLocalStorage('ngocky:funds:filters', { ...DEFAULT_FUNDS_FILTERS });
     const [search, setSearch] = useState('');
     const [form, setForm] = useState(emptyForm());
-    const [sortBy, setSortBy] = useState<SortKey>('date');
-    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+    const [sortBy, setSortBy] = useLocalStorage<SortKey>('ngocky:funds:sortBy', 'date');
+    const [sortOrder, setSortOrder] = useLocalStorage<SortOrder>('ngocky:funds:sortOrder', 'desc');
     const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(25);
+    const [pageSize, setPageSize] = useLocalStorage('ngocky:funds:pageSize', 25);
     const presetDateRange = filters.time === 'CUSTOM' ? null : getFundsDateRange(filters.time);
     const effectiveDateFrom = filters.time === 'CUSTOM' ? filters.dateFrom : (presetDateRange ? format(presetDateRange.start, 'yyyy-MM-dd') : '');
     const effectiveDateTo = filters.time === 'CUSTOM' ? filters.dateTo : (presetDateRange ? format(presetDateRange.end, 'yyyy-MM-dd') : '');
@@ -574,7 +575,7 @@ export default function FundsPage() {
                                         return (
                                             <tr
                                                 key={fund.id}
-                                                onDoubleClick={() => openEdit(fund)}
+                                                onClick={() => openEdit(fund)}
                                                 className={`cursor-pointer ${index % 2 === 0 ? 'bg-[#ecfdf5]' : 'bg-white'} hover:bg-[#d1fae5] transition-colors`}
                                             >
                                                 <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(fund.date), 'MMM d, yyyy')}</td>

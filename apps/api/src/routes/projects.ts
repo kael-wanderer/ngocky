@@ -10,6 +10,29 @@ import { resolveReminderFields } from '../utils/reminders';
 const router = Router();
 router.use(authenticate);
 
+async function createExpenseFromProjectTask(
+    userId: string,
+    task: { title: string; description?: string | null; cost?: number | null },
+    completedAt: Date,
+) {
+    if (!task.cost || (task.cost as number) <= 0) return;
+    await prisma.expense.create({
+        data: {
+            description: task.title,
+            note: task.description || null,
+            type: 'PAY',
+            scope: 'PROJECT',
+            date: completedAt,
+            amount: task.cost,
+            payment: 'BANK_TRANSFER',
+            category: 'Project',
+            isShared: false,
+            sourceModule: 'Project',
+            userId,
+        },
+    });
+}
+
 const canAccessBoard = (board: { ownerId: string; isShared?: boolean }, userId: string) =>
     board.ownerId === userId || !!board.isShared;
 const canAccessTask = (task: { createdById?: string; isShared?: boolean; project: { ownerId: string; isShared?: boolean } }, userId: string) =>
@@ -210,6 +233,7 @@ router.patch('/tasks/:id', validate(updateTaskSchema), async (req: Request, res:
             },
         );
 
+        const statusChangingToDone = req.body.status === 'DONE' && existing.status !== 'DONE';
         const task = await prisma.projectTask.update({
             where: { id: req.params.id },
             data: {
@@ -219,6 +243,19 @@ router.patch('/tasks/:id', validate(updateTaskSchema), async (req: Request, res:
             },
             include: { assignee: { select: { id: true, name: true } } },
         });
+
+        // Auto-create expense when task is marked Done and createExpenseAutomatically is enabled
+        const shouldCreateExpense = statusChangingToDone &&
+            (req.body.createExpenseAutomatically ?? existing.createExpenseAutomatically);
+        if (shouldCreateExpense) {
+            const cost = (req.body.cost ?? (existing as any).cost) as number | null;
+            await createExpenseFromProjectTask(
+                userId,
+                { title: task.title, description: task.description, cost },
+                new Date(),
+            );
+        }
+
         sendSuccess(res, task);
     } catch (err) { next(err); }
 });

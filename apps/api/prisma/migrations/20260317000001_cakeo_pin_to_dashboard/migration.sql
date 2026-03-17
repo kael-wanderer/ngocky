@@ -1,0 +1,1 @@
+ALTER TABLE "CaKeo" ADD COLUMN "pinToDashboard" BOOLEAN NOT NULL DEFAULT false;

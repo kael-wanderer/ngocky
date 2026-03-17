@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin, LayoutGrid, List, Copy, Filter, ArrowUp, ArrowDown, Bell } from 'lucide-react';
+import { Home, Plus, X, CheckCircle2, AlertTriangle, Pencil, Trash2, Pin, LayoutGrid, List, Copy, Filter, ArrowUp, ArrowDown, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import { addMonths, addWeeks, endOfMonth, endOfWeek, format, isWithinInterval, startOfMonth, startOfToday, startOfWeek } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
@@ -247,9 +248,21 @@ function HouseworkForm({
     loading: boolean;
     submitLabel: string;
 }) {
+    const [optionsOpen, setOptionsOpen] = useState(false);
+
     return (
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
-            <div><label className="label">Title <span className="text-red-500">*</span></label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+            <div>
+                <div className="flex items-center justify-between mb-1">
+                    <label className="label mb-0">Title <span className="text-red-500">*</span></label>
+                    <button type="button" onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}
+                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 text-gray-400 hover:text-gray-600'}`}
+                        title="Pin to dashboard">
+                        <Pin className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+                <input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </div>
             <div><label className="label">Description</label><textarea className="input" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -283,24 +296,30 @@ function HouseworkForm({
 
             <RecurrenceRuleFields form={form} setForm={setForm} />
 
-            <NotificationFields form={form} setForm={setForm} />
-
-            <div className="space-y-3">
-                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, isShared: !form.isShared })}>
-                    <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
-                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this item visible to all family members</p></div>
-                </div>
-                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}>
-                    <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
-                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this item in the Dashboard pin area</p></div>
-                </div>
-                <div className="flex items-start gap-2 p-3 rounded-lg border" style={{ borderColor: form.showOnCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.showOnCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent', opacity: !form.nextDueDate ? 0.5 : 1 }}>
-                    <input type="checkbox" id="houseworkShowOnCalendar" checked={form.showOnCalendar} disabled={!form.nextDueDate} onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })} className="rounded mt-0.5" />
-                    <div>
-                        <label htmlFor="houseworkShowOnCalendar" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--color-text)' }}>Add to Calendar</label>
-                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>{form.nextDueDate ? 'Creates a calendar event on the next due date' : 'Requires a due date'}</p>
+            {/* Options */}
+            <div className="rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
+                <button type="button" onClick={() => setOptionsOpen(o => !o)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium"
+                    style={{ color: 'var(--color-text)' }}>
+                    <span>Options</span>
+                    {optionsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+                {optionsOpen && (
+                    <div className="border-t px-3 pb-3 pt-2 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
+                        <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.showOnCalendar ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.showOnCalendar ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent', opacity: !form.nextDueDate ? 0.5 : 1 }}>
+                            <input type="checkbox" id="houseworkShowOnCalendar" checked={form.showOnCalendar} disabled={!form.nextDueDate} onChange={(e) => setForm({ ...form, showOnCalendar: e.target.checked })} className="rounded mt-0.5" />
+                            <label htmlFor="houseworkShowOnCalendar" className="cursor-pointer flex-1">
+                                <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Add to Calendar</span>
+                                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>{form.nextDueDate ? 'Creates a calendar event on the next due date' : 'Requires a due date'}</p>
+                            </label>
+                        </div>
+                        <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, isShared: !form.isShared })}>
+                            <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                            <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this item visible to all family members</p></div>
+                        </div>
+                        <NotificationFields form={form} setForm={setForm} />
                     </div>
-                </div>
+                )}
             </div>
 
             <div className="flex items-center justify-between gap-3 pt-2">
@@ -329,14 +348,14 @@ export default function HouseworkPage() {
     const [showCreate, setShowCreate] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
     const [form, setForm] = useState<HouseworkFormState>({ ...emptyForm });
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [filters, setFilters] = useState<{
+    const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>('ngocky:housework:viewMode', 'grid');
+    const [filters, setFilters] = useLocalStorage<{
         dueDate: HouseworkDueDateFilter;
         frequency: HouseworkFrequencyFilter;
         status: HouseworkStatusFilter;
-    }>({ ...DEFAULT_HOUSEWORK_FILTERS });
-    const [sortBy, setSortBy] = useState<HouseworkSortKey>('nextDueDate');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    }>('ngocky:housework:filters', { ...DEFAULT_HOUSEWORK_FILTERS });
+    const [sortBy, setSortBy] = useLocalStorage<HouseworkSortKey>('ngocky:housework:sortBy', 'nextDueDate');
+    const [sortOrder, setSortOrder] = useLocalStorage<'asc' | 'desc'>('ngocky:housework:sortOrder', 'asc');
     const [gridSort, setGridSort] = useState<HouseworkGridSort>('DUE_ASC');
     const [hwSearch, setHwSearch] = useState('');
     const editIdParam = searchParams.get('editId');

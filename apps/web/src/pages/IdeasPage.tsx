@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import api from '../api/client';
 import { Calendar, ChevronDown, ChevronUp, Copy, LayoutGrid, Lightbulb, List, Pencil, Pin, Plus, Tag, Trash2, X } from 'lucide-react';
 
@@ -31,8 +32,8 @@ export default function IdeasPage() {
     const [topicForm, setTopicForm] = useState(emptyTopicForm());
     const [logForm, setLogForm] = useState(emptyLogForm());
     const [tagInput, setTagInput] = useState('');
-    const [logListView, setLogListView] = useState<'grid' | 'list'>('grid');
-    const [logsSort, setLogsSort] = useState<{ col: string; dir: SortDir }>({ col: 'title', dir: 'asc' });
+    const [logListView, setLogListView] = useLocalStorage<'grid' | 'list'>('ngocky:ideas:logListView', 'grid');
+    const [logsSort, setLogsSort] = useLocalStorage<{ col: string; dir: SortDir }>('ngocky:ideas:logsSort', { col: 'title', dir: 'asc' });
     function toggleLogsSort(col: string) {
         setLogsSort(s => s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' });
     }

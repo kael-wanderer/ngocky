@@ -173,6 +173,9 @@ export const createTaskSchema = z.object({
     ...notificationFields,
     pinToDashboard: z.boolean().optional(),
     kanbanOrder: z.number().int().optional(),
+    cost: z.number().int().optional().nullable(),
+    showOnCalendar: z.boolean().optional(),
+    createExpenseAutomatically: z.boolean().optional(),
 }).superRefine(notificationRefinement);
 
 export const updateTaskSchema = z.object({
@@ -189,6 +192,9 @@ export const updateTaskSchema = z.object({
     ...notificationFields,
     pinToDashboard: z.boolean().optional(),
     kanbanOrder: z.number().int().optional(),
+    cost: z.number().int().optional().nullable(),
+    showOnCalendar: z.boolean().optional(),
+    createExpenseAutomatically: z.boolean().optional(),
 }).superRefine(notificationRefinement);
 
 const houseworkSchemaBase = z.object({

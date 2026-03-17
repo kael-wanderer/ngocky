@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
 import { useNavigate } from 'react-router-dom';
@@ -83,9 +84,9 @@ const getHouseworkStatus = (nextDueDate?: string | null) => {
 export default function DashboardPage() {
     const { user } = useAuthStore();
     const navigate = useNavigate();
-    const [timeRange, setTimeRange] = useState<TimeRange>('THIS_WEEK');
-    const [statusFilter, setStatusFilter] = useState<StatusFilter>('PENDING');
-    const [categories, setCategories] = useState<Category[]>([...CATEGORY_OPTIONS]);
+    const [timeRange, setTimeRange] = useLocalStorage<TimeRange>('ngocky:dashboard:timeRange', 'THIS_WEEK');
+    const [statusFilter, setStatusFilter] = useLocalStorage<StatusFilter>('ngocky:dashboard:statusFilter', 'PENDING');
+    const [categories, setCategories] = useLocalStorage<Category[]>('ngocky:dashboard:categories', [...CATEGORY_OPTIONS]);
     const [autoRefresh, setAutoRefresh] = useState(false);
     const [dashSearch, setDashSearch] = useState('');
     const [categoryOpen, setCategoryOpen] = useState(false);

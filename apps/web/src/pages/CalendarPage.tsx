@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import api from '../api/client';
-import { Calendar as CalIcon, Plus, X, ChevronLeft, ChevronRight, Pencil, Trash2, Pin } from 'lucide-react';
+import { Calendar as CalIcon, Plus, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Pencil, Trash2, Pin } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, addDays, isWithinInterval } from 'date-fns';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
@@ -79,7 +80,7 @@ export default function CalendarPage() {
     const navigate = useNavigate();
     const { user } = useAuthStore();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [view, setView] = useState<CalendarView>('month');
+    const [view, setView] = useLocalStorage<CalendarView>('ngocky:calendar:view', 'month');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [showCreate, setShowCreate] = useState(false);
     const [editingEvent, setEditingEvent] = useState<any>(null);
@@ -88,6 +89,7 @@ export default function CalendarPage() {
     const [selectedTimeRange, setSelectedTimeRange] = useState<{ startTime: string; endTime: string } | null>(null);
     const [form, setForm] = useState({ ...emptyForm });
     const [formError, setFormError] = useState('');
+    const [optionsOpen, setOptionsOpen] = useState(false);
     const eventIdParam = searchParams.get('eventId');
     const dateParam = searchParams.get('date');
 
@@ -429,11 +431,11 @@ export default function CalendarPage() {
             </div>
 
             {(showCreate || editingEvent) && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreate(false); setEditingEvent(null); clearSelection(); } }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreate(false); setEditingEvent(null); clearSelection(); setOptionsOpen(false); } }}>
                     <div className="card p-6 w-full max-w-2xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">{editingEvent ? 'Edit Item' : 'Create Item'}</h3>
-                            <button onClick={() => { setShowCreate(false); setEditingEvent(null); clearSelection(); }}><X className="w-5 h-5" /></button>
+                            <button onClick={() => { setShowCreate(false); setEditingEvent(null); clearSelection(); setOptionsOpen(false); }}><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={(e) => {
                             e.preventDefault();
@@ -461,7 +463,21 @@ export default function CalendarPage() {
                             if (editingEvent) updateMut.mutate({ id: getSourceId(editingEvent), body });
                             else createMut.mutate(body);
                         }} className="space-y-4">
-                            <div><label className="label">Description <span className="text-red-500">*</span></label><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                            <div>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="label mb-0">Description <span className="text-red-500">*</span></label>
+                                    <button
+                                        type="button"
+                                        title={form.pinToDashboard ? 'Unpin from dashboard' : 'Pin to dashboard'}
+                                        onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}
+                                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 hover:border-amber-300 hover:text-amber-400'}`}
+                                        style={form.pinToDashboard ? {} : { color: 'var(--color-text-secondary)' }}
+                                    >
+                                        <Pin className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                                <input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                            </div>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <label className="label">Type</label>
@@ -536,21 +552,26 @@ export default function CalendarPage() {
                                 </div>
                             )}
                             <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.allDay} onChange={(e) => setForm({ ...form, allDay: e.target.checked })} className="rounded" /> All day</label>
-                            <div className="space-y-3">
-                                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, isShared: !form.isShared })}>
-                                    <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
-                                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this event visible to all family members</p></div>
-                                </div>
-                                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.pinToDashboard ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.pinToDashboard ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}>
-                                    <input type="checkbox" checked={form.pinToDashboard} onChange={(e) => setForm({ ...form, pinToDashboard: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
-                                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Pin to dashboard</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Displays this event in the Dashboard pin area</p></div>
-                                </div>
-                                <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.notificationEnabled ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.notificationEnabled ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, notificationEnabled: !form.notificationEnabled })}>
-                                    <input type="checkbox" checked={form.notificationEnabled} onChange={(e) => setForm({ ...form, notificationEnabled: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
-                                    <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Notification</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Sends a reminder notification at your chosen date and time</p></div>
-                                </div>
+                            <div className="rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
+                                <button
+                                    type="button"
+                                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium"
+                                    style={{ color: 'var(--color-text)' }}
+                                    onClick={() => setOptionsOpen((o) => !o)}
+                                >
+                                    <span>Options</span>
+                                    {optionsOpen ? <ChevronUp className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />}
+                                </button>
+                                {optionsOpen && (
+                                    <div className="border-t px-3 pb-3 pt-2 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
+                                        <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: form.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setForm({ ...form, isShared: !form.isShared })}>
+                                            <input type="checkbox" checked={form.isShared} onChange={(e) => setForm({ ...form, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                            <div><p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Share with all users</p><p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Makes this event visible to all family members</p></div>
+                                        </div>
+                                        <NotificationFields form={form} setForm={setForm} />
+                                    </div>
+                                )}
                             </div>
-                            {form.notificationEnabled && <NotificationFields form={form} setForm={setForm} />}
                             {formError && (
                                 <p className="text-sm text-red-500">{formError}</p>
                             )}
@@ -572,7 +593,7 @@ export default function CalendarPage() {
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={() => { setShowCreate(false); setEditingEvent(null); clearSelection(); }}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={() => { setShowCreate(false); setEditingEvent(null); clearSelection(); setOptionsOpen(false); }}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createMut.isPending || updateMut.isPending}>{editingEvent ? 'Save' : 'Create Item'}</button>

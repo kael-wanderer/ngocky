@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalStorage } from '../utils/useLocalStorage';
 import api from '../api/client';
 import { ArrowDown, ArrowUp, Copy, Filter, Keyboard, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
 import PaginationControls from '../components/PaginationControls';
@@ -199,11 +200,11 @@ export default function KeyboardPage() {
     const qc = useQueryClient();
 
     // Filters
-    const [filters, setFilters] = useState({ ...DEFAULT_KEYBOARD_FILTERS });
-    const [sortBy, setSortBy] = useState<SortKey>('name');
-    const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+    const [filters, setFilters] = useLocalStorage('ngocky:keyboard:filters', { ...DEFAULT_KEYBOARD_FILTERS });
+    const [sortBy, setSortBy] = useLocalStorage<SortKey>('ngocky:keyboard:sortBy', 'name');
+    const [sortOrder, setSortOrder] = useLocalStorage<SortOrder>('ngocky:keyboard:sortOrder', 'asc');
     const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(25);
+    const [pageSize, setPageSize] = useLocalStorage('ngocky:keyboard:pageSize', 25);
 
     // Modal
     const [showModal, setShowModal] = useState(false);
@@ -514,7 +515,7 @@ export default function KeyboardPage() {
                             {paginatedItems.map((item, index) => (
                                 <tr
                                     key={item.id}
-                                    onDoubleClick={() => openEdit(item)}
+                                    onClick={() => openEdit(item)}
                                     className={`group border-t border-gray-200 dark:border-gray-800 cursor-pointer ${index % 2 === 0 ? 'bg-[#ecfdf5] dark:bg-[#202225]' : 'bg-white dark:bg-gray-900'} hover:bg-[#d1fae5] dark:hover:bg-[#2a2d31]'}`}
                                 >
                                     <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{item.name}</td>

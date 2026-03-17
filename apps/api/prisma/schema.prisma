@@ -429,6 +429,9 @@ model ProjectTask {
   notificationCooldownHours Int    @default(24)
   pinToDashboard      Boolean       @default(false)
   kanbanOrder         Int           @default(0)
+  cost                Int?
+  showOnCalendar      Boolean       @default(false)
+  createExpenseAutomatically Boolean @default(false)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
@@ -914,6 +917,7 @@ model CaKeo {
   lastNotificationSentAt  DateTime?
   notificationCooldownHours Int         @default(24)
   isShared                Boolean       @default(true)
+  pinToDashboard          Boolean       @default(false)
   ownerId                 String
   sortOrder               Int           @default(0)
   createdAt               DateTime      @default(now())
@@ -991,6 +995,7 @@ model HealthLog {
   nextCheckupDate           DateTime?
   linkedExpenseId           String?
   linkedCalendarEventId     String?
+  pinToDashboard            Boolean      @default(false)
   notificationEnabled       Boolean      @default(false)
   reminderOffsetValue       Int?
   reminderOffsetUnit        ReminderUnit?
