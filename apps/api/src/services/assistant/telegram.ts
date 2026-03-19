@@ -65,7 +65,9 @@ export async function logMessage(
  * Returns the code.
  */
 export async function generateLinkCode(userId: string): Promise<string> {
-    const code = crypto.randomBytes(6).toString('base64url').slice(0, 8).toUpperCase();
+    const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const bytes = crypto.randomBytes(8);
+    const code = Array.from(bytes).map(b => CHARS[b % CHARS.length]).join('');
     const expiresAt = new Date(
         Date.now() + ASSISTANT_POLICIES.LINK_CODE_TTL_MINUTES * 60 * 1000,
     );

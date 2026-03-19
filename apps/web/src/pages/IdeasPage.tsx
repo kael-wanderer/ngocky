@@ -206,7 +206,6 @@ export default function IdeasPage() {
                                             key={topic.id}
                                             className={`card p-4 cursor-pointer transition-all hover:shadow-md ${activeTopic?.id === topic.id ? 'ring-2 ring-primary border-transparent' : ''}`}
                                             onClick={() => setSelectedTopicId(topic.id)}
-                                            onDoubleClick={() => canManage && openEditTopic(topic)}
                                             style={activeTopic?.id === topic.id ? { borderColor: 'var(--color-primary)' } : {}}
                                         >
                                             <div className="flex items-start justify-between gap-3">

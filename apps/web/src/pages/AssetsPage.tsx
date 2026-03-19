@@ -151,8 +151,7 @@ function AssetCard({
         return (
             <div
                 className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={onOpen}
-                onDoubleClick={() => canManage && onEdit()}
+                onClick={() => canManage ? onEdit() : onOpen()}
             >
                 <div className="min-w-0 flex-1">
                     <span className="text-sm font-medium truncate block" style={{ color: 'var(--color-text)' }}>{asset.name}</span>
@@ -181,7 +180,7 @@ function AssetCard({
     }
 
     return (
-        <div className="card p-4 cursor-pointer transition-all hover:shadow-md" onClick={onOpen} onDoubleClick={() => canManage && onEdit()}>
+        <div className="card p-4 cursor-pointer transition-all hover:shadow-md" onClick={() => canManage ? onEdit() : onOpen()}>
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                     <h4 className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{asset.name}</h4>
