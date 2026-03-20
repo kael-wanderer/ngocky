@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalStorage } from '../utils/useLocalStorage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
@@ -489,7 +489,8 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [dateError, setDateError] = useState('');
     const [duration, setDuration] = useState<number | ''>('');
-    const [quantity, setQuantity] = useState(1);
+    const [quantity, setQuantity] = useState<number | ''>('');
+    const processedUrlParams = useRef({ editId: null as string | null, checkInId: null as string | null });
     const [periodFilter, setPeriodFilter] = useLocalStorage<SharedGoalPeriodFilter>('ngocky:goals:periodFilter', DEFAULT_GOAL_PERIOD_FILTER);
     const [goalSearch, setGoalSearch] = useState('');
     const [goalTrackingFilter, setGoalTrackingFilter] = useLocalStorage<'ALL' | 'BY_FREQUENCY' | 'BY_QUANTITY'>('ngocky:goals:trackingFilter', 'ALL');
@@ -567,7 +568,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             setCheckInGoalId(null);
             setNote('');
             setDate(new Date().toISOString().split('T')[0]);
-            setQuantity(1);
+            setQuantity('');
             setDuration('');
             setDateError('');
         },
@@ -833,7 +834,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const openCheckIn = (goalId: string) => {
         setCheckInGoalId(goalId);
         setDate(new Date().toISOString().split('T')[0]);
-        setQuantity(1);
+        setQuantity('');
         setDuration('');
         setNote('');
         setDateError('');
@@ -845,9 +846,13 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             alert(dateError || `Date must be between ${minDate} and ${today}.`);
             return;
         }
+        if (selectedGoal?.trackingType === 'BY_QUANTITY' && (quantity === '' || Number(quantity) < 1)) {
+            alert('Amount must be at least 1.');
+            return;
+        }
         const payload: any = {
             goalId: checkInGoalId,
-            quantity: selectedGoal?.trackingType === 'BY_QUANTITY' ? quantity : 1,
+            quantity: selectedGoal?.trackingType === 'BY_QUANTITY' ? Number(quantity) : 1,
             date,
         };
         const noteText = [
@@ -938,21 +943,26 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
 
     useEffect(() => {
         if (!goals.length) return;
-        if (editIdParam && activeTab === 'GOALS') {
+        if (editIdParam && activeTab === 'GOALS' && processedUrlParams.current.editId !== editIdParam) {
             const goal = goals.find((g: any) => g.id === editIdParam);
-            if (goal) openEditGoal(goal);
+            if (goal) { processedUrlParams.current.editId = editIdParam; openEditGoal(goal); }
         }
-        if (checkInIdParam && activeTab === 'GOALS') {
+        if (checkInIdParam && activeTab === 'GOALS' && processedUrlParams.current.checkInId !== checkInIdParam) {
             const goal = goals.find((g: any) => g.id === checkInIdParam);
-            if (goal) openCheckIn(goal.id);
+            if (goal) { processedUrlParams.current.checkInId = checkInIdParam; openCheckIn(goal.id); }
         }
     }, [goals, editIdParam, checkInIdParam, activeTab]);
 
     useEffect(() => {
+        if (!editIdParam) processedUrlParams.current.editId = null;
+        if (!checkInIdParam) processedUrlParams.current.checkInId = null;
+    }, [editIdParam, checkInIdParam]);
+
+    useEffect(() => {
         if (!tasks.length) return;
-        if (editIdParam && activeTab === 'TASKS') {
+        if (editIdParam && activeTab === 'TASKS' && processedUrlParams.current.editId !== editIdParam) {
             const task = tasks.find((entry: any) => entry.id === editIdParam);
-            if (task) openEditTask(task);
+            if (task) { processedUrlParams.current.editId = editIdParam; openEditTask(task); }
         }
     }, [tasks, editIdParam, activeTab]);
 
@@ -1323,7 +1333,8 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                 </thead>
                                 <tbody>
                                     {sortedTasks.map((task: any) => {
-                                        const canManage = !getSharedOwnerName(task, user?.id);
+                                        const sharedOwnerName = getSharedOwnerName(task, user?.id);
+                                        const canManage = !sharedOwnerName;
                                         const isDone = task.status === 'DONE';
                                         const isArchived = task.status === 'ARCHIVED';
                                         const dueDate = task.dueDate ? new Date(task.dueDate) : null;
@@ -1336,6 +1347,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                     <div className="flex items-center gap-2">
                                                         <span className={`font-medium ${isDone || isArchived ? 'line-through opacity-50' : ''}`} style={{ color: 'var(--color-text)' }}>{task.title}</span>
                                                     </div>
+                                                    {sharedOwnerName && <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
                                                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${dueBadge.tone === 'danger' ? 'bg-red-50 text-red-600' : dueBadge.tone === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
                                                             {dueBadge.label}
@@ -1640,7 +1652,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                             {selectedGoal.trackingType === 'BY_QUANTITY' && (
                                 <div>
                                     <label className="label">Amount ({selectedGoal.unit}) <span className="text-red-500">*</span></label>
-                                    <input type="number" min={1} className="input" value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 1)} required />
+                                    <input type="number" min={1} className="input" value={quantity} onChange={(e) => setQuantity(e.target.value === '' ? '' : parseInt(e.target.value, 10))} required />
                                 </div>
                             )}
                             <div>

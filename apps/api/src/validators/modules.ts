@@ -367,6 +367,8 @@ const fundSchemaBase = z.object({
     condition: z.enum(['BNIB', 'USED']).optional().nullable(),
     keyboardItemId: z.string().optional().nullable(),
     keyboardItemName: z.string().optional().nullable(),
+    addKeyboardItem: z.boolean().optional(),
+    removeKeyboardItem: z.boolean().optional(),
     date: z.string().datetime(),
     amount: z.number().positive(),
 });

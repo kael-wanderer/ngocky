@@ -122,6 +122,8 @@ const emptyForm = () => ({
     keyboardItemId: '',
     date: format(new Date(), 'yyyy-MM-dd'),
     amount: '',
+    addKeyboardItem: true,
+    removeKeyboardItem: true,
 });
 
 export default function FundsPage() {
@@ -283,6 +285,8 @@ export default function FundsPage() {
             keyboardItemId: '',
             date: format(new Date(fund.date), 'yyyy-MM-dd'),
             amount: String(Math.round(fund.amount)),
+            addKeyboardItem: true,
+            removeKeyboardItem: true,
         });
         setShowModal(true);
     }
@@ -300,7 +304,7 @@ export default function FundsPage() {
             window.alert('Amount must be a valid positive number. Example: 82000000 or 82M');
             return;
         }
-        if (!editingFund && form.scope === 'MECHANICAL_KEYBOARD' && form.type === 'SELL' && !form.keyboardItemId) {
+        if (!editingFund && form.scope === 'MECHANICAL_KEYBOARD' && form.type === 'SELL' && form.removeKeyboardItem && !form.keyboardItemId) {
             window.alert('Please select the keyboard item you want to remove.');
             return;
         }
@@ -432,6 +436,8 @@ export default function FundsPage() {
                                             category: e.target.value === 'TOP_UP' ? 'OTHER' : form.category,
                                             condition: normalizeConditionForType(e.target.value, form.condition),
                                             keyboardItemId: e.target.value === 'SELL' ? form.keyboardItemId : '',
+                                            addKeyboardItem: true,
+                                            removeKeyboardItem: true,
                                         })}
                                     >
                                         {typeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -466,15 +472,45 @@ export default function FundsPage() {
                                         {conditionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                                     </select>
                                 </div>
-                                {form.scope === 'MECHANICAL_KEYBOARD' && form.type === 'SELL' && (
+                                {form.scope === 'MECHANICAL_KEYBOARD' && form.type === 'BUY' && !editingFund && (
                                     <div className="md:col-span-2">
-                                        <label className="label">Keyboard Item <span className="text-red-500">*</span></label>
-                                        <select className="input" value={form.keyboardItemId} onChange={(e) => setForm({ ...form, keyboardItemId: e.target.value })}>
-                                            <option value="">Select keyboard item</option>
-                                            {keyboardOptions.map((item: any) => (
-                                                <option key={item.id} value={item.id}>{item.name}</option>
-                                            ))}
-                                        </select>
+                                        <div
+                                            className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer"
+                                            style={{ borderColor: form.addKeyboardItem ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.addKeyboardItem ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}
+                                            onClick={() => setForm({ ...form, addKeyboardItem: !form.addKeyboardItem })}
+                                        >
+                                            <input type="checkbox" checked={form.addKeyboardItem} onChange={(e) => setForm({ ...form, addKeyboardItem: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                            <div>
+                                                <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Add keyboard item</p>
+                                                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Automatically add this item to your keyboard collection</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                {form.scope === 'MECHANICAL_KEYBOARD' && form.type === 'SELL' && !editingFund && (
+                                    <div className="md:col-span-2 space-y-3">
+                                        <div
+                                            className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer"
+                                            style={{ borderColor: form.removeKeyboardItem ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: form.removeKeyboardItem ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }}
+                                            onClick={() => setForm({ ...form, removeKeyboardItem: !form.removeKeyboardItem, keyboardItemId: !form.removeKeyboardItem ? form.keyboardItemId : '' })}
+                                        >
+                                            <input type="checkbox" checked={form.removeKeyboardItem} onChange={(e) => setForm({ ...form, removeKeyboardItem: e.target.checked, keyboardItemId: e.target.checked ? form.keyboardItemId : '' })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
+                                            <div>
+                                                <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Remove keyboard item</p>
+                                                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Automatically remove this item from your keyboard collection</p>
+                                            </div>
+                                        </div>
+                                        {form.removeKeyboardItem && !editingFund && (
+                                            <div>
+                                                <label className="label">Keyboard Item <span className="text-red-500">*</span></label>
+                                                <select className="input" value={form.keyboardItemId} onChange={(e) => setForm({ ...form, keyboardItemId: e.target.value })}>
+                                                    <option value="">Select keyboard item</option>
+                                                    {keyboardOptions.map((item: any) => (
+                                                        <option key={item.id} value={item.id}>{item.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                                 <div>

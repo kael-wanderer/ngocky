@@ -78,9 +78,9 @@ router.post('/', validate(createFundSchema), async (req: Request, res: Response,
         const userId = req.user!.userId;
         const fund = await prisma.$transaction(async (tx: any) => {
             const normalizedCondition = normalizeCondition(req.body.type, req.body.condition);
-            const { keyboardItemId, keyboardItemName, ...fundData } = req.body;
+            const { keyboardItemId, keyboardItemName, addKeyboardItem, removeKeyboardItem, ...fundData } = req.body;
 
-            if (shouldCreateKeyboardFromFund(fundData.type, fundData.scope, fundData.category)) {
+            if (addKeyboardItem !== false && shouldCreateKeyboardFromFund(fundData.type, fundData.scope, fundData.category)) {
                 const lastKeyboard = await tx.keyboard.aggregate({
                     where: { ownerId: userId },
                     _max: { sortOrder: true },
@@ -101,7 +101,7 @@ router.post('/', validate(createFundSchema), async (req: Request, res: Response,
                 });
             }
 
-            if (fundData.type === 'SELL' && isMechanicalKeyboardScope(fundData.scope)) {
+            if (removeKeyboardItem !== false && fundData.type === 'SELL' && isMechanicalKeyboardScope(fundData.scope)) {
                 const where = keyboardItemId
                     ? { id: keyboardItemId, ownerId: userId }
                     : {

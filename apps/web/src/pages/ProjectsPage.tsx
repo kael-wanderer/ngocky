@@ -208,6 +208,7 @@ export default function ProjectsPage() {
     const [taskPriorityFilter, setTaskPriorityFilter] = useLocalStorage<'ALL' | 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'>('ngocky:projects:taskPriorityFilter', 'ALL');
     const [taskStatusFilter, setTaskStatusFilter] = useLocalStorage<'ALL' | 'PLANNED' | 'IN_PROGRESS' | 'DONE' | 'ARCHIVED'>('ngocky:projects:taskStatusFilter', 'ALL');
     const [hideDone, setHideDone] = useLocalStorage('ngocky:projects:hideDone', false);
+    const [hideArchived, setHideArchived] = useLocalStorage('ngocky:projects:hideArchived', true);
     const [boardForm, setBoardForm] = useState({ name: '', description: '', type: 'PERSONAL', boardStatus: 'PLAN', isShared: false, pinToDashboard: false });
     const [taskForm, setTaskForm] = useState({ ...emptyTaskForm });
     const [taskOptionsOpen, setTaskOptionsOpen] = useState(false);
@@ -415,14 +416,15 @@ export default function ProjectsPage() {
             if (taskTypeFilter !== 'ALL' && t.type !== taskTypeFilter) return false;
             if (taskPriorityFilter !== 'ALL' && t.priority !== taskPriorityFilter) return false;
             if (taskStatusFilter !== 'ALL' && t.status !== taskStatusFilter) return false;
-            if (hideDone && (t.status === 'DONE' || t.status === 'ARCHIVED')) return false;
+            if (hideDone && t.status === 'DONE') return false;
+            if (hideArchived && t.status === 'ARCHIVED') return false;
             if (q) {
                 const hay = [t.title, t.description, t.category, t.type, t.status, t.priority].filter(Boolean).join(' ').toLowerCase();
                 if (!hay.includes(q)) return false;
             }
             return true;
         });
-    }, [tasks, taskSearch, taskTypeFilter, taskPriorityFilter, taskStatusFilter, hideDone]);
+    }, [tasks, taskSearch, taskTypeFilter, taskPriorityFilter, taskStatusFilter, hideDone, hideArchived]);
 
     const openTaskEditor = (task: any) => {
         setEditingTask(task);
@@ -1046,13 +1048,21 @@ export default function ProjectsPage() {
                             <span className={`w-2 h-2 rounded-full ${hideDone ? 'bg-indigo-500' : 'bg-gray-300'}`} />
                             Hide Done
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => setHideArchived(h => !h)}
+                            className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${hideArchived ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                        >
+                            <span className={`w-2 h-2 rounded-full ${hideArchived ? 'bg-indigo-500' : 'bg-gray-300'}`} />
+                            Hide Archived
+                        </button>
                     </div>
                 </div>
 
                 {view === 'kanban' ? (
                 <DndContext sensors={sensors} onDragEnd={handleKanbanDragEnd}>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {STATUS_COLS.filter(status => !(hideDone && (status === 'DONE' || status === 'ARCHIVED'))).map((status) => (
+                        {STATUS_COLS.filter(status => !(hideDone && status === 'DONE') && !(hideArchived && status === 'ARCHIVED')).map((status) => (
                             <KanbanColumn key={status} status={status} count={filteredTasks.filter((t: any) => t.status === status).length}>
                                 {filteredTasks.filter((t: any) => t.status === status).map((t: any) => (
                                     <DraggableTaskCard

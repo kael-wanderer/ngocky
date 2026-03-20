@@ -276,6 +276,17 @@ router.patch('/tasks/:id/reorder', async (req: Request, res: Response, next: Nex
             where: { id: req.params.id },
             data: { kanbanOrder, ...(status && { status }) },
         });
+
+        const statusChangingToDone = status === 'DONE' && existing.status !== 'DONE';
+        const shouldCreateExpense = statusChangingToDone && (existing as any).createExpenseAutomatically;
+        if (shouldCreateExpense) {
+            await createExpenseFromProjectTask(
+                userId,
+                { title: existing.title, description: existing.description, cost: (existing as any).cost },
+                new Date(),
+            );
+        }
+
         sendSuccess(res, task);
     } catch (err) { next(err); }
 });
