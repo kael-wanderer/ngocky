@@ -19,10 +19,11 @@ async function getNextTaskSortOrder(userId: string) {
     return (aggregate._max.sortOrder ?? -1) + 1;
 }
 
-function addRepeat(date: Date, repeatFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY') {
+function addRepeat(date: Date, repeatFrequency: 'DAILY' | 'WEEKLY' | 'BI_WEEKLY' | 'MONTHLY' | 'QUARTERLY') {
     const next = new Date(date);
     if (repeatFrequency === 'DAILY') next.setDate(next.getDate() + 1);
     else if (repeatFrequency === 'WEEKLY') next.setDate(next.getDate() + 7);
+    else if (repeatFrequency === 'BI_WEEKLY') next.setDate(next.getDate() + 14);
     else if (repeatFrequency === 'MONTHLY') next.setMonth(next.getMonth() + 1);
     else next.setMonth(next.getMonth() + 3);
     return next;

@@ -131,7 +131,10 @@ function formatTaskNotificationBadges(task: any): string[] {
 
 function formatTaskRepeat(task: any): string | null {
     if (!task.repeatFrequency) return null;
-    const repeat = task.repeatFrequency.charAt(0) + task.repeatFrequency.slice(1).toLowerCase();
+    const labels: Record<string, string> = {
+        DAILY: 'Daily', WEEKLY: 'Weekly', BI_WEEKLY: 'Bi-weekly', MONTHLY: 'Monthly', QUARTERLY: 'Quarterly',
+    };
+    const repeat = labels[task.repeatFrequency] ?? task.repeatFrequency;
     if (task.repeatEndType === 'ON_DATE' && task.repeatUntil) {
         return `${repeat} until ${format(new Date(task.repeatUntil), 'MMM d, yyyy')}`;
     }
@@ -389,6 +392,7 @@ function TaskForm({
                         <option value="">Does not repeat</option>
                         <option value="DAILY">Daily</option>
                         <option value="WEEKLY">Weekly</option>
+                        <option value="BI_WEEKLY">Bi-weekly (every 2 weeks)</option>
                         <option value="MONTHLY">Monthly</option>
                         <option value="QUARTERLY">Quarterly</option>
                     </select>
@@ -503,6 +507,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const [taskSortBy, setTaskSortBy] = useLocalStorage<TaskSortKey>('ngocky:tasks:sortBy', 'dueDate');
     const [taskSortOrder, setTaskSortOrder] = useLocalStorage<'asc' | 'desc'>('ngocky:tasks:sortOrder', 'asc');
     const [taskGridSort, setTaskGridSort] = useState<TaskGridSortOption>('DUE_ASC');
+    const [showCompletedTasks, setShowCompletedTasks] = useLocalStorage<boolean>('ngocky:tasks:showCompleted', false);
     const [goalForm, setGoalForm] = useState({ ...goalEmptyForm });
     const [taskForm, setTaskForm] = useState({ ...taskEmptyForm });
     const editIdParam = searchParams.get('editId');
@@ -655,6 +660,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const filteredTasks = useMemo(() => {
         const q = taskSearch.trim().toLowerCase();
         return tasks.filter((task: any) => {
+            if (!showCompletedTasks && (task.status === 'DONE' || task.status === 'ARCHIVED')) return false;
             if (taskFilters.type !== 'ALL' && task.taskType !== taskFilters.type) return false;
             if (taskFilters.priority !== 'ALL' && task.priority !== taskFilters.priority) return false;
             if (taskFilters.status !== 'ALL' && task.status !== taskFilters.status) return false;
@@ -1004,6 +1010,12 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                 <div className="flex items-center gap-3 flex-wrap self-start sm:self-auto sm:justify-end">
                     {activeTab === 'TASKS' && (
                         <>
+                            <button
+                                onClick={() => setShowCompletedTasks(!showCompletedTasks)}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${showCompletedTasks ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'border-gray-200 text-gray-500 hover:text-gray-700'}`}
+                            >
+                                {showCompletedTasks ? 'Hide Completed' : 'Show Completed'}
+                            </button>
                             <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
                                 <button onClick={() => setTaskViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
                                 <button onClick={() => setTaskViewMode('list')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
@@ -1513,11 +1525,11 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
                                                 {task.user?.name || 'Task'}{task.completedAt ? ` · Completed ${format(new Date(task.completedAt), 'MMM d')}` : ''}
                                             </div>
                                             {!isDone && !isArchived && canManage ? (
-                                                <button className="btn-primary text-xs py-1.5 px-3" onClick={() => completeTaskMut.mutate(task.id)} disabled={completeTaskMut.isPending}>
+                                                <button className="btn-primary text-xs py-1.5 px-3" onClick={(e) => { e.stopPropagation(); completeTaskMut.mutate(task.id); }} disabled={completeTaskMut.isPending}>
                                                     <CheckCircle2 className="w-3.5 h-3.5" /> Mark Done
                                                 </button>
                                             ) : canManage ? (
-                                                <button className="text-xs py-1.5 px-3 rounded-lg font-medium inline-flex items-center gap-1.5 transition-colors" style={{ background: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa' }} onClick={() => updateTaskMut.mutate({ id: task.id, body: { status: 'PLANNED' } })}>
+                                                <button className="text-xs py-1.5 px-3 rounded-lg font-medium inline-flex items-center gap-1.5 transition-colors" style={{ background: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa' }} onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: task.id, body: { status: 'PLANNED' } }); }}>
                                                     <RefreshCcw className="w-3.5 h-3.5" /> Reopen
                                                 </button>
                                             ) : null}

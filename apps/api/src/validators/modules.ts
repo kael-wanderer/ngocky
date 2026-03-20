@@ -92,7 +92,7 @@ const standaloneTaskSchemaBase = z.object({
     status: z.enum(['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED']).optional(),
     ...notificationFields,
     pinToDashboard: z.boolean().optional(),
-    repeatFrequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY']).nullable().optional(),
+    repeatFrequency: z.enum(['DAILY', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY', 'QUARTERLY']).nullable().optional(),
     repeatEndType: z.enum(['NEVER', 'ON_DATE']).nullable().optional(),
     repeatUntil: z.string().datetime().nullable().optional(),
 });
@@ -296,7 +296,7 @@ const eventSchemaBase = z.object({
     isShared: z.boolean().optional(),
     ...notificationFields,
     pinToDashboard: z.boolean().optional(),
-    repeatFrequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY']).nullable().optional(),
+    repeatFrequency: z.enum(['DAILY', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY', 'QUARTERLY']).nullable().optional(),
     repeatEndType: z.enum(['NEVER', 'ON_DATE']).nullable().optional(),
     repeatUntil: z.string().datetime().nullable().optional(),
     participantIds: z.array(z.string()).optional(),
