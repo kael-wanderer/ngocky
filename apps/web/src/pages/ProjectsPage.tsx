@@ -866,8 +866,8 @@ export default function ProjectsPage() {
             {/* Task Modal */}
             {(showCreateTask || editingTask) && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) closeTaskModal(); }}>
-                    <div className="card p-6 w-full max-w-[55rem] animate-slide-up" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-between mb-4">
+                    <div className="card w-full max-w-[55rem] animate-slide-up flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
                             <h3 className="text-lg font-semibold">{editingTask ? 'Edit Project Tasks' : 'New Project Task'}</h3>
                             <button onClick={closeTaskModal}><X className="w-5 h-5" /></button>
                         </div>
@@ -887,7 +887,8 @@ export default function ProjectsPage() {
                             } else {
                                 createTaskMut.mutate(body);
                             }
-                        }} className="space-y-4">
+                        }} className="flex flex-col flex-1 min-h-0">
+                            <div className="space-y-4 overflow-y-auto flex-1 px-6 pb-2 pr-5">
                             {/* Title + Pin icon */}
                             <div>
                                 <div className="flex items-center justify-between mb-1">
@@ -985,7 +986,8 @@ export default function ProjectsPage() {
                                     </div>
                                 )}
                             </div>
-                            <div className="flex items-center justify-between gap-3 pt-2">
+                            </div>{/* end scrollable body */}
+                            <div className="flex items-center justify-between gap-3 px-6 py-4 border-t flex-shrink-0" style={{ borderColor: 'var(--color-border)' }}>
                                 <div>
                                     {editingTask && (
                                         <button
