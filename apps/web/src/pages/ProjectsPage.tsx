@@ -4,6 +4,7 @@ import { useLocalStorage } from '../utils/useLocalStorage';
 import api from '../api/client';
 import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, Trash2, Pencil, RefreshCw, Copy, Pin, Filter, ArrowUp, ArrowDown, ChevronsUpDown, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
+import RichTextEditor from '../components/RichTextEditor';
 import { format, startOfToday } from 'date-fns';
 import { parseCompactAmountInput } from '../utils/amount';
 import { useAuthStore } from '../stores/auth';
@@ -86,6 +87,7 @@ function buildTaskForm(task: any) {
     };
 }
 
+
 function KanbanColumn({ status, count, children }: { status: string; count: number; children: React.ReactNode }) {
     const { isOver, setNodeRef } = useDroppable({ id: `column:${status}` });
 
@@ -150,6 +152,13 @@ function DraggableTaskCard({ task, todayStart, userId, onOpen, onDuplicate, onTo
                 <Trash2 className="w-3.5 h-3.5" />
             </button>
             <p className="text-sm font-medium pr-5" style={{ color: 'var(--color-text)' }}>{task.title}</p>
+            {task.description && (
+                <div
+                    className="rich-text text-xs mt-2 leading-5 overflow-hidden"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                    dangerouslySetInnerHTML={{ __html: task.description }}
+                />
+            )}
             <div className="flex items-center gap-2 flex-wrap mt-2">
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: `${taskTypeColors[task.type || 'TASK']}20`, color: taskTypeColors[task.type || 'TASK'] }}>
                     {taskTypeLabels[task.type || 'TASK']}
@@ -780,7 +789,7 @@ export default function ProjectsPage() {
             {/* Edit Board Modal */}
             {editingBoard && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingBoard(null); }}>
-                    <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                    <div className="card p-6 w-full max-w-[50rem] animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">Edit Project Board</h3>
                             <button onClick={() => setEditingBoard(null)}><X className="w-5 h-5" /></button>
@@ -857,7 +866,7 @@ export default function ProjectsPage() {
             {/* Task Modal */}
             {(showCreateTask || editingTask) && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) closeTaskModal(); }}>
-                    <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                    <div className="card p-6 w-full max-w-[55rem] animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">{editingTask ? 'Edit Project Tasks' : 'New Project Task'}</h3>
                             <button onClick={closeTaskModal}><X className="w-5 h-5" /></button>
@@ -895,7 +904,13 @@ export default function ProjectsPage() {
                                 </div>
                                 <input className="input" required value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} />
                             </div>
-                            <div><label className="label">Description</label><textarea className="input" rows={2} value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} /></div>
+                            <div>
+                                <label className="label">Description</label>
+                                <RichTextEditor
+                                    value={taskForm.description}
+                                    onChange={(html) => setTaskForm({ ...taskForm, description: html })}
+                                />
+                            </div>
                             {/* Cost */}
                             <div>
                                 <label className="label">
@@ -1127,6 +1142,9 @@ export default function ProjectsPage() {
                                     <tr key={t.id} className="border-b last:border-0 cursor-pointer hover:bg-gray-50 transition-colors group" style={{ borderColor: 'var(--color-border)' }} onClick={() => openTaskEditor(t)}>
                                         <td className="px-4 py-2.5">
                                             <span className={`font-medium text-sm ${t.status === 'DONE' || t.status === 'ARCHIVED' ? 'line-through opacity-50' : ''}`} style={{ color: 'var(--color-text)' }}>{t.title}</span>
+                                            {t.description && (
+                                                <div className="rich-text text-xs mt-1 leading-5" style={{ color: 'var(--color-text-secondary)' }} dangerouslySetInnerHTML={{ __html: t.description }} />
+                                            )}
                                             {(() => {
                                                 const notifBadges = formatProjectTaskNotification(t);
                                                 return (
