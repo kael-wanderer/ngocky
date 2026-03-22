@@ -9,7 +9,14 @@
       "Read(//Users/cong.bui/Kael/20-Projects/NgocKy/**)",
       "Bash(grep -v \"^\\\\.$\")",
       "Bash(grep -v \"^\\\\.\\\\.$\")",
-      "Bash(head -20 grep -rn \"bottom.*nav\\\\|MobileNav\\\\|z-40\\\\|z-30\\\\|fixed.*bottom\\\\|bottom-0\" /Users/cong.bui/Kael/20-Projects/NgocKy/apps/web/src/components/ --include=*.tsx -l)"
+      "Bash(head -20 grep -rn \"bottom.*nav\\\\|MobileNav\\\\|z-40\\\\|z-30\\\\|fixed.*bottom\\\\|bottom-0\" /Users/cong.bui/Kael/20-Projects/NgocKy/apps/web/src/components/ --include=*.tsx -l)",
+      "Bash(grep -l \"useLocalStorage\" /Users/cong.bui/Kael/20-Projects/NgocKy/apps/web/src/pages/*.tsx)",
+      "Bash(/Users/cong.bui/Kael/20-Projects/NgocKy/apps/api/prisma/migrations/20260317000000_project_task_expense_fields/migration.sql:*)",
+      "Bash(grep -n \"onDoubleClick\\\\|openEdit\\\\|setEditing\" *.tsx)",
+      "Bash(for file:*)",
+      "Bash(do echo:*)",
+      "Bash(done)",
+      "Bash(grep -n \"onDoubleClick\" apps/web/src/pages/*.tsx)"
     ]
   }
 }
