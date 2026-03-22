@@ -221,7 +221,7 @@ router.patch('/:id', validate(updateFundSchema), async (req: Request, res: Respo
         if (!existing) throw new NotFoundError('Fund transaction');
         if (existing.userId !== req.user!.userId) throw new ForbiddenError('Only the owner can update this fund transaction');
         const fundData = Object.fromEntries(
-            Object.entries(req.body).filter(([key]) => key !== 'keyboardItemId' && key !== 'keyboardItemName'),
+            Object.entries(req.body).filter(([key]) => !['keyboardItemId', 'keyboardItemName', 'addKeyboardItem', 'removeKeyboardItem'].includes(key)),
         ) as Record<string, unknown>;
 
         const fund = await prisma.fundTransaction.update({
