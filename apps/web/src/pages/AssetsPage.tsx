@@ -162,7 +162,7 @@ function AssetCard({
                 <div className="flex items-center gap-1 shrink-0">
                     {asset.isShared && <span className="text-[9px] px-1 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                     {canManage && (
-                        <>
+                        <div className="hidden sm:flex items-center gap-1">
                             <button className="p-1 rounded hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
                                 <Pencil className="w-3 h-3" style={{ color: 'var(--color-text-secondary)' }} />
                             </button>
@@ -172,7 +172,7 @@ function AssetCard({
                             <button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-red-500" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
                                 <Trash2 className="w-3 h-3" />
                             </button>
-                        </>
+                        </div>
                     )}
                 </div>
             </div>
@@ -193,7 +193,7 @@ function AssetCard({
                     </p>
                 </div>
                 {canManage && (
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="hidden sm:flex items-center gap-1 shrink-0">
                         <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
                             <Pencil className="w-3.5 h-3.5" />
                         </button>

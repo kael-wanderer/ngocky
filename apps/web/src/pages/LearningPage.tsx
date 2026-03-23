@@ -314,7 +314,8 @@ export default function LearningPage() {
                                 {histories.length === 0 ? (
                                     <div className="text-center py-10 opacity-40"><p className="text-xs">No histories recorded for this topic.</p></div>
                                 ) : listView ? (
-                                    <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
+                                    <div className="card overflow-x-auto" style={{ borderColor: 'var(--color-border)' }}>
+                                    <div className="divide-y min-w-[520px]" style={{ borderColor: 'var(--color-border)' }}>
                                         <div className="flex items-center gap-3 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
                                             <SortHeader label="Status" col="status" sort={historiesSort} onSort={toggleHistoriesSort} className="w-20 shrink-0" />
                                             <SortHeader label="Title" col="title" sort={historiesSort} onSort={toggleHistoriesSort} className="flex-1" />
@@ -352,6 +353,7 @@ export default function LearningPage() {
                                                 )}
                                             </div>
                                         )})}
+                                    </div>
                                     </div>
                                 ) : (
                                     <div className="grid gap-4 md:grid-cols-2">
