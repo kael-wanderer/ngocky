@@ -50,6 +50,11 @@ const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
     return { value: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`, label: `${h12}:${String(m).padStart(2, '0')}${period}` };
 });
 
+const TIME_PRESETS = {
+    morning: { startTime: '08:00', endTime: '12:00' },
+    afternoon: { startTime: '13:00', endTime: '17:00' },
+} as const;
+
 function getCalendarTypeBadge(type?: string) {
     if (type === 'MEETING') {
         return { label: 'Meeting', style: { backgroundColor: '#fef2f2', color: '#dc2626' } };
@@ -244,6 +249,24 @@ export default function CalendarPage() {
     const clearSelection = () => {
         setSelectedRange(null);
         setSelectedTimeRange(null);
+    };
+
+    const applyTimePreset = (preset: keyof typeof TIME_PRESETS) => {
+        const { startTime, endTime } = TIME_PRESETS[preset];
+        const baseDate = form.startDate || format(selectedDate || new Date(), 'yyyy-MM-dd');
+        setForm((current) => ({
+            ...current,
+            allDay: false,
+            startDate: current.startDate || baseDate,
+            startTime,
+            endDate: current.endDate || current.startDate || baseDate,
+            endTime,
+        }));
+    };
+
+    const isPresetActive = (preset: keyof typeof TIME_PRESETS) => {
+        const { startTime, endTime } = TIME_PRESETS[preset];
+        return !form.allDay && form.startTime === startTime && form.endTime === endTime;
     };
 
     const openCreate = () => {
@@ -551,7 +574,30 @@ export default function CalendarPage() {
                                     <input type="date" min={form.startDate || format(new Date(), 'yyyy-MM-dd')} className="input" value={form.repeatUntil} onChange={(e) => setForm({ ...form, repeatUntil: e.target.value })} />
                                 </div>
                             )}
-                            <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={form.allDay} onChange={(e) => setForm({ ...form, allDay: e.target.checked })} className="rounded" /> All day</label>
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                                    <input type="checkbox" checked={form.allDay} onChange={(e) => setForm({ ...form, allDay: e.target.checked })} className="rounded" />
+                                    All day
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => applyTimePreset('morning')}
+                                        className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${isPresetActive('morning') ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 hover:bg-gray-50'}`}
+                                        style={isPresetActive('morning') ? {} : { color: 'var(--color-text)' }}
+                                    >
+                                        Morning
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyTimePreset('afternoon')}
+                                        className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${isPresetActive('afternoon') ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 hover:bg-gray-50'}`}
+                                        style={isPresetActive('afternoon') ? {} : { color: 'var(--color-text)' }}
+                                    >
+                                        Afternoon
+                                    </button>
+                                </div>
+                            </div>
                             <div className="rounded-lg border" style={{ borderColor: 'var(--color-border)' }}>
                                 <button
                                     type="button"

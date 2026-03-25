@@ -8,16 +8,52 @@ import { parseCompactAmountInput } from '../utils/amount';
 const router = Router();
 router.use(authenticate);
 
+const KEYBOARD_SPEC_ORDER = ['Base', 'Novel', 'Space', 'Accent', 'Hiragana', 'Icon Mode', 'Alpha', 'Mod', 'Fix Kit', 'Solder', 'Hotswap', 'Plate Alu', 'Plate PC', 'Plate PEI', 'Plate CF', 'Plate PP', 'Deskmat'];
+const KEYBOARD_SPEC_ALIASES: Record<string, string> = {
+    'icon mod': 'Icon Mode',
+    'icon mode': 'Icon Mode',
+    mod: 'Mod',
+    'fix kit': 'Fix Kit',
+    accent: 'Accent',
+    base: 'Base',
+    novel: 'Novel',
+    space: 'Space',
+    hiragana: 'Hiragana',
+    alpha: 'Alpha',
+    solder: 'Solder',
+    hotswap: 'Hotswap',
+    'plate alu': 'Plate Alu',
+    'plate pc': 'Plate PC',
+    'plate pei': 'Plate PEI',
+    'plate cf': 'Plate CF',
+    'plate pp': 'Plate PP',
+    deskmat: 'Deskmat',
+};
+const KEYBOARD_SPEC_RANK = new Map(KEYBOARD_SPEC_ORDER.map((spec, index) => [spec, index]));
+
+function normalizeSpecLabel(value: string) {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    return KEYBOARD_SPEC_ALIASES[trimmed.toLowerCase()] || trimmed;
+}
+
 function normalizeStringList(payload: any) {
-    if (Array.isArray(payload)) {
-        return payload.map((item) => String(item).trim()).filter(Boolean);
-    }
+    const rawValues = Array.isArray(payload)
+        ? payload.map((item) => String(item).trim()).filter(Boolean)
+        : typeof payload === 'string'
+            ? payload.split(',').map((item) => item.trim()).filter(Boolean)
+            : [];
 
-    if (typeof payload === 'string') {
-        return payload.split(',').map((item) => item.trim()).filter(Boolean);
-    }
-
-    return [];
+    return rawValues
+        .map(normalizeSpecLabel)
+        .filter(Boolean)
+        .filter((value, index, array) => array.indexOf(value) === index)
+        .sort((left, right) => {
+            const leftRank = KEYBOARD_SPEC_RANK.get(left) ?? Number.MAX_SAFE_INTEGER;
+            const rightRank = KEYBOARD_SPEC_RANK.get(right) ?? Number.MAX_SAFE_INTEGER;
+            if (leftRank !== rightRank) return leftRank - rightRank;
+            return left.localeCompare(right, undefined, { sensitivity: 'base' });
+        });
 }
 
 function serializeKeyboard(keyboard: any) {

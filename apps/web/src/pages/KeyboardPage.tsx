@@ -20,9 +20,30 @@ import {
 const CATEGORIES = [...KEYBOARD_FILTER_CATEGORIES];
 const TAGS = [...KEYBOARD_FILTER_TAGS];
 const COLORS = [...KEYBOARD_FILTER_COLORS];
-const SPECS = ['Base', 'Space', 'Plate Alu', 'Solder', 'Novel', 'Alpha', 'Icon mod', 'Hiragana', 'Hotswap', 'Deskmat', 'Fix kit'];
+const SPECS = ['Base', 'Novel', 'Space', 'Accent', 'Hiragana', 'Icon Mode', 'Alpha', 'Mod', 'Fix Kit', 'Solder', 'Hotswap', 'Plate Alu', 'Plate PC', 'Plate PEI', 'Plate CF', 'Plate PP', 'Deskmat'];
 const CONDITIONS = ['BNIB', 'Used'];
 const PRICE_RANGES = [...KEYBOARD_FILTER_PRICE_RANGES];
+const SPEC_ALIASES: Record<string, string> = {
+    'icon mod': 'Icon Mode',
+    'icon mode': 'Icon Mode',
+    mod: 'Mod',
+    'fix kit': 'Fix Kit',
+    accent: 'Accent',
+    base: 'Base',
+    novel: 'Novel',
+    space: 'Space',
+    hiragana: 'Hiragana',
+    alpha: 'Alpha',
+    solder: 'Solder',
+    hotswap: 'Hotswap',
+    'plate alu': 'Plate Alu',
+    'plate pc': 'Plate PC',
+    'plate pei': 'Plate PEI',
+    'plate cf': 'Plate CF',
+    'plate pp': 'Plate PP',
+    deskmat: 'Deskmat',
+};
+const SPEC_ORDER = new Map(SPECS.map((spec, index) => [spec, index]));
 const COLOR_TEXT_MAP: Record<string, string> = {
     Blue: '#2563eb',
     PC: '#6b7280',
@@ -90,6 +111,25 @@ function emptyForm(): FormState {
     return { name: '', price: '', category: '', tag: '', color: '', spec: [], description: '', note: '', isShared: false };
 }
 
+function normalizeSpecLabel(value: string) {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    return SPEC_ALIASES[trimmed.toLowerCase()] || trimmed;
+}
+
+function sortSpecs(values: string[]) {
+    return [...values]
+        .map(normalizeSpecLabel)
+        .filter(Boolean)
+        .filter((value, index, array) => array.indexOf(value) === index)
+        .sort((left, right) => {
+            const leftIndex = SPEC_ORDER.get(left) ?? Number.MAX_SAFE_INTEGER;
+            const rightIndex = SPEC_ORDER.get(right) ?? Number.MAX_SAFE_INTEGER;
+            if (leftIndex !== rightIndex) return leftIndex - rightIndex;
+            return left.localeCompare(right, undefined, { sensitivity: 'base' });
+        });
+}
+
 function formFromItem(item: KeyboardItem): FormState {
     return {
         name: item.name,
@@ -97,7 +137,7 @@ function formFromItem(item: KeyboardItem): FormState {
         category: item.category ?? '',
         tag: item.tag ?? '',
         color: item.color ?? '',
-        spec: item.spec ?? [],
+        spec: sortSpecs(item.spec ?? []),
         description: item.description ?? '',
         note: item.note ?? '',
         isShared: item.isShared,
@@ -111,7 +151,7 @@ function formToBody(f: FormState) {
         category: f.category || null,
         tag: f.tag || null,
         color: f.color || null,
-        spec: f.spec,
+        spec: sortSpecs(f.spec),
         description: f.description || null,
         note: f.note || null,
         isShared: f.isShared,
