@@ -173,7 +173,10 @@ export default function CalendarPage() {
 
     const deleteMut = useMutation({
         mutationFn: (id: string) => api.delete(`/calendar/${id}`),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['calendar'] }),
+        onSuccess: () => {
+            closeEditor();
+            qc.invalidateQueries({ queryKey: ['calendar'] });
+        },
     });
 
     const calendarUserColors = useMemo(() => {
@@ -250,6 +253,21 @@ export default function CalendarPage() {
         setSelectedRange(null);
         setSelectedTimeRange(null);
     };
+    const clearEventSearchParam = () => {
+        setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            next.delete('eventId');
+            return next;
+        });
+    };
+    const closeEditor = () => {
+        setShowCreate(false);
+        setEditingEvent(null);
+        setForm({ ...emptyForm });
+        clearSelection();
+        setOptionsOpen(false);
+        clearEventSearchParam();
+    };
 
     const applyTimePreset = (preset: keyof typeof TIME_PRESETS) => {
         const { startTime, endTime } = TIME_PRESETS[preset];
@@ -274,6 +292,7 @@ export default function CalendarPage() {
         setFormError('');
         const baseRange = selectedRange || (selectedDate ? { start: selectedDate, end: selectedDate } : null);
         const base = baseRange?.start || selectedDate || new Date();
+        const hasMultiDaySelection = !!(baseRange && !isSameDay(baseRange.start, baseRange.end));
         const now = new Date();
         let h = now.getHours();
         let m = Math.ceil(now.getMinutes() / 15) * 15;
@@ -289,8 +308,11 @@ export default function CalendarPage() {
             type: 'EVENT',
             startDate: format(base, 'yyyy-MM-dd'),
             startTime,
-            endDate: format(baseRange?.end || base, 'yyyy-MM-dd'),
+            endDate: format(base, 'yyyy-MM-dd'),
             endTime,
+            repeatFrequency: hasMultiDaySelection ? 'DAILY' : '',
+            repeatEndType: hasMultiDaySelection ? 'ON_DATE' : '',
+            repeatUntil: hasMultiDaySelection ? format(baseRange!.end, 'yyyy-MM-dd') : '',
         });
         setShowCreate(true);
     };
@@ -630,7 +652,6 @@ export default function CalendarPage() {
                                             onClick={() => {
                                                 if (window.confirm('Delete this item?')) {
                                                     deleteMut.mutate(getSourceId(editingEvent));
-                                                    setEditingEvent(null);
                                                 }
                                             }}
                                         >
@@ -639,7 +660,7 @@ export default function CalendarPage() {
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={() => { setShowCreate(false); setEditingEvent(null); clearSelection(); setOptionsOpen(false); }}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeEditor}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createMut.isPending || updateMut.isPending}>{editingEvent ? 'Save' : 'Create Item'}</button>
