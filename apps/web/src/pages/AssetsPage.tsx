@@ -981,7 +981,7 @@ export default function AssetsPage() {
 
             {showAssetModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) closeAssetModal(); }}>
-                    <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                    <div className="card modal-panel p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingAsset ? 'Edit Appliance / Device' : 'Add New Appliance / Device'}</h3>
                             <button onClick={closeAssetModal}><X className="w-5 h-5" /></button>
@@ -1061,7 +1061,7 @@ export default function AssetsPage() {
 
             {showRecordModal && selectedAsset && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) closeRecordModal(); }}>
-                    <div className="card p-6 w-full max-w-xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                    <div className="card modal-panel p-6 w-full max-w-xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{editingRecord ? 'Edit Maintenance Log' : 'Add Maintenance Log'}</h3>
                             <button onClick={closeRecordModal}><X className="w-5 h-5" /></button>

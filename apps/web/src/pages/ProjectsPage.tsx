@@ -635,7 +635,7 @@ export default function ProjectsPage() {
 
                 {editingBoard && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingBoard(null); }}>
-                        <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                        <div className="card modal-panel p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold">Edit Project Board</h3>
                                 <button onClick={() => setEditingBoard(null)}><X className="w-5 h-5" /></button>
@@ -705,7 +705,7 @@ export default function ProjectsPage() {
 
                 {showCreateBoard && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowCreateBoard(false); }}>
-                        <div className="card p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                        <div className="card modal-panel p-6 w-full max-w-md animate-slide-up" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold">Create Project Board</h3>
                                 <button onClick={() => setShowCreateBoard(false)}><X className="w-5 h-5" /></button>
@@ -789,7 +789,7 @@ export default function ProjectsPage() {
             {/* Edit Board Modal */}
             {editingBoard && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingBoard(null); }}>
-                    <div className="card p-6 w-full max-w-[50rem] animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                    <div className="card modal-panel p-6 w-full max-w-[50rem] animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">Edit Project Board</h3>
                             <button onClick={() => setEditingBoard(null)}><X className="w-5 h-5" /></button>

@@ -878,7 +878,7 @@ export default function HouseworkPage() {
 
             {(showCreate || editingItem) && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) { setShowCreate(false); setEditingItem(null); } }}>
-                    <div className="card p-6 w-full max-w-xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                    <div className="card modal-panel p-6 w-full max-w-xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">{editingItem ? 'Edit Housework' : 'New Housework'}</h3>
                             <button onClick={() => { setShowCreate(false); setEditingItem(null); }}><X className="w-5 h-5" /></button>
