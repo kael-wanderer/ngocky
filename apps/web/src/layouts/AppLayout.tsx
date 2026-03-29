@@ -212,7 +212,7 @@ export default function AppLayout() {
         .filter(Boolean) as Array<(typeof navItems)[number]>;
 
     return (
-        <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--color-bg)' }}>
+        <div className="flex min-h-screen h-[100dvh] overflow-hidden" style={{ backgroundColor: 'var(--color-bg)' }}>
             {/* Sidebar */}
             <aside
                 className={`fixed lg:relative z-30 h-full flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -336,7 +336,7 @@ export default function AppLayout() {
             )}
 
             {/* Main */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
                 {/* Top bar */}
                 <header
                     className="flex items-center gap-4 px-4 lg:px-6 h-16 border-b flex-shrink-0"
@@ -478,7 +478,7 @@ export default function AppLayout() {
                 </header>
 
                 {/* Content */}
-                <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+                <main className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6 mobile-scroll">
                     <div className="max-w-[1600px] mx-auto animate-fade-in">
                         <Outlet />
                     </div>

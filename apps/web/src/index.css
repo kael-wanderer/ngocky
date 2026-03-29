@@ -164,6 +164,12 @@
     color: var(--color-text);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
 }
 
 @layer components {
@@ -261,6 +267,11 @@
 
   .table-container tr:hover td {
     background-color: var(--color-primary-light);
+  }
+
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
   }
 }
 
