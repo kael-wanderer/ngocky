@@ -268,14 +268,27 @@ function TaskForm({
     isEdit: boolean;
 }) {
     const [optionsOpen, setOptionsOpen] = useState(false);
+    const parsedAmount = form.amount ? parseCompactAmountInput(form.amount) : NaN;
+    const amountPreview = !Number.isNaN(parsedAmount) && parsedAmount > 0
+        ? `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(parsedAmount)} VND`
+        : '';
     return (
         <form onSubmit={(e) => {
             e.preventDefault();
+            const amount = form.amount ? parseCompactAmountInput(form.amount) : null;
+            if (form.taskType === 'PAYMENT' && (!amount || Number.isNaN(amount) || amount <= 0)) {
+                window.alert('Amount must be a valid positive number. Example: 250000, 250k, or 1.5M');
+                return;
+            }
+            if (form.amount && amount !== null && (Number.isNaN(amount) || amount <= 0)) {
+                window.alert('Amount must be a valid positive number. Example: 250000, 250k, or 1.5M');
+                return;
+            }
             const payload: any = {
                 title: form.title,
                 description: form.description,
                 taskType: form.taskType,
-                amount: form.amount ? parseCompactAmountInput(form.amount) : null,
+                amount,
                 expenseCategory: form.expenseCategory || null,
                 scope: form.scope || 'PERSONAL',
                 isShared: form.isShared,
@@ -332,6 +345,11 @@ function TaskForm({
                         placeholder="e.g. 600k or 2M"
                         required={form.taskType === 'PAYMENT'}
                     />
+                    {form.amount && (
+                        <p className="mt-1 text-xs" style={{ color: Number.isNaN(parsedAmount) || parsedAmount <= 0 ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                            {Number.isNaN(parsedAmount) || parsedAmount <= 0 ? 'Invalid amount format' : amountPreview}
+                        </p>
+                    )}
                 </div>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -582,6 +600,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['tasks'] });
             qc.invalidateQueries({ queryKey: ['dashboard'] });
+            qc.invalidateQueries({ queryKey: ['expenses'] });
             setShowTaskModal(false);
             setTaskForm({ ...taskEmptyForm });
         },
@@ -592,6 +611,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['tasks'] });
             qc.invalidateQueries({ queryKey: ['dashboard'] });
+            qc.invalidateQueries({ queryKey: ['expenses'] });
             setEditTask(null);
             setShowTaskModal(false);
         },
