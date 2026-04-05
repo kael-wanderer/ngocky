@@ -99,7 +99,7 @@ jobs:
             mv -f docker-compose.prod.yml docker-compose.yml
 
             # Deploy
-            echo "${{ secrets.GH_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            echo "${{ secrets.GH_PAT }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
             docker compose pull api web
             docker compose up -d postgres
 
