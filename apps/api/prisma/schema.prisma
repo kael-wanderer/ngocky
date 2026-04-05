@@ -162,6 +162,7 @@ enum ColorSettingScope {
 enum RepeatFrequency {
   DAILY
   WEEKLY
+  BI_WEEKLY
   MONTHLY
   QUARTERLY
 }
