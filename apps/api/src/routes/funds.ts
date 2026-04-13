@@ -59,7 +59,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             if (dateTo) where.date.lte = new Date(dateTo);
         }
 
-        const [funds, total] = await Promise.all([
+        const [funds, total, aggregates] = await Promise.all([
             prisma.fundTransaction.findMany({
                 where,
                 skip: (page - 1) * limit,
@@ -67,9 +67,40 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 orderBy: { date: 'desc' },
             }),
             prisma.fundTransaction.count({ where }),
+            prisma.fundTransaction.groupBy({
+                by: ['type'],
+                where,
+                _sum: { amount: true },
+            }),
         ]);
 
-        sendPaginated(res, funds, total, page, limit);
+        const summary = {
+            buy: 0,
+            sell: 0,
+            topUp: 0,
+        };
+
+        for (const item of aggregates as Array<{ type: string; _sum: { amount: number | null } }>) {
+            const amount = item._sum.amount ?? 0;
+            if (item.type === 'BUY') summary.buy = amount;
+            if (item.type === 'SELL') summary.sell = amount;
+            if (item.type === 'TOP_UP') summary.topUp = amount;
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: funds,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+            summary: {
+                ...summary,
+                net: summary.sell + summary.topUp - summary.buy,
+            },
+        });
     } catch (err) { next(err); }
 });
 

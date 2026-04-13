@@ -12,6 +12,7 @@ import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
 import { getFundsDateRange } from '../config/fundsFilters';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
+import RichTextEditor from '../components/RichTextEditor';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -192,6 +193,16 @@ function formatLogNotificationBadges(log: HealthLog): string[] {
         return [label, ...(time ? [time] : [])];
     }
     return [];
+}
+
+function toRichTextHtml(value?: string | null) {
+    if (!value) return '';
+    if (/<\/?[a-z][\s\S]*>/i.test(value)) return value;
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br />');
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -651,18 +662,30 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                     </div>
                     <div>
                         <label className={labelCls} style={{ color: 'var(--color-text)' }}>Symptoms</label>
-                        <textarea rows={2} className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)', resize: 'vertical' }}
-                            value={form.symptoms} onChange={(e) => set('symptoms', e.target.value)} />
+                        <RichTextEditor
+                            value={form.symptoms}
+                            onChange={(html) => set('symptoms', html)}
+                            minHeight="96px"
+                            placeholder="Add symptoms..."
+                        />
                     </div>
                     <div>
                         <label className={labelCls} style={{ color: 'var(--color-text)' }}>Description / Diagnosis</label>
-                        <textarea rows={3} className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)', resize: 'vertical' }}
-                            value={form.description} onChange={(e) => set('description', e.target.value)} />
+                        <RichTextEditor
+                            value={form.description}
+                            onChange={(html) => set('description', html)}
+                            minHeight="120px"
+                            placeholder="Add diagnosis or notes..."
+                        />
                     </div>
                     <div>
                         <label className={labelCls} style={{ color: 'var(--color-text)' }}>Prescription / Notes</label>
-                        <textarea rows={2} className={inputCls} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)', resize: 'vertical' }}
-                            value={form.prescription} onChange={(e) => set('prescription', e.target.value)} />
+                        <RichTextEditor
+                            value={form.prescription}
+                            onChange={(html) => set('prescription', html)}
+                            minHeight="96px"
+                            placeholder="Add prescription or follow-up notes..."
+                        />
                     </div>
 
                     {/* Prescription / Files */}
@@ -1225,9 +1248,24 @@ export default function HealthbookPage() {
                                             <tr style={{ backgroundColor: 'var(--color-bg)' }}>
                                                 <td colSpan={7} className="px-5 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
                                                     <div className="space-y-2">
-                                                        {log.symptoms && <InfoRow label="Symptoms" value={log.symptoms} />}
-                                                        {log.description && <InfoRow label="Diagnosis / Notes" value={log.description} />}
-                                                        {log.prescription && <InfoRow label="Prescription" value={log.prescription} />}
+                                                        {log.symptoms && (
+                                                            <div className="space-y-1">
+                                                                <p className="text-sm text-gray-500">Symptoms:</p>
+                                                                <div className="rich-text text-sm" style={{ color: 'var(--color-text)' }} dangerouslySetInnerHTML={{ __html: toRichTextHtml(log.symptoms) }} />
+                                                            </div>
+                                                        )}
+                                                        {log.description && (
+                                                            <div className="space-y-1">
+                                                                <p className="text-sm text-gray-500">Diagnosis / Notes:</p>
+                                                                <div className="rich-text text-sm" style={{ color: 'var(--color-text)' }} dangerouslySetInnerHTML={{ __html: toRichTextHtml(log.description) }} />
+                                                            </div>
+                                                        )}
+                                                        {log.prescription && (
+                                                            <div className="space-y-1">
+                                                                <p className="text-sm text-gray-500">Prescription:</p>
+                                                                <div className="rich-text text-sm" style={{ color: 'var(--color-text)' }} dangerouslySetInnerHTML={{ __html: toRichTextHtml(log.prescription) }} />
+                                                            </div>
+                                                        )}
                                                         {log.nextCheckupDate && <InfoRow label="Next Checkup" value={format(new Date(log.nextCheckupDate), 'MMM d, yyyy')} />}
                                                         <div className="pt-3 border-t mt-2" style={{ borderColor: 'var(--color-border)' }}>
                                                             <div className="flex items-center gap-2 mb-3">
@@ -1276,8 +1314,20 @@ export default function HealthbookPage() {
                                 )}
                                 {log.doctor && <p className="text-xs font-medium" style={{ color: 'var(--color-primary)' }}>Dr. {log.doctor}</p>}
                                 {log.location && <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{log.location}</p>}
-                                {log.symptoms && <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>{log.symptoms}</p>}
-                                {log.description && <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text)' }}>{log.description}</p>}
+                                {log.symptoms && (
+                                    <div
+                                        className="rich-text text-xs line-clamp-2"
+                                        style={{ color: 'var(--color-text-secondary)' }}
+                                        dangerouslySetInnerHTML={{ __html: toRichTextHtml(log.symptoms) }}
+                                    />
+                                )}
+                                {log.description && (
+                                    <div
+                                        className="rich-text text-xs line-clamp-2"
+                                        style={{ color: 'var(--color-text)' }}
+                                        dangerouslySetInnerHTML={{ __html: toRichTextHtml(log.description) }}
+                                    />
+                                )}
                                 <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
                                     <div className="flex items-center gap-2">
                                         {log.cost != null && <span className="text-xs font-semibold text-red-500">{log.cost.toLocaleString('vi-VN')} ₫</span>}

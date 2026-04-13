@@ -244,12 +244,12 @@ export default function FundsPage() {
         );
     }, [sortedFunds, search]);
 
-    const summary = useMemo(() => {
-        const buy = funds.filter((item: any) => item.type === 'BUY').reduce((sum: number, item: any) => sum + item.amount, 0);
-        const sell = funds.filter((item: any) => item.type === 'SELL').reduce((sum: number, item: any) => sum + item.amount, 0);
-        const topUp = funds.filter((item: any) => item.type === 'TOP_UP').reduce((sum: number, item: any) => sum + item.amount, 0);
-        return { buy, sell, topUp, net: sell + topUp - buy };
-    }, [funds]);
+    const summary = useMemo(() => ({
+        buy: data?.summary?.buy ?? 0,
+        sell: data?.summary?.sell ?? 0,
+        topUp: data?.summary?.topUp ?? 0,
+        net: data?.summary?.net ?? 0,
+    }), [data]);
 
     const parsedAmount = parseAmountInput(form.amount);
     const amountPreview = Number.isNaN(parsedAmount) ? '' : formatAmount(parsedAmount);

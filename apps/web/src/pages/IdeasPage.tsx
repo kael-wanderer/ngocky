@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalStorage } from '../utils/useLocalStorage';
 import api from '../api/client';
 import { Calendar, ChevronDown, ChevronUp, Copy, LayoutGrid, Lightbulb, List, Pencil, Pin, Plus, Tag, Trash2, X } from 'lucide-react';
+import RichTextEditor from '../components/RichTextEditor';
 
 type SortDir = 'asc' | 'desc';
 function SortHeader({ label, col, sort, onSort, className }: { label: string; col: string; sort: { col: string; dir: SortDir }; onSort: (col: string) => void; className?: string }) {
@@ -20,6 +21,16 @@ import { getSharedOwnerName } from '../utils/sharedOwnership';
 const emptyTopicForm = () => ({ title: '', description: '', isShared: false });
 const ideaFieldOptions = ['Project', 'Blog', 'App', 'Collection', 'Hobby', 'Creative', 'Other'] as const;
 const emptyLogForm = () => ({ title: '', content: '', category: '', field: 'Other', status: 'OPEN', tags: [] as string[] });
+
+function toRichTextHtml(value?: string | null) {
+    if (!value) return '';
+    if (/<\/?[a-z][\s\S]*>/i.test(value)) return value;
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br />');
+}
 
 export default function IdeasPage() {
     const qc = useQueryClient();
@@ -251,7 +262,15 @@ export default function IdeasPage() {
                                         {activeTopic.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                                     </div>
                                     {getSharedOwnerName(activeTopic, user?.id) && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {getSharedOwnerName(activeTopic, user?.id)}</p>}
-                                    <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{activeTopic.description || 'No topic description yet.'}</p>
+                                    {activeTopic.description ? (
+                                        <div
+                                            className="rich-text text-sm mt-1 leading-6"
+                                            style={{ color: 'var(--color-text-secondary)' }}
+                                            dangerouslySetInnerHTML={{ __html: toRichTextHtml(activeTopic.description) }}
+                                        />
+                                    ) : (
+                                        <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>No topic description yet.</p>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                     <div className="flex items-center gap-1">
@@ -360,7 +379,13 @@ export default function IdeasPage() {
                                             {log.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                                         </div>
                                         {sharedOwnerName && <p className="text-[11px] mb-2" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
-                                        <p className="text-xs whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{log.content}</p>
+                                        {log.content && (
+                                            <div
+                                                className="rich-text text-xs leading-relaxed"
+                                                style={{ color: 'var(--color-text-secondary)' }}
+                                                dangerouslySetInnerHTML={{ __html: toRichTextHtml(log.content) }}
+                                            />
+                                        )}
 
                                         <div className="mt-4 flex flex-wrap gap-1.5">
                                             {(log.tags || []).map((tag: string) => (
@@ -411,7 +436,11 @@ export default function IdeasPage() {
                             </div>
                             <div>
                                 <label className="label">Description</label>
-                                <textarea className="input" rows={3} value={topicForm.description} onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })} />
+                                <RichTextEditor
+                                    value={topicForm.description}
+                                    onChange={(html) => setTopicForm({ ...topicForm, description: html })}
+                                    minHeight="100px"
+                                />
                             </div>
                             <div className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer" style={{ borderColor: topicForm.isShared ? 'var(--color-primary)' : 'var(--color-border)', backgroundColor: topicForm.isShared ? 'color-mix(in srgb, var(--color-primary) 6%, transparent)' : 'transparent' }} onClick={() => setTopicForm({ ...topicForm, isShared: !topicForm.isShared })}>
                                 <input type="checkbox" checked={topicForm.isShared} onChange={(e) => setTopicForm({ ...topicForm, isShared: e.target.checked })} onClick={(e) => e.stopPropagation()} className="mt-0.5" />
@@ -465,7 +494,11 @@ export default function IdeasPage() {
                             </div>
                             <div>
                                 <label className="label">Content</label>
-                                <textarea className="input" rows={4} value={logForm.content} onChange={(e) => setLogForm({ ...logForm, content: e.target.value })} />
+                                <RichTextEditor
+                                    value={logForm.content}
+                                    onChange={(html) => setLogForm({ ...logForm, content: html })}
+                                    minHeight="120px"
+                                />
                             </div>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div>
