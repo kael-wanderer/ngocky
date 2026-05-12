@@ -55,12 +55,39 @@ enum IdeaStatus {
 enum ExpenseScope {
   PERSONAL
   FAMILY
+  KEO
+  PROJECT
+}
+
+enum ExpensePayment {
+  CASH
+  BANK_TRANSFER
+  CREDIT_CARD
 }
 
 enum NotificationChannel {
   EMAIL
   TELEGRAM
   BOTH
+}
+
+enum HobbyFundType {
+  BUY
+  SELL
+  TOP_UP
+}
+
+enum HobbyFundScope {
+  MECHANICAL_KEYBOARD
+  PLAY_STATION
+}
+
+enum HobbyFundCategory {
+  KEYCAP
+  KIT
+  SHIPPING
+  ACCESSORIES
+  OTHER
 }
 
 enum AlertFrequency {
@@ -82,10 +109,31 @@ enum BudgetPeriod {
   YEARLY
 }
 
+enum ColorSettingModule {
+  CAKEO
+  CALENDAR
+}
+
+enum ColorSettingScope {
+  ASSIGNEE
+}
+
 enum Theme {
   BLUE_PURPLE
   GREY_BLACK
   RED_ACCENT
+  DARK
+  MODERN_GREEN
+  MULTI_COLOR_BLOCK
+  PAPER_MINT
+  AMBER_LEDGER
+  OCEAN_INK
+  MIDNIGHT_PLUM
+  SAKURA
+  FOREST_NIGHT
+  CANDY_BLOCK
+  EMBER_NIGHT
+  LINEN_DAWN
 }
 
 enum AssistantChannel {
@@ -104,6 +152,11 @@ enum ExecutionStatus {
   CANCELLED
 }
 
+enum TaskType {
+  TASK
+  PAYMENT
+}
+
 // ─── User ───────────────────────────────────────────
 
 model User {
@@ -114,11 +167,29 @@ model User {
   role                Role                @default(USER)
   active              Boolean             @default(true)
   theme               Theme               @default(BLUE_PURPLE)
+  mfaEnabled          Boolean             @default(false)
+  mfaSecret           String?
+  mfaPendingSecret    String?
   notificationEnabled Boolean             @default(true)
   notificationChannel NotificationChannel @default(EMAIL)
   notificationEmail   String?
-  timezone            String?             @default("Asia/Ho_Chi_Minh")
+  timezone            String              @default("Asia/Ho_Chi_Minh")
   telegramChatId      String?
+  avatarUrl           String?
+  mobileNavItems      Json                @default("[\"/\",\"/goals\",\"/tasks\",\"/calendar\",\"/settings\"]")
+  featureGoals        Boolean             @default(true)
+  featureProjects     Boolean             @default(true)
+  featureIdeas        Boolean             @default(true)
+  featureLearning     Boolean             @default(true)
+  featureExpenses     Boolean             @default(true)
+  featureTasks        Boolean             @default(true)
+  featureHousework    Boolean             @default(true)
+  featureAssets       Boolean             @default(true)
+  featureCalendar     Boolean             @default(true)
+  featureKeyboard     Boolean             @default(true)
+  featureFunds        Boolean             @default(true)
+  featureCaKeo        Boolean             @default(true)
+  featureHealthbook   Boolean             @default(true)
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
@@ -137,6 +208,7 @@ model User {
   calendarEvents          CalendarEvent[]          @relation("EventCreator")
   eventParticipants       EventParticipant[]
   expenses                Expense[]
+  fundTransactions        FundTransaction[]
   alertRules              AlertRule[]
   scheduledReports        ScheduledReport[]
   budgetSettings          BudgetSetting[]
@@ -145,6 +217,20 @@ model User {
   assistantMessages       AssistantMessage[]
   assistantActionLogs     AssistantActionLog[]
   assistantPendingActions AssistantPendingAction[]
+}
+
+model ModuleColorSetting {
+  id        String             @id @default(cuid())
+  module    ColorSettingModule
+  scope     ColorSettingScope
+  entityKey String
+  color     String
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([module, scope, entityKey])
+  @@unique([module, scope, color])
+  @@index([module, scope])
 }
 
 model RefreshToken {
@@ -203,6 +289,10 @@ model Task {
   id                  String        @id @default(cuid())
   title               String
   description         String?
+  taskType            TaskType      @default(TASK)
+  amount              Float?
+  expenseCategory     String?
+  scope               ExpenseScope  @default(PERSONAL)
   userId              String
   isShared            Boolean       @default(false)
   dueDate             DateTime?
@@ -276,6 +366,7 @@ model Idea {
   title          String
   content        String?
   category       String?
+  field          String?
   tags           String?
   status         IdeaStatus @default(OPEN)
   userId         String
@@ -393,23 +484,47 @@ model EventParticipant {
 // ─── Expenses ───────────────────────────────────────
 
 model Expense {
-  id          String       @id @default(cuid())
+  id          String         @id @default(cuid())
   date        DateTime
   description String
   amount      Float
+  payment     ExpensePayment @default(CASH)
   category    String?
-  scope       ExpenseScope @default(PERSONAL)
+  scope       ExpenseScope   @default(PERSONAL)
   note        String?
-  recurring   Boolean      @default(false)
+  recurring   Boolean        @default(false)
   userId      String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([date])
   @@index([category])
+}
+
+model FundTransaction {
+  id          String            @id @default(cuid())
+  date        DateTime
+  description String
+  amount      Float
+  type        HobbyFundType
+  scope       HobbyFundScope
+  category    HobbyFundCategory
+  condition   String?
+  userId      String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@index([type])
+  @@index([scope])
+  @@index([category])
+  @@index([condition])
 }
 
 // ─── Alert Rules ────────────────────────────────────

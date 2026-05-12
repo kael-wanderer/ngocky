@@ -126,11 +126,39 @@ exports.Prisma.UserScalarFieldEnum = {
   role: 'role',
   active: 'active',
   theme: 'theme',
+  mfaEnabled: 'mfaEnabled',
+  mfaSecret: 'mfaSecret',
+  mfaPendingSecret: 'mfaPendingSecret',
   notificationEnabled: 'notificationEnabled',
   notificationChannel: 'notificationChannel',
   notificationEmail: 'notificationEmail',
   timezone: 'timezone',
   telegramChatId: 'telegramChatId',
+  avatarUrl: 'avatarUrl',
+  mobileNavItems: 'mobileNavItems',
+  featureGoals: 'featureGoals',
+  featureProjects: 'featureProjects',
+  featureIdeas: 'featureIdeas',
+  featureLearning: 'featureLearning',
+  featureExpenses: 'featureExpenses',
+  featureTasks: 'featureTasks',
+  featureHousework: 'featureHousework',
+  featureAssets: 'featureAssets',
+  featureCalendar: 'featureCalendar',
+  featureKeyboard: 'featureKeyboard',
+  featureFunds: 'featureFunds',
+  featureCaKeo: 'featureCaKeo',
+  featureHealthbook: 'featureHealthbook',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ModuleColorSettingScalarFieldEnum = {
+  id: 'id',
+  module: 'module',
+  scope: 'scope',
+  entityKey: 'entityKey',
+  color: 'color',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -174,6 +202,10 @@ exports.Prisma.TaskScalarFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
+  taskType: 'taskType',
+  amount: 'amount',
+  expenseCategory: 'expenseCategory',
+  scope: 'scope',
   userId: 'userId',
   isShared: 'isShared',
   dueDate: 'dueDate',
@@ -225,6 +257,7 @@ exports.Prisma.IdeaScalarFieldEnum = {
   title: 'title',
   content: 'content',
   category: 'category',
+  field: 'field',
   tags: 'tags',
   status: 'status',
   userId: 'userId',
@@ -306,10 +339,25 @@ exports.Prisma.ExpenseScalarFieldEnum = {
   date: 'date',
   description: 'description',
   amount: 'amount',
+  payment: 'payment',
   category: 'category',
   scope: 'scope',
   note: 'note',
   recurring: 'recurring',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.FundTransactionScalarFieldEnum = {
+  id: 'id',
+  date: 'date',
+  description: 'description',
+  amount: 'amount',
+  type: 'type',
+  scope: 'scope',
+  category: 'category',
+  condition: 'condition',
   userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -420,18 +468,13 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.NullableJsonNullValueInput = {
-  DbNull: Prisma.DbNull,
-  JsonNull: Prisma.JsonNull
-};
-
 exports.Prisma.JsonNullValueInput = {
   JsonNull: Prisma.JsonNull
 };
 
-exports.Prisma.NullsOrder = {
-  first: 'first',
-  last: 'last'
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.JsonNullValueFilter = {
@@ -444,6 +487,11 @@ exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 };
+
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
 exports.Role = exports.$Enums.Role = {
   OWNER: 'OWNER',
   ADMIN: 'ADMIN',
@@ -453,7 +501,19 @@ exports.Role = exports.$Enums.Role = {
 exports.Theme = exports.$Enums.Theme = {
   BLUE_PURPLE: 'BLUE_PURPLE',
   GREY_BLACK: 'GREY_BLACK',
-  RED_ACCENT: 'RED_ACCENT'
+  RED_ACCENT: 'RED_ACCENT',
+  DARK: 'DARK',
+  MODERN_GREEN: 'MODERN_GREEN',
+  MULTI_COLOR_BLOCK: 'MULTI_COLOR_BLOCK',
+  PAPER_MINT: 'PAPER_MINT',
+  AMBER_LEDGER: 'AMBER_LEDGER',
+  OCEAN_INK: 'OCEAN_INK',
+  MIDNIGHT_PLUM: 'MIDNIGHT_PLUM',
+  SAKURA: 'SAKURA',
+  FOREST_NIGHT: 'FOREST_NIGHT',
+  CANDY_BLOCK: 'CANDY_BLOCK',
+  EMBER_NIGHT: 'EMBER_NIGHT',
+  LINEN_DAWN: 'LINEN_DAWN'
 };
 
 exports.NotificationChannel = exports.$Enums.NotificationChannel = {
@@ -462,10 +522,31 @@ exports.NotificationChannel = exports.$Enums.NotificationChannel = {
   BOTH: 'BOTH'
 };
 
+exports.ColorSettingModule = exports.$Enums.ColorSettingModule = {
+  CAKEO: 'CAKEO',
+  CALENDAR: 'CALENDAR'
+};
+
+exports.ColorSettingScope = exports.$Enums.ColorSettingScope = {
+  ASSIGNEE: 'ASSIGNEE'
+};
+
 exports.PeriodType = exports.$Enums.PeriodType = {
   WEEKLY: 'WEEKLY',
   MONTHLY: 'MONTHLY',
   QUARTERLY: 'QUARTERLY'
+};
+
+exports.TaskType = exports.$Enums.TaskType = {
+  TASK: 'TASK',
+  PAYMENT: 'PAYMENT'
+};
+
+exports.ExpenseScope = exports.$Enums.ExpenseScope = {
+  PERSONAL: 'PERSONAL',
+  FAMILY: 'FAMILY',
+  KEO: 'KEO',
+  PROJECT: 'PROJECT'
 };
 
 exports.Priority = exports.$Enums.Priority = {
@@ -498,9 +579,29 @@ exports.FrequencyType = exports.$Enums.FrequencyType = {
   CUSTOM: 'CUSTOM'
 };
 
-exports.ExpenseScope = exports.$Enums.ExpenseScope = {
-  PERSONAL: 'PERSONAL',
-  FAMILY: 'FAMILY'
+exports.ExpensePayment = exports.$Enums.ExpensePayment = {
+  CASH: 'CASH',
+  BANK_TRANSFER: 'BANK_TRANSFER',
+  CREDIT_CARD: 'CREDIT_CARD'
+};
+
+exports.HobbyFundType = exports.$Enums.HobbyFundType = {
+  BUY: 'BUY',
+  SELL: 'SELL',
+  TOP_UP: 'TOP_UP'
+};
+
+exports.HobbyFundScope = exports.$Enums.HobbyFundScope = {
+  MECHANICAL_KEYBOARD: 'MECHANICAL_KEYBOARD',
+  PLAY_STATION: 'PLAY_STATION'
+};
+
+exports.HobbyFundCategory = exports.$Enums.HobbyFundCategory = {
+  KEYCAP: 'KEYCAP',
+  KIT: 'KIT',
+  SHIPPING: 'SHIPPING',
+  ACCESSORIES: 'ACCESSORIES',
+  OTHER: 'OTHER'
 };
 
 exports.AlertFrequency = exports.$Enums.AlertFrequency = {
@@ -540,6 +641,7 @@ exports.ExecutionStatus = exports.$Enums.ExecutionStatus = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  ModuleColorSetting: 'ModuleColorSetting',
   RefreshToken: 'RefreshToken',
   Goal: 'Goal',
   GoalCheckIn: 'GoalCheckIn',
@@ -553,6 +655,7 @@ exports.Prisma.ModelName = {
   CalendarEvent: 'CalendarEvent',
   EventParticipant: 'EventParticipant',
   Expense: 'Expense',
+  FundTransaction: 'FundTransaction',
   AlertRule: 'AlertRule',
   ScheduledReport: 'ScheduledReport',
   BudgetSetting: 'BudgetSetting',

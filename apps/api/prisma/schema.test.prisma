@@ -109,6 +109,15 @@ enum BudgetPeriod {
   YEARLY
 }
 
+enum ColorSettingModule {
+  CAKEO
+  CALENDAR
+}
+
+enum ColorSettingScope {
+  ASSIGNEE
+}
+
 enum Theme {
   BLUE_PURPLE
   GREY_BLACK
@@ -122,6 +131,9 @@ enum Theme {
   MIDNIGHT_PLUM
   SAKURA
   FOREST_NIGHT
+  CANDY_BLOCK
+  EMBER_NIGHT
+  LINEN_DAWN
 }
 
 enum AssistantChannel {
@@ -140,6 +152,11 @@ enum ExecutionStatus {
   CANCELLED
 }
 
+enum TaskType {
+  TASK
+  PAYMENT
+}
+
 // ─── User ───────────────────────────────────────────
 
 model User {
@@ -150,11 +167,16 @@ model User {
   role                Role                @default(USER)
   active              Boolean             @default(true)
   theme               Theme               @default(BLUE_PURPLE)
+  mfaEnabled          Boolean             @default(false)
+  mfaSecret           String?
+  mfaPendingSecret    String?
   notificationEnabled Boolean             @default(true)
   notificationChannel NotificationChannel @default(EMAIL)
   notificationEmail   String?
-  timezone            String?             @default("Asia/Ho_Chi_Minh")
+  timezone            String              @default("Asia/Ho_Chi_Minh")
   telegramChatId      String?
+  avatarUrl           String?
+  mobileNavItems      Json                @default("[\"/\",\"/goals\",\"/tasks\",\"/calendar\",\"/settings\"]")
   featureGoals        Boolean             @default(true)
   featureProjects     Boolean             @default(true)
   featureIdeas        Boolean             @default(true)
@@ -164,8 +186,10 @@ model User {
   featureHousework    Boolean             @default(true)
   featureAssets       Boolean             @default(true)
   featureCalendar     Boolean             @default(true)
-  featureCollection   Boolean             @default(true)
+  featureKeyboard     Boolean             @default(true)
   featureFunds        Boolean             @default(true)
+  featureCaKeo        Boolean             @default(true)
+  featureHealthbook   Boolean             @default(true)
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
@@ -193,6 +217,20 @@ model User {
   assistantMessages       AssistantMessage[]
   assistantActionLogs     AssistantActionLog[]
   assistantPendingActions AssistantPendingAction[]
+}
+
+model ModuleColorSetting {
+  id        String             @id @default(cuid())
+  module    ColorSettingModule
+  scope     ColorSettingScope
+  entityKey String
+  color     String
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([module, scope, entityKey])
+  @@unique([module, scope, color])
+  @@index([module, scope])
 }
 
 model RefreshToken {

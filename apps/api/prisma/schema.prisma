@@ -148,6 +148,9 @@ enum Theme {
   MIDNIGHT_PLUM
   SAKURA
   FOREST_NIGHT
+  CANDY_BLOCK
+  EMBER_NIGHT
+  LINEN_DAWN
 }
 
 enum ColorSettingModule {

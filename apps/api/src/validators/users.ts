@@ -28,6 +28,9 @@ export const updateUserSchema = z.object({
         'MIDNIGHT_PLUM',
         'SAKURA',
         'FOREST_NIGHT',
+        'CANDY_BLOCK',
+        'EMBER_NIGHT',
+        'LINEN_DAWN',
     ]).optional(),
 });
 

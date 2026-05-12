@@ -703,7 +703,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
 
             return true;
         });
-    }, [tasks, taskFilters, taskSearch]);
+    }, [tasks, taskFilters, taskSearch, showCompletedTasks]);
 
     const sortedTasks = useMemo(() => {
         const getValue = (task: any, key: TaskSortKey) => {

@@ -159,6 +159,48 @@
     --color-danger: #f87171;
   }
 
+  /* Color block: bright editorial palette */
+  .theme-candy-block {
+    --color-bg: #fff5ea;
+    --color-surface: #fffdf8;
+    --color-text: #231815;
+    --color-text-secondary: #8b6d63;
+    --color-border: #f2d6bf;
+    --color-primary: #ff7a59;
+    --color-primary-light: #ffe3d9;
+    --color-success: #06a77d;
+    --color-warning: #d97706;
+    --color-danger: #dc2626;
+  }
+
+  /* Dark: charcoal with ember accents */
+  .theme-ember-night {
+    --color-bg: #120c14;
+    --color-surface: #1a1320;
+    --color-text: #f6e9e4;
+    --color-text-secondary: #c4a6a0;
+    --color-border: #322533;
+    --color-primary: #ff7b72;
+    --color-primary-light: #2a1d24;
+    --color-success: #34d399;
+    --color-warning: #f59e0b;
+    --color-danger: #f87171;
+  }
+
+  /* Light: warm linen neutrals */
+  .theme-linen-dawn {
+    --color-bg: #fffaf2;
+    --color-surface: #ffffff;
+    --color-text: #33261c;
+    --color-text-secondary: #8a7461;
+    --color-border: #f2e8d8;
+    --color-primary: #d97706;
+    --color-primary-light: #fff0d8;
+    --color-success: #15803d;
+    --color-warning: #ca8a04;
+    --color-danger: #dc2626;
+  }
+
   body {
     background-color: var(--color-bg);
     color: var(--color-text);

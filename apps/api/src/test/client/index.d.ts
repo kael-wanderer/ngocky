@@ -19,6 +19,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model ModuleColorSetting
+ * 
+ */
+export type ModuleColorSetting = $Result.DefaultSelection<Prisma.$ModuleColorSettingPayload>
+/**
  * Model RefreshToken
  * 
  */
@@ -83,6 +88,11 @@ export type EventParticipant = $Result.DefaultSelection<Prisma.$EventParticipant
  * 
  */
 export type Expense = $Result.DefaultSelection<Prisma.$ExpensePayload>
+/**
+ * Model FundTransaction
+ * 
+ */
+export type FundTransaction = $Result.DefaultSelection<Prisma.$FundTransactionPayload>
 /**
  * Model AlertRule
  * 
@@ -185,10 +195,21 @@ export type IdeaStatus = (typeof IdeaStatus)[keyof typeof IdeaStatus]
 
 export const ExpenseScope: {
   PERSONAL: 'PERSONAL',
-  FAMILY: 'FAMILY'
+  FAMILY: 'FAMILY',
+  KEO: 'KEO',
+  PROJECT: 'PROJECT'
 };
 
 export type ExpenseScope = (typeof ExpenseScope)[keyof typeof ExpenseScope]
+
+
+export const ExpensePayment: {
+  CASH: 'CASH',
+  BANK_TRANSFER: 'BANK_TRANSFER',
+  CREDIT_CARD: 'CREDIT_CARD'
+};
+
+export type ExpensePayment = (typeof ExpensePayment)[keyof typeof ExpensePayment]
 
 
 export const NotificationChannel: {
@@ -198,6 +219,34 @@ export const NotificationChannel: {
 };
 
 export type NotificationChannel = (typeof NotificationChannel)[keyof typeof NotificationChannel]
+
+
+export const HobbyFundType: {
+  BUY: 'BUY',
+  SELL: 'SELL',
+  TOP_UP: 'TOP_UP'
+};
+
+export type HobbyFundType = (typeof HobbyFundType)[keyof typeof HobbyFundType]
+
+
+export const HobbyFundScope: {
+  MECHANICAL_KEYBOARD: 'MECHANICAL_KEYBOARD',
+  PLAY_STATION: 'PLAY_STATION'
+};
+
+export type HobbyFundScope = (typeof HobbyFundScope)[keyof typeof HobbyFundScope]
+
+
+export const HobbyFundCategory: {
+  KEYCAP: 'KEYCAP',
+  KIT: 'KIT',
+  SHIPPING: 'SHIPPING',
+  ACCESSORIES: 'ACCESSORIES',
+  OTHER: 'OTHER'
+};
+
+export type HobbyFundCategory = (typeof HobbyFundCategory)[keyof typeof HobbyFundCategory]
 
 
 export const AlertFrequency: {
@@ -228,10 +277,37 @@ export const BudgetPeriod: {
 export type BudgetPeriod = (typeof BudgetPeriod)[keyof typeof BudgetPeriod]
 
 
+export const ColorSettingModule: {
+  CAKEO: 'CAKEO',
+  CALENDAR: 'CALENDAR'
+};
+
+export type ColorSettingModule = (typeof ColorSettingModule)[keyof typeof ColorSettingModule]
+
+
+export const ColorSettingScope: {
+  ASSIGNEE: 'ASSIGNEE'
+};
+
+export type ColorSettingScope = (typeof ColorSettingScope)[keyof typeof ColorSettingScope]
+
+
 export const Theme: {
   BLUE_PURPLE: 'BLUE_PURPLE',
   GREY_BLACK: 'GREY_BLACK',
-  RED_ACCENT: 'RED_ACCENT'
+  RED_ACCENT: 'RED_ACCENT',
+  DARK: 'DARK',
+  MODERN_GREEN: 'MODERN_GREEN',
+  MULTI_COLOR_BLOCK: 'MULTI_COLOR_BLOCK',
+  PAPER_MINT: 'PAPER_MINT',
+  AMBER_LEDGER: 'AMBER_LEDGER',
+  OCEAN_INK: 'OCEAN_INK',
+  MIDNIGHT_PLUM: 'MIDNIGHT_PLUM',
+  SAKURA: 'SAKURA',
+  FOREST_NIGHT: 'FOREST_NIGHT',
+  CANDY_BLOCK: 'CANDY_BLOCK',
+  EMBER_NIGHT: 'EMBER_NIGHT',
+  LINEN_DAWN: 'LINEN_DAWN'
 };
 
 export type Theme = (typeof Theme)[keyof typeof Theme]
@@ -260,6 +336,14 @@ export const ExecutionStatus: {
 };
 
 export type ExecutionStatus = (typeof ExecutionStatus)[keyof typeof ExecutionStatus]
+
+
+export const TaskType: {
+  TASK: 'TASK',
+  PAYMENT: 'PAYMENT'
+};
+
+export type TaskType = (typeof TaskType)[keyof typeof TaskType]
 
 }
 
@@ -291,9 +375,25 @@ export type ExpenseScope = $Enums.ExpenseScope
 
 export const ExpenseScope: typeof $Enums.ExpenseScope
 
+export type ExpensePayment = $Enums.ExpensePayment
+
+export const ExpensePayment: typeof $Enums.ExpensePayment
+
 export type NotificationChannel = $Enums.NotificationChannel
 
 export const NotificationChannel: typeof $Enums.NotificationChannel
+
+export type HobbyFundType = $Enums.HobbyFundType
+
+export const HobbyFundType: typeof $Enums.HobbyFundType
+
+export type HobbyFundScope = $Enums.HobbyFundScope
+
+export const HobbyFundScope: typeof $Enums.HobbyFundScope
+
+export type HobbyFundCategory = $Enums.HobbyFundCategory
+
+export const HobbyFundCategory: typeof $Enums.HobbyFundCategory
 
 export type AlertFrequency = $Enums.AlertFrequency
 
@@ -306,6 +406,14 @@ export const ReportFrequency: typeof $Enums.ReportFrequency
 export type BudgetPeriod = $Enums.BudgetPeriod
 
 export const BudgetPeriod: typeof $Enums.BudgetPeriod
+
+export type ColorSettingModule = $Enums.ColorSettingModule
+
+export const ColorSettingModule: typeof $Enums.ColorSettingModule
+
+export type ColorSettingScope = $Enums.ColorSettingScope
+
+export const ColorSettingScope: typeof $Enums.ColorSettingScope
 
 export type Theme = $Enums.Theme
 
@@ -322,6 +430,10 @@ export const MessageDirection: typeof $Enums.MessageDirection
 export type ExecutionStatus = $Enums.ExecutionStatus
 
 export const ExecutionStatus: typeof $Enums.ExecutionStatus
+
+export type TaskType = $Enums.TaskType
+
+export const TaskType: typeof $Enums.TaskType
 
 /**
  * ##  Prisma Client ʲˢ
@@ -452,6 +564,16 @@ export class PrismaClient<
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.moduleColorSetting`: Exposes CRUD operations for the **ModuleColorSetting** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ModuleColorSettings
+    * const moduleColorSettings = await prisma.moduleColorSetting.findMany()
+    * ```
+    */
+  get moduleColorSetting(): Prisma.ModuleColorSettingDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.refreshToken`: Exposes CRUD operations for the **RefreshToken** model.
     * Example usage:
     * ```ts
@@ -580,6 +702,16 @@ export class PrismaClient<
     * ```
     */
   get expense(): Prisma.ExpenseDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.fundTransaction`: Exposes CRUD operations for the **FundTransaction** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more FundTransactions
+    * const fundTransactions = await prisma.fundTransaction.findMany()
+    * ```
+    */
+  get fundTransaction(): Prisma.FundTransactionDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.alertRule`: Exposes CRUD operations for the **AlertRule** model.
@@ -1092,6 +1224,7 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
+    ModuleColorSetting: 'ModuleColorSetting',
     RefreshToken: 'RefreshToken',
     Goal: 'Goal',
     GoalCheckIn: 'GoalCheckIn',
@@ -1105,6 +1238,7 @@ export namespace Prisma {
     CalendarEvent: 'CalendarEvent',
     EventParticipant: 'EventParticipant',
     Expense: 'Expense',
+    FundTransaction: 'FundTransaction',
     AlertRule: 'AlertRule',
     ScheduledReport: 'ScheduledReport',
     BudgetSetting: 'BudgetSetting',
@@ -1130,7 +1264,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "refreshToken" | "goal" | "goalCheckIn" | "task" | "project" | "learningItem" | "idea" | "houseworkItem" | "asset" | "maintenanceRecord" | "calendarEvent" | "eventParticipant" | "expense" | "alertRule" | "scheduledReport" | "budgetSetting" | "telegramLink" | "assistantMessage" | "assistantActionLog" | "assistantPendingAction"
+      modelProps: "user" | "moduleColorSetting" | "refreshToken" | "goal" | "goalCheckIn" | "task" | "project" | "learningItem" | "idea" | "houseworkItem" | "asset" | "maintenanceRecord" | "calendarEvent" | "eventParticipant" | "expense" | "fundTransaction" | "alertRule" | "scheduledReport" | "budgetSetting" | "telegramLink" | "assistantMessage" | "assistantActionLog" | "assistantPendingAction"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1205,6 +1339,80 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      ModuleColorSetting: {
+        payload: Prisma.$ModuleColorSettingPayload<ExtArgs>
+        fields: Prisma.ModuleColorSettingFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ModuleColorSettingFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleColorSettingPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ModuleColorSettingFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleColorSettingPayload>
+          }
+          findFirst: {
+            args: Prisma.ModuleColorSettingFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleColorSettingPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ModuleColorSettingFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleColorSettingPayload>
+          }
+          findMany: {
+            args: Prisma.ModuleColorSettingFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleColorSettingPayload>[]
+          }
+          create: {
+            args: Prisma.ModuleColorSettingCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleColorSettingPayload>
+          }
+          createMany: {
+            args: Prisma.ModuleColorSettingCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ModuleColorSettingCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleColorSettingPayload>[]
+          }
+          delete: {
+            args: Prisma.ModuleColorSettingDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleColorSettingPayload>
+          }
+          update: {
+            args: Prisma.ModuleColorSettingUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleColorSettingPayload>
+          }
+          deleteMany: {
+            args: Prisma.ModuleColorSettingDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ModuleColorSettingUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ModuleColorSettingUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleColorSettingPayload>[]
+          }
+          upsert: {
+            args: Prisma.ModuleColorSettingUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleColorSettingPayload>
+          }
+          aggregate: {
+            args: Prisma.ModuleColorSettingAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateModuleColorSetting>
+          }
+          groupBy: {
+            args: Prisma.ModuleColorSettingGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ModuleColorSettingGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ModuleColorSettingCountArgs<ExtArgs>
+            result: $Utils.Optional<ModuleColorSettingCountAggregateOutputType> | number
           }
         }
       }
@@ -2170,6 +2378,80 @@ export namespace Prisma {
           }
         }
       }
+      FundTransaction: {
+        payload: Prisma.$FundTransactionPayload<ExtArgs>
+        fields: Prisma.FundTransactionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.FundTransactionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FundTransactionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.FundTransactionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FundTransactionPayload>
+          }
+          findFirst: {
+            args: Prisma.FundTransactionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FundTransactionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.FundTransactionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FundTransactionPayload>
+          }
+          findMany: {
+            args: Prisma.FundTransactionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FundTransactionPayload>[]
+          }
+          create: {
+            args: Prisma.FundTransactionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FundTransactionPayload>
+          }
+          createMany: {
+            args: Prisma.FundTransactionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.FundTransactionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FundTransactionPayload>[]
+          }
+          delete: {
+            args: Prisma.FundTransactionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FundTransactionPayload>
+          }
+          update: {
+            args: Prisma.FundTransactionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FundTransactionPayload>
+          }
+          deleteMany: {
+            args: Prisma.FundTransactionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.FundTransactionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.FundTransactionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FundTransactionPayload>[]
+          }
+          upsert: {
+            args: Prisma.FundTransactionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FundTransactionPayload>
+          }
+          aggregate: {
+            args: Prisma.FundTransactionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateFundTransaction>
+          }
+          groupBy: {
+            args: Prisma.FundTransactionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<FundTransactionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.FundTransactionCountArgs<ExtArgs>
+            result: $Utils.Optional<FundTransactionCountAggregateOutputType> | number
+          }
+        }
+      }
       AlertRule: {
         payload: Prisma.$AlertRulePayload<ExtArgs>
         fields: Prisma.AlertRuleFieldRefs
@@ -2785,6 +3067,7 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     user?: UserOmit
+    moduleColorSetting?: ModuleColorSettingOmit
     refreshToken?: RefreshTokenOmit
     goal?: GoalOmit
     goalCheckIn?: GoalCheckInOmit
@@ -2798,6 +3081,7 @@ export namespace Prisma {
     calendarEvent?: CalendarEventOmit
     eventParticipant?: EventParticipantOmit
     expense?: ExpenseOmit
+    fundTransaction?: FundTransactionOmit
     alertRule?: AlertRuleOmit
     scheduledReport?: ScheduledReportOmit
     budgetSetting?: BudgetSettingOmit
@@ -2899,6 +3183,7 @@ export namespace Prisma {
     calendarEvents: number
     eventParticipants: number
     expenses: number
+    fundTransactions: number
     alertRules: number
     scheduledReports: number
     budgetSettings: number
@@ -2923,6 +3208,7 @@ export namespace Prisma {
     calendarEvents?: boolean | UserCountOutputTypeCountCalendarEventsArgs
     eventParticipants?: boolean | UserCountOutputTypeCountEventParticipantsArgs
     expenses?: boolean | UserCountOutputTypeCountExpensesArgs
+    fundTransactions?: boolean | UserCountOutputTypeCountFundTransactionsArgs
     alertRules?: boolean | UserCountOutputTypeCountAlertRulesArgs
     scheduledReports?: boolean | UserCountOutputTypeCountScheduledReportsArgs
     budgetSettings?: boolean | UserCountOutputTypeCountBudgetSettingsArgs
@@ -3039,6 +3325,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountExpensesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ExpenseWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountFundTransactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: FundTransactionWhereInput
   }
 
   /**
@@ -3206,11 +3499,28 @@ export namespace Prisma {
     role: $Enums.Role | null
     active: boolean | null
     theme: $Enums.Theme | null
+    mfaEnabled: boolean | null
+    mfaSecret: string | null
+    mfaPendingSecret: string | null
     notificationEnabled: boolean | null
     notificationChannel: $Enums.NotificationChannel | null
     notificationEmail: string | null
     timezone: string | null
     telegramChatId: string | null
+    avatarUrl: string | null
+    featureGoals: boolean | null
+    featureProjects: boolean | null
+    featureIdeas: boolean | null
+    featureLearning: boolean | null
+    featureExpenses: boolean | null
+    featureTasks: boolean | null
+    featureHousework: boolean | null
+    featureAssets: boolean | null
+    featureCalendar: boolean | null
+    featureKeyboard: boolean | null
+    featureFunds: boolean | null
+    featureCaKeo: boolean | null
+    featureHealthbook: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -3223,11 +3533,28 @@ export namespace Prisma {
     role: $Enums.Role | null
     active: boolean | null
     theme: $Enums.Theme | null
+    mfaEnabled: boolean | null
+    mfaSecret: string | null
+    mfaPendingSecret: string | null
     notificationEnabled: boolean | null
     notificationChannel: $Enums.NotificationChannel | null
     notificationEmail: string | null
     timezone: string | null
     telegramChatId: string | null
+    avatarUrl: string | null
+    featureGoals: boolean | null
+    featureProjects: boolean | null
+    featureIdeas: boolean | null
+    featureLearning: boolean | null
+    featureExpenses: boolean | null
+    featureTasks: boolean | null
+    featureHousework: boolean | null
+    featureAssets: boolean | null
+    featureCalendar: boolean | null
+    featureKeyboard: boolean | null
+    featureFunds: boolean | null
+    featureCaKeo: boolean | null
+    featureHealthbook: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -3240,11 +3567,29 @@ export namespace Prisma {
     role: number
     active: number
     theme: number
+    mfaEnabled: number
+    mfaSecret: number
+    mfaPendingSecret: number
     notificationEnabled: number
     notificationChannel: number
     notificationEmail: number
     timezone: number
     telegramChatId: number
+    avatarUrl: number
+    mobileNavItems: number
+    featureGoals: number
+    featureProjects: number
+    featureIdeas: number
+    featureLearning: number
+    featureExpenses: number
+    featureTasks: number
+    featureHousework: number
+    featureAssets: number
+    featureCalendar: number
+    featureKeyboard: number
+    featureFunds: number
+    featureCaKeo: number
+    featureHealthbook: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -3259,11 +3604,28 @@ export namespace Prisma {
     role?: true
     active?: true
     theme?: true
+    mfaEnabled?: true
+    mfaSecret?: true
+    mfaPendingSecret?: true
     notificationEnabled?: true
     notificationChannel?: true
     notificationEmail?: true
     timezone?: true
     telegramChatId?: true
+    avatarUrl?: true
+    featureGoals?: true
+    featureProjects?: true
+    featureIdeas?: true
+    featureLearning?: true
+    featureExpenses?: true
+    featureTasks?: true
+    featureHousework?: true
+    featureAssets?: true
+    featureCalendar?: true
+    featureKeyboard?: true
+    featureFunds?: true
+    featureCaKeo?: true
+    featureHealthbook?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -3276,11 +3638,28 @@ export namespace Prisma {
     role?: true
     active?: true
     theme?: true
+    mfaEnabled?: true
+    mfaSecret?: true
+    mfaPendingSecret?: true
     notificationEnabled?: true
     notificationChannel?: true
     notificationEmail?: true
     timezone?: true
     telegramChatId?: true
+    avatarUrl?: true
+    featureGoals?: true
+    featureProjects?: true
+    featureIdeas?: true
+    featureLearning?: true
+    featureExpenses?: true
+    featureTasks?: true
+    featureHousework?: true
+    featureAssets?: true
+    featureCalendar?: true
+    featureKeyboard?: true
+    featureFunds?: true
+    featureCaKeo?: true
+    featureHealthbook?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -3293,11 +3672,29 @@ export namespace Prisma {
     role?: true
     active?: true
     theme?: true
+    mfaEnabled?: true
+    mfaSecret?: true
+    mfaPendingSecret?: true
     notificationEnabled?: true
     notificationChannel?: true
     notificationEmail?: true
     timezone?: true
     telegramChatId?: true
+    avatarUrl?: true
+    mobileNavItems?: true
+    featureGoals?: true
+    featureProjects?: true
+    featureIdeas?: true
+    featureLearning?: true
+    featureExpenses?: true
+    featureTasks?: true
+    featureHousework?: true
+    featureAssets?: true
+    featureCalendar?: true
+    featureKeyboard?: true
+    featureFunds?: true
+    featureCaKeo?: true
+    featureHealthbook?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -3383,11 +3780,29 @@ export namespace Prisma {
     role: $Enums.Role
     active: boolean
     theme: $Enums.Theme
+    mfaEnabled: boolean
+    mfaSecret: string | null
+    mfaPendingSecret: string | null
     notificationEnabled: boolean
     notificationChannel: $Enums.NotificationChannel
     notificationEmail: string | null
-    timezone: string | null
+    timezone: string
     telegramChatId: string | null
+    avatarUrl: string | null
+    mobileNavItems: JsonValue
+    featureGoals: boolean
+    featureProjects: boolean
+    featureIdeas: boolean
+    featureLearning: boolean
+    featureExpenses: boolean
+    featureTasks: boolean
+    featureHousework: boolean
+    featureAssets: boolean
+    featureCalendar: boolean
+    featureKeyboard: boolean
+    featureFunds: boolean
+    featureCaKeo: boolean
+    featureHealthbook: boolean
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -3417,11 +3832,29 @@ export namespace Prisma {
     role?: boolean
     active?: boolean
     theme?: boolean
+    mfaEnabled?: boolean
+    mfaSecret?: boolean
+    mfaPendingSecret?: boolean
     notificationEnabled?: boolean
     notificationChannel?: boolean
     notificationEmail?: boolean
     timezone?: boolean
     telegramChatId?: boolean
+    avatarUrl?: boolean
+    mobileNavItems?: boolean
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     goals?: boolean | User$goalsArgs<ExtArgs>
@@ -3438,6 +3871,7 @@ export namespace Prisma {
     calendarEvents?: boolean | User$calendarEventsArgs<ExtArgs>
     eventParticipants?: boolean | User$eventParticipantsArgs<ExtArgs>
     expenses?: boolean | User$expensesArgs<ExtArgs>
+    fundTransactions?: boolean | User$fundTransactionsArgs<ExtArgs>
     alertRules?: boolean | User$alertRulesArgs<ExtArgs>
     scheduledReports?: boolean | User$scheduledReportsArgs<ExtArgs>
     budgetSettings?: boolean | User$budgetSettingsArgs<ExtArgs>
@@ -3457,11 +3891,29 @@ export namespace Prisma {
     role?: boolean
     active?: boolean
     theme?: boolean
+    mfaEnabled?: boolean
+    mfaSecret?: boolean
+    mfaPendingSecret?: boolean
     notificationEnabled?: boolean
     notificationChannel?: boolean
     notificationEmail?: boolean
     timezone?: boolean
     telegramChatId?: boolean
+    avatarUrl?: boolean
+    mobileNavItems?: boolean
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -3474,11 +3926,29 @@ export namespace Prisma {
     role?: boolean
     active?: boolean
     theme?: boolean
+    mfaEnabled?: boolean
+    mfaSecret?: boolean
+    mfaPendingSecret?: boolean
     notificationEnabled?: boolean
     notificationChannel?: boolean
     notificationEmail?: boolean
     timezone?: boolean
     telegramChatId?: boolean
+    avatarUrl?: boolean
+    mobileNavItems?: boolean
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -3491,16 +3961,34 @@ export namespace Prisma {
     role?: boolean
     active?: boolean
     theme?: boolean
+    mfaEnabled?: boolean
+    mfaSecret?: boolean
+    mfaPendingSecret?: boolean
     notificationEnabled?: boolean
     notificationChannel?: boolean
     notificationEmail?: boolean
     timezone?: boolean
     telegramChatId?: boolean
+    avatarUrl?: boolean
+    mobileNavItems?: boolean
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "name" | "password" | "role" | "active" | "theme" | "notificationEnabled" | "notificationChannel" | "notificationEmail" | "timezone" | "telegramChatId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "name" | "password" | "role" | "active" | "theme" | "mfaEnabled" | "mfaSecret" | "mfaPendingSecret" | "notificationEnabled" | "notificationChannel" | "notificationEmail" | "timezone" | "telegramChatId" | "avatarUrl" | "mobileNavItems" | "featureGoals" | "featureProjects" | "featureIdeas" | "featureLearning" | "featureExpenses" | "featureTasks" | "featureHousework" | "featureAssets" | "featureCalendar" | "featureKeyboard" | "featureFunds" | "featureCaKeo" | "featureHealthbook" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     goals?: boolean | User$goalsArgs<ExtArgs>
     goalCheckIns?: boolean | User$goalCheckInsArgs<ExtArgs>
@@ -3516,6 +4004,7 @@ export namespace Prisma {
     calendarEvents?: boolean | User$calendarEventsArgs<ExtArgs>
     eventParticipants?: boolean | User$eventParticipantsArgs<ExtArgs>
     expenses?: boolean | User$expensesArgs<ExtArgs>
+    fundTransactions?: boolean | User$fundTransactionsArgs<ExtArgs>
     alertRules?: boolean | User$alertRulesArgs<ExtArgs>
     scheduledReports?: boolean | User$scheduledReportsArgs<ExtArgs>
     budgetSettings?: boolean | User$budgetSettingsArgs<ExtArgs>
@@ -3546,6 +4035,7 @@ export namespace Prisma {
       calendarEvents: Prisma.$CalendarEventPayload<ExtArgs>[]
       eventParticipants: Prisma.$EventParticipantPayload<ExtArgs>[]
       expenses: Prisma.$ExpensePayload<ExtArgs>[]
+      fundTransactions: Prisma.$FundTransactionPayload<ExtArgs>[]
       alertRules: Prisma.$AlertRulePayload<ExtArgs>[]
       scheduledReports: Prisma.$ScheduledReportPayload<ExtArgs>[]
       budgetSettings: Prisma.$BudgetSettingPayload<ExtArgs>[]
@@ -3563,11 +4053,29 @@ export namespace Prisma {
       role: $Enums.Role
       active: boolean
       theme: $Enums.Theme
+      mfaEnabled: boolean
+      mfaSecret: string | null
+      mfaPendingSecret: string | null
       notificationEnabled: boolean
       notificationChannel: $Enums.NotificationChannel
       notificationEmail: string | null
-      timezone: string | null
+      timezone: string
       telegramChatId: string | null
+      avatarUrl: string | null
+      mobileNavItems: Prisma.JsonValue
+      featureGoals: boolean
+      featureProjects: boolean
+      featureIdeas: boolean
+      featureLearning: boolean
+      featureExpenses: boolean
+      featureTasks: boolean
+      featureHousework: boolean
+      featureAssets: boolean
+      featureCalendar: boolean
+      featureKeyboard: boolean
+      featureFunds: boolean
+      featureCaKeo: boolean
+      featureHealthbook: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -3978,6 +4486,7 @@ export namespace Prisma {
     calendarEvents<T extends User$calendarEventsArgs<ExtArgs> = {}>(args?: Subset<T, User$calendarEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CalendarEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     eventParticipants<T extends User$eventParticipantsArgs<ExtArgs> = {}>(args?: Subset<T, User$eventParticipantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     expenses<T extends User$expensesArgs<ExtArgs> = {}>(args?: Subset<T, User$expensesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExpensePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    fundTransactions<T extends User$fundTransactionsArgs<ExtArgs> = {}>(args?: Subset<T, User$fundTransactionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FundTransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     alertRules<T extends User$alertRulesArgs<ExtArgs> = {}>(args?: Subset<T, User$alertRulesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AlertRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     scheduledReports<T extends User$scheduledReportsArgs<ExtArgs> = {}>(args?: Subset<T, User$scheduledReportsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ScheduledReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     budgetSettings<T extends User$budgetSettingsArgs<ExtArgs> = {}>(args?: Subset<T, User$budgetSettingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BudgetSettingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -4022,11 +4531,29 @@ export namespace Prisma {
     readonly role: FieldRef<"User", 'Role'>
     readonly active: FieldRef<"User", 'Boolean'>
     readonly theme: FieldRef<"User", 'Theme'>
+    readonly mfaEnabled: FieldRef<"User", 'Boolean'>
+    readonly mfaSecret: FieldRef<"User", 'String'>
+    readonly mfaPendingSecret: FieldRef<"User", 'String'>
     readonly notificationEnabled: FieldRef<"User", 'Boolean'>
     readonly notificationChannel: FieldRef<"User", 'NotificationChannel'>
     readonly notificationEmail: FieldRef<"User", 'String'>
     readonly timezone: FieldRef<"User", 'String'>
     readonly telegramChatId: FieldRef<"User", 'String'>
+    readonly avatarUrl: FieldRef<"User", 'String'>
+    readonly mobileNavItems: FieldRef<"User", 'Json'>
+    readonly featureGoals: FieldRef<"User", 'Boolean'>
+    readonly featureProjects: FieldRef<"User", 'Boolean'>
+    readonly featureIdeas: FieldRef<"User", 'Boolean'>
+    readonly featureLearning: FieldRef<"User", 'Boolean'>
+    readonly featureExpenses: FieldRef<"User", 'Boolean'>
+    readonly featureTasks: FieldRef<"User", 'Boolean'>
+    readonly featureHousework: FieldRef<"User", 'Boolean'>
+    readonly featureAssets: FieldRef<"User", 'Boolean'>
+    readonly featureCalendar: FieldRef<"User", 'Boolean'>
+    readonly featureKeyboard: FieldRef<"User", 'Boolean'>
+    readonly featureFunds: FieldRef<"User", 'Boolean'>
+    readonly featureCaKeo: FieldRef<"User", 'Boolean'>
+    readonly featureHealthbook: FieldRef<"User", 'Boolean'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -4751,6 +5278,30 @@ export namespace Prisma {
   }
 
   /**
+   * User.fundTransactions
+   */
+  export type User$fundTransactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionInclude<ExtArgs> | null
+    where?: FundTransactionWhereInput
+    orderBy?: FundTransactionOrderByWithRelationInput | FundTransactionOrderByWithRelationInput[]
+    cursor?: FundTransactionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: FundTransactionScalarFieldEnum | FundTransactionScalarFieldEnum[]
+  }
+
+  /**
    * User.alertRules
    */
   export type User$alertRulesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4953,6 +5504,1025 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ModuleColorSetting
+   */
+
+  export type AggregateModuleColorSetting = {
+    _count: ModuleColorSettingCountAggregateOutputType | null
+    _min: ModuleColorSettingMinAggregateOutputType | null
+    _max: ModuleColorSettingMaxAggregateOutputType | null
+  }
+
+  export type ModuleColorSettingMinAggregateOutputType = {
+    id: string | null
+    module: $Enums.ColorSettingModule | null
+    scope: $Enums.ColorSettingScope | null
+    entityKey: string | null
+    color: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ModuleColorSettingMaxAggregateOutputType = {
+    id: string | null
+    module: $Enums.ColorSettingModule | null
+    scope: $Enums.ColorSettingScope | null
+    entityKey: string | null
+    color: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ModuleColorSettingCountAggregateOutputType = {
+    id: number
+    module: number
+    scope: number
+    entityKey: number
+    color: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ModuleColorSettingMinAggregateInputType = {
+    id?: true
+    module?: true
+    scope?: true
+    entityKey?: true
+    color?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ModuleColorSettingMaxAggregateInputType = {
+    id?: true
+    module?: true
+    scope?: true
+    entityKey?: true
+    color?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ModuleColorSettingCountAggregateInputType = {
+    id?: true
+    module?: true
+    scope?: true
+    entityKey?: true
+    color?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ModuleColorSettingAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ModuleColorSetting to aggregate.
+     */
+    where?: ModuleColorSettingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModuleColorSettings to fetch.
+     */
+    orderBy?: ModuleColorSettingOrderByWithRelationInput | ModuleColorSettingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ModuleColorSettingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModuleColorSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModuleColorSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ModuleColorSettings
+    **/
+    _count?: true | ModuleColorSettingCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ModuleColorSettingMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ModuleColorSettingMaxAggregateInputType
+  }
+
+  export type GetModuleColorSettingAggregateType<T extends ModuleColorSettingAggregateArgs> = {
+        [P in keyof T & keyof AggregateModuleColorSetting]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateModuleColorSetting[P]>
+      : GetScalarType<T[P], AggregateModuleColorSetting[P]>
+  }
+
+
+
+
+  export type ModuleColorSettingGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ModuleColorSettingWhereInput
+    orderBy?: ModuleColorSettingOrderByWithAggregationInput | ModuleColorSettingOrderByWithAggregationInput[]
+    by: ModuleColorSettingScalarFieldEnum[] | ModuleColorSettingScalarFieldEnum
+    having?: ModuleColorSettingScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ModuleColorSettingCountAggregateInputType | true
+    _min?: ModuleColorSettingMinAggregateInputType
+    _max?: ModuleColorSettingMaxAggregateInputType
+  }
+
+  export type ModuleColorSettingGroupByOutputType = {
+    id: string
+    module: $Enums.ColorSettingModule
+    scope: $Enums.ColorSettingScope
+    entityKey: string
+    color: string
+    createdAt: Date
+    updatedAt: Date
+    _count: ModuleColorSettingCountAggregateOutputType | null
+    _min: ModuleColorSettingMinAggregateOutputType | null
+    _max: ModuleColorSettingMaxAggregateOutputType | null
+  }
+
+  type GetModuleColorSettingGroupByPayload<T extends ModuleColorSettingGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ModuleColorSettingGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ModuleColorSettingGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ModuleColorSettingGroupByOutputType[P]>
+            : GetScalarType<T[P], ModuleColorSettingGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ModuleColorSettingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    module?: boolean
+    scope?: boolean
+    entityKey?: boolean
+    color?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["moduleColorSetting"]>
+
+  export type ModuleColorSettingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    module?: boolean
+    scope?: boolean
+    entityKey?: boolean
+    color?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["moduleColorSetting"]>
+
+  export type ModuleColorSettingSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    module?: boolean
+    scope?: boolean
+    entityKey?: boolean
+    color?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["moduleColorSetting"]>
+
+  export type ModuleColorSettingSelectScalar = {
+    id?: boolean
+    module?: boolean
+    scope?: boolean
+    entityKey?: boolean
+    color?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ModuleColorSettingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "module" | "scope" | "entityKey" | "color" | "createdAt" | "updatedAt", ExtArgs["result"]["moduleColorSetting"]>
+
+  export type $ModuleColorSettingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ModuleColorSetting"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      module: $Enums.ColorSettingModule
+      scope: $Enums.ColorSettingScope
+      entityKey: string
+      color: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["moduleColorSetting"]>
+    composites: {}
+  }
+
+  type ModuleColorSettingGetPayload<S extends boolean | null | undefined | ModuleColorSettingDefaultArgs> = $Result.GetResult<Prisma.$ModuleColorSettingPayload, S>
+
+  type ModuleColorSettingCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ModuleColorSettingFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ModuleColorSettingCountAggregateInputType | true
+    }
+
+  export interface ModuleColorSettingDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ModuleColorSetting'], meta: { name: 'ModuleColorSetting' } }
+    /**
+     * Find zero or one ModuleColorSetting that matches the filter.
+     * @param {ModuleColorSettingFindUniqueArgs} args - Arguments to find a ModuleColorSetting
+     * @example
+     * // Get one ModuleColorSetting
+     * const moduleColorSetting = await prisma.moduleColorSetting.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ModuleColorSettingFindUniqueArgs>(args: SelectSubset<T, ModuleColorSettingFindUniqueArgs<ExtArgs>>): Prisma__ModuleColorSettingClient<$Result.GetResult<Prisma.$ModuleColorSettingPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ModuleColorSetting that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ModuleColorSettingFindUniqueOrThrowArgs} args - Arguments to find a ModuleColorSetting
+     * @example
+     * // Get one ModuleColorSetting
+     * const moduleColorSetting = await prisma.moduleColorSetting.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ModuleColorSettingFindUniqueOrThrowArgs>(args: SelectSubset<T, ModuleColorSettingFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ModuleColorSettingClient<$Result.GetResult<Prisma.$ModuleColorSettingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ModuleColorSetting that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleColorSettingFindFirstArgs} args - Arguments to find a ModuleColorSetting
+     * @example
+     * // Get one ModuleColorSetting
+     * const moduleColorSetting = await prisma.moduleColorSetting.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ModuleColorSettingFindFirstArgs>(args?: SelectSubset<T, ModuleColorSettingFindFirstArgs<ExtArgs>>): Prisma__ModuleColorSettingClient<$Result.GetResult<Prisma.$ModuleColorSettingPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ModuleColorSetting that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleColorSettingFindFirstOrThrowArgs} args - Arguments to find a ModuleColorSetting
+     * @example
+     * // Get one ModuleColorSetting
+     * const moduleColorSetting = await prisma.moduleColorSetting.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ModuleColorSettingFindFirstOrThrowArgs>(args?: SelectSubset<T, ModuleColorSettingFindFirstOrThrowArgs<ExtArgs>>): Prisma__ModuleColorSettingClient<$Result.GetResult<Prisma.$ModuleColorSettingPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ModuleColorSettings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleColorSettingFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ModuleColorSettings
+     * const moduleColorSettings = await prisma.moduleColorSetting.findMany()
+     * 
+     * // Get first 10 ModuleColorSettings
+     * const moduleColorSettings = await prisma.moduleColorSetting.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const moduleColorSettingWithIdOnly = await prisma.moduleColorSetting.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ModuleColorSettingFindManyArgs>(args?: SelectSubset<T, ModuleColorSettingFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModuleColorSettingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ModuleColorSetting.
+     * @param {ModuleColorSettingCreateArgs} args - Arguments to create a ModuleColorSetting.
+     * @example
+     * // Create one ModuleColorSetting
+     * const ModuleColorSetting = await prisma.moduleColorSetting.create({
+     *   data: {
+     *     // ... data to create a ModuleColorSetting
+     *   }
+     * })
+     * 
+     */
+    create<T extends ModuleColorSettingCreateArgs>(args: SelectSubset<T, ModuleColorSettingCreateArgs<ExtArgs>>): Prisma__ModuleColorSettingClient<$Result.GetResult<Prisma.$ModuleColorSettingPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ModuleColorSettings.
+     * @param {ModuleColorSettingCreateManyArgs} args - Arguments to create many ModuleColorSettings.
+     * @example
+     * // Create many ModuleColorSettings
+     * const moduleColorSetting = await prisma.moduleColorSetting.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ModuleColorSettingCreateManyArgs>(args?: SelectSubset<T, ModuleColorSettingCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ModuleColorSettings and returns the data saved in the database.
+     * @param {ModuleColorSettingCreateManyAndReturnArgs} args - Arguments to create many ModuleColorSettings.
+     * @example
+     * // Create many ModuleColorSettings
+     * const moduleColorSetting = await prisma.moduleColorSetting.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ModuleColorSettings and only return the `id`
+     * const moduleColorSettingWithIdOnly = await prisma.moduleColorSetting.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ModuleColorSettingCreateManyAndReturnArgs>(args?: SelectSubset<T, ModuleColorSettingCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModuleColorSettingPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ModuleColorSetting.
+     * @param {ModuleColorSettingDeleteArgs} args - Arguments to delete one ModuleColorSetting.
+     * @example
+     * // Delete one ModuleColorSetting
+     * const ModuleColorSetting = await prisma.moduleColorSetting.delete({
+     *   where: {
+     *     // ... filter to delete one ModuleColorSetting
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ModuleColorSettingDeleteArgs>(args: SelectSubset<T, ModuleColorSettingDeleteArgs<ExtArgs>>): Prisma__ModuleColorSettingClient<$Result.GetResult<Prisma.$ModuleColorSettingPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ModuleColorSetting.
+     * @param {ModuleColorSettingUpdateArgs} args - Arguments to update one ModuleColorSetting.
+     * @example
+     * // Update one ModuleColorSetting
+     * const moduleColorSetting = await prisma.moduleColorSetting.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ModuleColorSettingUpdateArgs>(args: SelectSubset<T, ModuleColorSettingUpdateArgs<ExtArgs>>): Prisma__ModuleColorSettingClient<$Result.GetResult<Prisma.$ModuleColorSettingPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ModuleColorSettings.
+     * @param {ModuleColorSettingDeleteManyArgs} args - Arguments to filter ModuleColorSettings to delete.
+     * @example
+     * // Delete a few ModuleColorSettings
+     * const { count } = await prisma.moduleColorSetting.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ModuleColorSettingDeleteManyArgs>(args?: SelectSubset<T, ModuleColorSettingDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ModuleColorSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleColorSettingUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ModuleColorSettings
+     * const moduleColorSetting = await prisma.moduleColorSetting.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ModuleColorSettingUpdateManyArgs>(args: SelectSubset<T, ModuleColorSettingUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ModuleColorSettings and returns the data updated in the database.
+     * @param {ModuleColorSettingUpdateManyAndReturnArgs} args - Arguments to update many ModuleColorSettings.
+     * @example
+     * // Update many ModuleColorSettings
+     * const moduleColorSetting = await prisma.moduleColorSetting.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ModuleColorSettings and only return the `id`
+     * const moduleColorSettingWithIdOnly = await prisma.moduleColorSetting.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ModuleColorSettingUpdateManyAndReturnArgs>(args: SelectSubset<T, ModuleColorSettingUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModuleColorSettingPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ModuleColorSetting.
+     * @param {ModuleColorSettingUpsertArgs} args - Arguments to update or create a ModuleColorSetting.
+     * @example
+     * // Update or create a ModuleColorSetting
+     * const moduleColorSetting = await prisma.moduleColorSetting.upsert({
+     *   create: {
+     *     // ... data to create a ModuleColorSetting
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ModuleColorSetting we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ModuleColorSettingUpsertArgs>(args: SelectSubset<T, ModuleColorSettingUpsertArgs<ExtArgs>>): Prisma__ModuleColorSettingClient<$Result.GetResult<Prisma.$ModuleColorSettingPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ModuleColorSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleColorSettingCountArgs} args - Arguments to filter ModuleColorSettings to count.
+     * @example
+     * // Count the number of ModuleColorSettings
+     * const count = await prisma.moduleColorSetting.count({
+     *   where: {
+     *     // ... the filter for the ModuleColorSettings we want to count
+     *   }
+     * })
+    **/
+    count<T extends ModuleColorSettingCountArgs>(
+      args?: Subset<T, ModuleColorSettingCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ModuleColorSettingCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ModuleColorSetting.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleColorSettingAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ModuleColorSettingAggregateArgs>(args: Subset<T, ModuleColorSettingAggregateArgs>): Prisma.PrismaPromise<GetModuleColorSettingAggregateType<T>>
+
+    /**
+     * Group by ModuleColorSetting.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleColorSettingGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ModuleColorSettingGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ModuleColorSettingGroupByArgs['orderBy'] }
+        : { orderBy?: ModuleColorSettingGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ModuleColorSettingGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetModuleColorSettingGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ModuleColorSetting model
+   */
+  readonly fields: ModuleColorSettingFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ModuleColorSetting.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ModuleColorSettingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ModuleColorSetting model
+   */
+  interface ModuleColorSettingFieldRefs {
+    readonly id: FieldRef<"ModuleColorSetting", 'String'>
+    readonly module: FieldRef<"ModuleColorSetting", 'ColorSettingModule'>
+    readonly scope: FieldRef<"ModuleColorSetting", 'ColorSettingScope'>
+    readonly entityKey: FieldRef<"ModuleColorSetting", 'String'>
+    readonly color: FieldRef<"ModuleColorSetting", 'String'>
+    readonly createdAt: FieldRef<"ModuleColorSetting", 'DateTime'>
+    readonly updatedAt: FieldRef<"ModuleColorSetting", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ModuleColorSetting findUnique
+   */
+  export type ModuleColorSettingFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleColorSetting
+     */
+    select?: ModuleColorSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleColorSetting
+     */
+    omit?: ModuleColorSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which ModuleColorSetting to fetch.
+     */
+    where: ModuleColorSettingWhereUniqueInput
+  }
+
+  /**
+   * ModuleColorSetting findUniqueOrThrow
+   */
+  export type ModuleColorSettingFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleColorSetting
+     */
+    select?: ModuleColorSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleColorSetting
+     */
+    omit?: ModuleColorSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which ModuleColorSetting to fetch.
+     */
+    where: ModuleColorSettingWhereUniqueInput
+  }
+
+  /**
+   * ModuleColorSetting findFirst
+   */
+  export type ModuleColorSettingFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleColorSetting
+     */
+    select?: ModuleColorSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleColorSetting
+     */
+    omit?: ModuleColorSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which ModuleColorSetting to fetch.
+     */
+    where?: ModuleColorSettingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModuleColorSettings to fetch.
+     */
+    orderBy?: ModuleColorSettingOrderByWithRelationInput | ModuleColorSettingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ModuleColorSettings.
+     */
+    cursor?: ModuleColorSettingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModuleColorSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModuleColorSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModuleColorSettings.
+     */
+    distinct?: ModuleColorSettingScalarFieldEnum | ModuleColorSettingScalarFieldEnum[]
+  }
+
+  /**
+   * ModuleColorSetting findFirstOrThrow
+   */
+  export type ModuleColorSettingFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleColorSetting
+     */
+    select?: ModuleColorSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleColorSetting
+     */
+    omit?: ModuleColorSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which ModuleColorSetting to fetch.
+     */
+    where?: ModuleColorSettingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModuleColorSettings to fetch.
+     */
+    orderBy?: ModuleColorSettingOrderByWithRelationInput | ModuleColorSettingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ModuleColorSettings.
+     */
+    cursor?: ModuleColorSettingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModuleColorSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModuleColorSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModuleColorSettings.
+     */
+    distinct?: ModuleColorSettingScalarFieldEnum | ModuleColorSettingScalarFieldEnum[]
+  }
+
+  /**
+   * ModuleColorSetting findMany
+   */
+  export type ModuleColorSettingFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleColorSetting
+     */
+    select?: ModuleColorSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleColorSetting
+     */
+    omit?: ModuleColorSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which ModuleColorSettings to fetch.
+     */
+    where?: ModuleColorSettingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModuleColorSettings to fetch.
+     */
+    orderBy?: ModuleColorSettingOrderByWithRelationInput | ModuleColorSettingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ModuleColorSettings.
+     */
+    cursor?: ModuleColorSettingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModuleColorSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModuleColorSettings.
+     */
+    skip?: number
+    distinct?: ModuleColorSettingScalarFieldEnum | ModuleColorSettingScalarFieldEnum[]
+  }
+
+  /**
+   * ModuleColorSetting create
+   */
+  export type ModuleColorSettingCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleColorSetting
+     */
+    select?: ModuleColorSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleColorSetting
+     */
+    omit?: ModuleColorSettingOmit<ExtArgs> | null
+    /**
+     * The data needed to create a ModuleColorSetting.
+     */
+    data: XOR<ModuleColorSettingCreateInput, ModuleColorSettingUncheckedCreateInput>
+  }
+
+  /**
+   * ModuleColorSetting createMany
+   */
+  export type ModuleColorSettingCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ModuleColorSettings.
+     */
+    data: ModuleColorSettingCreateManyInput | ModuleColorSettingCreateManyInput[]
+  }
+
+  /**
+   * ModuleColorSetting createManyAndReturn
+   */
+  export type ModuleColorSettingCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleColorSetting
+     */
+    select?: ModuleColorSettingSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleColorSetting
+     */
+    omit?: ModuleColorSettingOmit<ExtArgs> | null
+    /**
+     * The data used to create many ModuleColorSettings.
+     */
+    data: ModuleColorSettingCreateManyInput | ModuleColorSettingCreateManyInput[]
+  }
+
+  /**
+   * ModuleColorSetting update
+   */
+  export type ModuleColorSettingUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleColorSetting
+     */
+    select?: ModuleColorSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleColorSetting
+     */
+    omit?: ModuleColorSettingOmit<ExtArgs> | null
+    /**
+     * The data needed to update a ModuleColorSetting.
+     */
+    data: XOR<ModuleColorSettingUpdateInput, ModuleColorSettingUncheckedUpdateInput>
+    /**
+     * Choose, which ModuleColorSetting to update.
+     */
+    where: ModuleColorSettingWhereUniqueInput
+  }
+
+  /**
+   * ModuleColorSetting updateMany
+   */
+  export type ModuleColorSettingUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ModuleColorSettings.
+     */
+    data: XOR<ModuleColorSettingUpdateManyMutationInput, ModuleColorSettingUncheckedUpdateManyInput>
+    /**
+     * Filter which ModuleColorSettings to update
+     */
+    where?: ModuleColorSettingWhereInput
+    /**
+     * Limit how many ModuleColorSettings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModuleColorSetting updateManyAndReturn
+   */
+  export type ModuleColorSettingUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleColorSetting
+     */
+    select?: ModuleColorSettingSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleColorSetting
+     */
+    omit?: ModuleColorSettingOmit<ExtArgs> | null
+    /**
+     * The data used to update ModuleColorSettings.
+     */
+    data: XOR<ModuleColorSettingUpdateManyMutationInput, ModuleColorSettingUncheckedUpdateManyInput>
+    /**
+     * Filter which ModuleColorSettings to update
+     */
+    where?: ModuleColorSettingWhereInput
+    /**
+     * Limit how many ModuleColorSettings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModuleColorSetting upsert
+   */
+  export type ModuleColorSettingUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleColorSetting
+     */
+    select?: ModuleColorSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleColorSetting
+     */
+    omit?: ModuleColorSettingOmit<ExtArgs> | null
+    /**
+     * The filter to search for the ModuleColorSetting to update in case it exists.
+     */
+    where: ModuleColorSettingWhereUniqueInput
+    /**
+     * In case the ModuleColorSetting found by the `where` argument doesn't exist, create a new ModuleColorSetting with this data.
+     */
+    create: XOR<ModuleColorSettingCreateInput, ModuleColorSettingUncheckedCreateInput>
+    /**
+     * In case the ModuleColorSetting was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ModuleColorSettingUpdateInput, ModuleColorSettingUncheckedUpdateInput>
+  }
+
+  /**
+   * ModuleColorSetting delete
+   */
+  export type ModuleColorSettingDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleColorSetting
+     */
+    select?: ModuleColorSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleColorSetting
+     */
+    omit?: ModuleColorSettingOmit<ExtArgs> | null
+    /**
+     * Filter which ModuleColorSetting to delete.
+     */
+    where: ModuleColorSettingWhereUniqueInput
+  }
+
+  /**
+   * ModuleColorSetting deleteMany
+   */
+  export type ModuleColorSettingDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ModuleColorSettings to delete
+     */
+    where?: ModuleColorSettingWhereInput
+    /**
+     * Limit how many ModuleColorSettings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModuleColorSetting without action
+   */
+  export type ModuleColorSettingDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleColorSetting
+     */
+    select?: ModuleColorSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleColorSetting
+     */
+    omit?: ModuleColorSettingOmit<ExtArgs> | null
   }
 
 
@@ -8390,10 +9960,12 @@ export namespace Prisma {
   }
 
   export type TaskAvgAggregateOutputType = {
+    amount: number | null
     sortOrder: number | null
   }
 
   export type TaskSumAggregateOutputType = {
+    amount: number | null
     sortOrder: number | null
   }
 
@@ -8401,6 +9973,10 @@ export namespace Prisma {
     id: string | null
     title: string | null
     description: string | null
+    taskType: $Enums.TaskType | null
+    amount: number | null
+    expenseCategory: string | null
+    scope: $Enums.ExpenseScope | null
     userId: string | null
     isShared: boolean | null
     dueDate: Date | null
@@ -8418,6 +9994,10 @@ export namespace Prisma {
     id: string | null
     title: string | null
     description: string | null
+    taskType: $Enums.TaskType | null
+    amount: number | null
+    expenseCategory: string | null
+    scope: $Enums.ExpenseScope | null
     userId: string | null
     isShared: boolean | null
     dueDate: Date | null
@@ -8435,6 +10015,10 @@ export namespace Prisma {
     id: number
     title: number
     description: number
+    taskType: number
+    amount: number
+    expenseCategory: number
+    scope: number
     userId: number
     isShared: number
     dueDate: number
@@ -8451,10 +10035,12 @@ export namespace Prisma {
 
 
   export type TaskAvgAggregateInputType = {
+    amount?: true
     sortOrder?: true
   }
 
   export type TaskSumAggregateInputType = {
+    amount?: true
     sortOrder?: true
   }
 
@@ -8462,6 +10048,10 @@ export namespace Prisma {
     id?: true
     title?: true
     description?: true
+    taskType?: true
+    amount?: true
+    expenseCategory?: true
+    scope?: true
     userId?: true
     isShared?: true
     dueDate?: true
@@ -8479,6 +10069,10 @@ export namespace Prisma {
     id?: true
     title?: true
     description?: true
+    taskType?: true
+    amount?: true
+    expenseCategory?: true
+    scope?: true
     userId?: true
     isShared?: true
     dueDate?: true
@@ -8496,6 +10090,10 @@ export namespace Prisma {
     id?: true
     title?: true
     description?: true
+    taskType?: true
+    amount?: true
+    expenseCategory?: true
+    scope?: true
     userId?: true
     isShared?: true
     dueDate?: true
@@ -8600,6 +10198,10 @@ export namespace Prisma {
     id: string
     title: string
     description: string | null
+    taskType: $Enums.TaskType
+    amount: number | null
+    expenseCategory: string | null
+    scope: $Enums.ExpenseScope
     userId: string
     isShared: boolean
     dueDate: Date | null
@@ -8636,6 +10238,10 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     description?: boolean
+    taskType?: boolean
+    amount?: boolean
+    expenseCategory?: boolean
+    scope?: boolean
     userId?: boolean
     isShared?: boolean
     dueDate?: boolean
@@ -8654,6 +10260,10 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     description?: boolean
+    taskType?: boolean
+    amount?: boolean
+    expenseCategory?: boolean
+    scope?: boolean
     userId?: boolean
     isShared?: boolean
     dueDate?: boolean
@@ -8672,6 +10282,10 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     description?: boolean
+    taskType?: boolean
+    amount?: boolean
+    expenseCategory?: boolean
+    scope?: boolean
     userId?: boolean
     isShared?: boolean
     dueDate?: boolean
@@ -8690,6 +10304,10 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     description?: boolean
+    taskType?: boolean
+    amount?: boolean
+    expenseCategory?: boolean
+    scope?: boolean
     userId?: boolean
     isShared?: boolean
     dueDate?: boolean
@@ -8703,7 +10321,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type TaskOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "userId" | "isShared" | "dueDate" | "priority" | "status" | "notificationEnabled" | "pinToDashboard" | "sortOrder" | "completedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["task"]>
+  export type TaskOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "taskType" | "amount" | "expenseCategory" | "scope" | "userId" | "isShared" | "dueDate" | "priority" | "status" | "notificationEnabled" | "pinToDashboard" | "sortOrder" | "completedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["task"]>
   export type TaskInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -8723,6 +10341,10 @@ export namespace Prisma {
       id: string
       title: string
       description: string | null
+      taskType: $Enums.TaskType
+      amount: number | null
+      expenseCategory: string | null
+      scope: $Enums.ExpenseScope
       userId: string
       isShared: boolean
       dueDate: Date | null
@@ -9161,6 +10783,10 @@ export namespace Prisma {
     readonly id: FieldRef<"Task", 'String'>
     readonly title: FieldRef<"Task", 'String'>
     readonly description: FieldRef<"Task", 'String'>
+    readonly taskType: FieldRef<"Task", 'TaskType'>
+    readonly amount: FieldRef<"Task", 'Float'>
+    readonly expenseCategory: FieldRef<"Task", 'String'>
+    readonly scope: FieldRef<"Task", 'ExpenseScope'>
     readonly userId: FieldRef<"Task", 'String'>
     readonly isShared: FieldRef<"Task", 'Boolean'>
     readonly dueDate: FieldRef<"Task", 'DateTime'>
@@ -12027,6 +13653,7 @@ export namespace Prisma {
     title: string | null
     content: string | null
     category: string | null
+    field: string | null
     tags: string | null
     status: $Enums.IdeaStatus | null
     userId: string | null
@@ -12040,6 +13667,7 @@ export namespace Prisma {
     title: string | null
     content: string | null
     category: string | null
+    field: string | null
     tags: string | null
     status: $Enums.IdeaStatus | null
     userId: string | null
@@ -12053,6 +13681,7 @@ export namespace Prisma {
     title: number
     content: number
     category: number
+    field: number
     tags: number
     status: number
     userId: number
@@ -12068,6 +13697,7 @@ export namespace Prisma {
     title?: true
     content?: true
     category?: true
+    field?: true
     tags?: true
     status?: true
     userId?: true
@@ -12081,6 +13711,7 @@ export namespace Prisma {
     title?: true
     content?: true
     category?: true
+    field?: true
     tags?: true
     status?: true
     userId?: true
@@ -12094,6 +13725,7 @@ export namespace Prisma {
     title?: true
     content?: true
     category?: true
+    field?: true
     tags?: true
     status?: true
     userId?: true
@@ -12180,6 +13812,7 @@ export namespace Prisma {
     title: string
     content: string | null
     category: string | null
+    field: string | null
     tags: string | null
     status: $Enums.IdeaStatus
     userId: string
@@ -12210,6 +13843,7 @@ export namespace Prisma {
     title?: boolean
     content?: boolean
     category?: boolean
+    field?: boolean
     tags?: boolean
     status?: boolean
     userId?: boolean
@@ -12224,6 +13858,7 @@ export namespace Prisma {
     title?: boolean
     content?: boolean
     category?: boolean
+    field?: boolean
     tags?: boolean
     status?: boolean
     userId?: boolean
@@ -12238,6 +13873,7 @@ export namespace Prisma {
     title?: boolean
     content?: boolean
     category?: boolean
+    field?: boolean
     tags?: boolean
     status?: boolean
     userId?: boolean
@@ -12252,6 +13888,7 @@ export namespace Prisma {
     title?: boolean
     content?: boolean
     category?: boolean
+    field?: boolean
     tags?: boolean
     status?: boolean
     userId?: boolean
@@ -12260,7 +13897,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type IdeaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "content" | "category" | "tags" | "status" | "userId" | "pinToDashboard" | "createdAt" | "updatedAt", ExtArgs["result"]["idea"]>
+  export type IdeaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "content" | "category" | "field" | "tags" | "status" | "userId" | "pinToDashboard" | "createdAt" | "updatedAt", ExtArgs["result"]["idea"]>
   export type IdeaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -12281,6 +13918,7 @@ export namespace Prisma {
       title: string
       content: string | null
       category: string | null
+      field: string | null
       tags: string | null
       status: $Enums.IdeaStatus
       userId: string
@@ -12715,6 +14353,7 @@ export namespace Prisma {
     readonly title: FieldRef<"Idea", 'String'>
     readonly content: FieldRef<"Idea", 'String'>
     readonly category: FieldRef<"Idea", 'String'>
+    readonly field: FieldRef<"Idea", 'String'>
     readonly tags: FieldRef<"Idea", 'String'>
     readonly status: FieldRef<"Idea", 'IdeaStatus'>
     readonly userId: FieldRef<"Idea", 'String'>
@@ -18977,6 +20616,7 @@ export namespace Prisma {
     date: Date | null
     description: string | null
     amount: number | null
+    payment: $Enums.ExpensePayment | null
     category: string | null
     scope: $Enums.ExpenseScope | null
     note: string | null
@@ -18991,6 +20631,7 @@ export namespace Prisma {
     date: Date | null
     description: string | null
     amount: number | null
+    payment: $Enums.ExpensePayment | null
     category: string | null
     scope: $Enums.ExpenseScope | null
     note: string | null
@@ -19005,6 +20646,7 @@ export namespace Prisma {
     date: number
     description: number
     amount: number
+    payment: number
     category: number
     scope: number
     note: number
@@ -19029,6 +20671,7 @@ export namespace Prisma {
     date?: true
     description?: true
     amount?: true
+    payment?: true
     category?: true
     scope?: true
     note?: true
@@ -19043,6 +20686,7 @@ export namespace Prisma {
     date?: true
     description?: true
     amount?: true
+    payment?: true
     category?: true
     scope?: true
     note?: true
@@ -19057,6 +20701,7 @@ export namespace Prisma {
     date?: true
     description?: true
     amount?: true
+    payment?: true
     category?: true
     scope?: true
     note?: true
@@ -19158,6 +20803,7 @@ export namespace Prisma {
     date: Date
     description: string
     amount: number
+    payment: $Enums.ExpensePayment
     category: string | null
     scope: $Enums.ExpenseScope
     note: string | null
@@ -19191,6 +20837,7 @@ export namespace Prisma {
     date?: boolean
     description?: boolean
     amount?: boolean
+    payment?: boolean
     category?: boolean
     scope?: boolean
     note?: boolean
@@ -19206,6 +20853,7 @@ export namespace Prisma {
     date?: boolean
     description?: boolean
     amount?: boolean
+    payment?: boolean
     category?: boolean
     scope?: boolean
     note?: boolean
@@ -19221,6 +20869,7 @@ export namespace Prisma {
     date?: boolean
     description?: boolean
     amount?: boolean
+    payment?: boolean
     category?: boolean
     scope?: boolean
     note?: boolean
@@ -19236,6 +20885,7 @@ export namespace Prisma {
     date?: boolean
     description?: boolean
     amount?: boolean
+    payment?: boolean
     category?: boolean
     scope?: boolean
     note?: boolean
@@ -19245,7 +20895,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type ExpenseOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "date" | "description" | "amount" | "category" | "scope" | "note" | "recurring" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["expense"]>
+  export type ExpenseOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "date" | "description" | "amount" | "payment" | "category" | "scope" | "note" | "recurring" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["expense"]>
   export type ExpenseInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -19266,6 +20916,7 @@ export namespace Prisma {
       date: Date
       description: string
       amount: number
+      payment: $Enums.ExpensePayment
       category: string | null
       scope: $Enums.ExpenseScope
       note: string | null
@@ -19701,6 +21352,7 @@ export namespace Prisma {
     readonly date: FieldRef<"Expense", 'DateTime'>
     readonly description: FieldRef<"Expense", 'String'>
     readonly amount: FieldRef<"Expense", 'Float'>
+    readonly payment: FieldRef<"Expense", 'ExpensePayment'>
     readonly category: FieldRef<"Expense", 'String'>
     readonly scope: FieldRef<"Expense", 'ExpenseScope'>
     readonly note: FieldRef<"Expense", 'String'>
@@ -20117,6 +21769,1174 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ExpenseInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model FundTransaction
+   */
+
+  export type AggregateFundTransaction = {
+    _count: FundTransactionCountAggregateOutputType | null
+    _avg: FundTransactionAvgAggregateOutputType | null
+    _sum: FundTransactionSumAggregateOutputType | null
+    _min: FundTransactionMinAggregateOutputType | null
+    _max: FundTransactionMaxAggregateOutputType | null
+  }
+
+  export type FundTransactionAvgAggregateOutputType = {
+    amount: number | null
+  }
+
+  export type FundTransactionSumAggregateOutputType = {
+    amount: number | null
+  }
+
+  export type FundTransactionMinAggregateOutputType = {
+    id: string | null
+    date: Date | null
+    description: string | null
+    amount: number | null
+    type: $Enums.HobbyFundType | null
+    scope: $Enums.HobbyFundScope | null
+    category: $Enums.HobbyFundCategory | null
+    condition: string | null
+    userId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type FundTransactionMaxAggregateOutputType = {
+    id: string | null
+    date: Date | null
+    description: string | null
+    amount: number | null
+    type: $Enums.HobbyFundType | null
+    scope: $Enums.HobbyFundScope | null
+    category: $Enums.HobbyFundCategory | null
+    condition: string | null
+    userId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type FundTransactionCountAggregateOutputType = {
+    id: number
+    date: number
+    description: number
+    amount: number
+    type: number
+    scope: number
+    category: number
+    condition: number
+    userId: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type FundTransactionAvgAggregateInputType = {
+    amount?: true
+  }
+
+  export type FundTransactionSumAggregateInputType = {
+    amount?: true
+  }
+
+  export type FundTransactionMinAggregateInputType = {
+    id?: true
+    date?: true
+    description?: true
+    amount?: true
+    type?: true
+    scope?: true
+    category?: true
+    condition?: true
+    userId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type FundTransactionMaxAggregateInputType = {
+    id?: true
+    date?: true
+    description?: true
+    amount?: true
+    type?: true
+    scope?: true
+    category?: true
+    condition?: true
+    userId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type FundTransactionCountAggregateInputType = {
+    id?: true
+    date?: true
+    description?: true
+    amount?: true
+    type?: true
+    scope?: true
+    category?: true
+    condition?: true
+    userId?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type FundTransactionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which FundTransaction to aggregate.
+     */
+    where?: FundTransactionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FundTransactions to fetch.
+     */
+    orderBy?: FundTransactionOrderByWithRelationInput | FundTransactionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: FundTransactionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FundTransactions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FundTransactions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned FundTransactions
+    **/
+    _count?: true | FundTransactionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: FundTransactionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: FundTransactionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: FundTransactionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: FundTransactionMaxAggregateInputType
+  }
+
+  export type GetFundTransactionAggregateType<T extends FundTransactionAggregateArgs> = {
+        [P in keyof T & keyof AggregateFundTransaction]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateFundTransaction[P]>
+      : GetScalarType<T[P], AggregateFundTransaction[P]>
+  }
+
+
+
+
+  export type FundTransactionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: FundTransactionWhereInput
+    orderBy?: FundTransactionOrderByWithAggregationInput | FundTransactionOrderByWithAggregationInput[]
+    by: FundTransactionScalarFieldEnum[] | FundTransactionScalarFieldEnum
+    having?: FundTransactionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: FundTransactionCountAggregateInputType | true
+    _avg?: FundTransactionAvgAggregateInputType
+    _sum?: FundTransactionSumAggregateInputType
+    _min?: FundTransactionMinAggregateInputType
+    _max?: FundTransactionMaxAggregateInputType
+  }
+
+  export type FundTransactionGroupByOutputType = {
+    id: string
+    date: Date
+    description: string
+    amount: number
+    type: $Enums.HobbyFundType
+    scope: $Enums.HobbyFundScope
+    category: $Enums.HobbyFundCategory
+    condition: string | null
+    userId: string
+    createdAt: Date
+    updatedAt: Date
+    _count: FundTransactionCountAggregateOutputType | null
+    _avg: FundTransactionAvgAggregateOutputType | null
+    _sum: FundTransactionSumAggregateOutputType | null
+    _min: FundTransactionMinAggregateOutputType | null
+    _max: FundTransactionMaxAggregateOutputType | null
+  }
+
+  type GetFundTransactionGroupByPayload<T extends FundTransactionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<FundTransactionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof FundTransactionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], FundTransactionGroupByOutputType[P]>
+            : GetScalarType<T[P], FundTransactionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type FundTransactionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    date?: boolean
+    description?: boolean
+    amount?: boolean
+    type?: boolean
+    scope?: boolean
+    category?: boolean
+    condition?: boolean
+    userId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["fundTransaction"]>
+
+  export type FundTransactionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    date?: boolean
+    description?: boolean
+    amount?: boolean
+    type?: boolean
+    scope?: boolean
+    category?: boolean
+    condition?: boolean
+    userId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["fundTransaction"]>
+
+  export type FundTransactionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    date?: boolean
+    description?: boolean
+    amount?: boolean
+    type?: boolean
+    scope?: boolean
+    category?: boolean
+    condition?: boolean
+    userId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["fundTransaction"]>
+
+  export type FundTransactionSelectScalar = {
+    id?: boolean
+    date?: boolean
+    description?: boolean
+    amount?: boolean
+    type?: boolean
+    scope?: boolean
+    category?: boolean
+    condition?: boolean
+    userId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type FundTransactionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "date" | "description" | "amount" | "type" | "scope" | "category" | "condition" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["fundTransaction"]>
+  export type FundTransactionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type FundTransactionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type FundTransactionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $FundTransactionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "FundTransaction"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      date: Date
+      description: string
+      amount: number
+      type: $Enums.HobbyFundType
+      scope: $Enums.HobbyFundScope
+      category: $Enums.HobbyFundCategory
+      condition: string | null
+      userId: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["fundTransaction"]>
+    composites: {}
+  }
+
+  type FundTransactionGetPayload<S extends boolean | null | undefined | FundTransactionDefaultArgs> = $Result.GetResult<Prisma.$FundTransactionPayload, S>
+
+  type FundTransactionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<FundTransactionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: FundTransactionCountAggregateInputType | true
+    }
+
+  export interface FundTransactionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['FundTransaction'], meta: { name: 'FundTransaction' } }
+    /**
+     * Find zero or one FundTransaction that matches the filter.
+     * @param {FundTransactionFindUniqueArgs} args - Arguments to find a FundTransaction
+     * @example
+     * // Get one FundTransaction
+     * const fundTransaction = await prisma.fundTransaction.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends FundTransactionFindUniqueArgs>(args: SelectSubset<T, FundTransactionFindUniqueArgs<ExtArgs>>): Prisma__FundTransactionClient<$Result.GetResult<Prisma.$FundTransactionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one FundTransaction that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {FundTransactionFindUniqueOrThrowArgs} args - Arguments to find a FundTransaction
+     * @example
+     * // Get one FundTransaction
+     * const fundTransaction = await prisma.fundTransaction.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends FundTransactionFindUniqueOrThrowArgs>(args: SelectSubset<T, FundTransactionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__FundTransactionClient<$Result.GetResult<Prisma.$FundTransactionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first FundTransaction that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FundTransactionFindFirstArgs} args - Arguments to find a FundTransaction
+     * @example
+     * // Get one FundTransaction
+     * const fundTransaction = await prisma.fundTransaction.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends FundTransactionFindFirstArgs>(args?: SelectSubset<T, FundTransactionFindFirstArgs<ExtArgs>>): Prisma__FundTransactionClient<$Result.GetResult<Prisma.$FundTransactionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first FundTransaction that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FundTransactionFindFirstOrThrowArgs} args - Arguments to find a FundTransaction
+     * @example
+     * // Get one FundTransaction
+     * const fundTransaction = await prisma.fundTransaction.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends FundTransactionFindFirstOrThrowArgs>(args?: SelectSubset<T, FundTransactionFindFirstOrThrowArgs<ExtArgs>>): Prisma__FundTransactionClient<$Result.GetResult<Prisma.$FundTransactionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more FundTransactions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FundTransactionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all FundTransactions
+     * const fundTransactions = await prisma.fundTransaction.findMany()
+     * 
+     * // Get first 10 FundTransactions
+     * const fundTransactions = await prisma.fundTransaction.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const fundTransactionWithIdOnly = await prisma.fundTransaction.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends FundTransactionFindManyArgs>(args?: SelectSubset<T, FundTransactionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FundTransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a FundTransaction.
+     * @param {FundTransactionCreateArgs} args - Arguments to create a FundTransaction.
+     * @example
+     * // Create one FundTransaction
+     * const FundTransaction = await prisma.fundTransaction.create({
+     *   data: {
+     *     // ... data to create a FundTransaction
+     *   }
+     * })
+     * 
+     */
+    create<T extends FundTransactionCreateArgs>(args: SelectSubset<T, FundTransactionCreateArgs<ExtArgs>>): Prisma__FundTransactionClient<$Result.GetResult<Prisma.$FundTransactionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many FundTransactions.
+     * @param {FundTransactionCreateManyArgs} args - Arguments to create many FundTransactions.
+     * @example
+     * // Create many FundTransactions
+     * const fundTransaction = await prisma.fundTransaction.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends FundTransactionCreateManyArgs>(args?: SelectSubset<T, FundTransactionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many FundTransactions and returns the data saved in the database.
+     * @param {FundTransactionCreateManyAndReturnArgs} args - Arguments to create many FundTransactions.
+     * @example
+     * // Create many FundTransactions
+     * const fundTransaction = await prisma.fundTransaction.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many FundTransactions and only return the `id`
+     * const fundTransactionWithIdOnly = await prisma.fundTransaction.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends FundTransactionCreateManyAndReturnArgs>(args?: SelectSubset<T, FundTransactionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FundTransactionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a FundTransaction.
+     * @param {FundTransactionDeleteArgs} args - Arguments to delete one FundTransaction.
+     * @example
+     * // Delete one FundTransaction
+     * const FundTransaction = await prisma.fundTransaction.delete({
+     *   where: {
+     *     // ... filter to delete one FundTransaction
+     *   }
+     * })
+     * 
+     */
+    delete<T extends FundTransactionDeleteArgs>(args: SelectSubset<T, FundTransactionDeleteArgs<ExtArgs>>): Prisma__FundTransactionClient<$Result.GetResult<Prisma.$FundTransactionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one FundTransaction.
+     * @param {FundTransactionUpdateArgs} args - Arguments to update one FundTransaction.
+     * @example
+     * // Update one FundTransaction
+     * const fundTransaction = await prisma.fundTransaction.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends FundTransactionUpdateArgs>(args: SelectSubset<T, FundTransactionUpdateArgs<ExtArgs>>): Prisma__FundTransactionClient<$Result.GetResult<Prisma.$FundTransactionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more FundTransactions.
+     * @param {FundTransactionDeleteManyArgs} args - Arguments to filter FundTransactions to delete.
+     * @example
+     * // Delete a few FundTransactions
+     * const { count } = await prisma.fundTransaction.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends FundTransactionDeleteManyArgs>(args?: SelectSubset<T, FundTransactionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more FundTransactions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FundTransactionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many FundTransactions
+     * const fundTransaction = await prisma.fundTransaction.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends FundTransactionUpdateManyArgs>(args: SelectSubset<T, FundTransactionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more FundTransactions and returns the data updated in the database.
+     * @param {FundTransactionUpdateManyAndReturnArgs} args - Arguments to update many FundTransactions.
+     * @example
+     * // Update many FundTransactions
+     * const fundTransaction = await prisma.fundTransaction.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more FundTransactions and only return the `id`
+     * const fundTransactionWithIdOnly = await prisma.fundTransaction.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends FundTransactionUpdateManyAndReturnArgs>(args: SelectSubset<T, FundTransactionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FundTransactionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one FundTransaction.
+     * @param {FundTransactionUpsertArgs} args - Arguments to update or create a FundTransaction.
+     * @example
+     * // Update or create a FundTransaction
+     * const fundTransaction = await prisma.fundTransaction.upsert({
+     *   create: {
+     *     // ... data to create a FundTransaction
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the FundTransaction we want to update
+     *   }
+     * })
+     */
+    upsert<T extends FundTransactionUpsertArgs>(args: SelectSubset<T, FundTransactionUpsertArgs<ExtArgs>>): Prisma__FundTransactionClient<$Result.GetResult<Prisma.$FundTransactionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of FundTransactions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FundTransactionCountArgs} args - Arguments to filter FundTransactions to count.
+     * @example
+     * // Count the number of FundTransactions
+     * const count = await prisma.fundTransaction.count({
+     *   where: {
+     *     // ... the filter for the FundTransactions we want to count
+     *   }
+     * })
+    **/
+    count<T extends FundTransactionCountArgs>(
+      args?: Subset<T, FundTransactionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], FundTransactionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a FundTransaction.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FundTransactionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends FundTransactionAggregateArgs>(args: Subset<T, FundTransactionAggregateArgs>): Prisma.PrismaPromise<GetFundTransactionAggregateType<T>>
+
+    /**
+     * Group by FundTransaction.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FundTransactionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends FundTransactionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: FundTransactionGroupByArgs['orderBy'] }
+        : { orderBy?: FundTransactionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, FundTransactionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetFundTransactionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the FundTransaction model
+   */
+  readonly fields: FundTransactionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for FundTransaction.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__FundTransactionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the FundTransaction model
+   */
+  interface FundTransactionFieldRefs {
+    readonly id: FieldRef<"FundTransaction", 'String'>
+    readonly date: FieldRef<"FundTransaction", 'DateTime'>
+    readonly description: FieldRef<"FundTransaction", 'String'>
+    readonly amount: FieldRef<"FundTransaction", 'Float'>
+    readonly type: FieldRef<"FundTransaction", 'HobbyFundType'>
+    readonly scope: FieldRef<"FundTransaction", 'HobbyFundScope'>
+    readonly category: FieldRef<"FundTransaction", 'HobbyFundCategory'>
+    readonly condition: FieldRef<"FundTransaction", 'String'>
+    readonly userId: FieldRef<"FundTransaction", 'String'>
+    readonly createdAt: FieldRef<"FundTransaction", 'DateTime'>
+    readonly updatedAt: FieldRef<"FundTransaction", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * FundTransaction findUnique
+   */
+  export type FundTransactionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionInclude<ExtArgs> | null
+    /**
+     * Filter, which FundTransaction to fetch.
+     */
+    where: FundTransactionWhereUniqueInput
+  }
+
+  /**
+   * FundTransaction findUniqueOrThrow
+   */
+  export type FundTransactionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionInclude<ExtArgs> | null
+    /**
+     * Filter, which FundTransaction to fetch.
+     */
+    where: FundTransactionWhereUniqueInput
+  }
+
+  /**
+   * FundTransaction findFirst
+   */
+  export type FundTransactionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionInclude<ExtArgs> | null
+    /**
+     * Filter, which FundTransaction to fetch.
+     */
+    where?: FundTransactionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FundTransactions to fetch.
+     */
+    orderBy?: FundTransactionOrderByWithRelationInput | FundTransactionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for FundTransactions.
+     */
+    cursor?: FundTransactionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FundTransactions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FundTransactions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FundTransactions.
+     */
+    distinct?: FundTransactionScalarFieldEnum | FundTransactionScalarFieldEnum[]
+  }
+
+  /**
+   * FundTransaction findFirstOrThrow
+   */
+  export type FundTransactionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionInclude<ExtArgs> | null
+    /**
+     * Filter, which FundTransaction to fetch.
+     */
+    where?: FundTransactionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FundTransactions to fetch.
+     */
+    orderBy?: FundTransactionOrderByWithRelationInput | FundTransactionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for FundTransactions.
+     */
+    cursor?: FundTransactionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FundTransactions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FundTransactions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FundTransactions.
+     */
+    distinct?: FundTransactionScalarFieldEnum | FundTransactionScalarFieldEnum[]
+  }
+
+  /**
+   * FundTransaction findMany
+   */
+  export type FundTransactionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionInclude<ExtArgs> | null
+    /**
+     * Filter, which FundTransactions to fetch.
+     */
+    where?: FundTransactionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FundTransactions to fetch.
+     */
+    orderBy?: FundTransactionOrderByWithRelationInput | FundTransactionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing FundTransactions.
+     */
+    cursor?: FundTransactionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FundTransactions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FundTransactions.
+     */
+    skip?: number
+    distinct?: FundTransactionScalarFieldEnum | FundTransactionScalarFieldEnum[]
+  }
+
+  /**
+   * FundTransaction create
+   */
+  export type FundTransactionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a FundTransaction.
+     */
+    data: XOR<FundTransactionCreateInput, FundTransactionUncheckedCreateInput>
+  }
+
+  /**
+   * FundTransaction createMany
+   */
+  export type FundTransactionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many FundTransactions.
+     */
+    data: FundTransactionCreateManyInput | FundTransactionCreateManyInput[]
+  }
+
+  /**
+   * FundTransaction createManyAndReturn
+   */
+  export type FundTransactionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * The data used to create many FundTransactions.
+     */
+    data: FundTransactionCreateManyInput | FundTransactionCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * FundTransaction update
+   */
+  export type FundTransactionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a FundTransaction.
+     */
+    data: XOR<FundTransactionUpdateInput, FundTransactionUncheckedUpdateInput>
+    /**
+     * Choose, which FundTransaction to update.
+     */
+    where: FundTransactionWhereUniqueInput
+  }
+
+  /**
+   * FundTransaction updateMany
+   */
+  export type FundTransactionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update FundTransactions.
+     */
+    data: XOR<FundTransactionUpdateManyMutationInput, FundTransactionUncheckedUpdateManyInput>
+    /**
+     * Filter which FundTransactions to update
+     */
+    where?: FundTransactionWhereInput
+    /**
+     * Limit how many FundTransactions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * FundTransaction updateManyAndReturn
+   */
+  export type FundTransactionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * The data used to update FundTransactions.
+     */
+    data: XOR<FundTransactionUpdateManyMutationInput, FundTransactionUncheckedUpdateManyInput>
+    /**
+     * Filter which FundTransactions to update
+     */
+    where?: FundTransactionWhereInput
+    /**
+     * Limit how many FundTransactions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * FundTransaction upsert
+   */
+  export type FundTransactionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the FundTransaction to update in case it exists.
+     */
+    where: FundTransactionWhereUniqueInput
+    /**
+     * In case the FundTransaction found by the `where` argument doesn't exist, create a new FundTransaction with this data.
+     */
+    create: XOR<FundTransactionCreateInput, FundTransactionUncheckedCreateInput>
+    /**
+     * In case the FundTransaction was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<FundTransactionUpdateInput, FundTransactionUncheckedUpdateInput>
+  }
+
+  /**
+   * FundTransaction delete
+   */
+  export type FundTransactionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionInclude<ExtArgs> | null
+    /**
+     * Filter which FundTransaction to delete.
+     */
+    where: FundTransactionWhereUniqueInput
+  }
+
+  /**
+   * FundTransaction deleteMany
+   */
+  export type FundTransactionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which FundTransactions to delete
+     */
+    where?: FundTransactionWhereInput
+    /**
+     * Limit how many FundTransactions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * FundTransaction without action
+   */
+  export type FundTransactionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FundTransaction
+     */
+    select?: FundTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FundTransaction
+     */
+    omit?: FundTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FundTransactionInclude<ExtArgs> | null
   }
 
 
@@ -28273,16 +31093,47 @@ export namespace Prisma {
     role: 'role',
     active: 'active',
     theme: 'theme',
+    mfaEnabled: 'mfaEnabled',
+    mfaSecret: 'mfaSecret',
+    mfaPendingSecret: 'mfaPendingSecret',
     notificationEnabled: 'notificationEnabled',
     notificationChannel: 'notificationChannel',
     notificationEmail: 'notificationEmail',
     timezone: 'timezone',
     telegramChatId: 'telegramChatId',
+    avatarUrl: 'avatarUrl',
+    mobileNavItems: 'mobileNavItems',
+    featureGoals: 'featureGoals',
+    featureProjects: 'featureProjects',
+    featureIdeas: 'featureIdeas',
+    featureLearning: 'featureLearning',
+    featureExpenses: 'featureExpenses',
+    featureTasks: 'featureTasks',
+    featureHousework: 'featureHousework',
+    featureAssets: 'featureAssets',
+    featureCalendar: 'featureCalendar',
+    featureKeyboard: 'featureKeyboard',
+    featureFunds: 'featureFunds',
+    featureCaKeo: 'featureCaKeo',
+    featureHealthbook: 'featureHealthbook',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const ModuleColorSettingScalarFieldEnum: {
+    id: 'id',
+    module: 'module',
+    scope: 'scope',
+    entityKey: 'entityKey',
+    color: 'color',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ModuleColorSettingScalarFieldEnum = (typeof ModuleColorSettingScalarFieldEnum)[keyof typeof ModuleColorSettingScalarFieldEnum]
 
 
   export const RefreshTokenScalarFieldEnum: {
@@ -28333,6 +31184,10 @@ export namespace Prisma {
     id: 'id',
     title: 'title',
     description: 'description',
+    taskType: 'taskType',
+    amount: 'amount',
+    expenseCategory: 'expenseCategory',
+    scope: 'scope',
     userId: 'userId',
     isShared: 'isShared',
     dueDate: 'dueDate',
@@ -28393,6 +31248,7 @@ export namespace Prisma {
     title: 'title',
     content: 'content',
     category: 'category',
+    field: 'field',
     tags: 'tags',
     status: 'status',
     userId: 'userId',
@@ -28492,6 +31348,7 @@ export namespace Prisma {
     date: 'date',
     description: 'description',
     amount: 'amount',
+    payment: 'payment',
     category: 'category',
     scope: 'scope',
     note: 'note',
@@ -28502,6 +31359,23 @@ export namespace Prisma {
   };
 
   export type ExpenseScalarFieldEnum = (typeof ExpenseScalarFieldEnum)[keyof typeof ExpenseScalarFieldEnum]
+
+
+  export const FundTransactionScalarFieldEnum: {
+    id: 'id',
+    date: 'date',
+    description: 'description',
+    amount: 'amount',
+    type: 'type',
+    scope: 'scope',
+    category: 'category',
+    condition: 'condition',
+    userId: 'userId',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type FundTransactionScalarFieldEnum = (typeof FundTransactionScalarFieldEnum)[keyof typeof FundTransactionScalarFieldEnum]
 
 
   export const AlertRuleScalarFieldEnum: {
@@ -28633,14 +31507,6 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
-  export const NullableJsonNullValueInput: {
-    DbNull: typeof DbNull,
-    JsonNull: typeof JsonNull
-  };
-
-  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
-
-
   export const JsonNullValueInput: {
     JsonNull: typeof JsonNull
   };
@@ -28648,12 +31514,12 @@ export namespace Prisma {
   export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
-  export const NullsOrder: {
-    first: 'first',
-    last: 'last'
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
   };
 
-  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
   export const JsonNullValueFilter: {
@@ -28671,6 +31537,14 @@ export namespace Prisma {
   };
 
   export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+  export const NullsOrder: {
+    first: 'first',
+    last: 'last'
+  };
+
+  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
   /**
@@ -28714,9 +31588,37 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'QueryMode'
+   */
+  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+  /**
    * Reference to a field of type 'DateTime'
    */
   export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+  /**
+   * Reference to a field of type 'ColorSettingModule'
+   */
+  export type EnumColorSettingModuleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ColorSettingModule'>
+    
+
+
+  /**
+   * Reference to a field of type 'ColorSettingScope'
+   */
+  export type EnumColorSettingScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ColorSettingScope'>
     
 
 
@@ -28731,6 +31633,27 @@ export namespace Prisma {
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+  /**
+   * Reference to a field of type 'TaskType'
+   */
+  export type EnumTaskTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TaskType'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'ExpenseScope'
+   */
+  export type EnumExpenseScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ExpenseScope'>
     
 
 
@@ -28763,16 +31686,30 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Float'
+   * Reference to a field of type 'ExpensePayment'
    */
-  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+  export type EnumExpensePaymentFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ExpensePayment'>
     
 
 
   /**
-   * Reference to a field of type 'ExpenseScope'
+   * Reference to a field of type 'HobbyFundType'
    */
-  export type EnumExpenseScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ExpenseScope'>
+  export type EnumHobbyFundTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'HobbyFundType'>
+    
+
+
+  /**
+   * Reference to a field of type 'HobbyFundScope'
+   */
+  export type EnumHobbyFundScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'HobbyFundScope'>
+    
+
+
+  /**
+   * Reference to a field of type 'HobbyFundCategory'
+   */
+  export type EnumHobbyFundCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'HobbyFundCategory'>
     
 
 
@@ -28787,20 +31724,6 @@ export namespace Prisma {
    * Reference to a field of type 'ReportFrequency'
    */
   export type EnumReportFrequencyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportFrequency'>
-    
-
-
-  /**
-   * Reference to a field of type 'Json'
-   */
-  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-    
-
-
-  /**
-   * Reference to a field of type 'QueryMode'
-   */
-  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -28846,11 +31769,29 @@ export namespace Prisma {
     role?: EnumRoleFilter<"User"> | $Enums.Role
     active?: BoolFilter<"User"> | boolean
     theme?: EnumThemeFilter<"User"> | $Enums.Theme
+    mfaEnabled?: BoolFilter<"User"> | boolean
+    mfaSecret?: StringNullableFilter<"User"> | string | null
+    mfaPendingSecret?: StringNullableFilter<"User"> | string | null
     notificationEnabled?: BoolFilter<"User"> | boolean
     notificationChannel?: EnumNotificationChannelFilter<"User"> | $Enums.NotificationChannel
     notificationEmail?: StringNullableFilter<"User"> | string | null
-    timezone?: StringNullableFilter<"User"> | string | null
+    timezone?: StringFilter<"User"> | string
     telegramChatId?: StringNullableFilter<"User"> | string | null
+    avatarUrl?: StringNullableFilter<"User"> | string | null
+    mobileNavItems?: JsonFilter<"User">
+    featureGoals?: BoolFilter<"User"> | boolean
+    featureProjects?: BoolFilter<"User"> | boolean
+    featureIdeas?: BoolFilter<"User"> | boolean
+    featureLearning?: BoolFilter<"User"> | boolean
+    featureExpenses?: BoolFilter<"User"> | boolean
+    featureTasks?: BoolFilter<"User"> | boolean
+    featureHousework?: BoolFilter<"User"> | boolean
+    featureAssets?: BoolFilter<"User"> | boolean
+    featureCalendar?: BoolFilter<"User"> | boolean
+    featureKeyboard?: BoolFilter<"User"> | boolean
+    featureFunds?: BoolFilter<"User"> | boolean
+    featureCaKeo?: BoolFilter<"User"> | boolean
+    featureHealthbook?: BoolFilter<"User"> | boolean
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     goals?: GoalListRelationFilter
@@ -28867,6 +31808,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventListRelationFilter
     eventParticipants?: EventParticipantListRelationFilter
     expenses?: ExpenseListRelationFilter
+    fundTransactions?: FundTransactionListRelationFilter
     alertRules?: AlertRuleListRelationFilter
     scheduledReports?: ScheduledReportListRelationFilter
     budgetSettings?: BudgetSettingListRelationFilter
@@ -28885,11 +31827,29 @@ export namespace Prisma {
     role?: SortOrder
     active?: SortOrder
     theme?: SortOrder
+    mfaEnabled?: SortOrder
+    mfaSecret?: SortOrderInput | SortOrder
+    mfaPendingSecret?: SortOrderInput | SortOrder
     notificationEnabled?: SortOrder
     notificationChannel?: SortOrder
     notificationEmail?: SortOrderInput | SortOrder
-    timezone?: SortOrderInput | SortOrder
+    timezone?: SortOrder
     telegramChatId?: SortOrderInput | SortOrder
+    avatarUrl?: SortOrderInput | SortOrder
+    mobileNavItems?: SortOrder
+    featureGoals?: SortOrder
+    featureProjects?: SortOrder
+    featureIdeas?: SortOrder
+    featureLearning?: SortOrder
+    featureExpenses?: SortOrder
+    featureTasks?: SortOrder
+    featureHousework?: SortOrder
+    featureAssets?: SortOrder
+    featureCalendar?: SortOrder
+    featureKeyboard?: SortOrder
+    featureFunds?: SortOrder
+    featureCaKeo?: SortOrder
+    featureHealthbook?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     goals?: GoalOrderByRelationAggregateInput
@@ -28906,6 +31866,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventOrderByRelationAggregateInput
     eventParticipants?: EventParticipantOrderByRelationAggregateInput
     expenses?: ExpenseOrderByRelationAggregateInput
+    fundTransactions?: FundTransactionOrderByRelationAggregateInput
     alertRules?: AlertRuleOrderByRelationAggregateInput
     scheduledReports?: ScheduledReportOrderByRelationAggregateInput
     budgetSettings?: BudgetSettingOrderByRelationAggregateInput
@@ -28927,11 +31888,29 @@ export namespace Prisma {
     role?: EnumRoleFilter<"User"> | $Enums.Role
     active?: BoolFilter<"User"> | boolean
     theme?: EnumThemeFilter<"User"> | $Enums.Theme
+    mfaEnabled?: BoolFilter<"User"> | boolean
+    mfaSecret?: StringNullableFilter<"User"> | string | null
+    mfaPendingSecret?: StringNullableFilter<"User"> | string | null
     notificationEnabled?: BoolFilter<"User"> | boolean
     notificationChannel?: EnumNotificationChannelFilter<"User"> | $Enums.NotificationChannel
     notificationEmail?: StringNullableFilter<"User"> | string | null
-    timezone?: StringNullableFilter<"User"> | string | null
+    timezone?: StringFilter<"User"> | string
     telegramChatId?: StringNullableFilter<"User"> | string | null
+    avatarUrl?: StringNullableFilter<"User"> | string | null
+    mobileNavItems?: JsonFilter<"User">
+    featureGoals?: BoolFilter<"User"> | boolean
+    featureProjects?: BoolFilter<"User"> | boolean
+    featureIdeas?: BoolFilter<"User"> | boolean
+    featureLearning?: BoolFilter<"User"> | boolean
+    featureExpenses?: BoolFilter<"User"> | boolean
+    featureTasks?: BoolFilter<"User"> | boolean
+    featureHousework?: BoolFilter<"User"> | boolean
+    featureAssets?: BoolFilter<"User"> | boolean
+    featureCalendar?: BoolFilter<"User"> | boolean
+    featureKeyboard?: BoolFilter<"User"> | boolean
+    featureFunds?: BoolFilter<"User"> | boolean
+    featureCaKeo?: BoolFilter<"User"> | boolean
+    featureHealthbook?: BoolFilter<"User"> | boolean
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     goals?: GoalListRelationFilter
@@ -28948,6 +31927,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventListRelationFilter
     eventParticipants?: EventParticipantListRelationFilter
     expenses?: ExpenseListRelationFilter
+    fundTransactions?: FundTransactionListRelationFilter
     alertRules?: AlertRuleListRelationFilter
     scheduledReports?: ScheduledReportListRelationFilter
     budgetSettings?: BudgetSettingListRelationFilter
@@ -28966,11 +31946,29 @@ export namespace Prisma {
     role?: SortOrder
     active?: SortOrder
     theme?: SortOrder
+    mfaEnabled?: SortOrder
+    mfaSecret?: SortOrderInput | SortOrder
+    mfaPendingSecret?: SortOrderInput | SortOrder
     notificationEnabled?: SortOrder
     notificationChannel?: SortOrder
     notificationEmail?: SortOrderInput | SortOrder
-    timezone?: SortOrderInput | SortOrder
+    timezone?: SortOrder
     telegramChatId?: SortOrderInput | SortOrder
+    avatarUrl?: SortOrderInput | SortOrder
+    mobileNavItems?: SortOrder
+    featureGoals?: SortOrder
+    featureProjects?: SortOrder
+    featureIdeas?: SortOrder
+    featureLearning?: SortOrder
+    featureExpenses?: SortOrder
+    featureTasks?: SortOrder
+    featureHousework?: SortOrder
+    featureAssets?: SortOrder
+    featureCalendar?: SortOrder
+    featureKeyboard?: SortOrder
+    featureFunds?: SortOrder
+    featureCaKeo?: SortOrder
+    featureHealthbook?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -28989,13 +31987,95 @@ export namespace Prisma {
     role?: EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
     active?: BoolWithAggregatesFilter<"User"> | boolean
     theme?: EnumThemeWithAggregatesFilter<"User"> | $Enums.Theme
+    mfaEnabled?: BoolWithAggregatesFilter<"User"> | boolean
+    mfaSecret?: StringNullableWithAggregatesFilter<"User"> | string | null
+    mfaPendingSecret?: StringNullableWithAggregatesFilter<"User"> | string | null
     notificationEnabled?: BoolWithAggregatesFilter<"User"> | boolean
     notificationChannel?: EnumNotificationChannelWithAggregatesFilter<"User"> | $Enums.NotificationChannel
     notificationEmail?: StringNullableWithAggregatesFilter<"User"> | string | null
-    timezone?: StringNullableWithAggregatesFilter<"User"> | string | null
+    timezone?: StringWithAggregatesFilter<"User"> | string
     telegramChatId?: StringNullableWithAggregatesFilter<"User"> | string | null
+    avatarUrl?: StringNullableWithAggregatesFilter<"User"> | string | null
+    mobileNavItems?: JsonWithAggregatesFilter<"User">
+    featureGoals?: BoolWithAggregatesFilter<"User"> | boolean
+    featureProjects?: BoolWithAggregatesFilter<"User"> | boolean
+    featureIdeas?: BoolWithAggregatesFilter<"User"> | boolean
+    featureLearning?: BoolWithAggregatesFilter<"User"> | boolean
+    featureExpenses?: BoolWithAggregatesFilter<"User"> | boolean
+    featureTasks?: BoolWithAggregatesFilter<"User"> | boolean
+    featureHousework?: BoolWithAggregatesFilter<"User"> | boolean
+    featureAssets?: BoolWithAggregatesFilter<"User"> | boolean
+    featureCalendar?: BoolWithAggregatesFilter<"User"> | boolean
+    featureKeyboard?: BoolWithAggregatesFilter<"User"> | boolean
+    featureFunds?: BoolWithAggregatesFilter<"User"> | boolean
+    featureCaKeo?: BoolWithAggregatesFilter<"User"> | boolean
+    featureHealthbook?: BoolWithAggregatesFilter<"User"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+  }
+
+  export type ModuleColorSettingWhereInput = {
+    AND?: ModuleColorSettingWhereInput | ModuleColorSettingWhereInput[]
+    OR?: ModuleColorSettingWhereInput[]
+    NOT?: ModuleColorSettingWhereInput | ModuleColorSettingWhereInput[]
+    id?: StringFilter<"ModuleColorSetting"> | string
+    module?: EnumColorSettingModuleFilter<"ModuleColorSetting"> | $Enums.ColorSettingModule
+    scope?: EnumColorSettingScopeFilter<"ModuleColorSetting"> | $Enums.ColorSettingScope
+    entityKey?: StringFilter<"ModuleColorSetting"> | string
+    color?: StringFilter<"ModuleColorSetting"> | string
+    createdAt?: DateTimeFilter<"ModuleColorSetting"> | Date | string
+    updatedAt?: DateTimeFilter<"ModuleColorSetting"> | Date | string
+  }
+
+  export type ModuleColorSettingOrderByWithRelationInput = {
+    id?: SortOrder
+    module?: SortOrder
+    scope?: SortOrder
+    entityKey?: SortOrder
+    color?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ModuleColorSettingWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    module_scope_entityKey?: ModuleColorSettingModuleScopeEntityKeyCompoundUniqueInput
+    module_scope_color?: ModuleColorSettingModuleScopeColorCompoundUniqueInput
+    AND?: ModuleColorSettingWhereInput | ModuleColorSettingWhereInput[]
+    OR?: ModuleColorSettingWhereInput[]
+    NOT?: ModuleColorSettingWhereInput | ModuleColorSettingWhereInput[]
+    module?: EnumColorSettingModuleFilter<"ModuleColorSetting"> | $Enums.ColorSettingModule
+    scope?: EnumColorSettingScopeFilter<"ModuleColorSetting"> | $Enums.ColorSettingScope
+    entityKey?: StringFilter<"ModuleColorSetting"> | string
+    color?: StringFilter<"ModuleColorSetting"> | string
+    createdAt?: DateTimeFilter<"ModuleColorSetting"> | Date | string
+    updatedAt?: DateTimeFilter<"ModuleColorSetting"> | Date | string
+  }, "id" | "module_scope_entityKey" | "module_scope_color">
+
+  export type ModuleColorSettingOrderByWithAggregationInput = {
+    id?: SortOrder
+    module?: SortOrder
+    scope?: SortOrder
+    entityKey?: SortOrder
+    color?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ModuleColorSettingCountOrderByAggregateInput
+    _max?: ModuleColorSettingMaxOrderByAggregateInput
+    _min?: ModuleColorSettingMinOrderByAggregateInput
+  }
+
+  export type ModuleColorSettingScalarWhereWithAggregatesInput = {
+    AND?: ModuleColorSettingScalarWhereWithAggregatesInput | ModuleColorSettingScalarWhereWithAggregatesInput[]
+    OR?: ModuleColorSettingScalarWhereWithAggregatesInput[]
+    NOT?: ModuleColorSettingScalarWhereWithAggregatesInput | ModuleColorSettingScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ModuleColorSetting"> | string
+    module?: EnumColorSettingModuleWithAggregatesFilter<"ModuleColorSetting"> | $Enums.ColorSettingModule
+    scope?: EnumColorSettingScopeWithAggregatesFilter<"ModuleColorSetting"> | $Enums.ColorSettingScope
+    entityKey?: StringWithAggregatesFilter<"ModuleColorSetting"> | string
+    color?: StringWithAggregatesFilter<"ModuleColorSetting"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"ModuleColorSetting"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ModuleColorSetting"> | Date | string
   }
 
   export type RefreshTokenWhereInput = {
@@ -29235,6 +32315,10 @@ export namespace Prisma {
     id?: StringFilter<"Task"> | string
     title?: StringFilter<"Task"> | string
     description?: StringNullableFilter<"Task"> | string | null
+    taskType?: EnumTaskTypeFilter<"Task"> | $Enums.TaskType
+    amount?: FloatNullableFilter<"Task"> | number | null
+    expenseCategory?: StringNullableFilter<"Task"> | string | null
+    scope?: EnumExpenseScopeFilter<"Task"> | $Enums.ExpenseScope
     userId?: StringFilter<"Task"> | string
     isShared?: BoolFilter<"Task"> | boolean
     dueDate?: DateTimeNullableFilter<"Task"> | Date | string | null
@@ -29253,6 +32337,10 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     description?: SortOrderInput | SortOrder
+    taskType?: SortOrder
+    amount?: SortOrderInput | SortOrder
+    expenseCategory?: SortOrderInput | SortOrder
+    scope?: SortOrder
     userId?: SortOrder
     isShared?: SortOrder
     dueDate?: SortOrderInput | SortOrder
@@ -29274,6 +32362,10 @@ export namespace Prisma {
     NOT?: TaskWhereInput | TaskWhereInput[]
     title?: StringFilter<"Task"> | string
     description?: StringNullableFilter<"Task"> | string | null
+    taskType?: EnumTaskTypeFilter<"Task"> | $Enums.TaskType
+    amount?: FloatNullableFilter<"Task"> | number | null
+    expenseCategory?: StringNullableFilter<"Task"> | string | null
+    scope?: EnumExpenseScopeFilter<"Task"> | $Enums.ExpenseScope
     userId?: StringFilter<"Task"> | string
     isShared?: BoolFilter<"Task"> | boolean
     dueDate?: DateTimeNullableFilter<"Task"> | Date | string | null
@@ -29292,6 +32384,10 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     description?: SortOrderInput | SortOrder
+    taskType?: SortOrder
+    amount?: SortOrderInput | SortOrder
+    expenseCategory?: SortOrderInput | SortOrder
+    scope?: SortOrder
     userId?: SortOrder
     isShared?: SortOrder
     dueDate?: SortOrderInput | SortOrder
@@ -29317,6 +32413,10 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Task"> | string
     title?: StringWithAggregatesFilter<"Task"> | string
     description?: StringNullableWithAggregatesFilter<"Task"> | string | null
+    taskType?: EnumTaskTypeWithAggregatesFilter<"Task"> | $Enums.TaskType
+    amount?: FloatNullableWithAggregatesFilter<"Task"> | number | null
+    expenseCategory?: StringNullableWithAggregatesFilter<"Task"> | string | null
+    scope?: EnumExpenseScopeWithAggregatesFilter<"Task"> | $Enums.ExpenseScope
     userId?: StringWithAggregatesFilter<"Task"> | string
     isShared?: BoolWithAggregatesFilter<"Task"> | boolean
     dueDate?: DateTimeNullableWithAggregatesFilter<"Task"> | Date | string | null
@@ -29540,6 +32640,7 @@ export namespace Prisma {
     title?: StringFilter<"Idea"> | string
     content?: StringNullableFilter<"Idea"> | string | null
     category?: StringNullableFilter<"Idea"> | string | null
+    field?: StringNullableFilter<"Idea"> | string | null
     tags?: StringNullableFilter<"Idea"> | string | null
     status?: EnumIdeaStatusFilter<"Idea"> | $Enums.IdeaStatus
     userId?: StringFilter<"Idea"> | string
@@ -29554,6 +32655,7 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrderInput | SortOrder
     category?: SortOrderInput | SortOrder
+    field?: SortOrderInput | SortOrder
     tags?: SortOrderInput | SortOrder
     status?: SortOrder
     userId?: SortOrder
@@ -29571,6 +32673,7 @@ export namespace Prisma {
     title?: StringFilter<"Idea"> | string
     content?: StringNullableFilter<"Idea"> | string | null
     category?: StringNullableFilter<"Idea"> | string | null
+    field?: StringNullableFilter<"Idea"> | string | null
     tags?: StringNullableFilter<"Idea"> | string | null
     status?: EnumIdeaStatusFilter<"Idea"> | $Enums.IdeaStatus
     userId?: StringFilter<"Idea"> | string
@@ -29585,6 +32688,7 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrderInput | SortOrder
     category?: SortOrderInput | SortOrder
+    field?: SortOrderInput | SortOrder
     tags?: SortOrderInput | SortOrder
     status?: SortOrder
     userId?: SortOrder
@@ -29604,6 +32708,7 @@ export namespace Prisma {
     title?: StringWithAggregatesFilter<"Idea"> | string
     content?: StringNullableWithAggregatesFilter<"Idea"> | string | null
     category?: StringNullableWithAggregatesFilter<"Idea"> | string | null
+    field?: StringNullableWithAggregatesFilter<"Idea"> | string | null
     tags?: StringNullableWithAggregatesFilter<"Idea"> | string | null
     status?: EnumIdeaStatusWithAggregatesFilter<"Idea"> | $Enums.IdeaStatus
     userId?: StringWithAggregatesFilter<"Idea"> | string
@@ -30055,6 +33160,7 @@ export namespace Prisma {
     date?: DateTimeFilter<"Expense"> | Date | string
     description?: StringFilter<"Expense"> | string
     amount?: FloatFilter<"Expense"> | number
+    payment?: EnumExpensePaymentFilter<"Expense"> | $Enums.ExpensePayment
     category?: StringNullableFilter<"Expense"> | string | null
     scope?: EnumExpenseScopeFilter<"Expense"> | $Enums.ExpenseScope
     note?: StringNullableFilter<"Expense"> | string | null
@@ -30070,6 +33176,7 @@ export namespace Prisma {
     date?: SortOrder
     description?: SortOrder
     amount?: SortOrder
+    payment?: SortOrder
     category?: SortOrderInput | SortOrder
     scope?: SortOrder
     note?: SortOrderInput | SortOrder
@@ -30088,6 +33195,7 @@ export namespace Prisma {
     date?: DateTimeFilter<"Expense"> | Date | string
     description?: StringFilter<"Expense"> | string
     amount?: FloatFilter<"Expense"> | number
+    payment?: EnumExpensePaymentFilter<"Expense"> | $Enums.ExpensePayment
     category?: StringNullableFilter<"Expense"> | string | null
     scope?: EnumExpenseScopeFilter<"Expense"> | $Enums.ExpenseScope
     note?: StringNullableFilter<"Expense"> | string | null
@@ -30103,6 +33211,7 @@ export namespace Prisma {
     date?: SortOrder
     description?: SortOrder
     amount?: SortOrder
+    payment?: SortOrder
     category?: SortOrderInput | SortOrder
     scope?: SortOrder
     note?: SortOrderInput | SortOrder
@@ -30125,6 +33234,7 @@ export namespace Prisma {
     date?: DateTimeWithAggregatesFilter<"Expense"> | Date | string
     description?: StringWithAggregatesFilter<"Expense"> | string
     amount?: FloatWithAggregatesFilter<"Expense"> | number
+    payment?: EnumExpensePaymentWithAggregatesFilter<"Expense"> | $Enums.ExpensePayment
     category?: StringNullableWithAggregatesFilter<"Expense"> | string | null
     scope?: EnumExpenseScopeWithAggregatesFilter<"Expense"> | $Enums.ExpenseScope
     note?: StringNullableWithAggregatesFilter<"Expense"> | string | null
@@ -30132,6 +33242,93 @@ export namespace Prisma {
     userId?: StringWithAggregatesFilter<"Expense"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Expense"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Expense"> | Date | string
+  }
+
+  export type FundTransactionWhereInput = {
+    AND?: FundTransactionWhereInput | FundTransactionWhereInput[]
+    OR?: FundTransactionWhereInput[]
+    NOT?: FundTransactionWhereInput | FundTransactionWhereInput[]
+    id?: StringFilter<"FundTransaction"> | string
+    date?: DateTimeFilter<"FundTransaction"> | Date | string
+    description?: StringFilter<"FundTransaction"> | string
+    amount?: FloatFilter<"FundTransaction"> | number
+    type?: EnumHobbyFundTypeFilter<"FundTransaction"> | $Enums.HobbyFundType
+    scope?: EnumHobbyFundScopeFilter<"FundTransaction"> | $Enums.HobbyFundScope
+    category?: EnumHobbyFundCategoryFilter<"FundTransaction"> | $Enums.HobbyFundCategory
+    condition?: StringNullableFilter<"FundTransaction"> | string | null
+    userId?: StringFilter<"FundTransaction"> | string
+    createdAt?: DateTimeFilter<"FundTransaction"> | Date | string
+    updatedAt?: DateTimeFilter<"FundTransaction"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type FundTransactionOrderByWithRelationInput = {
+    id?: SortOrder
+    date?: SortOrder
+    description?: SortOrder
+    amount?: SortOrder
+    type?: SortOrder
+    scope?: SortOrder
+    category?: SortOrder
+    condition?: SortOrderInput | SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type FundTransactionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: FundTransactionWhereInput | FundTransactionWhereInput[]
+    OR?: FundTransactionWhereInput[]
+    NOT?: FundTransactionWhereInput | FundTransactionWhereInput[]
+    date?: DateTimeFilter<"FundTransaction"> | Date | string
+    description?: StringFilter<"FundTransaction"> | string
+    amount?: FloatFilter<"FundTransaction"> | number
+    type?: EnumHobbyFundTypeFilter<"FundTransaction"> | $Enums.HobbyFundType
+    scope?: EnumHobbyFundScopeFilter<"FundTransaction"> | $Enums.HobbyFundScope
+    category?: EnumHobbyFundCategoryFilter<"FundTransaction"> | $Enums.HobbyFundCategory
+    condition?: StringNullableFilter<"FundTransaction"> | string | null
+    userId?: StringFilter<"FundTransaction"> | string
+    createdAt?: DateTimeFilter<"FundTransaction"> | Date | string
+    updatedAt?: DateTimeFilter<"FundTransaction"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type FundTransactionOrderByWithAggregationInput = {
+    id?: SortOrder
+    date?: SortOrder
+    description?: SortOrder
+    amount?: SortOrder
+    type?: SortOrder
+    scope?: SortOrder
+    category?: SortOrder
+    condition?: SortOrderInput | SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: FundTransactionCountOrderByAggregateInput
+    _avg?: FundTransactionAvgOrderByAggregateInput
+    _max?: FundTransactionMaxOrderByAggregateInput
+    _min?: FundTransactionMinOrderByAggregateInput
+    _sum?: FundTransactionSumOrderByAggregateInput
+  }
+
+  export type FundTransactionScalarWhereWithAggregatesInput = {
+    AND?: FundTransactionScalarWhereWithAggregatesInput | FundTransactionScalarWhereWithAggregatesInput[]
+    OR?: FundTransactionScalarWhereWithAggregatesInput[]
+    NOT?: FundTransactionScalarWhereWithAggregatesInput | FundTransactionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"FundTransaction"> | string
+    date?: DateTimeWithAggregatesFilter<"FundTransaction"> | Date | string
+    description?: StringWithAggregatesFilter<"FundTransaction"> | string
+    amount?: FloatWithAggregatesFilter<"FundTransaction"> | number
+    type?: EnumHobbyFundTypeWithAggregatesFilter<"FundTransaction"> | $Enums.HobbyFundType
+    scope?: EnumHobbyFundScopeWithAggregatesFilter<"FundTransaction"> | $Enums.HobbyFundScope
+    category?: EnumHobbyFundCategoryWithAggregatesFilter<"FundTransaction"> | $Enums.HobbyFundCategory
+    condition?: StringNullableWithAggregatesFilter<"FundTransaction"> | string | null
+    userId?: StringWithAggregatesFilter<"FundTransaction"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"FundTransaction"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"FundTransaction"> | Date | string
   }
 
   export type AlertRuleWhereInput = {
@@ -30757,11 +33954,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -30778,6 +33993,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -30796,11 +34012,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -30817,6 +34051,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -30835,11 +34070,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -30856,6 +34109,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -30874,11 +34128,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -30895,6 +34167,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -30913,11 +34186,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -30930,11 +34221,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -30947,11 +34256,99 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModuleColorSettingCreateInput = {
+    id?: string
+    module: $Enums.ColorSettingModule
+    scope: $Enums.ColorSettingScope
+    entityKey: string
+    color: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ModuleColorSettingUncheckedCreateInput = {
+    id?: string
+    module: $Enums.ColorSettingModule
+    scope: $Enums.ColorSettingScope
+    entityKey: string
+    color: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ModuleColorSettingUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    module?: EnumColorSettingModuleFieldUpdateOperationsInput | $Enums.ColorSettingModule
+    scope?: EnumColorSettingScopeFieldUpdateOperationsInput | $Enums.ColorSettingScope
+    entityKey?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModuleColorSettingUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    module?: EnumColorSettingModuleFieldUpdateOperationsInput | $Enums.ColorSettingModule
+    scope?: EnumColorSettingScopeFieldUpdateOperationsInput | $Enums.ColorSettingScope
+    entityKey?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModuleColorSettingCreateManyInput = {
+    id?: string
+    module: $Enums.ColorSettingModule
+    scope: $Enums.ColorSettingScope
+    entityKey: string
+    color: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ModuleColorSettingUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    module?: EnumColorSettingModuleFieldUpdateOperationsInput | $Enums.ColorSettingModule
+    scope?: EnumColorSettingScopeFieldUpdateOperationsInput | $Enums.ColorSettingScope
+    entityKey?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModuleColorSettingUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    module?: EnumColorSettingModuleFieldUpdateOperationsInput | $Enums.ColorSettingModule
+    scope?: EnumColorSettingScopeFieldUpdateOperationsInput | $Enums.ColorSettingScope
+    entityKey?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -31205,6 +34602,10 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    taskType?: $Enums.TaskType
+    amount?: number | null
+    expenseCategory?: string | null
+    scope?: $Enums.ExpenseScope
     isShared?: boolean
     dueDate?: Date | string | null
     priority?: $Enums.Priority
@@ -31222,6 +34623,10 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    taskType?: $Enums.TaskType
+    amount?: number | null
+    expenseCategory?: string | null
+    scope?: $Enums.ExpenseScope
     userId: string
     isShared?: boolean
     dueDate?: Date | string | null
@@ -31239,6 +34644,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    taskType?: EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+    amount?: NullableFloatFieldUpdateOperationsInput | number | null
+    expenseCategory?: NullableStringFieldUpdateOperationsInput | string | null
+    scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     isShared?: BoolFieldUpdateOperationsInput | boolean
     dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     priority?: EnumPriorityFieldUpdateOperationsInput | $Enums.Priority
@@ -31256,6 +34665,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    taskType?: EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+    amount?: NullableFloatFieldUpdateOperationsInput | number | null
+    expenseCategory?: NullableStringFieldUpdateOperationsInput | string | null
+    scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     userId?: StringFieldUpdateOperationsInput | string
     isShared?: BoolFieldUpdateOperationsInput | boolean
     dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -31273,6 +34686,10 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    taskType?: $Enums.TaskType
+    amount?: number | null
+    expenseCategory?: string | null
+    scope?: $Enums.ExpenseScope
     userId: string
     isShared?: boolean
     dueDate?: Date | string | null
@@ -31290,6 +34707,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    taskType?: EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+    amount?: NullableFloatFieldUpdateOperationsInput | number | null
+    expenseCategory?: NullableStringFieldUpdateOperationsInput | string | null
+    scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     isShared?: BoolFieldUpdateOperationsInput | boolean
     dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     priority?: EnumPriorityFieldUpdateOperationsInput | $Enums.Priority
@@ -31306,6 +34727,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    taskType?: EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+    amount?: NullableFloatFieldUpdateOperationsInput | number | null
+    expenseCategory?: NullableStringFieldUpdateOperationsInput | string | null
+    scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     userId?: StringFieldUpdateOperationsInput | string
     isShared?: BoolFieldUpdateOperationsInput | boolean
     dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -31552,6 +34977,7 @@ export namespace Prisma {
     title: string
     content?: string | null
     category?: string | null
+    field?: string | null
     tags?: string | null
     status?: $Enums.IdeaStatus
     pinToDashboard?: boolean
@@ -31565,6 +34991,7 @@ export namespace Prisma {
     title: string
     content?: string | null
     category?: string | null
+    field?: string | null
     tags?: string | null
     status?: $Enums.IdeaStatus
     userId: string
@@ -31578,6 +35005,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     category?: NullableStringFieldUpdateOperationsInput | string | null
+    field?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
     pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
@@ -31591,6 +35019,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     category?: NullableStringFieldUpdateOperationsInput | string | null
+    field?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
     userId?: StringFieldUpdateOperationsInput | string
@@ -31604,6 +35033,7 @@ export namespace Prisma {
     title: string
     content?: string | null
     category?: string | null
+    field?: string | null
     tags?: string | null
     status?: $Enums.IdeaStatus
     userId: string
@@ -31617,6 +35047,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     category?: NullableStringFieldUpdateOperationsInput | string | null
+    field?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
     pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
@@ -31629,6 +35060,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     category?: NullableStringFieldUpdateOperationsInput | string | null
+    field?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
     userId?: StringFieldUpdateOperationsInput | string
@@ -32118,6 +35550,7 @@ export namespace Prisma {
     date: Date | string
     description: string
     amount: number
+    payment?: $Enums.ExpensePayment
     category?: string | null
     scope?: $Enums.ExpenseScope
     note?: string | null
@@ -32132,6 +35565,7 @@ export namespace Prisma {
     date: Date | string
     description: string
     amount: number
+    payment?: $Enums.ExpensePayment
     category?: string | null
     scope?: $Enums.ExpenseScope
     note?: string | null
@@ -32146,6 +35580,7 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    payment?: EnumExpensePaymentFieldUpdateOperationsInput | $Enums.ExpensePayment
     category?: NullableStringFieldUpdateOperationsInput | string | null
     scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     note?: NullableStringFieldUpdateOperationsInput | string | null
@@ -32160,6 +35595,7 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    payment?: EnumExpensePaymentFieldUpdateOperationsInput | $Enums.ExpensePayment
     category?: NullableStringFieldUpdateOperationsInput | string | null
     scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     note?: NullableStringFieldUpdateOperationsInput | string | null
@@ -32174,6 +35610,7 @@ export namespace Prisma {
     date: Date | string
     description: string
     amount: number
+    payment?: $Enums.ExpensePayment
     category?: string | null
     scope?: $Enums.ExpenseScope
     note?: string | null
@@ -32188,6 +35625,7 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    payment?: EnumExpensePaymentFieldUpdateOperationsInput | $Enums.ExpensePayment
     category?: NullableStringFieldUpdateOperationsInput | string | null
     scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     note?: NullableStringFieldUpdateOperationsInput | string | null
@@ -32201,10 +35639,108 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    payment?: EnumExpensePaymentFieldUpdateOperationsInput | $Enums.ExpensePayment
     category?: NullableStringFieldUpdateOperationsInput | string | null
     scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     note?: NullableStringFieldUpdateOperationsInput | string | null
     recurring?: BoolFieldUpdateOperationsInput | boolean
+    userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FundTransactionCreateInput = {
+    id?: string
+    date: Date | string
+    description: string
+    amount: number
+    type: $Enums.HobbyFundType
+    scope: $Enums.HobbyFundScope
+    category: $Enums.HobbyFundCategory
+    condition?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutFundTransactionsInput
+  }
+
+  export type FundTransactionUncheckedCreateInput = {
+    id?: string
+    date: Date | string
+    description: string
+    amount: number
+    type: $Enums.HobbyFundType
+    scope: $Enums.HobbyFundScope
+    category: $Enums.HobbyFundCategory
+    condition?: string | null
+    userId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type FundTransactionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    description?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    type?: EnumHobbyFundTypeFieldUpdateOperationsInput | $Enums.HobbyFundType
+    scope?: EnumHobbyFundScopeFieldUpdateOperationsInput | $Enums.HobbyFundScope
+    category?: EnumHobbyFundCategoryFieldUpdateOperationsInput | $Enums.HobbyFundCategory
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutFundTransactionsNestedInput
+  }
+
+  export type FundTransactionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    description?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    type?: EnumHobbyFundTypeFieldUpdateOperationsInput | $Enums.HobbyFundType
+    scope?: EnumHobbyFundScopeFieldUpdateOperationsInput | $Enums.HobbyFundScope
+    category?: EnumHobbyFundCategoryFieldUpdateOperationsInput | $Enums.HobbyFundCategory
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FundTransactionCreateManyInput = {
+    id?: string
+    date: Date | string
+    description: string
+    amount: number
+    type: $Enums.HobbyFundType
+    scope: $Enums.HobbyFundScope
+    category: $Enums.HobbyFundCategory
+    condition?: string | null
+    userId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type FundTransactionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    description?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    type?: EnumHobbyFundTypeFieldUpdateOperationsInput | $Enums.HobbyFundType
+    scope?: EnumHobbyFundScopeFieldUpdateOperationsInput | $Enums.HobbyFundScope
+    category?: EnumHobbyFundCategoryFieldUpdateOperationsInput | $Enums.HobbyFundCategory
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FundTransactionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    description?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    type?: EnumHobbyFundTypeFieldUpdateOperationsInput | $Enums.HobbyFundType
+    scope?: EnumHobbyFundScopeFieldUpdateOperationsInput | $Enums.HobbyFundScope
+    category?: EnumHobbyFundCategoryFieldUpdateOperationsInput | $Enums.HobbyFundCategory
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -32936,13 +36472,6 @@ export namespace Prisma {
     not?: NestedEnumThemeFilter<$PrismaModel> | $Enums.Theme
   }
 
-  export type EnumNotificationChannelFilter<$PrismaModel = never> = {
-    equals?: $Enums.NotificationChannel | EnumNotificationChannelFieldRefInput<$PrismaModel>
-    in?: $Enums.NotificationChannel[]
-    notIn?: $Enums.NotificationChannel[]
-    not?: NestedEnumNotificationChannelFilter<$PrismaModel> | $Enums.NotificationChannel
-  }
-
   export type StringNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | null
@@ -32955,6 +36484,31 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type EnumNotificationChannelFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationChannel | EnumNotificationChannelFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationChannel[]
+    notIn?: $Enums.NotificationChannel[]
+    not?: NestedEnumNotificationChannelFilter<$PrismaModel> | $Enums.NotificationChannel
+  }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type DateTimeFilter<$PrismaModel = never> = {
@@ -33038,6 +36592,12 @@ export namespace Prisma {
     every?: ExpenseWhereInput
     some?: ExpenseWhereInput
     none?: ExpenseWhereInput
+  }
+
+  export type FundTransactionListRelationFilter = {
+    every?: FundTransactionWhereInput
+    some?: FundTransactionWhereInput
+    none?: FundTransactionWhereInput
   }
 
   export type AlertRuleListRelationFilter = {
@@ -33140,6 +36700,10 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type FundTransactionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type AlertRuleOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -33176,11 +36740,29 @@ export namespace Prisma {
     role?: SortOrder
     active?: SortOrder
     theme?: SortOrder
+    mfaEnabled?: SortOrder
+    mfaSecret?: SortOrder
+    mfaPendingSecret?: SortOrder
     notificationEnabled?: SortOrder
     notificationChannel?: SortOrder
     notificationEmail?: SortOrder
     timezone?: SortOrder
     telegramChatId?: SortOrder
+    avatarUrl?: SortOrder
+    mobileNavItems?: SortOrder
+    featureGoals?: SortOrder
+    featureProjects?: SortOrder
+    featureIdeas?: SortOrder
+    featureLearning?: SortOrder
+    featureExpenses?: SortOrder
+    featureTasks?: SortOrder
+    featureHousework?: SortOrder
+    featureAssets?: SortOrder
+    featureCalendar?: SortOrder
+    featureKeyboard?: SortOrder
+    featureFunds?: SortOrder
+    featureCaKeo?: SortOrder
+    featureHealthbook?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -33193,11 +36775,28 @@ export namespace Prisma {
     role?: SortOrder
     active?: SortOrder
     theme?: SortOrder
+    mfaEnabled?: SortOrder
+    mfaSecret?: SortOrder
+    mfaPendingSecret?: SortOrder
     notificationEnabled?: SortOrder
     notificationChannel?: SortOrder
     notificationEmail?: SortOrder
     timezone?: SortOrder
     telegramChatId?: SortOrder
+    avatarUrl?: SortOrder
+    featureGoals?: SortOrder
+    featureProjects?: SortOrder
+    featureIdeas?: SortOrder
+    featureLearning?: SortOrder
+    featureExpenses?: SortOrder
+    featureTasks?: SortOrder
+    featureHousework?: SortOrder
+    featureAssets?: SortOrder
+    featureCalendar?: SortOrder
+    featureKeyboard?: SortOrder
+    featureFunds?: SortOrder
+    featureCaKeo?: SortOrder
+    featureHealthbook?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -33210,11 +36809,28 @@ export namespace Prisma {
     role?: SortOrder
     active?: SortOrder
     theme?: SortOrder
+    mfaEnabled?: SortOrder
+    mfaSecret?: SortOrder
+    mfaPendingSecret?: SortOrder
     notificationEnabled?: SortOrder
     notificationChannel?: SortOrder
     notificationEmail?: SortOrder
     timezone?: SortOrder
     telegramChatId?: SortOrder
+    avatarUrl?: SortOrder
+    featureGoals?: SortOrder
+    featureProjects?: SortOrder
+    featureIdeas?: SortOrder
+    featureLearning?: SortOrder
+    featureExpenses?: SortOrder
+    featureTasks?: SortOrder
+    featureHousework?: SortOrder
+    featureAssets?: SortOrder
+    featureCalendar?: SortOrder
+    featureKeyboard?: SortOrder
+    featureFunds?: SortOrder
+    featureCaKeo?: SortOrder
+    featureHealthbook?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -33264,16 +36880,6 @@ export namespace Prisma {
     _max?: NestedEnumThemeFilter<$PrismaModel>
   }
 
-  export type EnumNotificationChannelWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.NotificationChannel | EnumNotificationChannelFieldRefInput<$PrismaModel>
-    in?: $Enums.NotificationChannel[]
-    notIn?: $Enums.NotificationChannel[]
-    not?: NestedEnumNotificationChannelWithAggregatesFilter<$PrismaModel> | $Enums.NotificationChannel
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumNotificationChannelFilter<$PrismaModel>
-    _max?: NestedEnumNotificationChannelFilter<$PrismaModel>
-  }
-
   export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | null
@@ -33291,6 +36897,37 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
+  export type EnumNotificationChannelWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationChannel | EnumNotificationChannelFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationChannel[]
+    notIn?: $Enums.NotificationChannel[]
+    not?: NestedEnumNotificationChannelWithAggregatesFilter<$PrismaModel> | $Enums.NotificationChannel
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNotificationChannelFilter<$PrismaModel>
+    _max?: NestedEnumNotificationChannelFilter<$PrismaModel>
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
+  }
+
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[]
@@ -33303,6 +36940,82 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type EnumColorSettingModuleFilter<$PrismaModel = never> = {
+    equals?: $Enums.ColorSettingModule | EnumColorSettingModuleFieldRefInput<$PrismaModel>
+    in?: $Enums.ColorSettingModule[]
+    notIn?: $Enums.ColorSettingModule[]
+    not?: NestedEnumColorSettingModuleFilter<$PrismaModel> | $Enums.ColorSettingModule
+  }
+
+  export type EnumColorSettingScopeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ColorSettingScope | EnumColorSettingScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.ColorSettingScope[]
+    notIn?: $Enums.ColorSettingScope[]
+    not?: NestedEnumColorSettingScopeFilter<$PrismaModel> | $Enums.ColorSettingScope
+  }
+
+  export type ModuleColorSettingModuleScopeEntityKeyCompoundUniqueInput = {
+    module: $Enums.ColorSettingModule
+    scope: $Enums.ColorSettingScope
+    entityKey: string
+  }
+
+  export type ModuleColorSettingModuleScopeColorCompoundUniqueInput = {
+    module: $Enums.ColorSettingModule
+    scope: $Enums.ColorSettingScope
+    color: string
+  }
+
+  export type ModuleColorSettingCountOrderByAggregateInput = {
+    id?: SortOrder
+    module?: SortOrder
+    scope?: SortOrder
+    entityKey?: SortOrder
+    color?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ModuleColorSettingMaxOrderByAggregateInput = {
+    id?: SortOrder
+    module?: SortOrder
+    scope?: SortOrder
+    entityKey?: SortOrder
+    color?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ModuleColorSettingMinOrderByAggregateInput = {
+    id?: SortOrder
+    module?: SortOrder
+    scope?: SortOrder
+    entityKey?: SortOrder
+    color?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumColorSettingModuleWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ColorSettingModule | EnumColorSettingModuleFieldRefInput<$PrismaModel>
+    in?: $Enums.ColorSettingModule[]
+    notIn?: $Enums.ColorSettingModule[]
+    not?: NestedEnumColorSettingModuleWithAggregatesFilter<$PrismaModel> | $Enums.ColorSettingModule
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumColorSettingModuleFilter<$PrismaModel>
+    _max?: NestedEnumColorSettingModuleFilter<$PrismaModel>
+  }
+
+  export type EnumColorSettingScopeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ColorSettingScope | EnumColorSettingScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.ColorSettingScope[]
+    notIn?: $Enums.ColorSettingScope[]
+    not?: NestedEnumColorSettingScopeWithAggregatesFilter<$PrismaModel> | $Enums.ColorSettingScope
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumColorSettingScopeFilter<$PrismaModel>
+    _max?: NestedEnumColorSettingScopeFilter<$PrismaModel>
   }
 
   export type UserScalarRelationFilter = {
@@ -33482,6 +37195,31 @@ export namespace Prisma {
     quantity?: SortOrder
   }
 
+  export type EnumTaskTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.TaskType | EnumTaskTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.TaskType[]
+    notIn?: $Enums.TaskType[]
+    not?: NestedEnumTaskTypeFilter<$PrismaModel> | $Enums.TaskType
+  }
+
+  export type FloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type EnumExpenseScopeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExpenseScope | EnumExpenseScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.ExpenseScope[]
+    notIn?: $Enums.ExpenseScope[]
+    not?: NestedEnumExpenseScopeFilter<$PrismaModel> | $Enums.ExpenseScope
+  }
+
   export type DateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | null
@@ -33511,6 +37249,10 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     description?: SortOrder
+    taskType?: SortOrder
+    amount?: SortOrder
+    expenseCategory?: SortOrder
+    scope?: SortOrder
     userId?: SortOrder
     isShared?: SortOrder
     dueDate?: SortOrder
@@ -33525,6 +37267,7 @@ export namespace Prisma {
   }
 
   export type TaskAvgOrderByAggregateInput = {
+    amount?: SortOrder
     sortOrder?: SortOrder
   }
 
@@ -33532,6 +37275,10 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     description?: SortOrder
+    taskType?: SortOrder
+    amount?: SortOrder
+    expenseCategory?: SortOrder
+    scope?: SortOrder
     userId?: SortOrder
     isShared?: SortOrder
     dueDate?: SortOrder
@@ -33549,6 +37296,10 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     description?: SortOrder
+    taskType?: SortOrder
+    amount?: SortOrder
+    expenseCategory?: SortOrder
+    scope?: SortOrder
     userId?: SortOrder
     isShared?: SortOrder
     dueDate?: SortOrder
@@ -33563,7 +37314,44 @@ export namespace Prisma {
   }
 
   export type TaskSumOrderByAggregateInput = {
+    amount?: SortOrder
     sortOrder?: SortOrder
+  }
+
+  export type EnumTaskTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TaskType | EnumTaskTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.TaskType[]
+    notIn?: $Enums.TaskType[]
+    not?: NestedEnumTaskTypeWithAggregatesFilter<$PrismaModel> | $Enums.TaskType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTaskTypeFilter<$PrismaModel>
+    _max?: NestedEnumTaskTypeFilter<$PrismaModel>
+  }
+
+  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
+  export type EnumExpenseScopeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExpenseScope | EnumExpenseScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.ExpenseScope[]
+    notIn?: $Enums.ExpenseScope[]
+    not?: NestedEnumExpenseScopeWithAggregatesFilter<$PrismaModel> | $Enums.ExpenseScope
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumExpenseScopeFilter<$PrismaModel>
+    _max?: NestedEnumExpenseScopeFilter<$PrismaModel>
   }
 
   export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -33732,6 +37520,7 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrder
     category?: SortOrder
+    field?: SortOrder
     tags?: SortOrder
     status?: SortOrder
     userId?: SortOrder
@@ -33745,6 +37534,7 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrder
     category?: SortOrder
+    field?: SortOrder
     tags?: SortOrder
     status?: SortOrder
     userId?: SortOrder
@@ -33758,6 +37548,7 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrder
     category?: SortOrder
+    field?: SortOrder
     tags?: SortOrder
     status?: SortOrder
     userId?: SortOrder
@@ -33792,17 +37583,6 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
-  }
-
-  export type FloatNullableFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | null
-    notIn?: number[] | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
   export type HouseworkItemCountOrderByAggregateInput = {
@@ -33893,22 +37673,6 @@ export namespace Prisma {
     _sum?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedIntNullableFilter<$PrismaModel>
     _max?: NestedIntNullableFilter<$PrismaModel>
-  }
-
-  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | null
-    notIn?: number[] | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedFloatNullableFilter<$PrismaModel>
-    _min?: NestedFloatNullableFilter<$PrismaModel>
-    _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
   export type AssetCountOrderByAggregateInput = {
@@ -34095,11 +37859,11 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
-  export type EnumExpenseScopeFilter<$PrismaModel = never> = {
-    equals?: $Enums.ExpenseScope | EnumExpenseScopeFieldRefInput<$PrismaModel>
-    in?: $Enums.ExpenseScope[]
-    notIn?: $Enums.ExpenseScope[]
-    not?: NestedEnumExpenseScopeFilter<$PrismaModel> | $Enums.ExpenseScope
+  export type EnumExpensePaymentFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExpensePayment | EnumExpensePaymentFieldRefInput<$PrismaModel>
+    in?: $Enums.ExpensePayment[]
+    notIn?: $Enums.ExpensePayment[]
+    not?: NestedEnumExpensePaymentFilter<$PrismaModel> | $Enums.ExpensePayment
   }
 
   export type ExpenseCountOrderByAggregateInput = {
@@ -34107,6 +37871,7 @@ export namespace Prisma {
     date?: SortOrder
     description?: SortOrder
     amount?: SortOrder
+    payment?: SortOrder
     category?: SortOrder
     scope?: SortOrder
     note?: SortOrder
@@ -34125,6 +37890,7 @@ export namespace Prisma {
     date?: SortOrder
     description?: SortOrder
     amount?: SortOrder
+    payment?: SortOrder
     category?: SortOrder
     scope?: SortOrder
     note?: SortOrder
@@ -34139,6 +37905,7 @@ export namespace Prisma {
     date?: SortOrder
     description?: SortOrder
     amount?: SortOrder
+    payment?: SortOrder
     category?: SortOrder
     scope?: SortOrder
     note?: SortOrder
@@ -34168,14 +37935,115 @@ export namespace Prisma {
     _max?: NestedFloatFilter<$PrismaModel>
   }
 
-  export type EnumExpenseScopeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.ExpenseScope | EnumExpenseScopeFieldRefInput<$PrismaModel>
-    in?: $Enums.ExpenseScope[]
-    notIn?: $Enums.ExpenseScope[]
-    not?: NestedEnumExpenseScopeWithAggregatesFilter<$PrismaModel> | $Enums.ExpenseScope
+  export type EnumExpensePaymentWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExpensePayment | EnumExpensePaymentFieldRefInput<$PrismaModel>
+    in?: $Enums.ExpensePayment[]
+    notIn?: $Enums.ExpensePayment[]
+    not?: NestedEnumExpensePaymentWithAggregatesFilter<$PrismaModel> | $Enums.ExpensePayment
     _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumExpenseScopeFilter<$PrismaModel>
-    _max?: NestedEnumExpenseScopeFilter<$PrismaModel>
+    _min?: NestedEnumExpensePaymentFilter<$PrismaModel>
+    _max?: NestedEnumExpensePaymentFilter<$PrismaModel>
+  }
+
+  export type EnumHobbyFundTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.HobbyFundType | EnumHobbyFundTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.HobbyFundType[]
+    notIn?: $Enums.HobbyFundType[]
+    not?: NestedEnumHobbyFundTypeFilter<$PrismaModel> | $Enums.HobbyFundType
+  }
+
+  export type EnumHobbyFundScopeFilter<$PrismaModel = never> = {
+    equals?: $Enums.HobbyFundScope | EnumHobbyFundScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.HobbyFundScope[]
+    notIn?: $Enums.HobbyFundScope[]
+    not?: NestedEnumHobbyFundScopeFilter<$PrismaModel> | $Enums.HobbyFundScope
+  }
+
+  export type EnumHobbyFundCategoryFilter<$PrismaModel = never> = {
+    equals?: $Enums.HobbyFundCategory | EnumHobbyFundCategoryFieldRefInput<$PrismaModel>
+    in?: $Enums.HobbyFundCategory[]
+    notIn?: $Enums.HobbyFundCategory[]
+    not?: NestedEnumHobbyFundCategoryFilter<$PrismaModel> | $Enums.HobbyFundCategory
+  }
+
+  export type FundTransactionCountOrderByAggregateInput = {
+    id?: SortOrder
+    date?: SortOrder
+    description?: SortOrder
+    amount?: SortOrder
+    type?: SortOrder
+    scope?: SortOrder
+    category?: SortOrder
+    condition?: SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type FundTransactionAvgOrderByAggregateInput = {
+    amount?: SortOrder
+  }
+
+  export type FundTransactionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    date?: SortOrder
+    description?: SortOrder
+    amount?: SortOrder
+    type?: SortOrder
+    scope?: SortOrder
+    category?: SortOrder
+    condition?: SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type FundTransactionMinOrderByAggregateInput = {
+    id?: SortOrder
+    date?: SortOrder
+    description?: SortOrder
+    amount?: SortOrder
+    type?: SortOrder
+    scope?: SortOrder
+    category?: SortOrder
+    condition?: SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type FundTransactionSumOrderByAggregateInput = {
+    amount?: SortOrder
+  }
+
+  export type EnumHobbyFundTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.HobbyFundType | EnumHobbyFundTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.HobbyFundType[]
+    notIn?: $Enums.HobbyFundType[]
+    not?: NestedEnumHobbyFundTypeWithAggregatesFilter<$PrismaModel> | $Enums.HobbyFundType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumHobbyFundTypeFilter<$PrismaModel>
+    _max?: NestedEnumHobbyFundTypeFilter<$PrismaModel>
+  }
+
+  export type EnumHobbyFundScopeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.HobbyFundScope | EnumHobbyFundScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.HobbyFundScope[]
+    notIn?: $Enums.HobbyFundScope[]
+    not?: NestedEnumHobbyFundScopeWithAggregatesFilter<$PrismaModel> | $Enums.HobbyFundScope
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumHobbyFundScopeFilter<$PrismaModel>
+    _max?: NestedEnumHobbyFundScopeFilter<$PrismaModel>
+  }
+
+  export type EnumHobbyFundCategoryWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.HobbyFundCategory | EnumHobbyFundCategoryFieldRefInput<$PrismaModel>
+    in?: $Enums.HobbyFundCategory[]
+    notIn?: $Enums.HobbyFundCategory[]
+    not?: NestedEnumHobbyFundCategoryWithAggregatesFilter<$PrismaModel> | $Enums.HobbyFundCategory
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumHobbyFundCategoryFilter<$PrismaModel>
+    _max?: NestedEnumHobbyFundCategoryFilter<$PrismaModel>
   }
 
   export type EnumAlertFrequencyFilter<$PrismaModel = never> = {
@@ -34630,24 +38498,6 @@ export namespace Prisma {
     _min?: NestedEnumExecutionStatusFilter<$PrismaModel>
     _max?: NestedEnumExecutionStatusFilter<$PrismaModel>
   }
-  export type JsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
 
   export type AssistantPendingActionCountOrderByAggregateInput = {
     id?: SortOrder
@@ -34675,27 +38525,6 @@ export namespace Prisma {
     intent?: SortOrder
     expiresAt?: SortOrder
     createdAt?: SortOrder
-  }
-  export type JsonWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedJsonFilter<$PrismaModel>
-    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type GoalCreateNestedManyWithoutUserInput = {
@@ -34794,6 +38623,13 @@ export namespace Prisma {
     connectOrCreate?: ExpenseCreateOrConnectWithoutUserInput | ExpenseCreateOrConnectWithoutUserInput[]
     createMany?: ExpenseCreateManyUserInputEnvelope
     connect?: ExpenseWhereUniqueInput | ExpenseWhereUniqueInput[]
+  }
+
+  export type FundTransactionCreateNestedManyWithoutUserInput = {
+    create?: XOR<FundTransactionCreateWithoutUserInput, FundTransactionUncheckedCreateWithoutUserInput> | FundTransactionCreateWithoutUserInput[] | FundTransactionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: FundTransactionCreateOrConnectWithoutUserInput | FundTransactionCreateOrConnectWithoutUserInput[]
+    createMany?: FundTransactionCreateManyUserInputEnvelope
+    connect?: FundTransactionWhereUniqueInput | FundTransactionWhereUniqueInput[]
   }
 
   export type AlertRuleCreateNestedManyWithoutUserInput = {
@@ -34949,6 +38785,13 @@ export namespace Prisma {
     connect?: ExpenseWhereUniqueInput | ExpenseWhereUniqueInput[]
   }
 
+  export type FundTransactionUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<FundTransactionCreateWithoutUserInput, FundTransactionUncheckedCreateWithoutUserInput> | FundTransactionCreateWithoutUserInput[] | FundTransactionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: FundTransactionCreateOrConnectWithoutUserInput | FundTransactionCreateOrConnectWithoutUserInput[]
+    createMany?: FundTransactionCreateManyUserInputEnvelope
+    connect?: FundTransactionWhereUniqueInput | FundTransactionWhereUniqueInput[]
+  }
+
   export type AlertRuleUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<AlertRuleCreateWithoutUserInput, AlertRuleUncheckedCreateWithoutUserInput> | AlertRuleCreateWithoutUserInput[] | AlertRuleUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AlertRuleCreateOrConnectWithoutUserInput | AlertRuleCreateOrConnectWithoutUserInput[]
@@ -35020,12 +38863,12 @@ export namespace Prisma {
     set?: $Enums.Theme
   }
 
-  export type EnumNotificationChannelFieldUpdateOperationsInput = {
-    set?: $Enums.NotificationChannel
-  }
-
   export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null
+  }
+
+  export type EnumNotificationChannelFieldUpdateOperationsInput = {
+    set?: $Enums.NotificationChannel
   }
 
   export type DateTimeFieldUpdateOperationsInput = {
@@ -35226,6 +39069,20 @@ export namespace Prisma {
     update?: ExpenseUpdateWithWhereUniqueWithoutUserInput | ExpenseUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: ExpenseUpdateManyWithWhereWithoutUserInput | ExpenseUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: ExpenseScalarWhereInput | ExpenseScalarWhereInput[]
+  }
+
+  export type FundTransactionUpdateManyWithoutUserNestedInput = {
+    create?: XOR<FundTransactionCreateWithoutUserInput, FundTransactionUncheckedCreateWithoutUserInput> | FundTransactionCreateWithoutUserInput[] | FundTransactionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: FundTransactionCreateOrConnectWithoutUserInput | FundTransactionCreateOrConnectWithoutUserInput[]
+    upsert?: FundTransactionUpsertWithWhereUniqueWithoutUserInput | FundTransactionUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: FundTransactionCreateManyUserInputEnvelope
+    set?: FundTransactionWhereUniqueInput | FundTransactionWhereUniqueInput[]
+    disconnect?: FundTransactionWhereUniqueInput | FundTransactionWhereUniqueInput[]
+    delete?: FundTransactionWhereUniqueInput | FundTransactionWhereUniqueInput[]
+    connect?: FundTransactionWhereUniqueInput | FundTransactionWhereUniqueInput[]
+    update?: FundTransactionUpdateWithWhereUniqueWithoutUserInput | FundTransactionUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: FundTransactionUpdateManyWithWhereWithoutUserInput | FundTransactionUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: FundTransactionScalarWhereInput | FundTransactionScalarWhereInput[]
   }
 
   export type AlertRuleUpdateManyWithoutUserNestedInput = {
@@ -35532,6 +39389,20 @@ export namespace Prisma {
     deleteMany?: ExpenseScalarWhereInput | ExpenseScalarWhereInput[]
   }
 
+  export type FundTransactionUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<FundTransactionCreateWithoutUserInput, FundTransactionUncheckedCreateWithoutUserInput> | FundTransactionCreateWithoutUserInput[] | FundTransactionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: FundTransactionCreateOrConnectWithoutUserInput | FundTransactionCreateOrConnectWithoutUserInput[]
+    upsert?: FundTransactionUpsertWithWhereUniqueWithoutUserInput | FundTransactionUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: FundTransactionCreateManyUserInputEnvelope
+    set?: FundTransactionWhereUniqueInput | FundTransactionWhereUniqueInput[]
+    disconnect?: FundTransactionWhereUniqueInput | FundTransactionWhereUniqueInput[]
+    delete?: FundTransactionWhereUniqueInput | FundTransactionWhereUniqueInput[]
+    connect?: FundTransactionWhereUniqueInput | FundTransactionWhereUniqueInput[]
+    update?: FundTransactionUpdateWithWhereUniqueWithoutUserInput | FundTransactionUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: FundTransactionUpdateManyWithWhereWithoutUserInput | FundTransactionUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: FundTransactionScalarWhereInput | FundTransactionScalarWhereInput[]
+  }
+
   export type AlertRuleUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<AlertRuleCreateWithoutUserInput, AlertRuleUncheckedCreateWithoutUserInput> | AlertRuleCreateWithoutUserInput[] | AlertRuleUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AlertRuleCreateOrConnectWithoutUserInput | AlertRuleCreateOrConnectWithoutUserInput[]
@@ -35638,6 +39509,14 @@ export namespace Prisma {
     update?: AssistantPendingActionUpdateWithWhereUniqueWithoutUserInput | AssistantPendingActionUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: AssistantPendingActionUpdateManyWithWhereWithoutUserInput | AssistantPendingActionUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: AssistantPendingActionScalarWhereInput | AssistantPendingActionScalarWhereInput[]
+  }
+
+  export type EnumColorSettingModuleFieldUpdateOperationsInput = {
+    set?: $Enums.ColorSettingModule
+  }
+
+  export type EnumColorSettingScopeFieldUpdateOperationsInput = {
+    set?: $Enums.ColorSettingScope
   }
 
   export type UserCreateNestedOneWithoutRefreshTokensInput = {
@@ -35756,6 +39635,22 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
+  export type EnumTaskTypeFieldUpdateOperationsInput = {
+    set?: $Enums.TaskType
+  }
+
+  export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type EnumExpenseScopeFieldUpdateOperationsInput = {
+    set?: $Enums.ExpenseScope
+  }
+
   export type NullableDateTimeFieldUpdateOperationsInput = {
     set?: Date | string | null
   }
@@ -35855,14 +39750,6 @@ export namespace Prisma {
   }
 
   export type NullableIntFieldUpdateOperationsInput = {
-    set?: number | null
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
-  }
-
-  export type NullableFloatFieldUpdateOperationsInput = {
     set?: number | null
     increment?: number
     decrement?: number
@@ -36070,8 +39957,8 @@ export namespace Prisma {
     divide?: number
   }
 
-  export type EnumExpenseScopeFieldUpdateOperationsInput = {
-    set?: $Enums.ExpenseScope
+  export type EnumExpensePaymentFieldUpdateOperationsInput = {
+    set?: $Enums.ExpensePayment
   }
 
   export type UserUpdateOneRequiredWithoutExpensesNestedInput = {
@@ -36080,6 +39967,32 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutExpensesInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutExpensesInput, UserUpdateWithoutExpensesInput>, UserUncheckedUpdateWithoutExpensesInput>
+  }
+
+  export type UserCreateNestedOneWithoutFundTransactionsInput = {
+    create?: XOR<UserCreateWithoutFundTransactionsInput, UserUncheckedCreateWithoutFundTransactionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutFundTransactionsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type EnumHobbyFundTypeFieldUpdateOperationsInput = {
+    set?: $Enums.HobbyFundType
+  }
+
+  export type EnumHobbyFundScopeFieldUpdateOperationsInput = {
+    set?: $Enums.HobbyFundScope
+  }
+
+  export type EnumHobbyFundCategoryFieldUpdateOperationsInput = {
+    set?: $Enums.HobbyFundCategory
+  }
+
+  export type UserUpdateOneRequiredWithoutFundTransactionsNestedInput = {
+    create?: XOR<UserCreateWithoutFundTransactionsInput, UserUncheckedCreateWithoutFundTransactionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutFundTransactionsInput
+    upsert?: UserUpsertWithoutFundTransactionsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutFundTransactionsInput, UserUpdateWithoutFundTransactionsInput>, UserUncheckedUpdateWithoutFundTransactionsInput>
   }
 
   export type UserCreateNestedOneWithoutAlertRulesInput = {
@@ -36237,13 +40150,6 @@ export namespace Prisma {
     not?: NestedEnumThemeFilter<$PrismaModel> | $Enums.Theme
   }
 
-  export type NestedEnumNotificationChannelFilter<$PrismaModel = never> = {
-    equals?: $Enums.NotificationChannel | EnumNotificationChannelFieldRefInput<$PrismaModel>
-    in?: $Enums.NotificationChannel[]
-    notIn?: $Enums.NotificationChannel[]
-    not?: NestedEnumNotificationChannelFilter<$PrismaModel> | $Enums.NotificationChannel
-  }
-
   export type NestedStringNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | null
@@ -36256,6 +40162,13 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedEnumNotificationChannelFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationChannel | EnumNotificationChannelFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationChannel[]
+    notIn?: $Enums.NotificationChannel[]
+    not?: NestedEnumNotificationChannelFilter<$PrismaModel> | $Enums.NotificationChannel
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -36325,16 +40238,6 @@ export namespace Prisma {
     _max?: NestedEnumThemeFilter<$PrismaModel>
   }
 
-  export type NestedEnumNotificationChannelWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.NotificationChannel | EnumNotificationChannelFieldRefInput<$PrismaModel>
-    in?: $Enums.NotificationChannel[]
-    notIn?: $Enums.NotificationChannel[]
-    not?: NestedEnumNotificationChannelWithAggregatesFilter<$PrismaModel> | $Enums.NotificationChannel
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumNotificationChannelFilter<$PrismaModel>
-    _max?: NestedEnumNotificationChannelFilter<$PrismaModel>
-  }
-
   export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | null
@@ -36363,6 +40266,34 @@ export namespace Prisma {
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
+  export type NestedEnumNotificationChannelWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationChannel | EnumNotificationChannelFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationChannel[]
+    notIn?: $Enums.NotificationChannel[]
+    not?: NestedEnumNotificationChannelWithAggregatesFilter<$PrismaModel> | $Enums.NotificationChannel
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNotificationChannelFilter<$PrismaModel>
+    _max?: NestedEnumNotificationChannelFilter<$PrismaModel>
+  }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[]
@@ -36375,6 +40306,40 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumColorSettingModuleFilter<$PrismaModel = never> = {
+    equals?: $Enums.ColorSettingModule | EnumColorSettingModuleFieldRefInput<$PrismaModel>
+    in?: $Enums.ColorSettingModule[]
+    notIn?: $Enums.ColorSettingModule[]
+    not?: NestedEnumColorSettingModuleFilter<$PrismaModel> | $Enums.ColorSettingModule
+  }
+
+  export type NestedEnumColorSettingScopeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ColorSettingScope | EnumColorSettingScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.ColorSettingScope[]
+    notIn?: $Enums.ColorSettingScope[]
+    not?: NestedEnumColorSettingScopeFilter<$PrismaModel> | $Enums.ColorSettingScope
+  }
+
+  export type NestedEnumColorSettingModuleWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ColorSettingModule | EnumColorSettingModuleFieldRefInput<$PrismaModel>
+    in?: $Enums.ColorSettingModule[]
+    notIn?: $Enums.ColorSettingModule[]
+    not?: NestedEnumColorSettingModuleWithAggregatesFilter<$PrismaModel> | $Enums.ColorSettingModule
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumColorSettingModuleFilter<$PrismaModel>
+    _max?: NestedEnumColorSettingModuleFilter<$PrismaModel>
+  }
+
+  export type NestedEnumColorSettingScopeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ColorSettingScope | EnumColorSettingScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.ColorSettingScope[]
+    notIn?: $Enums.ColorSettingScope[]
+    not?: NestedEnumColorSettingScopeWithAggregatesFilter<$PrismaModel> | $Enums.ColorSettingScope
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumColorSettingScopeFilter<$PrismaModel>
+    _max?: NestedEnumColorSettingScopeFilter<$PrismaModel>
   }
 
   export type NestedEnumPeriodTypeFilter<$PrismaModel = never> = {
@@ -36421,6 +40386,31 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
+  export type NestedEnumTaskTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.TaskType | EnumTaskTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.TaskType[]
+    notIn?: $Enums.TaskType[]
+    not?: NestedEnumTaskTypeFilter<$PrismaModel> | $Enums.TaskType
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedEnumExpenseScopeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExpenseScope | EnumExpenseScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.ExpenseScope[]
+    notIn?: $Enums.ExpenseScope[]
+    not?: NestedEnumExpenseScopeFilter<$PrismaModel> | $Enums.ExpenseScope
+  }
+
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | null
@@ -36444,6 +40434,42 @@ export namespace Prisma {
     in?: $Enums.ProjectStatus[]
     notIn?: $Enums.ProjectStatus[]
     not?: NestedEnumProjectStatusFilter<$PrismaModel> | $Enums.ProjectStatus
+  }
+
+  export type NestedEnumTaskTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TaskType | EnumTaskTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.TaskType[]
+    notIn?: $Enums.TaskType[]
+    not?: NestedEnumTaskTypeWithAggregatesFilter<$PrismaModel> | $Enums.TaskType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTaskTypeFilter<$PrismaModel>
+    _max?: NestedEnumTaskTypeFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumExpenseScopeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExpenseScope | EnumExpenseScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.ExpenseScope[]
+    notIn?: $Enums.ExpenseScope[]
+    not?: NestedEnumExpenseScopeWithAggregatesFilter<$PrismaModel> | $Enums.ExpenseScope
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumExpenseScopeFilter<$PrismaModel>
+    _max?: NestedEnumExpenseScopeFilter<$PrismaModel>
   }
 
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -36504,17 +40530,6 @@ export namespace Prisma {
     not?: NestedEnumFrequencyTypeFilter<$PrismaModel> | $Enums.FrequencyType
   }
 
-  export type NestedFloatNullableFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | null
-    notIn?: number[] | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
-  }
-
   export type NestedEnumFrequencyTypeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.FrequencyType | EnumFrequencyTypeFieldRefInput<$PrismaModel>
     in?: $Enums.FrequencyType[]
@@ -36541,27 +40556,11 @@ export namespace Prisma {
     _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
-  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | null
-    notIn?: number[] | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedFloatNullableFilter<$PrismaModel>
-    _min?: NestedFloatNullableFilter<$PrismaModel>
-    _max?: NestedFloatNullableFilter<$PrismaModel>
-  }
-
-  export type NestedEnumExpenseScopeFilter<$PrismaModel = never> = {
-    equals?: $Enums.ExpenseScope | EnumExpenseScopeFieldRefInput<$PrismaModel>
-    in?: $Enums.ExpenseScope[]
-    notIn?: $Enums.ExpenseScope[]
-    not?: NestedEnumExpenseScopeFilter<$PrismaModel> | $Enums.ExpenseScope
+  export type NestedEnumExpensePaymentFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExpensePayment | EnumExpensePaymentFieldRefInput<$PrismaModel>
+    in?: $Enums.ExpensePayment[]
+    notIn?: $Enums.ExpensePayment[]
+    not?: NestedEnumExpensePaymentFilter<$PrismaModel> | $Enums.ExpensePayment
   }
 
   export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
@@ -36580,14 +40579,65 @@ export namespace Prisma {
     _max?: NestedFloatFilter<$PrismaModel>
   }
 
-  export type NestedEnumExpenseScopeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.ExpenseScope | EnumExpenseScopeFieldRefInput<$PrismaModel>
-    in?: $Enums.ExpenseScope[]
-    notIn?: $Enums.ExpenseScope[]
-    not?: NestedEnumExpenseScopeWithAggregatesFilter<$PrismaModel> | $Enums.ExpenseScope
+  export type NestedEnumExpensePaymentWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExpensePayment | EnumExpensePaymentFieldRefInput<$PrismaModel>
+    in?: $Enums.ExpensePayment[]
+    notIn?: $Enums.ExpensePayment[]
+    not?: NestedEnumExpensePaymentWithAggregatesFilter<$PrismaModel> | $Enums.ExpensePayment
     _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumExpenseScopeFilter<$PrismaModel>
-    _max?: NestedEnumExpenseScopeFilter<$PrismaModel>
+    _min?: NestedEnumExpensePaymentFilter<$PrismaModel>
+    _max?: NestedEnumExpensePaymentFilter<$PrismaModel>
+  }
+
+  export type NestedEnumHobbyFundTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.HobbyFundType | EnumHobbyFundTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.HobbyFundType[]
+    notIn?: $Enums.HobbyFundType[]
+    not?: NestedEnumHobbyFundTypeFilter<$PrismaModel> | $Enums.HobbyFundType
+  }
+
+  export type NestedEnumHobbyFundScopeFilter<$PrismaModel = never> = {
+    equals?: $Enums.HobbyFundScope | EnumHobbyFundScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.HobbyFundScope[]
+    notIn?: $Enums.HobbyFundScope[]
+    not?: NestedEnumHobbyFundScopeFilter<$PrismaModel> | $Enums.HobbyFundScope
+  }
+
+  export type NestedEnumHobbyFundCategoryFilter<$PrismaModel = never> = {
+    equals?: $Enums.HobbyFundCategory | EnumHobbyFundCategoryFieldRefInput<$PrismaModel>
+    in?: $Enums.HobbyFundCategory[]
+    notIn?: $Enums.HobbyFundCategory[]
+    not?: NestedEnumHobbyFundCategoryFilter<$PrismaModel> | $Enums.HobbyFundCategory
+  }
+
+  export type NestedEnumHobbyFundTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.HobbyFundType | EnumHobbyFundTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.HobbyFundType[]
+    notIn?: $Enums.HobbyFundType[]
+    not?: NestedEnumHobbyFundTypeWithAggregatesFilter<$PrismaModel> | $Enums.HobbyFundType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumHobbyFundTypeFilter<$PrismaModel>
+    _max?: NestedEnumHobbyFundTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumHobbyFundScopeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.HobbyFundScope | EnumHobbyFundScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.HobbyFundScope[]
+    notIn?: $Enums.HobbyFundScope[]
+    not?: NestedEnumHobbyFundScopeWithAggregatesFilter<$PrismaModel> | $Enums.HobbyFundScope
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumHobbyFundScopeFilter<$PrismaModel>
+    _max?: NestedEnumHobbyFundScopeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumHobbyFundCategoryWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.HobbyFundCategory | EnumHobbyFundCategoryFieldRefInput<$PrismaModel>
+    in?: $Enums.HobbyFundCategory[]
+    notIn?: $Enums.HobbyFundCategory[]
+    not?: NestedEnumHobbyFundCategoryWithAggregatesFilter<$PrismaModel> | $Enums.HobbyFundCategory
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumHobbyFundCategoryFilter<$PrismaModel>
+    _max?: NestedEnumHobbyFundCategoryFilter<$PrismaModel>
   }
 
   export type NestedEnumAlertFrequencyFilter<$PrismaModel = never> = {
@@ -36709,24 +40759,6 @@ export namespace Prisma {
     _min?: NestedEnumExecutionStatusFilter<$PrismaModel>
     _max?: NestedEnumExecutionStatusFilter<$PrismaModel>
   }
-  export type NestedJsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
 
   export type GoalCreateWithoutUserInput = {
     id?: string
@@ -36802,6 +40834,10 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    taskType?: $Enums.TaskType
+    amount?: number | null
+    expenseCategory?: string | null
+    scope?: $Enums.ExpenseScope
     isShared?: boolean
     dueDate?: Date | string | null
     priority?: $Enums.Priority
@@ -36818,6 +40854,10 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    taskType?: $Enums.TaskType
+    amount?: number | null
+    expenseCategory?: string | null
+    scope?: $Enums.ExpenseScope
     isShared?: boolean
     dueDate?: Date | string | null
     priority?: $Enums.Priority
@@ -36965,6 +41005,7 @@ export namespace Prisma {
     title: string
     content?: string | null
     category?: string | null
+    field?: string | null
     tags?: string | null
     status?: $Enums.IdeaStatus
     pinToDashboard?: boolean
@@ -36977,6 +41018,7 @@ export namespace Prisma {
     title: string
     content?: string | null
     category?: string | null
+    field?: string | null
     tags?: string | null
     status?: $Enums.IdeaStatus
     pinToDashboard?: boolean
@@ -37216,6 +41258,7 @@ export namespace Prisma {
     date: Date | string
     description: string
     amount: number
+    payment?: $Enums.ExpensePayment
     category?: string | null
     scope?: $Enums.ExpenseScope
     note?: string | null
@@ -37229,6 +41272,7 @@ export namespace Prisma {
     date: Date | string
     description: string
     amount: number
+    payment?: $Enums.ExpensePayment
     category?: string | null
     scope?: $Enums.ExpenseScope
     note?: string | null
@@ -37244,6 +41288,41 @@ export namespace Prisma {
 
   export type ExpenseCreateManyUserInputEnvelope = {
     data: ExpenseCreateManyUserInput | ExpenseCreateManyUserInput[]
+  }
+
+  export type FundTransactionCreateWithoutUserInput = {
+    id?: string
+    date: Date | string
+    description: string
+    amount: number
+    type: $Enums.HobbyFundType
+    scope: $Enums.HobbyFundScope
+    category: $Enums.HobbyFundCategory
+    condition?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type FundTransactionUncheckedCreateWithoutUserInput = {
+    id?: string
+    date: Date | string
+    description: string
+    amount: number
+    type: $Enums.HobbyFundType
+    scope: $Enums.HobbyFundScope
+    category: $Enums.HobbyFundCategory
+    condition?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type FundTransactionCreateOrConnectWithoutUserInput = {
+    where: FundTransactionWhereUniqueInput
+    create: XOR<FundTransactionCreateWithoutUserInput, FundTransactionUncheckedCreateWithoutUserInput>
+  }
+
+  export type FundTransactionCreateManyUserInputEnvelope = {
+    data: FundTransactionCreateManyUserInput | FundTransactionCreateManyUserInput[]
   }
 
   export type AlertRuleCreateWithoutUserInput = {
@@ -37602,6 +41681,10 @@ export namespace Prisma {
     id?: StringFilter<"Task"> | string
     title?: StringFilter<"Task"> | string
     description?: StringNullableFilter<"Task"> | string | null
+    taskType?: EnumTaskTypeFilter<"Task"> | $Enums.TaskType
+    amount?: FloatNullableFilter<"Task"> | number | null
+    expenseCategory?: StringNullableFilter<"Task"> | string | null
+    scope?: EnumExpenseScopeFilter<"Task"> | $Enums.ExpenseScope
     userId?: StringFilter<"Task"> | string
     isShared?: BoolFilter<"Task"> | boolean
     dueDate?: DateTimeNullableFilter<"Task"> | Date | string | null
@@ -37726,6 +41809,7 @@ export namespace Prisma {
     title?: StringFilter<"Idea"> | string
     content?: StringNullableFilter<"Idea"> | string | null
     category?: StringNullableFilter<"Idea"> | string | null
+    field?: StringNullableFilter<"Idea"> | string | null
     tags?: StringNullableFilter<"Idea"> | string | null
     status?: EnumIdeaStatusFilter<"Idea"> | $Enums.IdeaStatus
     userId?: StringFilter<"Idea"> | string
@@ -37937,6 +42021,7 @@ export namespace Prisma {
     date?: DateTimeFilter<"Expense"> | Date | string
     description?: StringFilter<"Expense"> | string
     amount?: FloatFilter<"Expense"> | number
+    payment?: EnumExpensePaymentFilter<"Expense"> | $Enums.ExpensePayment
     category?: StringNullableFilter<"Expense"> | string | null
     scope?: EnumExpenseScopeFilter<"Expense"> | $Enums.ExpenseScope
     note?: StringNullableFilter<"Expense"> | string | null
@@ -37944,6 +42029,39 @@ export namespace Prisma {
     userId?: StringFilter<"Expense"> | string
     createdAt?: DateTimeFilter<"Expense"> | Date | string
     updatedAt?: DateTimeFilter<"Expense"> | Date | string
+  }
+
+  export type FundTransactionUpsertWithWhereUniqueWithoutUserInput = {
+    where: FundTransactionWhereUniqueInput
+    update: XOR<FundTransactionUpdateWithoutUserInput, FundTransactionUncheckedUpdateWithoutUserInput>
+    create: XOR<FundTransactionCreateWithoutUserInput, FundTransactionUncheckedCreateWithoutUserInput>
+  }
+
+  export type FundTransactionUpdateWithWhereUniqueWithoutUserInput = {
+    where: FundTransactionWhereUniqueInput
+    data: XOR<FundTransactionUpdateWithoutUserInput, FundTransactionUncheckedUpdateWithoutUserInput>
+  }
+
+  export type FundTransactionUpdateManyWithWhereWithoutUserInput = {
+    where: FundTransactionScalarWhereInput
+    data: XOR<FundTransactionUpdateManyMutationInput, FundTransactionUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type FundTransactionScalarWhereInput = {
+    AND?: FundTransactionScalarWhereInput | FundTransactionScalarWhereInput[]
+    OR?: FundTransactionScalarWhereInput[]
+    NOT?: FundTransactionScalarWhereInput | FundTransactionScalarWhereInput[]
+    id?: StringFilter<"FundTransaction"> | string
+    date?: DateTimeFilter<"FundTransaction"> | Date | string
+    description?: StringFilter<"FundTransaction"> | string
+    amount?: FloatFilter<"FundTransaction"> | number
+    type?: EnumHobbyFundTypeFilter<"FundTransaction"> | $Enums.HobbyFundType
+    scope?: EnumHobbyFundScopeFilter<"FundTransaction"> | $Enums.HobbyFundScope
+    category?: EnumHobbyFundCategoryFilter<"FundTransaction"> | $Enums.HobbyFundCategory
+    condition?: StringNullableFilter<"FundTransaction"> | string | null
+    userId?: StringFilter<"FundTransaction"> | string
+    createdAt?: DateTimeFilter<"FundTransaction"> | Date | string
+    updatedAt?: DateTimeFilter<"FundTransaction"> | Date | string
   }
 
   export type AlertRuleUpsertWithWhereUniqueWithoutUserInput = {
@@ -38217,11 +42335,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -38238,6 +42374,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -38255,11 +42392,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -38276,6 +42431,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -38309,11 +42465,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -38330,6 +42504,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -38347,11 +42522,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -38368,6 +42561,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -38385,11 +42579,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
@@ -38405,6 +42617,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -38423,11 +42636,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
@@ -38443,6 +42674,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -38504,11 +42736,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
@@ -38524,6 +42774,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -38542,11 +42793,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
@@ -38562,6 +42831,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -38635,11 +42905,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -38655,6 +42943,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -38673,11 +42962,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -38693,6 +43000,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -38772,11 +43080,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -38792,6 +43118,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -38810,11 +43137,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -38830,6 +43175,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -38848,11 +43194,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -38868,6 +43232,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -38886,11 +43251,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -38906,6 +43289,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -38940,11 +43324,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -38960,6 +43362,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -38978,11 +43381,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -38998,6 +43419,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -39016,11 +43438,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -39036,6 +43476,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -39054,11 +43495,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -39074,6 +43533,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -39097,11 +43557,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -39117,6 +43595,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -39135,11 +43614,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -39155,6 +43652,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -39189,11 +43687,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -39209,6 +43725,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -39227,11 +43744,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -39247,6 +43782,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -39276,11 +43812,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -39296,6 +43850,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -39314,11 +43869,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -39334,6 +43907,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -39352,11 +43926,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -39372,6 +43964,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -39390,11 +43983,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -39410,6 +44021,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -39444,11 +44056,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -39464,6 +44094,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -39482,11 +44113,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -39502,6 +44151,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -39520,11 +44170,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -39540,6 +44208,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -39558,11 +44227,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -39578,6 +44265,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -39612,11 +44300,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -39632,6 +44338,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -39650,11 +44357,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -39670,6 +44395,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -39688,11 +44414,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -39708,6 +44452,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -39726,11 +44471,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -39746,6 +44509,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -39769,11 +44533,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -39789,6 +44571,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -39807,11 +44590,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -39827,6 +44628,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -39861,11 +44663,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -39881,6 +44701,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -39899,11 +44720,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -39919,6 +44758,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -39948,11 +44788,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -39968,6 +44826,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -39986,11 +44845,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -40006,6 +44883,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -40024,11 +44902,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -40044,6 +44940,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -40062,11 +44959,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -40082,6 +44997,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -40151,11 +45067,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -40171,6 +45105,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -40189,11 +45124,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -40209,6 +45162,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -40276,11 +45230,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -40296,6 +45268,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -40314,11 +45287,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -40334,6 +45325,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -40407,11 +45399,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -40427,6 +45437,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -40445,11 +45456,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -40465,6 +45494,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -40483,11 +45513,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -40503,6 +45551,7 @@ export namespace Prisma {
     maintenanceRecords?: MaintenanceRecordCreateNestedManyWithoutUserInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -40521,11 +45570,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -40541,6 +45608,7 @@ export namespace Prisma {
     maintenanceRecords?: MaintenanceRecordUncheckedCreateNestedManyWithoutUserInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -40594,11 +45662,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -40614,6 +45700,7 @@ export namespace Prisma {
     maintenanceRecords?: MaintenanceRecordUpdateManyWithoutUserNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -40632,11 +45719,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -40652,6 +45757,7 @@ export namespace Prisma {
     maintenanceRecords?: MaintenanceRecordUncheckedUpdateManyWithoutUserNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -40723,11 +45829,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -40743,6 +45867,7 @@ export namespace Prisma {
     maintenanceRecords?: MaintenanceRecordCreateNestedManyWithoutUserInput
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -40761,11 +45886,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -40781,6 +45924,7 @@ export namespace Prisma {
     maintenanceRecords?: MaintenanceRecordUncheckedCreateNestedManyWithoutUserInput
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -40858,11 +46002,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -40878,6 +46040,7 @@ export namespace Prisma {
     maintenanceRecords?: MaintenanceRecordUpdateManyWithoutUserNestedInput
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -40896,11 +46059,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -40916,6 +46097,7 @@ export namespace Prisma {
     maintenanceRecords?: MaintenanceRecordUncheckedUpdateManyWithoutUserNestedInput
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -40934,11 +46116,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -40954,6 +46154,7 @@ export namespace Prisma {
     maintenanceRecords?: MaintenanceRecordCreateNestedManyWithoutUserInput
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -40972,11 +46173,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -40992,6 +46211,7 @@ export namespace Prisma {
     maintenanceRecords?: MaintenanceRecordUncheckedCreateNestedManyWithoutUserInput
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -41026,11 +46246,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -41046,6 +46284,7 @@ export namespace Prisma {
     maintenanceRecords?: MaintenanceRecordUpdateManyWithoutUserNestedInput
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -41064,11 +46303,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -41084,6 +46341,251 @@ export namespace Prisma {
     maintenanceRecords?: MaintenanceRecordUncheckedUpdateManyWithoutUserNestedInput
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
+    alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
+    scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
+    budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
+    refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUncheckedUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUncheckedUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUncheckedUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutFundTransactionsInput = {
+    id?: string
+    email: string
+    name: string
+    password: string
+    role?: $Enums.Role
+    active?: boolean
+    theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
+    notificationEnabled?: boolean
+    notificationChannel?: $Enums.NotificationChannel
+    notificationEmail?: string | null
+    timezone?: string
+    telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    goals?: GoalCreateNestedManyWithoutUserInput
+    goalCheckIns?: GoalCheckInCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
+    projects?: ProjectCreateNestedManyWithoutAssigneeInput
+    createdProjects?: ProjectCreateNestedManyWithoutCreatedByInput
+    learningItems?: LearningItemCreateNestedManyWithoutUserInput
+    ideas?: IdeaCreateNestedManyWithoutUserInput
+    houseworkItems?: HouseworkItemCreateNestedManyWithoutAssigneeInput
+    createdHousework?: HouseworkItemCreateNestedManyWithoutCreatedByInput
+    assets?: AssetCreateNestedManyWithoutUserInput
+    maintenanceRecords?: MaintenanceRecordCreateNestedManyWithoutUserInput
+    calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
+    eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
+    expenses?: ExpenseCreateNestedManyWithoutUserInput
+    alertRules?: AlertRuleCreateNestedManyWithoutUserInput
+    scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
+    budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
+    refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutFundTransactionsInput = {
+    id?: string
+    email: string
+    name: string
+    password: string
+    role?: $Enums.Role
+    active?: boolean
+    theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
+    notificationEnabled?: boolean
+    notificationChannel?: $Enums.NotificationChannel
+    notificationEmail?: string | null
+    timezone?: string
+    telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    goals?: GoalUncheckedCreateNestedManyWithoutUserInput
+    goalCheckIns?: GoalCheckInUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
+    projects?: ProjectUncheckedCreateNestedManyWithoutAssigneeInput
+    createdProjects?: ProjectUncheckedCreateNestedManyWithoutCreatedByInput
+    learningItems?: LearningItemUncheckedCreateNestedManyWithoutUserInput
+    ideas?: IdeaUncheckedCreateNestedManyWithoutUserInput
+    houseworkItems?: HouseworkItemUncheckedCreateNestedManyWithoutAssigneeInput
+    createdHousework?: HouseworkItemUncheckedCreateNestedManyWithoutCreatedByInput
+    assets?: AssetUncheckedCreateNestedManyWithoutUserInput
+    maintenanceRecords?: MaintenanceRecordUncheckedCreateNestedManyWithoutUserInput
+    calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
+    eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
+    expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
+    scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
+    budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
+    refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    telegramLink?: TelegramLinkUncheckedCreateNestedOneWithoutUserInput
+    assistantMessages?: AssistantMessageUncheckedCreateNestedManyWithoutUserInput
+    assistantActionLogs?: AssistantActionLogUncheckedCreateNestedManyWithoutUserInput
+    assistantPendingActions?: AssistantPendingActionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutFundTransactionsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutFundTransactionsInput, UserUncheckedCreateWithoutFundTransactionsInput>
+  }
+
+  export type UserUpsertWithoutFundTransactionsInput = {
+    update: XOR<UserUpdateWithoutFundTransactionsInput, UserUncheckedUpdateWithoutFundTransactionsInput>
+    create: XOR<UserCreateWithoutFundTransactionsInput, UserUncheckedCreateWithoutFundTransactionsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutFundTransactionsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutFundTransactionsInput, UserUncheckedUpdateWithoutFundTransactionsInput>
+  }
+
+  export type UserUpdateWithoutFundTransactionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    active?: BoolFieldUpdateOperationsInput | boolean
+    theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    goals?: GoalUpdateManyWithoutUserNestedInput
+    goalCheckIns?: GoalCheckInUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
+    projects?: ProjectUpdateManyWithoutAssigneeNestedInput
+    createdProjects?: ProjectUpdateManyWithoutCreatedByNestedInput
+    learningItems?: LearningItemUpdateManyWithoutUserNestedInput
+    ideas?: IdeaUpdateManyWithoutUserNestedInput
+    houseworkItems?: HouseworkItemUpdateManyWithoutAssigneeNestedInput
+    createdHousework?: HouseworkItemUpdateManyWithoutCreatedByNestedInput
+    assets?: AssetUpdateManyWithoutUserNestedInput
+    maintenanceRecords?: MaintenanceRecordUpdateManyWithoutUserNestedInput
+    calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
+    eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
+    expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
+    scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
+    budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
+    refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    telegramLink?: TelegramLinkUpdateOneWithoutUserNestedInput
+    assistantMessages?: AssistantMessageUpdateManyWithoutUserNestedInput
+    assistantActionLogs?: AssistantActionLogUpdateManyWithoutUserNestedInput
+    assistantPendingActions?: AssistantPendingActionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutFundTransactionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    active?: BoolFieldUpdateOperationsInput | boolean
+    theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
+    goalCheckIns?: GoalCheckInUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
+    projects?: ProjectUncheckedUpdateManyWithoutAssigneeNestedInput
+    createdProjects?: ProjectUncheckedUpdateManyWithoutCreatedByNestedInput
+    learningItems?: LearningItemUncheckedUpdateManyWithoutUserNestedInput
+    ideas?: IdeaUncheckedUpdateManyWithoutUserNestedInput
+    houseworkItems?: HouseworkItemUncheckedUpdateManyWithoutAssigneeNestedInput
+    createdHousework?: HouseworkItemUncheckedUpdateManyWithoutCreatedByNestedInput
+    assets?: AssetUncheckedUpdateManyWithoutUserNestedInput
+    maintenanceRecords?: MaintenanceRecordUncheckedUpdateManyWithoutUserNestedInput
+    calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
+    eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+    expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -41102,11 +46604,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -41123,6 +46643,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
@@ -41140,11 +46661,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -41161,6 +46700,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
@@ -41194,11 +46734,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -41215,6 +46773,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
@@ -41232,11 +46791,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -41253,6 +46830,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -41270,11 +46848,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -41291,6 +46887,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
@@ -41308,11 +46905,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -41329,6 +46944,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
@@ -41362,11 +46978,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -41383,6 +47017,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
@@ -41400,11 +47035,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -41421,6 +47074,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -41438,11 +47092,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -41459,6 +47131,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
@@ -41476,11 +47149,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -41497,6 +47188,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
@@ -41530,11 +47222,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -41551,6 +47261,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
@@ -41568,11 +47279,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -41589,6 +47318,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -41606,11 +47336,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -41627,6 +47375,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -41644,11 +47393,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -41665,6 +47432,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -41698,11 +47466,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -41719,6 +47505,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -41736,11 +47523,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -41757,6 +47562,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -41774,11 +47580,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -41795,6 +47619,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -41812,11 +47637,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -41833,6 +47676,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -41866,11 +47710,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -41887,6 +47749,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -41904,11 +47767,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -41925,6 +47806,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -41942,11 +47824,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -41963,6 +47863,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -41980,11 +47881,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -42001,6 +47920,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -42034,11 +47954,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -42055,6 +47993,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -42072,11 +48011,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -42093,6 +48050,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -42110,11 +48068,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalCreateNestedManyWithoutUserInput
@@ -42131,6 +48107,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantCreateNestedManyWithoutUserInput
     expenses?: ExpenseCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingCreateNestedManyWithoutUserInput
@@ -42148,11 +48125,29 @@ export namespace Prisma {
     role?: $Enums.Role
     active?: boolean
     theme?: $Enums.Theme
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    mfaPendingSecret?: string | null
     notificationEnabled?: boolean
     notificationChannel?: $Enums.NotificationChannel
     notificationEmail?: string | null
-    timezone?: string | null
+    timezone?: string
     telegramChatId?: string | null
+    avatarUrl?: string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: boolean
+    featureProjects?: boolean
+    featureIdeas?: boolean
+    featureLearning?: boolean
+    featureExpenses?: boolean
+    featureTasks?: boolean
+    featureHousework?: boolean
+    featureAssets?: boolean
+    featureCalendar?: boolean
+    featureKeyboard?: boolean
+    featureFunds?: boolean
+    featureCaKeo?: boolean
+    featureHealthbook?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     goals?: GoalUncheckedCreateNestedManyWithoutUserInput
@@ -42169,6 +48164,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedCreateNestedManyWithoutCreatedByInput
     eventParticipants?: EventParticipantUncheckedCreateNestedManyWithoutUserInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutUserInput
+    fundTransactions?: FundTransactionUncheckedCreateNestedManyWithoutUserInput
     alertRules?: AlertRuleUncheckedCreateNestedManyWithoutUserInput
     scheduledReports?: ScheduledReportUncheckedCreateNestedManyWithoutUserInput
     budgetSettings?: BudgetSettingUncheckedCreateNestedManyWithoutUserInput
@@ -42202,11 +48198,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUpdateManyWithoutUserNestedInput
@@ -42223,6 +48237,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUpdateManyWithoutUserNestedInput
@@ -42240,11 +48255,29 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     active?: BoolFieldUpdateOperationsInput | boolean
     theme?: EnumThemeFieldUpdateOperationsInput | $Enums.Theme
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaPendingSecret?: NullableStringFieldUpdateOperationsInput | string | null
     notificationEnabled?: BoolFieldUpdateOperationsInput | boolean
     notificationChannel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
     notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    timezone?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
     telegramChatId?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNavItems?: JsonNullValueInput | InputJsonValue
+    featureGoals?: BoolFieldUpdateOperationsInput | boolean
+    featureProjects?: BoolFieldUpdateOperationsInput | boolean
+    featureIdeas?: BoolFieldUpdateOperationsInput | boolean
+    featureLearning?: BoolFieldUpdateOperationsInput | boolean
+    featureExpenses?: BoolFieldUpdateOperationsInput | boolean
+    featureTasks?: BoolFieldUpdateOperationsInput | boolean
+    featureHousework?: BoolFieldUpdateOperationsInput | boolean
+    featureAssets?: BoolFieldUpdateOperationsInput | boolean
+    featureCalendar?: BoolFieldUpdateOperationsInput | boolean
+    featureKeyboard?: BoolFieldUpdateOperationsInput | boolean
+    featureFunds?: BoolFieldUpdateOperationsInput | boolean
+    featureCaKeo?: BoolFieldUpdateOperationsInput | boolean
+    featureHealthbook?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     goals?: GoalUncheckedUpdateManyWithoutUserNestedInput
@@ -42261,6 +48294,7 @@ export namespace Prisma {
     calendarEvents?: CalendarEventUncheckedUpdateManyWithoutCreatedByNestedInput
     eventParticipants?: EventParticipantUncheckedUpdateManyWithoutUserNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutUserNestedInput
+    fundTransactions?: FundTransactionUncheckedUpdateManyWithoutUserNestedInput
     alertRules?: AlertRuleUncheckedUpdateManyWithoutUserNestedInput
     scheduledReports?: ScheduledReportUncheckedUpdateManyWithoutUserNestedInput
     budgetSettings?: BudgetSettingUncheckedUpdateManyWithoutUserNestedInput
@@ -42299,6 +48333,10 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    taskType?: $Enums.TaskType
+    amount?: number | null
+    expenseCategory?: string | null
+    scope?: $Enums.ExpenseScope
     isShared?: boolean
     dueDate?: Date | string | null
     priority?: $Enums.Priority
@@ -42363,6 +48401,7 @@ export namespace Prisma {
     title: string
     content?: string | null
     category?: string | null
+    field?: string | null
     tags?: string | null
     status?: $Enums.IdeaStatus
     pinToDashboard?: boolean
@@ -42455,10 +48494,24 @@ export namespace Prisma {
     date: Date | string
     description: string
     amount: number
+    payment?: $Enums.ExpensePayment
     category?: string | null
     scope?: $Enums.ExpenseScope
     note?: string | null
     recurring?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type FundTransactionCreateManyUserInput = {
+    id?: string
+    date: Date | string
+    description: string
+    amount: number
+    type: $Enums.HobbyFundType
+    scope: $Enums.HobbyFundScope
+    category: $Enums.HobbyFundCategory
+    condition?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -42632,6 +48685,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    taskType?: EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+    amount?: NullableFloatFieldUpdateOperationsInput | number | null
+    expenseCategory?: NullableStringFieldUpdateOperationsInput | string | null
+    scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     isShared?: BoolFieldUpdateOperationsInput | boolean
     dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     priority?: EnumPriorityFieldUpdateOperationsInput | $Enums.Priority
@@ -42648,6 +48705,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    taskType?: EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+    amount?: NullableFloatFieldUpdateOperationsInput | number | null
+    expenseCategory?: NullableStringFieldUpdateOperationsInput | string | null
+    scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     isShared?: BoolFieldUpdateOperationsInput | boolean
     dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     priority?: EnumPriorityFieldUpdateOperationsInput | $Enums.Priority
@@ -42664,6 +48725,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    taskType?: EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+    amount?: NullableFloatFieldUpdateOperationsInput | number | null
+    expenseCategory?: NullableStringFieldUpdateOperationsInput | string | null
+    scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     isShared?: BoolFieldUpdateOperationsInput | boolean
     dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     priority?: EnumPriorityFieldUpdateOperationsInput | $Enums.Priority
@@ -42822,6 +48887,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     category?: NullableStringFieldUpdateOperationsInput | string | null
+    field?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
     pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
@@ -42834,6 +48900,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     category?: NullableStringFieldUpdateOperationsInput | string | null
+    field?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
     pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
@@ -42846,6 +48913,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     category?: NullableStringFieldUpdateOperationsInput | string | null
+    field?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumIdeaStatusFieldUpdateOperationsInput | $Enums.IdeaStatus
     pinToDashboard?: BoolFieldUpdateOperationsInput | boolean
@@ -43102,6 +49170,7 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    payment?: EnumExpensePaymentFieldUpdateOperationsInput | $Enums.ExpensePayment
     category?: NullableStringFieldUpdateOperationsInput | string | null
     scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     note?: NullableStringFieldUpdateOperationsInput | string | null
@@ -43115,6 +49184,7 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    payment?: EnumExpensePaymentFieldUpdateOperationsInput | $Enums.ExpensePayment
     category?: NullableStringFieldUpdateOperationsInput | string | null
     scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     note?: NullableStringFieldUpdateOperationsInput | string | null
@@ -43128,10 +49198,50 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     description?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    payment?: EnumExpensePaymentFieldUpdateOperationsInput | $Enums.ExpensePayment
     category?: NullableStringFieldUpdateOperationsInput | string | null
     scope?: EnumExpenseScopeFieldUpdateOperationsInput | $Enums.ExpenseScope
     note?: NullableStringFieldUpdateOperationsInput | string | null
     recurring?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FundTransactionUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    description?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    type?: EnumHobbyFundTypeFieldUpdateOperationsInput | $Enums.HobbyFundType
+    scope?: EnumHobbyFundScopeFieldUpdateOperationsInput | $Enums.HobbyFundScope
+    category?: EnumHobbyFundCategoryFieldUpdateOperationsInput | $Enums.HobbyFundCategory
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FundTransactionUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    description?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    type?: EnumHobbyFundTypeFieldUpdateOperationsInput | $Enums.HobbyFundType
+    scope?: EnumHobbyFundScopeFieldUpdateOperationsInput | $Enums.HobbyFundScope
+    category?: EnumHobbyFundCategoryFieldUpdateOperationsInput | $Enums.HobbyFundCategory
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FundTransactionUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    description?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    type?: EnumHobbyFundTypeFieldUpdateOperationsInput | $Enums.HobbyFundType
+    scope?: EnumHobbyFundScopeFieldUpdateOperationsInput | $Enums.HobbyFundScope
+    category?: EnumHobbyFundCategoryFieldUpdateOperationsInput | $Enums.HobbyFundCategory
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

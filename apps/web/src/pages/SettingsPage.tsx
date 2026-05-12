@@ -324,6 +324,9 @@ export default function SettingsPage() {
         { id: 'MIDNIGHT_PLUM', name: 'Midnight Plum', colors: ['#140d1f', '#c084fc', '#1d1530'] },
         { id: 'SAKURA', name: 'Sakura', colors: ['#fff8f9', '#e8457a', '#fde8ef'] },
         { id: 'FOREST_NIGHT', name: 'Forest Night', colors: ['#0d1f17', '#4ade80', '#132a1e'] },
+        { id: 'CANDY_BLOCK', name: 'Candy Block', colors: ['#ff7a59', '#ffd166', '#06d6a0'] },
+        { id: 'EMBER_NIGHT', name: 'Ember Night', colors: ['#120c14', '#ff7b72', '#221722'] },
+        { id: 'LINEN_DAWN', name: 'Linen Dawn', colors: ['#fffaf2', '#d97706', '#f2e8d8'] },
     ];
 
     const cakeoUsedColors = useMemo(
