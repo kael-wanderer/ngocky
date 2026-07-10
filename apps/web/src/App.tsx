@@ -1,27 +1,28 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './stores/auth';
 import AppLayout from './layouts/AppLayout';
 import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import GoalsPage from './pages/GoalsPage';
-import ProjectsPage from './pages/ProjectsPage';
-import HouseworkPage from './pages/HouseworkPage';
-import CalendarPage from './pages/CalendarPage';
-import ExpensesPage from './pages/ExpensesPage';
-import FundsPage from './pages/FundsPage';
-import ReportsPage from './pages/ReportsPage';
-import AssetsPage from './pages/AssetsPage';
-import LearningPage from './pages/LearningPage';
-import IdeasPage from './pages/IdeasPage';
-import KeyboardPage from './pages/KeyboardPage';
-import CaKeoPage from './pages/CaKeoPage';
-import HealthbookPage from './pages/HealthbookPage';
-import AlertsPage from './pages/AlertsPage';
-import SettingsPage from './pages/SettingsPage';
-import UsersPage from './pages/UsersPage';
 import { isRouteAccessible } from './config/features';
+
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const GoalsPage = lazy(() => import('./pages/goals'));
+const ProjectsPage = lazy(() => import('./pages/projects'));
+const HouseworkPage = lazy(() => import('./pages/HouseworkPage'));
+const CalendarPage = lazy(() => import('./pages/CalendarPage'));
+const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
+const FundsPage = lazy(() => import('./pages/FundsPage'));
+const ReportsPage = lazy(() => import('./pages/reports'));
+const AssetsPage = lazy(() => import('./pages/AssetsPage'));
+const LearningPage = lazy(() => import('./pages/LearningPage'));
+const IdeasPage = lazy(() => import('./pages/IdeasPage'));
+const KeyboardPage = lazy(() => import('./pages/KeyboardPage'));
+const CaKeoPage = lazy(() => import('./pages/CaKeoPage'));
+const HealthbookPage = lazy(() => import('./pages/healthbook'));
+const AlertsPage = lazy(() => import('./pages/AlertsPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const UsersPage = lazy(() => import('./pages/UsersPage'));
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -62,6 +63,7 @@ export default function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <BrowserRouter>
+                <Suspense fallback={null}>
                 <Routes>
                     <Route path="/login" element={!isInitialized ? null : isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
                     <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
@@ -90,6 +92,7 @@ export default function App() {
                     </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+                </Suspense>
             </BrowserRouter>
         </QueryClientProvider>
     );

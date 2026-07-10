@@ -1,8 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { prisma } from '../config/database';
-import { authenticate } from '../middleware/auth';
-import { sendSuccess } from '../utils/response';
-import { buildVisibleCalendarEventWhere } from '../utils/calendarVisibility';
+import { prisma } from '../../config/database';
+import { authenticate } from '../../middleware/auth';
+import { sendSuccess } from '../../utils/response';
+import { buildVisibleCalendarEventWhere } from '../../utils/calendarVisibility';
 
 const router = Router();
 router.use(authenticate);

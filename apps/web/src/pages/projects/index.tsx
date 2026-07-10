@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLocalStorage } from '../utils/useLocalStorage';
-import api from '../api/client';
+import { useLocalStorage } from '../../utils/useLocalStorage';
+import api from '../../api/client';
 import { FolderKanban, Plus, X, LayoutGrid, List, ArrowLeft, Trash2, Pencil, RefreshCw, Copy, Pin, Filter, ArrowUp, ArrowDown, ChevronsUpDown, Bell, ChevronDown, ChevronUp } from 'lucide-react';
-import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
-import RichTextEditor from '../components/RichTextEditor';
+import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../../components/NotificationFields';
+import RichTextEditor from '../../components/RichTextEditor';
 import { format, startOfToday } from 'date-fns';
-import { parseCompactAmountInput } from '../utils/amount';
-import { useAuthStore } from '../stores/auth';
+import { parseCompactAmountInput } from '../../utils/amount';
+import { useAuthStore } from '../../stores/auth';
 import { useSearchParams } from 'react-router-dom';
-import { getSharedOwnerName } from '../utils/sharedOwnership';
+import { getSharedOwnerName } from '../../utils/sharedOwnership';
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useMemo } from 'react';
-import { useLocalStorage } from '../utils/useLocalStorage';
+import { useLocalStorage } from '../../utils/useLocalStorage';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -8,11 +8,11 @@ import {
     Paperclip, Upload, X, FileText, Image, ChevronDown, ChevronUp, Eye,
     LayoutGrid, List, Filter, Bell, Copy, Pin,
 } from 'lucide-react';
-import api from '../api/client';
-import { useAuthStore } from '../stores/auth';
-import { getFundsDateRange } from '../config/fundsFilters';
-import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
-import RichTextEditor from '../components/RichTextEditor';
+import api from '../../api/client';
+import { useAuthStore } from '../../stores/auth';
+import { getFundsDateRange } from '../../config/fundsFilters';
+import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../../components/NotificationFields';
+import RichTextEditor from '../../components/RichTextEditor';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

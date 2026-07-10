@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useLocalStorage } from '../utils/useLocalStorage';
-import api from '../api/client';
-import { useAuthStore } from '../stores/auth';
-import { FEATURE_GROUPS, getFeatureFlags } from '../config/features';
+import { useLocalStorage } from '../../utils/useLocalStorage';
+import api from '../../api/client';
+import { useAuthStore } from '../../stores/auth';
+import { FEATURE_GROUPS, getFeatureFlags } from '../../config/features';
 import {
     DEFAULT_TASK_FILTERS,
     getTaskDueDateRange,
@@ -15,8 +15,8 @@ import {
     type SharedTaskPriorityFilter,
     type SharedTaskStatusFilter,
     type SharedTaskTypeFilter,
-} from '../config/taskFilters';
-import { DEFAULT_GOAL_PERIOD_FILTER, GOAL_PERIOD_FILTER_OPTIONS, type SharedGoalPeriodFilter } from '../config/goalFilters';
+} from '../../config/taskFilters';
+import { DEFAULT_GOAL_PERIOD_FILTER, GOAL_PERIOD_FILTER_OPTIONS, type SharedGoalPeriodFilter } from '../../config/goalFilters';
 import {
     DEFAULT_EXPENSE_FILTERS,
     EXPENSE_ALL_CATEGORIES,
@@ -27,7 +27,7 @@ import {
     EXPENSE_TYPE_OPTIONS,
     getExpenseDateRangeFromPreset,
     type ExpenseTimePreset,
-} from '../config/expenseFilters';
+} from '../../config/expenseFilters';
 import {
     DEFAULT_HOUSEWORK_FILTERS,
     getHouseworkDueDateRange,
@@ -37,7 +37,7 @@ import {
     type SharedHouseworkDueDateFilter,
     type SharedHouseworkFrequencyFilter,
     type SharedHouseworkStatusFilter,
-} from '../config/houseworkFilters';
+} from '../../config/houseworkFilters';
 import {
     CAKEO_CATEGORY_OPTIONS,
     CAKEO_DATE_FILTER_OPTIONS,
@@ -48,8 +48,8 @@ import {
     type SharedCaKeoDateFilter,
     type SharedCaKeoStatusFilter,
     type SharedCaKeoTypeFilter,
-} from '../config/cakeoFilters';
-import MultiSelectFilter from '../components/MultiSelectFilter';
+} from '../../config/cakeoFilters';
+import MultiSelectFilter from '../../components/MultiSelectFilter';
 import {
     DEFAULT_KEYBOARD_FILTERS,
     KEYBOARD_FILTER_CATEGORIES,
@@ -57,14 +57,14 @@ import {
     KEYBOARD_FILTER_PRICE_RANGES,
     KEYBOARD_FILTER_TAGS,
     matchesKeyboardFilters,
-} from '../config/keyboardFilters';
+} from '../../config/keyboardFilters';
 import {
     DEFAULT_FUNDS_FILTERS,
     FUNDS_CATEGORY_OPTIONS,
     FUNDS_CONDITION_OPTIONS,
     FUNDS_SCOPE_OPTIONS,
     FUNDS_TYPE_OPTIONS,
-} from '../config/fundsFilters';
+} from '../../config/fundsFilters';
 import { BarChart3, FileSpreadsheet, FileText, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 

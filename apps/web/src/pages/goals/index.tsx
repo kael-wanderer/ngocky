@@ -1,17 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocalStorage } from '../utils/useLocalStorage';
+import { useLocalStorage } from '../../utils/useLocalStorage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../api/client';
+import api from '../../api/client';
 import {
     Trophy, Plus, X, Check, Trash2, AlertCircle, Pencil, Copy, Pin,
     LayoutGrid, List, Bell, ClipboardList, CheckCircle2, RefreshCcw, ArrowUp, ArrowDown, Filter, ChevronDown, ChevronUp,
 } from 'lucide-react';
-import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
+import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../../components/NotificationFields';
 import { useSearchParams } from 'react-router-dom';
 import { addMonths, addWeeks, endOfMonth, endOfWeek, format, isWithinInterval, startOfMonth, startOfToday, startOfWeek } from 'date-fns';
-import { useAuthStore } from '../stores/auth';
-import { getSharedOwnerName } from '../utils/sharedOwnership';
-import { parseCompactAmountInput } from '../utils/amount';
+import { useAuthStore } from '../../stores/auth';
+import { getSharedOwnerName } from '../../utils/sharedOwnership';
+import { parseCompactAmountInput } from '../../utils/amount';
 import {
     DEFAULT_TASK_FILTERS,
     getTaskDueDateRange,
@@ -23,9 +23,9 @@ import {
     type SharedTaskPriorityFilter,
     type SharedTaskStatusFilter,
     type SharedTaskTypeFilter,
-} from '../config/taskFilters';
-import { DEFAULT_GOAL_PERIOD_FILTER, GOAL_PERIOD_FILTER_OPTIONS, type SharedGoalPeriodFilter } from '../config/goalFilters';
-import { DEFAULT_PAY_CATEGORY, EXPENSE_PAY_CATEGORIES, EXPENSE_SCOPE_OPTIONS } from '../config/expenseFilters';
+} from '../../config/taskFilters';
+import { DEFAULT_GOAL_PERIOD_FILTER, GOAL_PERIOD_FILTER_OPTIONS, type SharedGoalPeriodFilter } from '../../config/goalFilters';
+import { DEFAULT_PAY_CATEGORY, EXPENSE_PAY_CATEGORIES, EXPENSE_SCOPE_OPTIONS } from '../../config/expenseFilters';
 
 const unitOptions = [
     { value: 'times', label: 'Time' },
