@@ -4,10 +4,19 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createExpenseSchema, updateExpenseSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
-import { ForbiddenError, NotFoundError } from '../utils/errors';
+import { ForbiddenError, NotFoundError, ValidationError } from '../utils/errors';
 
 const router = Router();
 router.use(authenticate);
+
+async function assertPageInstance(instanceId: string | null | undefined) {
+    if (!instanceId) return null;
+    const page = await prisma.pageInstance.findUnique({ where: { id: instanceId } });
+    if (!page || page.moduleType !== 'EXPENSE') {
+        throw new ValidationError('Invalid instanceId');
+    }
+    return page;
+}
 
 // List expenses
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -28,6 +37,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 { isShared: true },
             ],
         };
+        where.instanceId = typeof req.query.instanceId === 'string' && req.query.instanceId ? req.query.instanceId : null;
         if (userId) {
             where.AND = [{ userId }];
         }
@@ -56,10 +66,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 // Create expense
 router.post('/', validate(createExpenseSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const instanceId = req.body.instanceId ?? null;
+        await assertPageInstance(instanceId);
         const expense = await prisma.expense.create({
             data: {
                 ...req.body,
                 date: new Date(req.body.date),
+                instanceId,
                 userId: req.user!.userId,
             },
             include: { user: { select: { id: true, name: true } } },
@@ -90,10 +103,11 @@ router.patch('/:id', validate(updateExpenseSchema), async (req: Request, res: Re
         if (!existing) throw new NotFoundError('Expense');
         if (existing.userId !== currentUserId) throw new ForbiddenError('Only the owner can update this expense');
 
+        const { instanceId: _ignoredInstanceId, ...body } = req.body;
         const expense = await prisma.expense.update({
             where: { id: req.params.id },
             data: {
-                ...req.body,
+                ...body,
                 date: req.body.date ? new Date(req.body.date) : undefined,
             },
             include: { user: { select: { id: true, name: true } } },

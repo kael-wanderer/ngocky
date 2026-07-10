@@ -61,6 +61,7 @@ export const createGoalSchema = z.object({
     startDate: z.string().datetime().optional(),
     ...notificationFields,
     pinToDashboard: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 }).superRefine(notificationRefinement);
 
 export const updateGoalSchema = z.object({
@@ -75,6 +76,7 @@ export const updateGoalSchema = z.object({
     ...notificationFields,
     pinToDashboard: z.boolean().optional(),
     active: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 }).superRefine(notificationRefinement);
 
 const standaloneTaskSchemaBase = z.object({
@@ -95,6 +97,7 @@ const standaloneTaskSchemaBase = z.object({
     repeatFrequency: z.enum(['DAILY', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY', 'QUARTERLY']).nullable().optional(),
     repeatEndType: z.enum(['NEVER', 'ON_DATE']).nullable().optional(),
     repeatUntil: z.string().datetime().nullable().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 });
 
 function validateStandaloneTaskRepeat(data: any, ctx: z.RefinementCtx) {
@@ -155,6 +158,7 @@ export const createProjectSchema = z.object({
     boardStatus: z.enum(['PLAN', 'WORKING', 'COMPLETED']).optional(),
     isShared: z.boolean().optional(),
     pinToDashboard: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 });
 
 export const updateProjectSchema = createProjectSchema.partial();
@@ -355,6 +359,7 @@ export const createExpenseSchema = z.object({
     scope: z.enum(['PERSONAL', 'FAMILY', 'KEO', 'PROJECT']).optional(),
     note: z.string().optional(),
     recurring: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 });
 
 export const updateExpenseSchema = createExpenseSchema.partial();

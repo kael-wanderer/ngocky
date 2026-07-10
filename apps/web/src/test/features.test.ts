@@ -31,4 +31,12 @@ describe('feature flags', () => {
     it('route in mobile nav stays accessible even when feature off', () => {
         expect(isRouteAccessible('/goals', { featureGoals: false, mobileNavItems: ['/', '/goals', '/tasks', '/settings'] })).toBe(true);
     });
+
+    it('disabled app group blocks route regardless of user flags', () => {
+        expect(isRouteAccessible('/keyboard', { featureKeyboard: true }, ['personal'])).toBe(false);
+    });
+
+    it('enabled app group keeps existing user flag behavior', () => {
+        expect(isRouteAccessible('/keyboard', { featureKeyboard: true }, ['personal', 'hobby'])).toBe(true);
+    });
 });

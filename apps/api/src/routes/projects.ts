@@ -4,7 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createProjectSchema, updateProjectSchema, createTaskSchema, updateTaskSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
-import { NotFoundError, ForbiddenError } from '../utils/errors';
+import { NotFoundError, ForbiddenError, ValidationError } from '../utils/errors';
 import { resolveReminderFields } from '../utils/reminders';
 
 const router = Router();
@@ -38,6 +38,15 @@ const canAccessBoard = (board: { ownerId: string; isShared?: boolean }, userId: 
 const canAccessTask = (task: { createdById?: string; isShared?: boolean; project: { ownerId: string; isShared?: boolean } }, userId: string) =>
     task.project.ownerId === userId || !!task.project.isShared || !!task.isShared;
 
+async function assertPageInstance(instanceId: string | null | undefined) {
+    if (!instanceId) return null;
+    const page = await prisma.pageInstance.findUnique({ where: { id: instanceId } });
+    if (!page || page.moduleType !== 'PROJECT') {
+        throw new ValidationError('Invalid instanceId');
+    }
+    return page;
+}
+
 // --- Project Boards ---
 
 // List project boards (owned by current user OR shared)
@@ -49,6 +58,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 { ownerId: userId },
                 { isShared: true },
             ],
+            instanceId: typeof req.query.instanceId === 'string' && req.query.instanceId ? req.query.instanceId : null,
         };
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
@@ -73,7 +83,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             }),
         ]);
 
-        const overdueTaskCountMap = new Map(
+        const overdueTaskCountMap = new Map<string, number>(
             overdueTaskCounts.map((entry: any) => [entry.projectId, entry._count._all])
         );
 
@@ -98,9 +108,12 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
 // Create board
 router.post('/', validate(createProjectSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const instanceId = req.body.instanceId ?? null;
+        await assertPageInstance(instanceId);
         const board = await prisma.project.create({
             data: {
                 ...req.body,
+                instanceId,
                 ownerId: req.user!.userId,
             },
         });
@@ -138,9 +151,10 @@ router.patch('/:id', validate(updateProjectSchema), async (req: Request, res: Re
         const board = await prisma.project.findUnique({ where: { id: req.params.id } });
         if (!board) throw new NotFoundError('Project Board');
         if (!canAccessBoard(board as any, userId)) throw new ForbiddenError('You do not have access to this project board');
+        const { instanceId: _ignoredInstanceId, ...body } = req.body;
         const updated = await prisma.project.update({
             where: { id: req.params.id },
-            data: req.body,
+            data: body,
         });
         sendSuccess(res, updated);
     } catch (err) { next(err); }
@@ -175,6 +189,8 @@ router.get('/tasks/all', async (req: Request, res: Response, next: NextFunction)
                 { isShared: true },
             ],
         };
+        const instanceId = typeof req.query.instanceId === 'string' && req.query.instanceId ? req.query.instanceId : null;
+        where.project = { ...(where.project || {}), instanceId };
         if (req.query.status) where.status = req.query.status;
 
         const [tasks, total] = await Promise.all([

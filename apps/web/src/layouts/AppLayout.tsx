@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
-import { getFeatureFlags, getMobileNavItems, isFeatureRouteEnabled } from '../config/features';
+import { getEnabledGroups, getFeatureFlags, getMobileNavItems, isFeatureRouteEnabled, isRouteAccessible } from '../config/features';
+import { useAppSettings, type ModuleGroupId } from '../api/appSettings';
+import { useDeletePage, usePages } from '../api/pages';
+import AddPageModal from '../components/AddPageModal';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, Menu, X,
@@ -133,11 +136,17 @@ export default function AppLayout() {
     });
     const [showNotificationMenu, setShowNotificationMenu] = useState(false);
     const [showAccountMenu, setShowAccountMenu] = useState(false);
+    const [addPageGroup, setAddPageGroup] = useState<ModuleGroupId | null>(null);
     const notificationMenuRef = useRef<HTMLDivElement | null>(null);
     const accountMenuRef = useRef<HTMLDivElement | null>(null);
 
     const isAdmin = user?.role === 'OWNER' || user?.role === 'ADMIN';
     const featureFlags = getFeatureFlags(user);
+    const { data: appSettings } = useAppSettings();
+    const { data: pages = [] } = usePages();
+    const deletePage = useDeletePage();
+    const appName = appSettings?.appName || 'NgốcKý';
+    const enabledGroups = getEnabledGroups(appSettings?.enabledGroups);
 
     const handleLogout = () => {
         logout();
@@ -148,7 +157,8 @@ export default function AppLayout() {
         const current = [...navItems, ...adminItems].find(
             (i) => i.to === location.pathname || (i.to !== '/' && location.pathname.startsWith(i.to))
         );
-        return current?.label || 'NgốcKý';
+        const instance = pages.find((page) => location.pathname === `/p/${page.slug}`);
+        return instance?.name || current?.label || appName;
     })();
 
     useEffect(() => {
@@ -203,11 +213,13 @@ export default function AppLayout() {
     const visibleGroups = navGroups.filter((group) => {
         if (group.id === 'admin') return isAdmin;
         if (group.id === 'personal' || group.id === 'family' || group.id === 'hobby') {
-            return group.items.some((to) => isFeatureRouteEnabled(to, featureFlags));
+            if (!enabledGroups.includes(group.id)) return false;
+            return group.items.some((to) => isRouteAccessible(to, user, appSettings?.enabledGroups)) || pages.some((page) => page.group === group.id);
         }
         return true;
     });
     const mobileItems = getMobileNavItems(user)
+        .filter((to) => isRouteAccessible(to, user, appSettings?.enabledGroups))
         .map((to) => resolveNavItem(to))
         .filter(Boolean) as Array<(typeof navItems)[number]>;
 
@@ -221,10 +233,10 @@ export default function AppLayout() {
             >
                 {/* Logo */}
                 <div className="flex items-center gap-3 px-5 h-16 border-b" style={{ borderColor: 'var(--color-border)' }}>
-                    <img src="/ladybug-logo.svg" alt="NgốcKý logo" className="w-8 h-8" />
+                    <img src="/ladybug-logo.svg" alt={`${appName} logo`} className="w-8 h-8" />
                     {!collapsed && (
                         <span className="font-bold text-lg tracking-tight" style={{ color: 'var(--color-text)' }}>
-                            NgốcKý
+                            {appName}
                         </span>
                     )}
                     <button
@@ -241,10 +253,12 @@ export default function AppLayout() {
                         const orderedPaths = groupOrder[group.id] || group.items;
                         const items = orderedPaths
                             .filter((to) => isFeatureRouteEnabled(to, featureFlags))
+                            .filter((to) => isRouteAccessible(to, user, appSettings?.enabledGroups))
                             .map((to) => resolveNavItem(to))
                             .filter(Boolean) as Array<(typeof navItems)[number]>;
+                        const instanceItems = pages.filter((page) => page.group === group.id);
 
-                        if (items.length === 0) return null;
+                        if (items.length === 0 && instanceItems.length === 0) return null;
 
                         if (collapsed) {
                             return (
@@ -269,6 +283,20 @@ export default function AppLayout() {
                                             title={item.label}
                                         >
                                             <item.icon className="w-5 h-5 flex-shrink-0" />
+                                        </NavLink>
+                                    ))}
+                                    {instanceItems.map((page) => (
+                                        <NavLink
+                                            key={page.id}
+                                            to={`/p/${page.slug}`}
+                                            onClick={() => setSidebarOpen(false)}
+                                            className={({ isActive }) =>
+                                                `flex items-center justify-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive ? 'text-white shadow-sm' : 'hover:bg-gray-50'}`
+                                            }
+                                            style={({ isActive }) => isActive ? { backgroundColor: 'var(--color-primary)' } : { color: 'var(--color-text-secondary)' }}
+                                            title={page.name}
+                                        >
+                                            <FileText className="w-5 h-5 flex-shrink-0" />
                                         </NavLink>
                                     ))}
                                 </div>
@@ -315,6 +343,46 @@ export default function AppLayout() {
                                                 <span>{item.label}</span>
                                             </NavLink>
                                         ))}
+                                        {instanceItems.map((page) => (
+                                            <div key={page.id} className="flex items-center gap-1">
+                                                <NavLink
+                                                    to={`/p/${page.slug}`}
+                                                    onClick={() => setSidebarOpen(false)}
+                                                    className={({ isActive }) =>
+                                                        `min-w-0 flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive ? 'text-white shadow-sm' : 'hover:bg-gray-50'}`
+                                                    }
+                                                    style={({ isActive }) => isActive ? { backgroundColor: 'var(--color-primary)' } : { color: 'var(--color-text-secondary)' }}
+                                                >
+                                                    <FileText className="w-5 h-5 flex-shrink-0" />
+                                                    <span className="truncate">{page.name}</span>
+                                                </NavLink>
+                                                {isAdmin && (
+                                                    <button
+                                                        type="button"
+                                                        className="px-2 py-2 rounded-lg text-xs hover:bg-gray-50"
+                                                        style={{ color: 'var(--color-text-secondary)' }}
+                                                        onClick={async () => {
+                                                            if (!window.confirm(`Delete ${page.name}? Items on this page will also be deleted.`)) return;
+                                                            await deletePage.mutateAsync(page.id);
+                                                        }}
+                                                        title="Delete page"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {isAdmin && (group.id === 'personal' || group.id === 'family' || group.id === 'hobby') && (
+                                            <button
+                                                type="button"
+                                                className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-gray-50 transition-colors"
+                                                style={{ color: 'var(--color-text-secondary)' }}
+                                                onClick={() => setAddPageGroup(group.id)}
+                                            >
+                                                <FileText className="w-4 h-4" />
+                                                <span>Add page</span>
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -325,10 +393,11 @@ export default function AppLayout() {
                 {/* Footer */}
                 {!collapsed && (
                     <div className="p-4 border-t text-[11px]" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
-                        NgốcKý v1.2.0
+                        {appName} v1.2.0
                     </div>
                 )}
             </aside>
+            {addPageGroup && <AddPageModal group={addPageGroup} onClose={() => setAddPageGroup(null)} />}
 
             {/* Overlay */}
             {sidebarOpen && (

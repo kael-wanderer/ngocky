@@ -188,7 +188,12 @@ function DraggableTaskCard({ task, todayStart, userId, onOpen, onDuplicate, onTo
     );
 }
 
-export default function ProjectsPage() {
+type ProjectsPageProps = {
+    instanceId?: string;
+    pageTitle?: string;
+};
+
+export default function ProjectsPage({ instanceId, pageTitle }: ProjectsPageProps) {
     const qc = useQueryClient();
     const { user } = useAuthStore();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -221,6 +226,9 @@ export default function ProjectsPage() {
     const [boardForm, setBoardForm] = useState({ name: '', description: '', type: 'PERSONAL', boardStatus: 'PLAN', isShared: false, pinToDashboard: false });
     const [taskForm, setTaskForm] = useState({ ...emptyTaskForm });
     const [taskOptionsOpen, setTaskOptionsOpen] = useState(false);
+    const instanceKey = instanceId ?? 'default';
+    const boardsQuery = new URLSearchParams();
+    if (instanceId) boardsQuery.set('instanceId', instanceId);
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
@@ -228,7 +236,7 @@ export default function ProjectsPage() {
         setOpeningBoardId(boardId);
         try {
             await qc.ensureQueryData({
-                queryKey: ['project_board', boardId],
+                queryKey: ['project_board', instanceKey, boardId],
                 queryFn: async () => (await api.get(`/projects/${boardId}`)).data.data,
             });
         } finally {
@@ -242,19 +250,19 @@ export default function ProjectsPage() {
 
     // Queries
     const { data: boards, isLoading: boardsLoading } = useQuery({
-        queryKey: ['project_boards'],
-        queryFn: async () => (await api.get('/projects')).data.data,
+        queryKey: ['project_boards', instanceKey],
+        queryFn: async () => (await api.get(`/projects${boardsQuery.toString() ? `?${boardsQuery}` : ''}`)).data.data,
     });
 
     const { data: activeBoard, isLoading: activeBoardLoading, isFetching: activeBoardFetching } = useQuery({
-        queryKey: ['project_board', selectedBoardId],
+        queryKey: ['project_board', instanceKey, selectedBoardId],
         queryFn: async () => (await api.get(`/projects/${selectedBoardId}`)).data.data,
         enabled: !!selectedBoardId,
     });
 
     // Mutations
     const createBoardMut = useMutation({
-        mutationFn: (body: any) => api.post('/projects', body),
+        mutationFn: (body: any) => api.post('/projects', { ...body, ...(instanceId ? { instanceId } : {}) }),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['project_boards'] }); setShowCreateBoard(false); setBoardForm({ name: '', description: '', type: 'PERSONAL', boardStatus: 'PLAN', isShared: false, pinToDashboard: false }); },
     });
 
@@ -267,7 +275,7 @@ export default function ProjectsPage() {
         mutationFn: ({ id, data }: { id: string; data: any }) => api.patch(`/projects/${id}`, data),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['project_boards'] });
-            qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
+            qc.invalidateQueries({ queryKey: ['project_board', instanceKey, selectedBoardId] });
             setEditingBoard(null);
         },
     });
@@ -275,7 +283,7 @@ export default function ProjectsPage() {
     const createTaskMut = useMutation({
         mutationFn: (body: any) => api.post('/projects/tasks', body),
         onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
+            qc.invalidateQueries({ queryKey: ['project_board', instanceKey, selectedBoardId] });
             qc.invalidateQueries({ queryKey: ['project_boards'] });
             closeTaskModal();
         },
@@ -284,7 +292,7 @@ export default function ProjectsPage() {
     const updateTaskMut = useMutation({
         mutationFn: ({ id, data }: { id: string, data: any }) => api.patch(`/projects/tasks/${id}`, data),
         onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
+            qc.invalidateQueries({ queryKey: ['project_board', instanceKey, selectedBoardId] });
             qc.invalidateQueries({ queryKey: ['project_boards'] });
             closeTaskModal();
         },
@@ -293,7 +301,7 @@ export default function ProjectsPage() {
     const deleteTaskMut = useMutation({
         mutationFn: (id: string) => api.delete(`/projects/tasks/${id}`),
         onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
+            qc.invalidateQueries({ queryKey: ['project_board', instanceKey, selectedBoardId] });
             qc.invalidateQueries({ queryKey: ['project_boards'] });
         },
     });
@@ -302,7 +310,7 @@ export default function ProjectsPage() {
         mutationFn: ({ id, status, kanbanOrder }: { id: string; status: string; kanbanOrder: number }) =>
             api.patch(`/projects/tasks/${id}/reorder`, { status, kanbanOrder }),
         onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
+            qc.invalidateQueries({ queryKey: ['project_board', instanceKey, selectedBoardId] });
             qc.invalidateQueries({ queryKey: ['project_boards'] });
         },
         onError: () => {
@@ -366,7 +374,7 @@ export default function ProjectsPage() {
 
     const refreshBoard = () => {
         if (!selectedBoardId) return;
-        qc.invalidateQueries({ queryKey: ['project_board', selectedBoardId] });
+        qc.invalidateQueries({ queryKey: ['project_board', instanceKey, selectedBoardId] });
         qc.invalidateQueries({ queryKey: ['project_boards'] });
     };
 
@@ -473,7 +481,7 @@ export default function ProjectsPage() {
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-2">
                         <FolderKanban className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                        <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Project Boards</h2>
+                        <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{pageTitle || 'Project Boards'}</h2>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
@@ -527,7 +535,7 @@ export default function ProjectsPage() {
                                     <div
                                         key={b.id}
                                         className="card p-5 transition-all group hover:shadow-lg cursor-pointer"
-                                        onMouseEnter={() => { qc.prefetchQuery({ queryKey: ['project_board', b.id], queryFn: async () => (await api.get(`/projects/${b.id}`)).data.data }); }}
+                                        onMouseEnter={() => { qc.prefetchQuery({ queryKey: ['project_board', instanceKey, b.id], queryFn: async () => (await api.get(`/projects/${b.id}`)).data.data }); }}
                                         onClick={() => openBoard(b.id)}
                                     >
                                         <div className="flex justify-between items-start mb-2">
@@ -589,7 +597,7 @@ export default function ProjectsPage() {
                                         const sharedOwnerName = getSharedOwnerName(b, user?.id);
                                         return (
                                             <tr key={b.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors group cursor-pointer" style={{ borderColor: 'var(--color-border)' }}
-                                                onMouseEnter={() => { qc.prefetchQuery({ queryKey: ['project_board', b.id], queryFn: async () => (await api.get(`/projects/${b.id}`)).data.data }); }}
+                                                onMouseEnter={() => { qc.prefetchQuery({ queryKey: ['project_board', instanceKey, b.id], queryFn: async () => (await api.get(`/projects/${b.id}`)).data.data }); }}
                                                 onClick={() => openBoard(b.id)}>
                                                 <td className="px-4 py-2.5">
                                                     <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{b.name}</span>

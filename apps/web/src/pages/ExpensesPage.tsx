@@ -80,7 +80,12 @@ const emptyForm = () => ({
     note: '',
 });
 
-export default function ExpensesPage() {
+type ExpensesPageProps = {
+    instanceId?: string;
+    pageTitle?: string;
+};
+
+export default function ExpensesPage({ instanceId, pageTitle }: ExpensesPageProps) {
     const qc = useQueryClient();
     const { user } = useAuthStore();
     const exportContentRef = useRef<HTMLDivElement>(null);
@@ -93,6 +98,7 @@ export default function ExpensesPage() {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useLocalStorage('ngocky:expenses:pageSize', 25);
     const [expenseSearch, setExpenseSearch] = useState('');
+    const instanceKey = instanceId ?? 'default';
 
     const effectiveRange = filters.timePreset === 'CUSTOM'
         ? { dateFrom: filters.dateFrom, dateTo: filters.dateTo }
@@ -106,14 +112,15 @@ export default function ExpensesPage() {
     if (filters.category) queryParams.set('category', filters.category);
     if (effectiveRange.dateFrom) queryParams.set('dateFrom', new Date(`${effectiveRange.dateFrom}T00:00:00`).toISOString());
     if (effectiveRange.dateTo) queryParams.set('dateTo', new Date(`${effectiveRange.dateTo}T23:59:59.999`).toISOString());
+    if (instanceId) queryParams.set('instanceId', instanceId);
 
     const { data, isLoading } = useQuery({
-        queryKey: ['expenses', filters, effectiveRange, page, pageSize],
+        queryKey: ['expenses', instanceKey, filters, effectiveRange, page, pageSize],
         queryFn: async () => (await api.get(`/expenses?${queryParams}`)).data,
     });
 
     const createMut = useMutation({
-        mutationFn: (body: any) => api.post('/expenses', body),
+        mutationFn: (body: any) => api.post('/expenses', { ...body, ...(instanceId ? { instanceId } : {}) }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['expenses'] });
             closeModal();
@@ -311,6 +318,7 @@ export default function ExpensesPage() {
             scope: expense.scope || 'PERSONAL',
             date: format(new Date(expense.date), 'yyyy-MM-dd'),
             note: expense.note || '',
+            ...(instanceId ? { instanceId } : {}),
         });
         setShowModal(true);
     }
@@ -388,7 +396,7 @@ export default function ExpensesPage() {
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2">
                     <Wallet className="w-6 h-6" style={{ color: '#d97706' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Expenses</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{pageTitle || 'Expenses'}</h2>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                     <button

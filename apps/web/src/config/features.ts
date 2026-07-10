@@ -86,11 +86,27 @@ export const FEATURE_ROUTE_MAP = Object.fromEntries(
     FEATURE_GROUPS.flatMap((group) => group.items.map((item) => [item.route, item.key]))
 ) as Record<string, FeatureFlagKey>;
 
+export const FEATURE_ROUTE_GROUP_MAP = Object.fromEntries(
+    FEATURE_GROUPS.flatMap((group) => group.items.map((item) => [item.route, group.id]))
+) as Record<string, FeatureGroup['id']>;
+
 export function getFeatureFlags(source?: Partial<FeatureFlags> | null): FeatureFlags {
     return {
         ...FEATURE_FLAGS,
         ...(source || {}),
     };
+}
+
+export function getEnabledGroups(appGroups?: string[] | null): Array<FeatureGroup['id']> {
+    const enabled = new Set(appGroups ?? ['personal', 'family', 'hobby']);
+    enabled.add('personal');
+    return FEATURE_GROUPS.map((group) => group.id).filter((id) => enabled.has(id));
+}
+
+export function isRouteGroupEnabled(route: string, appGroups?: string[] | null) {
+    const group = FEATURE_ROUTE_GROUP_MAP[route];
+    if (!group) return true;
+    return getEnabledGroups(appGroups).includes(group);
 }
 
 export function isFeatureRouteEnabled(route: string, source?: Partial<FeatureFlags> | null) {
@@ -107,7 +123,8 @@ export function getMobileNavItems(source?: (Partial<FeatureFlags> & { mobileNavI
     return [...DEFAULT_MOBILE_NAV_ITEMS];
 }
 
-export function isRouteAccessible(route: string, source?: (Partial<FeatureFlags> & { mobileNavItems?: string[] | null }) | null) {
+export function isRouteAccessible(route: string, source?: (Partial<FeatureFlags> & { mobileNavItems?: string[] | null }) | null, appGroups?: string[] | null) {
+    if (!isRouteGroupEnabled(route, appGroups)) return false;
     if (isFeatureRouteEnabled(route, source)) return true;
     return getMobileNavItems(source).includes(route);
 }

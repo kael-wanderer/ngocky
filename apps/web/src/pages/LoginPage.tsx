@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
 import api from '../api/client';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
+import { useAppSettings } from '../api/appSettings';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -15,6 +16,8 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const { login } = useAuthStore();
     const navigate = useNavigate();
+    const { data: appSettings } = useAppSettings();
+    const appName = appSettings?.appName || 'NgốcKý';
 
     const handlePasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -61,10 +64,10 @@ export default function LoginPage() {
                 <div className="text-center mb-8">
                     <img
                         src="/ladybug-logo.svg"
-                        alt="NgốcKý logo"
+                        alt={`${appName} logo`}
                         className="w-16 h-16 mb-4 inline-block"
                     />
-                    <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>NgốcKý</h1>
+                    <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>{appName}</h1>
                     <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>Family Productivity Hub</p>
                 </div>
 

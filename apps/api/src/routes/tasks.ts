@@ -5,18 +5,27 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createStandaloneTaskSchema, updateStandaloneTaskSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError, ValidationError } from '../utils/errors';
 import { resolveReminderFields } from '../utils/reminders';
 
 const router = Router();
 router.use(authenticate);
 
-async function getNextTaskSortOrder(userId: string) {
+async function getNextTaskSortOrder(userId: string, instanceId: string | null) {
     const aggregate = await prisma.task.aggregate({
-        where: { userId },
+        where: { userId, instanceId },
         _max: { sortOrder: true },
     });
     return (aggregate._max.sortOrder ?? -1) + 1;
+}
+
+async function assertPageInstance(instanceId: string | null | undefined) {
+    if (!instanceId) return null;
+    const page = await prisma.pageInstance.findUnique({ where: { id: instanceId } });
+    if (!page || page.moduleType !== 'TASK') {
+        throw new ValidationError('Invalid instanceId');
+    }
+    return page;
 }
 
 function addRepeat(date: Date, repeatFrequency: 'DAILY' | 'WEEKLY' | 'BI_WEEKLY' | 'MONTHLY' | 'QUARTERLY') {
@@ -71,6 +80,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 { isShared: true },
             ],
         };
+        where.instanceId = typeof req.query.instanceId === 'string' && req.query.instanceId ? req.query.instanceId : null;
 
         const [tasks, total] = await Promise.all([
             prisma.task.findMany({
@@ -114,7 +124,9 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
 
 router.post('/', validate(createStandaloneTaskSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const sortOrder = await getNextTaskSortOrder(req.user!.userId);
+        const instanceId = req.body.instanceId ?? null;
+        await assertPageInstance(instanceId);
+        const sortOrder = await getNextTaskSortOrder(req.user!.userId, instanceId);
         const task = await prisma.task.create({
             data: {
                 ...req.body,
@@ -128,6 +140,7 @@ router.post('/', validate(createStandaloneTaskSchema), async (req: Request, res:
                 dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
                 repeatUntil: req.body.repeatUntil ? new Date(req.body.repeatUntil) : null,
                 sortOrder,
+                instanceId,
                 userId: req.user!.userId,
             },
             include: { user: { select: { id: true, name: true } } },
@@ -154,6 +167,7 @@ router.patch('/:id', validate(updateStandaloneTaskSchema), async (req: Request, 
         const markingDoneNow = nextStatus === 'DONE' && existing.status !== 'DONE';
         const completedAt = markingDoneNow ? new Date() : req.body.status && req.body.status !== 'DONE' ? null : undefined;
         const nextTaskType = req.body.taskType ?? existing.taskType;
+        const { instanceId: _ignoredInstanceId, ...body } = req.body;
         const shouldCreateExpense = markingDoneNow
             && nextTaskType === 'PAYMENT'
             && (req.body.createExpenseAutomatically ?? existing.createExpenseAutomatically);
@@ -172,7 +186,7 @@ router.patch('/:id', validate(updateStandaloneTaskSchema), async (req: Request, 
             return tx.task.update({
                 where: { id: req.params.id },
                 data: {
-                    ...req.body,
+                    ...body,
                     ...reminderFields,
                     amount: req.body.amount === null ? null : req.body.amount ?? undefined,
                     expenseCategory: req.body.expenseCategory === null ? null : req.body.expenseCategory ?? undefined,

@@ -6,6 +6,12 @@ import { config } from '../config/env';
 import { UnauthorizedError } from '../utils/errors';
 import { AuthPayload } from '../middleware/auth';
 
+const BCRYPT_ROUNDS = 12;
+
+export function hashPassword(password: string) {
+    return bcrypt.hash(password, BCRYPT_ROUNDS);
+}
+
 export class AuthService {
     static async login(email: string, password: string) {
         const user: any = await prisma.user.findUnique({ where: { email } });
@@ -174,7 +180,7 @@ export class AuthService {
         const valid = await bcrypt.compare(currentPassword, user.password);
         if (!valid) throw new UnauthorizedError('Current password is incorrect');
 
-        const hashed = await bcrypt.hash(newPassword, 12);
+        const hashed = await hashPassword(newPassword);
         await prisma.user.update({ where: { id: userId }, data: { password: hashed } });
 
         // Invalidate all refresh tokens for this user
@@ -217,13 +223,20 @@ export class AuthService {
     }
 
     static async seedOwner() {
+        if (!config.OWNER_EMAIL) {
+            console.log('ℹ️ OWNER_EMAIL unset, skipping owner seed');
+            return;
+        }
+        if (!config.OWNER_PASSWORD) {
+            throw new Error('OWNER_PASSWORD is required when OWNER_EMAIL is set');
+        }
         const existing = await prisma.user.findFirst({ where: { role: 'OWNER' } });
         if (existing) {
             console.log('✅ Owner already exists, skipping seed');
             return;
         }
 
-        const hashed = await bcrypt.hash(config.OWNER_PASSWORD, 12);
+        const hashed = await hashPassword(config.OWNER_PASSWORD);
         await prisma.user.create({
             data: {
                 email: config.OWNER_EMAIL,

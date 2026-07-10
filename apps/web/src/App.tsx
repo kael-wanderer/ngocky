@@ -5,6 +5,7 @@ import { useAuthStore } from './stores/auth';
 import AppLayout from './layouts/AppLayout';
 import LoginPage from './pages/LoginPage';
 import { isRouteAccessible } from './config/features';
+import { useAppSettings, useSetupStatus } from './api/appSettings';
 
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const GoalsPage = lazy(() => import('./pages/goals'));
@@ -23,6 +24,8 @@ const HealthbookPage = lazy(() => import('./pages/healthbook'));
 const AlertsPage = lazy(() => import('./pages/AlertsPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
+const SetupPage = lazy(() => import('./pages/SetupPage'));
+const InstancePage = lazy(() => import('./pages/InstancePage'));
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -46,26 +49,40 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 function FeatureRoute({ route, children }: { route: string; children: React.ReactNode }) {
     const { user } = useAuthStore();
-    if (!isRouteAccessible(route, user)) {
+    const { data: appSettings } = useAppSettings();
+    if (!isRouteAccessible(route, user, appSettings?.enabledGroups)) {
         return <Navigate to="/" replace />;
     }
     return <>{children}</>;
 }
 
-export default function App() {
+function AppRoutes() {
     const { initialize, refreshUser, isAuthenticated, isInitialized } = useAuthStore();
+    const { data: appSettings } = useAppSettings();
+    const { data: setupStatus } = useSetupStatus(isInitialized && !isAuthenticated);
 
     useEffect(() => {
         initialize();
         refreshUser();
     }, []);
 
+    useEffect(() => {
+        document.title = appSettings?.appName || 'NgốcKý';
+    }, [appSettings?.appName]);
+
+    const loginElement = !isInitialized
+        ? null
+        : isAuthenticated
+            ? <Navigate to="/" replace />
+            : setupStatus?.needsSetup
+                ? <SetupPage />
+                : <LoginPage />;
+
     return (
-        <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
-                <Suspense fallback={null}>
+        <BrowserRouter>
+            <Suspense fallback={null}>
                 <Routes>
-                    <Route path="/login" element={!isInitialized ? null : isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
+                    <Route path="/login" element={loginElement} />
                     <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                         <Route index element={<DashboardPage />} />
                         <Route path="goals" element={<FeatureRoute route="/goals"><GoalsPage forcedTab="GOALS" /></FeatureRoute>} />
@@ -89,11 +106,19 @@ export default function App() {
                         <Route path="alerts" element={<Navigate to="/notifications" replace />} />
                         <Route path="settings" element={<SettingsPage />} />
                         <Route path="users" element={<AdminRoute><UsersPage /></AdminRoute>} />
+                        <Route path="p/:slug" element={<InstancePage />} />
                     </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
-                </Suspense>
-            </BrowserRouter>
+            </Suspense>
+        </BrowserRouter>
+    );
+}
+
+export default function App() {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <AppRoutes />
         </QueryClientProvider>
     );
 }

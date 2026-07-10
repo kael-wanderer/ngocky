@@ -205,6 +205,13 @@ enum HealthLogType {
   OTHER
 }
 
+enum PageModuleType {
+  TASK
+  PROJECT
+  EXPENSE
+  GOAL
+}
+
 // ─── User ───────────────────────────────────────────
 
 model User {
@@ -242,27 +249,27 @@ model User {
   updatedAt           DateTime            @updatedAt
 
   // Relations
-  goals               Goal[]
-  goalCheckIns        GoalCheckIn[]
-  tasks               Task[]
-  learningItems       LearningItem[]
-  learningTopics      LearningTopic[]
-  ideas               Idea[]
-  ideaTopics          IdeaTopic[]
-  houseworkItems      HouseworkItem[]     @relation("HouseworkAssignee")
-  createdHousework    HouseworkItem[]     @relation("HouseworkCreator")
-  projectTasks        ProjectTask[]       @relation("TaskAssignee")
-  createdTasks        ProjectTask[]       @relation("TaskCreator")
-  assets              Asset[]
-  maintenanceRecords  MaintenanceRecord[]
-  calendarEvents      CalendarEvent[]     @relation("EventCreator")
-  eventParticipants   EventParticipant[]
-  expenses            Expense[]
-  fundTransactions    FundTransaction[]
-  alertRules          AlertRule[]
-  scheduledReports    ScheduledReport[]
-  budgetSettings      BudgetSetting[]
-  refreshTokens       RefreshToken[]
+  goals                   Goal[]
+  goalCheckIns            GoalCheckIn[]
+  tasks                   Task[]
+  learningItems           LearningItem[]
+  learningTopics          LearningTopic[]
+  ideas                   Idea[]
+  ideaTopics              IdeaTopic[]
+  houseworkItems          HouseworkItem[]          @relation("HouseworkAssignee")
+  createdHousework        HouseworkItem[]          @relation("HouseworkCreator")
+  projectTasks            ProjectTask[]            @relation("TaskAssignee")
+  createdTasks            ProjectTask[]            @relation("TaskCreator")
+  assets                  Asset[]
+  maintenanceRecords      MaintenanceRecord[]
+  calendarEvents          CalendarEvent[]          @relation("EventCreator")
+  eventParticipants       EventParticipant[]
+  expenses                Expense[]
+  fundTransactions        FundTransaction[]
+  alertRules              AlertRule[]
+  scheduledReports        ScheduledReport[]
+  budgetSettings          BudgetSetting[]
+  refreshTokens           RefreshToken[]
   ownedProjectBoards      Project[]                @relation("ProjectBoardOwner")
   telegramLink            TelegramLink?
   assistantMessages       AssistantMessage[]
@@ -273,6 +280,15 @@ model User {
   assignedCaKeos          CaKeo[]                  @relation("CaKeoAssigner")
   healthPersons           HealthPerson[]
   healthLogs              HealthLog[]
+  pageInstances           PageInstance[]
+}
+
+model AppSetting {
+  id             Int      @id @default(1)
+  appName        String   @default("NgốcKý")
+  enabledGroups  Json     @default("[\"personal\",\"family\",\"hobby\"]")
+  setupCompleted Boolean  @default(false)
+  updatedAt      DateTime @updatedAt
 }
 
 model ModuleColorSetting {
@@ -289,7 +305,6 @@ model ModuleColorSetting {
   @@index([module, scope])
 }
 
-
 model RefreshToken {
   id        String   @id @default(cuid())
   token     String   @unique
@@ -302,38 +317,63 @@ model RefreshToken {
   @@index([userId])
 }
 
+model PageInstance {
+  id          String         @id @default(cuid())
+  name        String
+  slug        String         @unique
+  moduleType  PageModuleType
+  group       String
+  icon        String?
+  createdById String
+  createdBy   User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  tasks    Task[]
+  projects Project[]
+  expenses Expense[]
+  goals    Goal[]
+
+  @@index([createdById])
+  @@index([group])
+  @@index([moduleType])
+}
+
 // ─── Goals ──────────────────────────────────────────
 
 model Goal {
-  id                  String     @id @default(cuid())
-  title               String
-  description         String?
-  userId              String
-  isShared            Boolean          @default(false)
-  periodType          PeriodType
-  targetCount         Int
-  currentCount        Int              @default(0)
-  unit                String?          @default("times")
-  trackingType        GoalTrackingType @default(BY_FREQUENCY)
-  currentPeriodStart  DateTime
-  startDate           DateTime         @default(now())
-  active              Boolean          @default(true)
-  notificationEnabled Boolean          @default(false)
-  reminderOffsetValue Int?
-  reminderOffsetUnit  ReminderUnit?
-  notificationDate    DateTime?
-  notificationTime    String?
-  lastNotificationSentAt DateTime?
-  notificationCooldownHours Int       @default(24)
-  pinToDashboard      Boolean          @default(false)
-  sortOrder           Int              @default(0)
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  id                        String           @id @default(cuid())
+  title                     String
+  description               String?
+  userId                    String
+  isShared                  Boolean          @default(false)
+  periodType                PeriodType
+  targetCount               Int
+  currentCount              Int              @default(0)
+  unit                      String?          @default("times")
+  trackingType              GoalTrackingType @default(BY_FREQUENCY)
+  currentPeriodStart        DateTime
+  startDate                 DateTime         @default(now())
+  active                    Boolean          @default(true)
+  notificationEnabled       Boolean          @default(false)
+  reminderOffsetValue       Int?
+  reminderOffsetUnit        ReminderUnit?
+  notificationDate          DateTime?
+  notificationTime          String?
+  lastNotificationSentAt    DateTime?
+  notificationCooldownHours Int              @default(24)
+  pinToDashboard            Boolean          @default(false)
+  sortOrder                 Int              @default(0)
+  instanceId                String?
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
 
   user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   checkIns GoalCheckIn[]
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([instanceId])
 }
 
 model GoalCheckIn {
@@ -353,39 +393,42 @@ model GoalCheckIn {
 }
 
 model Task {
-  id                  String           @id @default(cuid())
-  title               String
-  description         String?
-  taskType            TaskType         @default(TASK)
-  amount              Float?
-  expenseCategory     String?
-  scope               ExpenseScope     @default(PERSONAL)
-  userId              String
-  isShared            Boolean          @default(false)
-  dueDate             DateTime?
-  showOnCalendar      Boolean          @default(false)
-  createExpenseAutomatically Boolean   @default(true)
-  priority            Priority         @default(MEDIUM)
-  status              ProjectStatus    @default(PLANNED)
-  notificationEnabled Boolean          @default(false)
-  reminderOffsetValue Int?
-  reminderOffsetUnit  ReminderUnit?
-  notificationDate    DateTime?
-  notificationTime    String?
-  lastNotificationSentAt DateTime?
-  notificationCooldownHours Int       @default(24)
-  pinToDashboard      Boolean          @default(false)
-  repeatFrequency     RepeatFrequency?
-  repeatEndType       RepeatEndType?
-  repeatUntil         DateTime?
-  completedAt         DateTime?
-  sortOrder           Int              @default(0)
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  id                         String           @id @default(cuid())
+  title                      String
+  description                String?
+  taskType                   TaskType         @default(TASK)
+  amount                     Float?
+  expenseCategory            String?
+  scope                      ExpenseScope     @default(PERSONAL)
+  userId                     String
+  isShared                   Boolean          @default(false)
+  dueDate                    DateTime?
+  showOnCalendar             Boolean          @default(false)
+  createExpenseAutomatically Boolean          @default(true)
+  priority                   Priority         @default(MEDIUM)
+  status                     ProjectStatus    @default(PLANNED)
+  notificationEnabled        Boolean          @default(false)
+  reminderOffsetValue        Int?
+  reminderOffsetUnit         ReminderUnit?
+  notificationDate           DateTime?
+  notificationTime           String?
+  lastNotificationSentAt     DateTime?
+  notificationCooldownHours  Int              @default(24)
+  pinToDashboard             Boolean          @default(false)
+  repeatFrequency            RepeatFrequency?
+  repeatEndType              RepeatEndType?
+  repeatUntil                DateTime?
+  completedAt                DateTime?
+  sortOrder                  Int              @default(0)
+  instanceId                 String?
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([instanceId])
   @@index([status])
   @@index([dueDate])
 }
@@ -393,51 +436,54 @@ model Task {
 // ─── Projects ───────────────────────────────────────
 
 model Project {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  type        ProjectType @default(PERSONAL)
-  boardStatus ProjectBoardStatus @default(PLAN)
-  ownerId     String
-  isShared    Boolean  @default(false)
-  pinToDashboard Boolean @default(false)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String             @id @default(cuid())
+  name           String
+  description    String?
+  type           ProjectType        @default(PERSONAL)
+  boardStatus    ProjectBoardStatus @default(PLAN)
+  ownerId        String
+  isShared       Boolean            @default(false)
+  pinToDashboard Boolean            @default(false)
+  sortOrder      Int                @default(0)
+  instanceId     String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
-  owner User          @relation("ProjectBoardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  tasks ProjectTask[]
+  owner    User          @relation("ProjectBoardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  tasks    ProjectTask[]
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([ownerId])
+  @@index([instanceId])
 }
 
 model ProjectTask {
-  id                  String        @id @default(cuid())
-  title               String
-  description         String?
-  type                ProjectTaskType @default(TASK)
-  projectId           String
-  category            String?
-  deadline            DateTime?
-  priority            Priority      @default(MEDIUM)
-  status              ProjectStatus @default(PLANNED)
-  assigneeId          String?
-  createdById         String
-  isShared            Boolean       @default(false)
-  notificationEnabled Boolean       @default(false)
-  reminderOffsetValue Int?
-  reminderOffsetUnit  ReminderUnit?
-  notificationDate    DateTime?
-  notificationTime    String?
-  lastNotificationSentAt DateTime?
-  notificationCooldownHours Int    @default(24)
-  pinToDashboard      Boolean       @default(false)
-  kanbanOrder         Int           @default(0)
-  cost                Int?
-  showOnCalendar      Boolean       @default(false)
-  createExpenseAutomatically Boolean @default(false)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  id                         String          @id @default(cuid())
+  title                      String
+  description                String?
+  type                       ProjectTaskType @default(TASK)
+  projectId                  String
+  category                   String?
+  deadline                   DateTime?
+  priority                   Priority        @default(MEDIUM)
+  status                     ProjectStatus   @default(PLANNED)
+  assigneeId                 String?
+  createdById                String
+  isShared                   Boolean         @default(false)
+  notificationEnabled        Boolean         @default(false)
+  reminderOffsetValue        Int?
+  reminderOffsetUnit         ReminderUnit?
+  notificationDate           DateTime?
+  notificationTime           String?
+  lastNotificationSentAt     DateTime?
+  notificationCooldownHours  Int             @default(24)
+  pinToDashboard             Boolean         @default(false)
+  kanbanOrder                Int             @default(0)
+  cost                       Int?
+  showOnCalendar             Boolean         @default(false)
+  createExpenseAutomatically Boolean         @default(false)
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
 
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignee  User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
@@ -452,15 +498,15 @@ model ProjectTask {
 // ─── Learning ───────────────────────────────────────
 
 model LearningTopic {
-  id          String         @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
   description String?
   category    String?
-  isShared    Boolean        @default(false)
-  sortOrder   Int            @default(0)
+  isShared    Boolean  @default(false)
+  sortOrder   Int      @default(0)
   userId      String
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   histories LearningItem[]
@@ -510,20 +556,20 @@ model IdeaTopic {
 }
 
 model Idea {
-  id        String     @id @default(cuid())
-  title     String
-  content   String?
-  category  String?
-  field     String?
-  tags      String[]
-  status    IdeaStatus @default(OPEN)
-  topicId   String?
-  userId    String
-  pinToDashboard Boolean @default(false)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id             String     @id @default(cuid())
+  title          String
+  content        String?
+  category       String?
+  field          String?
+  tags           String[]
+  status         IdeaStatus @default(OPEN)
+  topicId        String?
+  userId         String
+  pinToDashboard Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
-  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   topic IdeaTopic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
 
   @@index([userId])
@@ -533,34 +579,34 @@ model Idea {
 // ─── Housework ──────────────────────────────────────
 
 model HouseworkItem {
-  id                  String        @id @default(cuid())
-  title               String
-  description         String?
-  assigneeId          String?
-  createdById         String
-  isShared            Boolean       @default(false)
-  status              ProjectStatus @default(PLANNED)
-  frequencyType       FrequencyType @default(ONE_TIME)
-  dayOfWeek           Int?
-  dayOfMonth          Int?
-  monthOfPeriod       Int?
-  monthOfYear         Int?
-  customIntervalDays  Int?
-  nextDueDate         DateTime?
-  lastCompletedDate   DateTime?
-  estimatedCost       Float?
-  showOnCalendar      Boolean       @default(false)
-  notificationEnabled Boolean       @default(false)
-  reminderOffsetValue Int?
-  reminderOffsetUnit  ReminderUnit?
-  notificationDate    DateTime?
-  notificationTime    String?
-  lastNotificationSentAt DateTime?
-  notificationCooldownHours Int    @default(24)
-  pinToDashboard      Boolean       @default(false)
-  active              Boolean       @default(true)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  id                        String        @id @default(cuid())
+  title                     String
+  description               String?
+  assigneeId                String?
+  createdById               String
+  isShared                  Boolean       @default(false)
+  status                    ProjectStatus @default(PLANNED)
+  frequencyType             FrequencyType @default(ONE_TIME)
+  dayOfWeek                 Int?
+  dayOfMonth                Int?
+  monthOfPeriod             Int?
+  monthOfYear               Int?
+  customIntervalDays        Int?
+  nextDueDate               DateTime?
+  lastCompletedDate         DateTime?
+  estimatedCost             Float?
+  showOnCalendar            Boolean       @default(false)
+  notificationEnabled       Boolean       @default(false)
+  reminderOffsetValue       Int?
+  reminderOffsetUnit        ReminderUnit?
+  notificationDate          DateTime?
+  notificationTime          String?
+  lastNotificationSentAt    DateTime?
+  notificationCooldownHours Int           @default(24)
+  pinToDashboard            Boolean       @default(false)
+  active                    Boolean       @default(true)
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
 
   assignee  User? @relation("HouseworkAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   createdBy User  @relation("HouseworkCreator", fields: [createdById], references: [id], onDelete: Cascade)
@@ -572,20 +618,20 @@ model HouseworkItem {
 // ─── Assets & Maintenance ───────────────────────────
 
 model Asset {
-  id           String              @id @default(cuid())
-  name         String
-  type         String?
-  brand        String?
-  model        String?
-  serialNumber String?
-  purchaseDate DateTime?
+  id             String    @id @default(cuid())
+  name           String
+  type           String?
+  brand          String?
+  model          String?
+  serialNumber   String?
+  purchaseDate   DateTime?
   warrantyMonths Int?
-  isShared     Boolean             @default(false)
-  sortOrder    Int                 @default(0)
-  note         String?
-  userId       String
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
+  isShared       Boolean   @default(false)
+  sortOrder      Int       @default(0)
+  note           String?
+  userId         String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   maintenanceRecords MaintenanceRecord[]
@@ -594,28 +640,28 @@ model Asset {
 }
 
 model MaintenanceRecord {
-  id                      String       @id @default(cuid())
-  assetId                 String
-  serviceDate             DateTime
-  description             String
-  serviceType             String?
-  cost                    Float?
-  vendor                  String?
-  nextRecommendedDate     DateTime?
-  linkedExpenseId         String?
-  kilometers              Int?
-  notificationEnabled     Boolean      @default(false)
-  reminderOffsetValue     Int?
-  reminderOffsetUnit      ReminderUnit?
-  notificationDate        DateTime?
-  notificationTime        String?
-  lastNotificationSentAt  DateTime?
-  notificationCooldownHours Int       @default(24)
-  linkedEventId           String?      @unique
-  userId                  String
-  pinToDashboard          Boolean      @default(false)
-  createdAt               DateTime     @default(now())
-  updatedAt               DateTime     @updatedAt
+  id                        String        @id @default(cuid())
+  assetId                   String
+  serviceDate               DateTime
+  description               String
+  serviceType               String?
+  cost                      Float?
+  vendor                    String?
+  nextRecommendedDate       DateTime?
+  linkedExpenseId           String?
+  kilometers                Int?
+  notificationEnabled       Boolean       @default(false)
+  reminderOffsetValue       Int?
+  reminderOffsetUnit        ReminderUnit?
+  notificationDate          DateTime?
+  notificationTime          String?
+  lastNotificationSentAt    DateTime?
+  notificationCooldownHours Int           @default(24)
+  linkedEventId             String?       @unique
+  userId                    String
+  pinToDashboard            Boolean       @default(false)
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
 
   asset       Asset          @relation(fields: [assetId], references: [id], onDelete: Cascade)
   linkedEvent CalendarEvent? @relation(fields: [linkedEventId], references: [id], onDelete: SetNull)
@@ -628,31 +674,31 @@ model MaintenanceRecord {
 // ─── Calendar ───────────────────────────────────────
 
 model CalendarEvent {
-  id          String             @id @default(cuid())
-  title       String
-  type        String             @default("EVENT")
-  description String?
-  startDate   DateTime
-  endDate     DateTime?
-  allDay      Boolean            @default(false)
-  location    String?
-  color       String?
-  category    String?
-  isShared    Boolean            @default(true)
-  notificationEnabled Boolean    @default(false)
-  reminderOffsetValue Int?
-  reminderOffsetUnit ReminderUnit?
-  notificationDate   DateTime?
-  notificationTime   String?
-  lastNotificationSentAt DateTime?
-  notificationCooldownHours Int @default(24)
-  pinToDashboard Boolean         @default(false)
-  repeatFrequency RepeatFrequency?
-  repeatEndType RepeatEndType?
-  repeatUntil DateTime?
-  createdById String
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  id                        String           @id @default(cuid())
+  title                     String
+  type                      String           @default("EVENT")
+  description               String?
+  startDate                 DateTime
+  endDate                   DateTime?
+  allDay                    Boolean          @default(false)
+  location                  String?
+  color                     String?
+  category                  String?
+  isShared                  Boolean          @default(true)
+  notificationEnabled       Boolean          @default(false)
+  reminderOffsetValue       Int?
+  reminderOffsetUnit        ReminderUnit?
+  notificationDate          DateTime?
+  notificationTime          String?
+  lastNotificationSentAt    DateTime?
+  notificationCooldownHours Int              @default(24)
+  pinToDashboard            Boolean          @default(false)
+  repeatFrequency           RepeatFrequency?
+  repeatEndType             RepeatEndType?
+  repeatUntil               DateTime?
+  createdById               String
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
 
   createdBy         User               @relation("EventCreator", fields: [createdById], references: [id], onDelete: Cascade)
   maintenanceRecord MaintenanceRecord?
@@ -676,25 +722,28 @@ model EventParticipant {
 // ─── Expenses ───────────────────────────────────────
 
 model Expense {
-  id          String       @id @default(cuid())
-  date        DateTime
-  description String
-  amount      Float
-  type        ExpenseType  @default(PAY)
-  payment     ExpensePayment @default(CASH)
-  isShared    Boolean      @default(false)
-  category    String?
-  scope       ExpenseScope @default(PERSONAL)
-  note        String?
-  recurring   Boolean      @default(false)
+  id           String         @id @default(cuid())
+  date         DateTime
+  description  String
+  amount       Float
+  type         ExpenseType    @default(PAY)
+  payment      ExpensePayment @default(CASH)
+  isShared     Boolean        @default(false)
+  category     String?
+  scope        ExpenseScope   @default(PERSONAL)
+  note         String?
+  recurring    Boolean        @default(false)
   sourceModule String?
-  userId      String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  userId       String
+  instanceId   String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([instanceId])
   @@index([date])
   @@index([category])
 }
@@ -860,14 +909,14 @@ model AssistantPendingAction {
 // ─── Budget Settings ────────────────────────────────
 
 model BudgetSetting {
-  id       String       @id @default(cuid())
-  category String
-  period   BudgetPeriod @default(MONTHLY)
-  amount   Float
-  active   Boolean      @default(true)
-  userId   String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id        String       @id @default(cuid())
+  category  String
+  period    BudgetPeriod @default(MONTHLY)
+  amount    Float
+  active    Boolean      @default(true)
+  userId    String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -901,31 +950,31 @@ model Keyboard {
 // ─── Ca Keo ──────────────────────────────────────────
 
 model CaKeo {
-  id                      String        @id @default(cuid())
-  title                   String
-  description             String?
-  type                    String        @default("Task")
-  category                String?
-  status                  String        @default("TODO")
-  assignerId              String?
-  startDate               DateTime?
-  endDate                 DateTime?
-  allDay                  Boolean       @default(false)
-  color                   String?
-  showOnCalendar          Boolean       @default(true)
-  notificationEnabled     Boolean       @default(false)
-  reminderOffsetValue     Int?
-  reminderOffsetUnit      ReminderUnit?
-  notificationDate        DateTime?
-  notificationTime        String?
-  lastNotificationSentAt  DateTime?
-  notificationCooldownHours Int         @default(24)
-  isShared                Boolean       @default(true)
-  pinToDashboard          Boolean       @default(false)
-  ownerId                 String
-  sortOrder               Int           @default(0)
-  createdAt               DateTime      @default(now())
-  updatedAt               DateTime      @updatedAt
+  id                        String        @id @default(cuid())
+  title                     String
+  description               String?
+  type                      String        @default("Task")
+  category                  String?
+  status                    String        @default("TODO")
+  assignerId                String?
+  startDate                 DateTime?
+  endDate                   DateTime?
+  allDay                    Boolean       @default(false)
+  color                     String?
+  showOnCalendar            Boolean       @default(true)
+  notificationEnabled       Boolean       @default(false)
+  reminderOffsetValue       Int?
+  reminderOffsetUnit        ReminderUnit?
+  notificationDate          DateTime?
+  notificationTime          String?
+  lastNotificationSentAt    DateTime?
+  notificationCooldownHours Int           @default(24)
+  isShared                  Boolean       @default(true)
+  pinToDashboard            Boolean       @default(false)
+  ownerId                   String
+  sortOrder                 Int           @default(0)
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
 
   owner    User  @relation("CaKeoOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   assigner User? @relation("CaKeoAssigner", fields: [assignerId], references: [id], onDelete: SetNull)
@@ -986,33 +1035,33 @@ model HealthPerson {
 }
 
 model HealthLog {
-  id              String        @id @default(cuid())
-  personId        String
-  date            DateTime
-  type            HealthLogType @default(DOCTOR_VISIT)
-  location        String?
-  doctor          String?
-  symptoms        String?
-  description     String?
-  cost            Float?
-  prescription    String?
+  id                        String        @id @default(cuid())
+  personId                  String
+  date                      DateTime
+  type                      HealthLogType @default(DOCTOR_VISIT)
+  location                  String?
+  doctor                    String?
+  symptoms                  String?
+  description               String?
+  cost                      Float?
+  prescription              String?
   nextCheckupDate           DateTime?
   linkedExpenseId           String?
   linkedCalendarEventId     String?
-  pinToDashboard            Boolean      @default(false)
-  notificationEnabled       Boolean      @default(false)
+  pinToDashboard            Boolean       @default(false)
+  notificationEnabled       Boolean       @default(false)
   reminderOffsetValue       Int?
   reminderOffsetUnit        ReminderUnit?
   notificationDate          DateTime?
   notificationTime          String?
   lastNotificationSentAt    DateTime?
-  notificationCooldownHours Int          @default(24)
-  userId                String
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
+  notificationCooldownHours Int           @default(24)
+  userId                    String
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
 
-  person HealthPerson  @relation(fields: [personId], references: [id], onDelete: Cascade)
-  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  person HealthPerson    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   files  HealthLogFile[]
 
   @@index([personId])
@@ -1021,7 +1070,7 @@ model HealthLog {
 }
 
 model HealthPersonFile {
-  id           String      @id @default(cuid())
+  id           String   @id @default(cuid())
   personId     String
   originalName String
   storedName   String
@@ -1030,7 +1079,7 @@ model HealthPersonFile {
   path         String
   label        String?
   userId       String
-  createdAt    DateTime    @default(now())
+  createdAt    DateTime @default(now())
 
   person HealthPerson @relation(fields: [personId], references: [id], onDelete: Cascade)
 
@@ -1038,7 +1087,7 @@ model HealthPersonFile {
 }
 
 model HealthLogFile {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   logId        String
   originalName String
   storedName   String
@@ -1047,7 +1096,7 @@ model HealthLogFile {
   path         String
   label        String?
   userId       String
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime @default(now())
 
   log HealthLog @relation(fields: [logId], references: [id], onDelete: Cascade)
 

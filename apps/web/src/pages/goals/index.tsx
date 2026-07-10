@@ -488,9 +488,11 @@ function TaskForm({
 
 type GoalsPageProps = {
     forcedTab?: 'GOALS' | 'TASKS';
+    instanceId?: string;
+    pageTitle?: string;
 };
 
-export default function GoalsPage({ forcedTab }: GoalsPageProps) {
+export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPageProps) {
     const qc = useQueryClient();
     const { user } = useAuthStore();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -532,6 +534,13 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     const editIdParam = searchParams.get('editId');
     const checkInIdParam = searchParams.get('checkInId');
     const showTabSwitcher = !forcedTab;
+    const instanceKey = instanceId ?? 'default';
+    const goalQuery = new URLSearchParams({ limit: '50' });
+    const taskQuery = new URLSearchParams({ limit: '100' });
+    if (instanceId) {
+        goalQuery.set('instanceId', instanceId);
+        taskQuery.set('instanceId', instanceId);
+    }
 
     useEffect(() => {
         if (forcedTab && activeTab !== forcedTab) {
@@ -540,17 +549,17 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     }, [forcedTab, activeTab]);
 
     const { data: goalsData, isLoading: goalsLoading } = useQuery({
-        queryKey: ['goals'],
-        queryFn: async () => (await api.get('/goals?limit=50')).data.data,
+        queryKey: ['goals', instanceKey],
+        queryFn: async () => (await api.get(`/goals?${goalQuery}`)).data.data,
     });
 
     const { data: tasksData, isLoading: tasksLoading } = useQuery({
-        queryKey: ['tasks'],
-        queryFn: async () => (await api.get('/tasks?limit=100')).data.data,
+        queryKey: ['tasks', instanceKey],
+        queryFn: async () => (await api.get(`/tasks?${taskQuery}`)).data.data,
     });
 
     const createGoalMut = useMutation({
-        mutationFn: (body: any) => api.post('/goals', body),
+        mutationFn: (body: any) => api.post('/goals', { ...body, ...(instanceId ? { instanceId } : {}) }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['goals'] });
             setShowCreate(false);
@@ -596,7 +605,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
     });
 
     const createTaskMut = useMutation({
-        mutationFn: (body: any) => api.post('/tasks', body),
+        mutationFn: (body: any) => api.post('/tasks', { ...body, ...(instanceId ? { instanceId } : {}) }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['tasks'] });
             qc.invalidateQueries({ queryKey: ['dashboard'] });
@@ -1035,7 +1044,7 @@ export default function GoalsPage({ forcedTab }: GoalsPageProps) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     <Trophy className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTab === 'GOALS' ? 'Goals' : 'Tasks'}</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{pageTitle || (activeTab === 'GOALS' ? 'Goals' : 'Tasks')}</h2>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap self-start sm:self-auto sm:justify-end">
                     {activeTab === 'TASKS' && (

@@ -4,11 +4,20 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createGoalSchema, updateGoalSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError, ValidationError } from '../utils/errors';
 import { getGoalPeriodEnd, getGoalPeriodStart, resolveReminderFields } from '../utils/reminders';
 
 const router = Router();
 router.use(authenticate);
+
+async function assertPageInstance(instanceId: string | null | undefined) {
+    if (!instanceId) return null;
+    const page = await prisma.pageInstance.findUnique({ where: { id: instanceId } });
+    if (!page || page.moduleType !== 'GOAL') {
+        throw new ValidationError('Invalid instanceId');
+    }
+    return page;
+}
 
 // List goals
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -28,6 +37,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 ],
             };
         if (active !== undefined) where.active = active;
+        where.instanceId = typeof req.query.instanceId === 'string' && req.query.instanceId ? req.query.instanceId : null;
 
         const [goals, total] = await Promise.all([
             prisma.goal.findMany({
@@ -42,7 +52,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         ]);
 
         // Auto-reset period counts if needed
-        const updated = await Promise.all(goals.map(async (g) => {
+        const updated = await Promise.all(goals.map(async (g: any) => {
             const periodStart = getGoalPeriodStart(g.periodType);
             const currentPeriodStart = new Date(g.currentPeriodStart);
 
@@ -96,6 +106,8 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
 // Create goal
 router.post('/', validate(createGoalSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const instanceId = req.body.instanceId ?? null;
+        await assertPageInstance(instanceId);
         const periodStart = getGoalPeriodStart(req.body.periodType);
         const reminderFields = resolveReminderFields(req.body, {
             anchorDate: getGoalPeriodEnd(periodStart, req.body.periodType),
@@ -108,6 +120,7 @@ router.post('/', validate(createGoalSchema), async (req: Request, res: Response,
                 trackingType: req.body.trackingType || 'BY_FREQUENCY', // always default to BY_FREQUENCY
                 startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
                 currentPeriodStart: periodStart,
+                instanceId,
                 userId: req.user!.userId,
             },
         });
@@ -138,6 +151,7 @@ router.patch('/:id', validate(updateGoalSchema), async (req: Request, res: Respo
         const existing = await prisma.goal.findUnique({ where: { id: req.params.id } });
         if (!existing) throw new NotFoundError('Goal');
         if (existing.userId !== req.user!.userId) throw new NotFoundError('Goal');
+        const { instanceId: _ignoredInstanceId, ...body } = req.body;
         const periodType = req.body.periodType ?? existing.periodType;
         const currentPeriodStart = existing.currentPeriodStart;
         const reminderFields = resolveReminderFields(
@@ -151,7 +165,7 @@ router.patch('/:id', validate(updateGoalSchema), async (req: Request, res: Respo
         const goal = await prisma.goal.update({
             where: { id: req.params.id },
             data: {
-                ...req.body,
+                ...body,
                 ...reminderFields,
             },
         });
