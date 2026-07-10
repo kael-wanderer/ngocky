@@ -284,11 +284,13 @@ model User {
 }
 
 model AppSetting {
-  id             Int      @id @default(1)
-  appName        String   @default("NgốcKý")
-  enabledGroups  Json     @default("[\"personal\",\"family\",\"hobby\"]")
-  setupCompleted Boolean  @default(false)
-  updatedAt      DateTime @updatedAt
+  id                  Int      @id @default(1)
+  appName             String   @default("NgốcKý")
+  enabledGroups       Json     @default("[\"personal\",\"family\",\"hobby\"]")
+  setupCompleted      Boolean  @default(false)
+  openaiKeyCiphertext String?
+  openaiKeyLast4      String?
+  updatedAt           DateTime @updatedAt
 }
 
 model ModuleColorSetting {

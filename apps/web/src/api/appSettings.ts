@@ -35,3 +35,29 @@ export function useUpdateAppSettings() {
         },
     });
 }
+
+export type OpenaiKeyStatus = { configured: boolean; last4: string | null; source: 'db' | 'env' | null };
+
+export function useOpenaiKeyStatus(enabled = true) {
+    return useQuery<OpenaiKeyStatus>({
+        queryKey: ['openai-key-status'],
+        queryFn: async () => (await api.get('/app-settings/openai-key')).data,
+        enabled,
+    });
+}
+
+export function useSetOpenaiKey() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (key: string) => api.put('/app-settings/openai-key', { key }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['openai-key-status'] }),
+    });
+}
+
+export function useDeleteOpenaiKey() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: () => api.delete('/app-settings/openai-key'),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['openai-key-status'] }),
+    });
+}

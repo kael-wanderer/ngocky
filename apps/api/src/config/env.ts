@@ -37,6 +37,7 @@ const envSchema = z.object({
     CORS_ORIGIN: z.string().default('http://localhost:5173'),
     ASSISTANT_API_KEY: z.string().min(16).default('dev-assistant-key-change-me'),
     OPENAI_API_KEY: z.string().optional(),
+    APP_ENCRYPTION_KEY: z.preprocess(emptyToUndefined, z.string().min(16).optional()),
 });
 
 const parsed = envSchema.safeParse({

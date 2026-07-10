@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { config } from '../../config/env';
+import { AppSettingsService } from '../appSettings';
 import { ASSISTANT_INTENTS, type AssistantIntent } from './policies';
 import { todayISO } from './utils';
 
@@ -259,18 +259,25 @@ function regexFallback(text: string, today: string): ParsedIntent {
 // ─── LLM Parser ───────────────────────────────────────────────────────────────
 
 let openaiClient: OpenAI | null = null;
+let openaiClientKey: string | null = null;
 
-function getClient(): OpenAI | null {
-    if (!config.OPENAI_API_KEY) return null;
-    if (!openaiClient) {
-        openaiClient = new OpenAI({ apiKey: config.OPENAI_API_KEY });
+async function getClient(): Promise<OpenAI | null> {
+    const key = await AppSettingsService.getOpenaiKey();
+    if (!key) {
+        openaiClient = null;
+        openaiClientKey = null;
+        return null;
+    }
+    if (!openaiClient || openaiClientKey !== key) {
+        openaiClient = new OpenAI({ apiKey: key });
+        openaiClientKey = key;
     }
     return openaiClient;
 }
 
 export async function parseIntent(text: string, timezone: string): Promise<ParsedIntent> {
     const today = todayISO(timezone);
-    const client = getClient();
+    const client = await getClient();
 
     if (!client) {
         // No LLM key — use regex fallback

@@ -6,7 +6,7 @@ import { Settings as SettingsIcon, User, Bell, Palette, Shield, Camera, Bot, Cop
 import { useSearchParams } from 'react-router-dom';
 import { DEFAULT_MOBILE_NAV_ITEMS, FEATURE_GROUPS, FEATURE_FLAGS, MOBILE_NAV_OPTIONS, getMobileNavItems, type FeatureFlags, type FeatureFlagKey } from '../config/features';
 import ColorPicker from '../components/ColorPicker';
-import { useAppSettings, useUpdateAppSettings, type ModuleGroupId } from '../api/appSettings';
+import { useAppSettings, useUpdateAppSettings, useOpenaiKeyStatus, useSetOpenaiKey, useDeleteOpenaiKey, type ModuleGroupId } from '../api/appSettings';
 
 function resizeImageToBase64(file: File, maxSize = 128): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -56,6 +56,10 @@ export default function SettingsPage() {
     const isOwner = user?.role === 'OWNER';
     const { data: appSettings } = useAppSettings();
     const updateAppSettings = useUpdateAppSettings();
+    const [openaiKeyInput, setOpenaiKeyInput] = useState('');
+    const { data: openaiKeyStatus } = useOpenaiKeyStatus(isOwner);
+    const setOpenaiKey = useSetOpenaiKey();
+    const deleteOpenaiKey = useDeleteOpenaiKey();
 
     const { data: assistantLink, refetch: refetchLink } = useQuery({
         queryKey: ['assistant-link-status'],
@@ -489,6 +493,58 @@ export default function SettingsPage() {
                             >
                                 {updateAppSettings.isPending ? 'Saving...' : 'Save'}
                             </button>
+
+                            <div className="pt-5 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                                <h4 className="font-semibold" style={{ color: 'var(--color-text)' }}>AI Assistant (OpenAI API Key)</h4>
+                                <p className="text-sm mt-1 mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+                                    The key is stored encrypted and can never be viewed again — only replaced or deleted.
+                                </p>
+                                {openaiKeyStatus?.configured ? (
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                        <span className="text-sm font-mono px-2 py-1 rounded" style={{ background: 'var(--color-bg-secondary)', color: 'var(--color-text)' }}>
+                                            ••••••••{openaiKeyStatus.last4 ?? ''}
+                                        </span>
+                                        {openaiKeyStatus.source === 'env' && (
+                                            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                                from server environment — saving a key here overrides it
+                                            </span>
+                                        )}
+                                        <button className="text-sm text-red-500 hover:text-red-600" disabled={openaiKeyStatus.source === 'env' || deleteOpenaiKey.isPending}
+                                            onClick={async () => {
+                                                if (!window.confirm('Delete the stored OpenAI key? The AI assistant will stop working.')) return;
+                                                await deleteOpenaiKey.mutateAsync();
+                                                setMsg('OpenAI key deleted.');
+                                                setTimeout(() => setMsg(''), 2500);
+                                            }}>
+                                            Delete
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No key configured — the assistant uses basic pattern matching only.</p>
+                                )}
+                                <div className="flex items-center gap-2 mt-3 max-w-md">
+                                    <input
+                                        className="input flex-1"
+                                        type="password"
+                                        placeholder={openaiKeyStatus?.configured ? 'Enter new key to replace' : 'sk-...'}
+                                        value={openaiKeyInput}
+                                        onChange={(e) => setOpenaiKeyInput(e.target.value)}
+                                        autoComplete="off"
+                                    />
+                                    <button
+                                        className="btn-primary"
+                                        disabled={openaiKeyInput.trim().length < 20 || setOpenaiKey.isPending}
+                                        onClick={async () => {
+                                            await setOpenaiKey.mutateAsync(openaiKeyInput.trim());
+                                            setOpenaiKeyInput('');
+                                            setMsg('OpenAI key saved.');
+                                            setTimeout(() => setMsg(''), 2500);
+                                        }}
+                                    >
+                                        {setOpenaiKey.isPending ? 'Saving...' : openaiKeyStatus?.configured ? 'Replace' : 'Save key'}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
 
