@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import { escapeMd, localDayToUTCRange, formatVND } from '../utils';
 import { ASSISTANT_POLICIES } from '../policies';
 import type { ResolverContext, ResolverResult } from './types';
@@ -27,7 +27,7 @@ export async function resolveExpenseQuery(
 
     const category = (entities.category as string | undefined)?.trim();
     if (category) {
-        where.category = { contains: category, mode: 'insensitive' };
+        where.category = iContains(category);
     }
 
     const expenses = await prisma.expense.findMany({

@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import { escapeMd, parseEndOfDay } from '../utils';
 import type { ResolverContext, ResolverResult } from './types';
 
@@ -34,7 +34,7 @@ export async function resolveCaKeoCreate(
     const assignerName = (entities.assignerName as string | undefined)?.trim();
     if (assignerName) {
         const user = await prisma.user.findFirst({
-            where: { name: { contains: assignerName, mode: 'insensitive' }, active: true },
+            where: { name: iContains(assignerName), active: true },
             select: { id: true },
         });
         assignerId = user?.id ?? null;

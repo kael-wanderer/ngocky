@@ -58,6 +58,7 @@ describe('Assistant Phase 7', () => {
                 title: 'Pay electricity bill March',
                 status: 'PLANNED',
                 priority: 'MEDIUM',
+                createdAt: new Date('2026-03-01T00:00:00.000Z'),
             },
         });
 
@@ -67,6 +68,7 @@ describe('Assistant Phase 7', () => {
                 title: 'Pay electricity bill April',
                 status: 'PLANNED',
                 priority: 'MEDIUM',
+                createdAt: new Date('2026-04-01T00:00:00.000Z'),
             },
         });
 
@@ -107,7 +109,8 @@ describe('Assistant Phase 7', () => {
                 telegramUserId: 'tg-user-1',
                 telegramUsername: 'phase7_user',
                 messageId: 'msg-2',
-                text: '2',
+                // Options are listed newest-first, so "1" selects the April task
+                text: '1',
             });
 
         expect(confirmRes.status).toBe(200);

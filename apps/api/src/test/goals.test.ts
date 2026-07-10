@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
 import request from 'supertest';
 import app from '../app';
 import { prisma } from '../config/database';
@@ -181,6 +181,10 @@ describe('Goals & Check-ins API', () => {
     });
 
     it('should aggregate goal check-in trends by weekday, hour, day, and goal', async () => {
+        // Test data uses fixed March 2026 dates; check-ins must be within the
+        // last 45 days, so pin the clock instead of rewriting the fixtures.
+        vi.useFakeTimers({ now: new Date('2026-03-11T00:00:00.000Z'), toFake: ['Date'] });
+        try {
         const createRes = await request(app)
             .post('/api/goals')
             .set('Authorization', `Bearer ${accessToken}`)
@@ -250,5 +254,8 @@ describe('Goals & Check-ins API', () => {
             count: 3,
             quantity: 6,
         });
+        } finally {
+            vi.useRealTimers();
+        }
     });
 });

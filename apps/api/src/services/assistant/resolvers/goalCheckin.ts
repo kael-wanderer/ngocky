@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import type { Goal } from '@prisma/client';
 import { escapeMd } from '../utils';
 import { ASSISTANT_POLICIES } from '../policies';
@@ -50,7 +50,7 @@ export async function resolveGoalCheckin(
     const matches = await prisma.goal.findMany({
         where: {
             OR: [{ userId: ctx.userId }, { isShared: true }],
-            title: { contains: goalTitle, mode: 'insensitive' },
+            title: iContains(goalTitle),
             active: true,
         },
         orderBy: { createdAt: 'desc' },

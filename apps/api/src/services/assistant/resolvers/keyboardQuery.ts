@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import { escapeMd, formatVND } from '../utils';
 import { ASSISTANT_POLICIES } from '../policies';
 import type { ResolverContext, ResolverResult } from './types';
@@ -17,10 +17,10 @@ export async function resolveKeyboardQuery(
     const category = (entities.category as string | undefined)?.trim();
 
     const and: any[] = [];
-    if (keyword) and.push({ name: { contains: keyword, mode: 'insensitive' } });
-    if (tag) and.push({ tag: { contains: tag, mode: 'insensitive' } });
-    if (color) and.push({ color: { contains: color, mode: 'insensitive' } });
-    if (category) and.push({ category: { contains: category, mode: 'insensitive' } });
+    if (keyword) and.push({ name: iContains(keyword) });
+    if (tag) and.push({ tag: iContains(tag) });
+    if (color) and.push({ color: iContains(color) });
+    if (category) and.push({ category: iContains(category) });
     if (and.length) where.AND = and;
 
     const keyboards = await prisma.keyboard.findMany({

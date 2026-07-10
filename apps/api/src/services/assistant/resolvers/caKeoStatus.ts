@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import { escapeMd } from '../utils';
 import { ASSISTANT_POLICIES } from '../policies';
 import type { ResolverContext, ResolverResult } from './types';
@@ -52,7 +52,7 @@ export async function resolveCaKeoStatus(
     const matches = await prisma.caKeo.findMany({
         where: {
             OR: [{ ownerId: ctx.userId }, { isShared: true }, { assignerId: ctx.userId }],
-            title: { contains: itemTitle, mode: 'insensitive' },
+            title: iContains(itemTitle),
         },
         orderBy: { startDate: 'asc' },
         take: ASSISTANT_POLICIES.MAX_DISAMBIGUATION_OPTIONS + 1,

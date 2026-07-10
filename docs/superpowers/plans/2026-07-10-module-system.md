@@ -15,7 +15,7 @@
 - Page instances support exactly 4 template types in v1: `TASK`, `PROJECT`, `EXPENSE`, `GOAL`. Instances can be assigned to any group (`personal` | `family` | `hobby`). No custom fields, no schema-less pages (explicitly out of scope).
 - All new API inputs validated with Zod via the existing `validate(schema)` middleware (`apps/api/src/middleware/validate.ts`).
 - All env access through `apps/api/src/config/env.ts`, never `process.env` directly.
-- After each schema change: `npm run db:generate`, then `cd apps/api && npx prisma migrate dev --name <name>`, then **mirror the same change into `apps/api/prisma/schema.test.prisma`** (SQLite test schema — kept in sync by hand; enums there follow the existing style in that file, check how existing enums are declared and copy the style).
+- After each schema change: `npm run db:generate`, then `cd apps/api && npx prisma migrate dev --name <name>`. The SQLite test schema (`schema.test.prisma`) is **auto-generated** from `schema.prisma` by `apps/api/scripts/generate-test-schema.mjs` (the test setup runs it automatically) — never edit it by hand. Note: scalar list fields (`String[]` etc.) are mapped to `Json?` on SQLite by that script, and `mode: 'insensitive'` is unsupported on SQLite — use the `iContains()` helper from `src/config/database.ts` for case-insensitive `contains` filters.
 - API tests live in `apps/api/src/test/`, run with `cd apps/api && npm test` (sequential, real SQLite DB). Follow the structure of an existing test file (read one, e.g. whatever covers goals or settings, before writing new tests).
 - Commit after each task. `feat:` prefix.
 - **Run this plan AFTER the 2026-07-10-codebase-refactor plan** (page folders). If refactor not done, page-component file paths in Tasks 8–9 refer to the old `pages/XxxPage.tsx` files instead — adapt paths, logic identical.
@@ -45,7 +45,7 @@ model AppSetting {
 ```
 
 - [ ] **Step 2: Migrate:** `cd apps/api && npx prisma migrate dev --name app-settings && npm run db:generate` (run from repo root for db:generate if the script lives there). Expected: migration created, client regenerated.
-- [ ] **Step 3: Mirror model into `schema.test.prisma`** (same fields; keep SQLite-compatible — `Json` is supported by Prisma on SQLite).
+- [ ] **Step 3: No test-schema edit needed** — `schema.test.prisma` regenerates automatically from `schema.prisma` when tests run.
 - [ ] **Step 4: Verify:** `cd apps/api && npm test` — existing suite passes (test DB now includes the table).
 - [ ] **Step 5: Commit** `feat: add AppSetting model`
 
@@ -347,7 +347,7 @@ And on each of `Task`, `Project`, `Expense`, `Goal`:
 (`onDelete: Cascade` — deleting a page deletes its items; the delete endpoint in Task 5 warns via item count first. Add the `pageInstances PageInstance[]` back-relation on `User`.)
 
 - [ ] **Step 2: Migrate** `npx prisma migrate dev --name page-instances`, regenerate client.
-- [ ] **Step 3: Mirror into `schema.test.prisma`.**
+- [ ] **Step 3: No test-schema edit needed** — auto-generated on test run.
 - [ ] **Step 4: Verify** `npm test` — existing suite still green (all existing rows have `instanceId = null`, nothing filters on it yet).
 - [ ] **Step 5: Commit** `feat: PageInstance model and instanceId columns`
 

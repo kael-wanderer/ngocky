@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import type { CalendarEvent } from '@prisma/client';
 import { escapeMd, localDayToUTCRange, formatLocalDateTime } from '../utils';
 import { ASSISTANT_POLICIES } from '../policies';
@@ -58,7 +58,7 @@ export async function resolveCalendarQuery(
     };
 
     if (entities.keyword) {
-        where.title = { contains: entities.keyword as string, mode: 'insensitive' };
+        where.title = iContains(entities.keyword as string);
     }
 
     const events = await prisma.calendarEvent.findMany({

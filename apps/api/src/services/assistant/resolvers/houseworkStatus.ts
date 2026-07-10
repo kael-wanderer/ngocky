@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import type { HouseworkItem } from '@prisma/client';
 import { escapeMd } from '../utils';
 import { ASSISTANT_POLICIES } from '../policies';
@@ -59,7 +59,7 @@ export async function resolveHouseworkStatus(
     const matches = await prisma.houseworkItem.findMany({
         where: {
             OR: [{ createdById: ctx.userId }, { isShared: true }],
-            title: { contains: itemTitle, mode: 'insensitive' },
+            title: iContains(itemTitle),
             active: true,
         },
         orderBy: { nextDueDate: 'asc' },

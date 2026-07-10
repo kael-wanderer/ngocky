@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import { escapeMd, formatVND } from '../utils';
 import type { ResolverContext, ResolverResult } from './types';
 import { ASSISTANT_POLICIES } from '../policies';
@@ -85,7 +85,7 @@ export async function resolveFundCreate(
         const matches = await prisma.keyboard.findMany({
             where: {
                 ownerId: ctx.userId,
-                name: { contains: keyboardName, mode: 'insensitive' },
+                name: iContains(keyboardName),
             },
             orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
             take: ASSISTANT_POLICIES.MAX_DISAMBIGUATION_OPTIONS + 1,

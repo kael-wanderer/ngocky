@@ -34,7 +34,8 @@ describe('Auth API', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.data).toHaveProperty('accessToken');
-        expect(res.body.data).toHaveProperty('refreshToken');
+        // Refresh token is delivered as an httpOnly cookie, not in the body
+        expect(res.headers['set-cookie']!.toString()).toContain('ngocky_refresh_token=');
         expect(res.body.data.user.email).toBe(testUser.email);
     });
 
@@ -59,21 +60,22 @@ describe('Auth API', () => {
                 password: testUser.password
             });
 
-        const { refreshToken } = loginRes.body.data;
+        const cookies: string[] = loginRes.headers['set-cookie'] as unknown as string[];
+        const loginCookie = cookies.find((c) => c.startsWith('ngocky_refresh_token='))!;
 
-        // Use refresh token
+        // Use refresh token cookie
         const refreshRes = await request(app)
             .post('/api/auth/refresh')
-            .send({ refreshToken });
+            .set('Cookie', loginCookie);
 
         expect(refreshRes.status).toBe(200);
         expect(refreshRes.body.data).toHaveProperty('accessToken');
-        expect(refreshRes.body.data).toHaveProperty('refreshToken');
+        expect(refreshRes.headers['set-cookie']!.toString()).toContain('ngocky_refresh_token=');
 
         // Old token should be invalid (rotated)
         const oldRefreshRes = await request(app)
             .post('/api/auth/refresh')
-            .send({ refreshToken });
+            .set('Cookie', loginCookie);
 
         expect(oldRefreshRes.status).toBe(401);
     });

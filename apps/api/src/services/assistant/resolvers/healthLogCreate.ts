@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import { escapeMd, formatLocalDateTime } from '../utils';
 import type { ResolverContext, ResolverResult } from './types';
 
@@ -52,7 +52,7 @@ export async function resolveHealthLogCreate(
 
     const person = await prisma.healthPerson.findFirst({
         where: {
-            name: { contains: personName, mode: 'insensitive' },
+            name: iContains(personName),
             OR: [{ userId: ctx.userId }, { isShared: true }],
         },
     });

@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import { escapeMd } from '../utils';
 import { ASSISTANT_POLICIES } from '../policies';
 import type { ResolverContext, ResolverResult } from './types';
@@ -29,7 +29,7 @@ export async function resolveProjectTaskQuery(
         const projects = await prisma.project.findMany({
             where: {
                 OR: [{ ownerId: ctx.userId }, { isShared: true }],
-                name: { contains: projectName, mode: 'insensitive' },
+                name: iContains(projectName),
             },
             select: { id: true, name: true },
             take: 1,

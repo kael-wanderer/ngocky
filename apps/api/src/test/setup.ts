@@ -8,6 +8,7 @@ beforeAll(async () => {
     // Sync the SQLite test schema directly instead of replaying the main
     // Postgres migration history.
     console.log('--- Setting up test database ---');
+    execSync('node scripts/generate-test-schema.mjs', { stdio: 'inherit' });
     execSync(
         'npx prisma db push --schema prisma/schema.test.prisma --accept-data-loss',
         { stdio: 'inherit' },

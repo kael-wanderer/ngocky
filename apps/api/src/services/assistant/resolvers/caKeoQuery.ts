@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import { escapeMd, localDayToUTCRange, formatLocalDateTime } from '../utils';
 import { ASSISTANT_POLICIES } from '../policies';
 import type { ResolverContext, ResolverResult } from './types';
@@ -41,7 +41,7 @@ export async function resolveCaKeoQuery(
     if (status) where.status = status;
 
     const category = entities.category as string | undefined;
-    if (category) where.category = { contains: category, mode: 'insensitive' };
+    if (category) where.category = iContains(category);
 
     const items = await prisma.caKeo.findMany({
         where,

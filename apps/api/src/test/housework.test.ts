@@ -40,6 +40,7 @@ describe('Housework API', () => {
         const itemData = {
             title: 'Weekly Vacuuming',
             frequencyType: 'WEEKLY',
+            dayOfWeek: 1,
             nextDueDate: new Date().toISOString()
         };
 
@@ -61,6 +62,7 @@ describe('Housework API', () => {
             .send({
                 title: 'Recurring Test',
                 frequencyType: 'WEEKLY',
+                dayOfWeek: 1,
                 nextDueDate: new Date().toISOString()
             });
 

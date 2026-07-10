@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import { escapeMd, localDayToUTCRange, formatLocalDateTime } from '../utils';
 import { ASSISTANT_POLICIES } from '../policies';
 import type { ResolverContext, ResolverResult } from './types';
@@ -26,7 +26,7 @@ export async function resolveHealthbookQuery(
     const where: any = {
         OR: [{ userId: ctx.userId }, { isShared: true }],
     };
-    if (personName) where.name = { contains: personName, mode: 'insensitive' };
+    if (personName) where.name = iContains(personName);
 
     const persons = await prisma.healthPerson.findMany({
         where,
@@ -80,7 +80,7 @@ export async function resolveHealthLogsQuery(
 
     const person = await prisma.healthPerson.findFirst({
         where: {
-            name: { contains: personName, mode: 'insensitive' },
+            name: iContains(personName),
             OR: [{ userId: ctx.userId }, { isShared: true }],
         },
     });

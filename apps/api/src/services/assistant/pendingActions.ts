@@ -101,7 +101,7 @@ export async function resolvePendingActionReply(
 ): Promise<PendingResolution> {
     const normalized = input.trim();
 
-    if (isCancelReply(normalized)) {
+    if (isCancelReply(normalized, pending.payload.kind)) {
         await prisma.assistantPendingAction.delete({ where: { id: pending.id } });
         await prisma.assistantActionLog.create({
             data: {
@@ -148,9 +148,12 @@ export function buildLowConfidencePending(parsed: ParsedIntent): PendingActionPa
     };
 }
 
-function isCancelReply(input: string): boolean {
+function isCancelReply(input: string, kind: PendingActionPayload['kind']): boolean {
     const normalized = input.trim().toLowerCase();
-    return normalized === 'cancel' || normalized === '2' || normalized === 'no';
+    if (normalized === 'cancel' || normalized === 'no') return true;
+    // '2' means Cancel only in the 1-Confirm/2-Cancel prompt; in a
+    // select_option list it is a valid choice.
+    return kind !== 'select_option' && normalized === '2';
 }
 
 function isConfirmReply(input: string): boolean {

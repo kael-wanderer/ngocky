@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import type { Task } from '@prisma/client';
 import { escapeMd } from '../utils';
 import { ASSISTANT_POLICIES } from '../policies';
@@ -59,7 +59,7 @@ export async function resolveTaskStatus(
     const matches = await prisma.task.findMany({
         where: {
             userId: ctx.userId,
-            title: { contains: taskTitle, mode: 'insensitive' },
+            title: iContains(taskTitle),
             status: { not: 'ARCHIVED' },
         },
         orderBy: { createdAt: 'desc' },
@@ -96,7 +96,7 @@ export async function resolveTaskStatus(
         .join('\n');
 
     return {
-        reply: `Found multiple tasks matching _${escapeMd(taskTitle)}_\\. Please be more specific:\n${list}`,
+        reply: `Found multiple tasks matching _${escapeMd(taskTitle)}_\\. Reply with a number or send cancel\\.\n${list}`,
         requiresConfirmation: true,
         pendingIntent: 'update_task_status',
         pendingPayload: {

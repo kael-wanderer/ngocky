@@ -7,3 +7,6 @@ apps/web/.env.local
 .DS_Store
 coverage/
 .turbo/
+apps/api/prisma/test.db*
+apps/api/src/test/client/
+apps/api/prisma/schema.test.prisma

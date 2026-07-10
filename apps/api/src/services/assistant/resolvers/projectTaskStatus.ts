@@ -1,4 +1,4 @@
-import { prisma } from '../../../config/database';
+import { prisma, iContains } from '../../../config/database';
 import { escapeMd } from '../utils';
 import { ASSISTANT_POLICIES } from '../policies';
 import type { ResolverContext, ResolverResult } from './types';
@@ -61,12 +61,12 @@ export async function resolveProjectTaskStatus(
         OR: [{ ownerId: ctx.userId }, { isShared: true }],
     };
     if (projectName) {
-        projectWhere.name = { contains: projectName, mode: 'insensitive' };
+        projectWhere.name = iContains(projectName);
     }
 
     const matches = await prisma.projectTask.findMany({
         where: {
-            title: { contains: taskTitle, mode: 'insensitive' },
+            title: iContains(taskTitle),
             project: projectWhere,
         },
         include: { project: { select: { name: true } } },
