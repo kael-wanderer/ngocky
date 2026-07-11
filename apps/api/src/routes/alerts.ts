@@ -6,9 +6,21 @@ import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/r
 import { NotFoundError } from '../utils/errors';
 import { paramStr, queryInt } from '../utils/query';
 import { createAlertRuleSchema, updateAlertRuleSchema } from '../validators/phase2';
+import { assertPageInstance } from '../services/pageInstances';
 
 const router = Router();
 router.use(authenticate);
+
+const ALERT_PAGE_TYPES: Record<string, any> = {
+    GOAL: 'GOAL', TASK: 'TASK', HOUSEWORK: 'HOUSEWORK', EXPENSE: 'EXPENSE', CALENDAR: 'CALENDAR', ASSETS: 'ASSET',
+};
+
+async function validateAlertPage(moduleType: string, instanceId: string | null | undefined) {
+    if (!instanceId) return;
+    const expected = ALERT_PAGE_TYPES[moduleType];
+    if (!expected) throw new Error('Unsupported alert module type');
+    await assertPageInstance(instanceId, expected);
+}
 
 async function getNextAlertRuleSortOrder(userId: string) {
     const aggregate = await prisma.alertRule.aggregate({
@@ -21,11 +33,13 @@ async function getNextAlertRuleSortOrder(userId: string) {
 router.post('/', validate(createAlertRuleSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const sortOrder = await getNextAlertRuleSortOrder(req.user!.userId);
+        await validateAlertPage(req.body.moduleType, req.body.instanceId);
         const item = await prisma.alertRule.create({
             data: {
                 ...req.body,
                 sortOrder,
                 userId: req.user!.userId,
+                instanceId: req.body.instanceId ?? null,
             },
         });
         sendCreated(res, item);
@@ -44,6 +58,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 skip,
                 take: limit,
                 orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+                include: { instance: { select: { id: true, name: true, slug: true, moduleType: true } } },
             }),
             prisma.alertRule.count({ where: { userId: req.user!.userId } }),
         ]);
@@ -80,6 +95,7 @@ router.patch('/:id', validate(updateAlertRuleSchema), async (req: Request, res: 
             where: { id, userId: req.user!.userId },
         });
         if (!item) throw new NotFoundError('Alert rule not found');
+        await validateAlertPage(req.body.moduleType ?? item.moduleType, req.body.instanceId === undefined ? item.instanceId : req.body.instanceId);
 
         const updated = await prisma.alertRule.update({
             where: { id },

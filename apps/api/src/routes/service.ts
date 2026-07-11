@@ -43,6 +43,7 @@ router.get('/due-reports', async (_req: Request, res: Response, next: NextFuncti
                         timezone: true,
                     },
                 },
+                instance: { select: { id: true, name: true, slug: true, moduleType: true } },
             },
         });
 
@@ -93,10 +94,12 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
     try {
         const report = await prisma.scheduledReport.findUnique({
             where: { id: req.params.reportId },
+            include: { instance: { select: { id: true, name: true, slug: true, moduleType: true } } },
         });
         if (!report) return res.status(404).json({ message: 'Report not found' });
 
         const userId = report.userId;
+        const instanceId = report.instanceId;
         const now = new Date();
 
         const userInfo = await prisma.user.findUnique({
@@ -139,51 +142,52 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
 
             const [goals, projectTasks, standaloneTasks, housework, calendar, expenses, assets, learning, ideas, cakeo, healthbook, keyboards, funds] = await Promise.all([
                 prisma.goal.findMany({
-                    where: { userId, active: true },
+                    where: { userId, active: true, instanceId },
                     orderBy: { sortOrder: 'asc' },
                 }),
                 prisma.projectTask.findMany({
-                    where: { project: { ownerId: userId }, updatedAt: { gte: start, lte: end } },
+                    where: { project: { ownerId: userId, instanceId }, updatedAt: { gte: start, lte: end } },
                     include: { project: { select: { name: true } } },
                     orderBy: { updatedAt: 'desc' },
                     take: 30,
                 }),
                 prisma.task.findMany({
-                    where: { userId, updatedAt: { gte: start, lte: end } },
+                    where: { userId, instanceId, updatedAt: { gte: start, lte: end } },
                     orderBy: { updatedAt: 'desc' },
                     take: 30,
                 }),
                 prisma.houseworkItem.findMany({
-                    where: { createdById: userId, lastCompletedDate: { gte: start, lte: end } },
+                    where: { createdById: userId, instanceId, lastCompletedDate: { gte: start, lte: end } },
                 }),
                 prisma.calendarEvent.findMany({
-                    where: { createdById: userId, startDate: { gte: start, lte: end } },
+                    where: { createdById: userId, instanceId, startDate: { gte: start, lte: end } },
                     orderBy: { startDate: 'asc' },
                 }),
                 prisma.expense.findMany({
-                    where: { userId, date: { gte: start, lte: end } },
+                    where: { userId, instanceId, date: { gte: start, lte: end } },
                     orderBy: { date: 'desc' },
                 }),
                 prisma.maintenanceRecord.findMany({
-                    where: { userId, serviceDate: { gte: start, lte: end } },
+                    where: { userId, asset: { instanceId }, serviceDate: { gte: start, lte: end } },
                     include: { asset: { select: { name: true } } },
                     orderBy: { serviceDate: 'desc' },
                     take: 20,
                 }),
                 prisma.learningItem.findMany({
-                    where: { userId, updatedAt: { gte: start, lte: end } },
+                    where: { userId, topic: { instanceId }, updatedAt: { gte: start, lte: end } },
                     include: { topic: { select: { title: true } } },
                     orderBy: { updatedAt: 'desc' },
                     take: 20,
                 }),
                 prisma.idea.findMany({
-                    where: { userId, updatedAt: { gte: start, lte: end } },
+                    where: { userId, topic: { instanceId }, updatedAt: { gte: start, lte: end } },
                     orderBy: { updatedAt: 'desc' },
                     take: 20,
                 }),
                 prisma.caKeo.findMany({
                     where: {
                         ownerId: userId,
+                        instanceId,
                         OR: [
                             { startDate: { gte: start, lte: end } },
                             { endDate: { gte: start, lte: end } },
@@ -202,6 +206,7 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                 prisma.healthLog.findMany({
                     where: {
                         userId,
+                        person: { instanceId },
                         OR: [
                             { date: { gte: start, lte: end } },
                             { nextCheckupDate: { gte: start, lte: end } },
@@ -212,12 +217,12 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                     take: 20,
                 }),
                 prisma.keyboard.findMany({
-                    where: { ownerId: userId, createdAt: { gte: start, lte: end } },
+                    where: { ownerId: userId, instanceId, createdAt: { gte: start, lte: end } },
                     orderBy: { createdAt: 'desc' },
                     take: 20,
                 }),
                 prisma.fundTransaction.findMany({
-                    where: { userId, date: { gte: start, lte: end } },
+                    where: { userId, instanceId, date: { gte: start, lte: end } },
                     orderBy: { date: 'desc' },
                     take: 20,
                 }),
@@ -229,6 +234,7 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
             return sendSuccess(res, {
                 reportType: 'WEEKLY_SUMMARY',
                 sections: report.sections ?? [],
+                page: report.instance,
                 user: userInfo,
                 period: { start, end },
                 goals: goals.map(g => ({
@@ -334,33 +340,34 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
 
             const [goals, project, tasks, housework, calendar, expenses, cakeo, assets, healthbook, keyboards, funds, learning, ideas] = await Promise.all([
                 prisma.goal.findMany({
-                    where: { userId, active: true },
+                    where: { userId, active: true, instanceId },
                     orderBy: { sortOrder: 'asc' },
                 }),
                 prisma.projectTask.findMany({
-                    where: { project: { ownerId: userId }, deadline: { gte: start, lte: end }, status: { not: 'DONE' } },
+                    where: { project: { ownerId: userId, instanceId }, deadline: { gte: start, lte: end }, status: { not: 'DONE' } },
                     include: { project: { select: { name: true } } },
                     orderBy: [{ deadline: 'asc' }],
                 }),
                 prisma.task.findMany({
-                    where: { userId, dueDate: { gte: start, lte: end }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+                    where: { userId, instanceId, dueDate: { gte: start, lte: end }, status: { notIn: ['DONE', 'ARCHIVED'] } },
                     orderBy: [{ dueDate: 'asc' }],
                 }),
                 prisma.houseworkItem.findMany({
-                    where: { createdById: userId, nextDueDate: { gte: start, lte: end }, active: true },
+                    where: { createdById: userId, instanceId, nextDueDate: { gte: start, lte: end }, active: true },
                     orderBy: { nextDueDate: 'asc' },
                 }),
                 prisma.calendarEvent.findMany({
-                    where: { createdById: userId, startDate: { gte: start, lte: end } },
+                    where: { createdById: userId, instanceId, startDate: { gte: start, lte: end } },
                     orderBy: { startDate: 'asc' },
                 }),
                 prisma.expense.findMany({
-                    where: { userId, date: { gte: start, lte: end } },
+                    where: { userId, instanceId, date: { gte: start, lte: end } },
                     orderBy: { date: 'desc' },
                 }),
                 prisma.caKeo.findMany({
                     where: {
                         ownerId: userId,
+                        instanceId,
                         OR: [
                             { startDate: { gte: start, lte: end } },
                             { endDate: { gte: start, lte: end } },
@@ -378,6 +385,7 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                 prisma.maintenanceRecord.findMany({
                     where: {
                         userId,
+                        asset: { instanceId },
                         OR: [
                             { serviceDate: { gte: start, lte: end } },
                             { nextRecommendedDate: { gte: start, lte: end } },
@@ -389,6 +397,7 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                 prisma.healthLog.findMany({
                     where: {
                         userId,
+                        person: { instanceId },
                         OR: [
                             { date: { gte: start, lte: end } },
                             { nextCheckupDate: { gte: start, lte: end } },
@@ -398,16 +407,17 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                     orderBy: [{ nextCheckupDate: 'asc' }, { date: 'desc' }],
                 }),
                 prisma.keyboard.findMany({
-                    where: { ownerId: userId, createdAt: { gte: start, lte: end } },
+                    where: { ownerId: userId, instanceId, createdAt: { gte: start, lte: end } },
                     orderBy: { createdAt: 'desc' },
                 }),
                 prisma.fundTransaction.findMany({
-                    where: { userId, date: { gte: start, lte: end } },
+                    where: { userId, instanceId, date: { gte: start, lte: end } },
                     orderBy: { date: 'desc' },
                 }),
                 prisma.learningItem.findMany({
                     where: {
                         userId,
+                        topic: { instanceId },
                         OR: [
                             { deadline: { gte: start, lte: end } },
                             { updatedAt: { gte: start, lte: end } },
@@ -417,7 +427,7 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
                     orderBy: [{ deadline: 'asc' }, { updatedAt: 'desc' }],
                 }),
                 prisma.idea.findMany({
-                    where: { userId, updatedAt: { gte: start, lte: end } },
+                    where: { userId, topic: { instanceId }, updatedAt: { gte: start, lte: end } },
                     orderBy: { updatedAt: 'desc' },
                 }),
             ]);
@@ -425,6 +435,7 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
             return sendSuccess(res, {
                 reportType: report.reportType,
                 sections: report.sections ?? [],
+                page: report.instance,
                 user: userInfo,
                 period: { start, end },
                 goals: goals

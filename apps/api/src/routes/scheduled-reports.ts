@@ -6,9 +6,19 @@ import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/r
 import { NotFoundError } from '../utils/errors';
 import { paramStr, queryInt } from '../utils/query';
 import { createScheduledReportSchema, updateScheduledReportSchema } from '../validators/phase2';
+import { getEffectiveTemplateByType, getPageInstance } from '../services/pageInstances';
+import { ValidationError } from '../utils/errors';
 
 const router = Router();
 router.use(authenticate);
+
+async function validateScheduledPage(instanceId: string | null | undefined) {
+    if (!instanceId) return null;
+    const page = await getPageInstance(instanceId);
+    const template = await getEffectiveTemplateByType(page.moduleType);
+    if (!template?.available) throw new ValidationError('Page template is not available');
+    return page;
+}
 
 async function getNextScheduledReportSortOrder(userId: string) {
     const aggregate = await prisma.scheduledReport.aggregate({
@@ -21,6 +31,7 @@ async function getNextScheduledReportSortOrder(userId: string) {
 router.post('/', validate(createScheduledReportSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const frequency = req.body.frequency === 'NONE' ? 'ONE_TIME' : req.body.frequency;
+        await validateScheduledPage(req.body.instanceId);
         const sortOrder = await getNextScheduledReportSortOrder(req.user!.userId);
         const item = await prisma.scheduledReport.create({
             data: {
@@ -28,6 +39,7 @@ router.post('/', validate(createScheduledReportSchema), async (req: Request, res
                 frequency,
                 sortOrder,
                 userId: req.user!.userId,
+                instanceId: req.body.instanceId ?? null,
             },
         });
         sendCreated(res, item);
@@ -46,6 +58,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 skip,
                 take: limit,
                 orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+                include: { instance: { select: { id: true, name: true, slug: true, moduleType: true } } },
             }),
             prisma.scheduledReport.count({ where: { userId: req.user!.userId } }),
         ]);
@@ -84,10 +97,12 @@ router.patch('/:id', validate(updateScheduledReportSchema), async (req: Request,
         if (!item) throw new NotFoundError('Scheduled report not found');
 
         const frequency = req.body.frequency === 'NONE' ? 'ONE_TIME' : req.body.frequency;
+        await validateScheduledPage(req.body.instanceId === undefined ? item.instanceId : req.body.instanceId);
         const updated = await prisma.scheduledReport.update({
             where: { id },
             data: {
                 ...req.body,
+                ...(req.body.instanceId !== undefined ? { instanceId: req.body.instanceId } : {}),
                 ...(frequency ? { frequency } : {}),
             },
         });

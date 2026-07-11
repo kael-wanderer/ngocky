@@ -380,6 +380,8 @@ model PageInstance {
   keyboards        Keyboard[]
   fundTransactions FundTransaction[]
   learningTopics   LearningTopic[]
+  alertRules       AlertRule[]
+  scheduledReports ScheduledReport[]
 
   @@index([createdById])
   @@index([group])
@@ -854,12 +856,15 @@ model AlertRule {
   active              Boolean             @default(true)
   sortOrder           Int                 @default(0)
   userId              String
+  instanceId          String?
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([instanceId])
 }
 
 // ─── Scheduled Reports ──────────────────────────────
@@ -879,12 +884,15 @@ model ScheduledReport {
   active              Boolean             @default(true)
   sortOrder           Int                 @default(0)
   userId              String
+  instanceId          String?
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([instanceId])
 }
 
 // ─── Assistant ──────────────────────────────────────

@@ -112,6 +112,7 @@ export const createAlertRuleSchema = z.object({
     conditionValue: z.string().optional(),
     cooldownHours: z.number().int().min(1).optional(),
     active: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 });
 
 export const updateAlertRuleSchema = createAlertRuleSchema.partial();
@@ -128,6 +129,7 @@ export const createScheduledReportSchema = z.object({
     notificationChannel: z.enum(['EMAIL', 'TELEGRAM', 'BOTH']).optional(),
     recipients: z.array(z.string()).optional(),
     active: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 });
 
 export const updateScheduledReportSchema = createScheduledReportSchema.partial();
