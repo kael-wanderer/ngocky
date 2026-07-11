@@ -46,7 +46,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     { moduleType: 'EXPENSE', label: 'Expenses', group: 'personal', rootLabel: 'expenses', available: true },
     { moduleType: 'GOAL', label: 'Goals', group: 'personal', rootLabel: 'goals', available: true },
     { moduleType: 'IDEA', label: 'Ideas', group: 'personal', rootLabel: 'topics', available: true },
-    { moduleType: 'CALENDAR', label: 'Calendar', group: 'family', rootLabel: 'events', available: false },
+    { moduleType: 'CALENDAR', label: 'Calendar', group: 'family', rootLabel: 'events', available: true },
     { moduleType: 'CAKEO', label: 'Ca Keo (Child)', group: 'family', rootLabel: 'items', available: false },
     { moduleType: 'HOUSEWORK', label: 'Housework', group: 'family', rootLabel: 'items', available: false },
     { moduleType: 'ASSET', label: 'Assets', group: 'family', rootLabel: 'assets', available: false },

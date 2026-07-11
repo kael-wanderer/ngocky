@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-11] - Calendar Page Instances
+
+### Added
+
+- **Calendar Instances**: Added instance-scoped event list, create, update, read, delete, participant boundaries, and custom-page query keys.
+- **Calendar Tests**: Added dedicated Calendar instance isolation coverage.
+
+### Changed
+
+- **Custom Calendar Overlays**: Custom calendars no longer load built-in Task, Housework, or Ca Keo overlays.
+- **Availability**: Enabled the Calendar template after focused tests passed.
+
+---
+
 ## [2026-07-11] - Template Instance Foundations
 
 ### Added

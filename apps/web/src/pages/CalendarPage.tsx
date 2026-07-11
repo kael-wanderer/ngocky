@@ -133,16 +133,19 @@ export default function CalendarPage({ instanceId, pageTitle }: { instanceId?: s
     const { data: cakeoData } = useQuery({
         queryKey: ['cakeos-calendar', format(range.start, 'yyyy-MM-dd'), format(range.end, 'yyyy-MM-dd')],
         queryFn: async () => (await api.get(`/cakeos?startFrom=${range.start.toISOString()}&startTo=${range.end.toISOString()}`)).data.data,
+        enabled: !instanceId,
     });
 
     const { data: tasksData } = useQuery({
         queryKey: ['tasks-calendar'],
         queryFn: async () => (await api.get('/tasks?limit=200')).data.data,
+        enabled: !instanceId,
     });
 
     const { data: houseworkData } = useQuery({
         queryKey: ['housework-calendar'],
         queryFn: async () => (await api.get('/housework?limit=200')).data.data,
+        enabled: !instanceId,
     });
 
     const createMut = useMutation({
