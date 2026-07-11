@@ -8,3 +8,4 @@
 - Task 15 complete: Housework dedicated instance isolation test and availability enabled.
 - Task 16 complete: Assets dedicated instance isolation test and availability enabled.
 - Task 17 complete: Healthbook person instance isolation test and availability enabled.
+- Task 18 complete: Keyboard instance isolation and import test, availability enabled.

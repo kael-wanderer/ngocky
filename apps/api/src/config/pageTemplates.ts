@@ -51,7 +51,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     { moduleType: 'HOUSEWORK', label: 'Housework', group: 'family', rootLabel: 'items', available: true },
     { moduleType: 'ASSET', label: 'Assets', group: 'family', rootLabel: 'assets', available: true },
     { moduleType: 'HEALTHBOOK', label: 'Healthbook', group: 'family', rootLabel: 'people', available: true },
-    { moduleType: 'KEYBOARD', label: 'Keyboard', group: 'hobby', rootLabel: 'collections', available: false },
+    { moduleType: 'KEYBOARD', label: 'Keyboard', group: 'hobby', rootLabel: 'collections', available: true },
     { moduleType: 'FUND', label: 'Funds', group: 'hobby', rootLabel: 'transactions', available: false },
     { moduleType: 'LEARNING', label: 'Learning', group: 'hobby', rootLabel: 'topics', available: true },
 ];

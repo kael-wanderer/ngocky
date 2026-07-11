@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-11] - Keyboard Page Instances
+
+### Added
+
+- **Keyboard Instances**: Added dedicated list/create/import isolation coverage and instance-aware import assignment.
+
+### Changed
+
+- **Availability**: Enabled the Keyboard template after focused tests passed.
+
+---
+
 ## [2026-07-11] - Healthbook Page Instances
 
 ### Added
