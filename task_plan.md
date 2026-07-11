@@ -2,7 +2,7 @@
 
 - [x] Task 13: Calendar instance support, dedicated tests, availability, commit.
 - [x] Task 14: Ca Keo instance support, dedicated tests, availability, commit.
-- [ ] Task 15: Housework instance support, dedicated tests, availability, commit.
+- [x] Task 15: Housework instance support, dedicated tests, availability, commit.
 - [ ] Task 16: Assets instance support, dedicated tests, availability, commit.
 - [ ] Task 17: Healthbook instance/file cleanup support, dedicated tests, availability, commit.
 - [ ] Task 18: Keyboard instance support, dedicated tests, availability, commit.

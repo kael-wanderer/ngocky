@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-11] - Housework Page Instances
+
+### Added
+
+- **Housework Instances**: Added dedicated isolation coverage for list, create, and recurring completion boundaries.
+
+### Changed
+
+- **Availability**: Enabled the Housework template after focused tests passed.
+
+---
+
 ## [2026-07-11] - Ca Keo Page Instances
 
 ### Added
