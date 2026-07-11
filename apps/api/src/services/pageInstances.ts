@@ -1,6 +1,16 @@
 import type { PageModuleType } from '@prisma/client';
 import { prisma } from '../config/database';
 import { NotFoundError, ValidationError } from '../utils/errors';
+import { applyTemplateOverrides } from '../config/pageTemplates';
+
+export async function getEffectiveTemplates() {
+    const settings = await prisma.appSetting.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
+    return applyTemplateOverrides(settings.templateOverrides);
+}
+
+export async function getEffectiveTemplateByType(moduleType: PageModuleType) {
+    return (await getEffectiveTemplates()).find((template) => template.moduleType === moduleType);
+}
 
 export async function assertPageInstance(instanceId: string | null | undefined, expectedTemplate: PageModuleType) {
     if (!instanceId) return null;

@@ -1,10 +1,12 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import type { PageModuleType } from '@prisma/client';
 import { prisma } from '../config/database';
 import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validate';
-import { builtInPageParamsSchema, createPageSchema, updateBuiltInPageSchema, updatePageSchema } from '../validators/pages';
-import { applyBuiltInPageOverrides, PAGE_TEMPLATES, PAGE_TEMPLATE_BY_TYPE, type BuiltInPageOverride } from '../config/pageTemplates';
-import { countPageRoots, getPageInstance } from '../services/pageInstances';
+import { builtInPageParamsSchema, createPageSchema, templateOverrideSchema, updateBuiltInPageSchema, updatePageSchema } from '../validators/pages';
+import { applyBuiltInPageOverrides, applyTemplateOverrides, parseTemplateOverrideMap, PAGE_TEMPLATE_BY_TYPE, type BuiltInPageOverride } from '../config/pageTemplates';
+import { countPageRoots, getEffectiveTemplateByType, getPageInstance } from '../services/pageInstances';
+import { ValidationError } from '../utils/errors';
 
 const router = Router();
 
@@ -44,9 +46,54 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
 router.get('/templates', async (_req: Request, res: Response, next: NextFunction) => {
     try {
         const settings = await prisma.appSetting.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
-        res.json(applyBuiltInPageOverrides(settings.builtInPages));
+        const templates = applyTemplateOverrides(settings.templateOverrides);
+        res.json(applyBuiltInPageOverrides(settings.builtInPages, templates));
     } catch (err) { next(err); }
 });
+
+router.put(
+    '/templates/:moduleType/override',
+    authorize('OWNER'),
+    validate(builtInPageParamsSchema, 'params'),
+    validate(templateOverrideSchema),
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const moduleType = req.params.moduleType;
+            const settings = await prisma.appSetting.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
+            const current = parseTemplateOverrideMap(settings.templateOverrides);
+            const templateOverrides = { ...current, [moduleType]: { ...current[moduleType], ...req.body } };
+
+            await prisma.$transaction(async (tx) => {
+                await tx.appSetting.update({ where: { id: 1 }, data: { templateOverrides } });
+                if (req.body.group) await tx.pageInstance.updateMany({ where: { moduleType: moduleType as PageModuleType }, data: { group: req.body.group } });
+            });
+
+            res.json(applyTemplateOverrides(templateOverrides).find((template) => template.moduleType === moduleType));
+        } catch (err) { next(err); }
+    },
+);
+
+router.delete(
+    '/templates/:moduleType/override',
+    authorize('OWNER'),
+    validate(builtInPageParamsSchema, 'params'),
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const moduleType = req.params.moduleType;
+            const settings = await prisma.appSetting.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
+            const current = parseTemplateOverrideMap(settings.templateOverrides);
+            const { [moduleType]: _removed, ...templateOverrides } = current;
+            const baseTemplate = PAGE_TEMPLATE_BY_TYPE[moduleType as keyof typeof PAGE_TEMPLATE_BY_TYPE];
+
+            await prisma.$transaction(async (tx) => {
+                await tx.appSetting.update({ where: { id: 1 }, data: { templateOverrides } });
+                if (_removed?.group) await tx.pageInstance.updateMany({ where: { moduleType: moduleType as PageModuleType }, data: { group: baseTemplate.group } });
+            });
+
+            res.json(applyTemplateOverrides(templateOverrides).find((template) => template.moduleType === moduleType));
+        } catch (err) { next(err); }
+    },
+);
 
 router.put(
     '/templates/:moduleType',
@@ -82,6 +129,10 @@ router.get('/:id/delete-preview', authorize('OWNER', 'ADMIN'), async (req: Reque
 
 router.post('/', authorize('OWNER', 'ADMIN'), validate(createPageSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const template = await getEffectiveTemplateByType(req.body.moduleType);
+        if (!template?.available) throw new ValidationError('Template is not available yet');
+        if (template.group !== req.body.group) throw new ValidationError(`Template belongs to ${template.group}`);
+
         const page = await prisma.pageInstance.create({
             data: {
                 ...req.body,

@@ -304,6 +304,7 @@ model AppSetting {
   logoUrl             String?
   enabledGroups       Json     @default("[\"personal\",\"family\",\"hobby\"]")
   builtInPages        Json     @default("{}")
+  templateOverrides   Json     @default("{}")
   setupCompleted      Boolean  @default(false)
   openaiKeyCiphertext String?
   openaiKeyLast4      String?

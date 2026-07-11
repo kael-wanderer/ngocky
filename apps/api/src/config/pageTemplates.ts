@@ -12,9 +12,28 @@ export type PageTemplate = {
 
 export type BuiltInPageOverride = { name?: string; visible?: boolean };
 
-export function applyBuiltInPageOverrides(raw: unknown): Array<PageTemplate & { name: string; visible: boolean }> {
-    const overrides = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, BuiltInPageOverride> : {};
+export type TemplateOverride = { label?: string; group?: PageTemplateGroup };
+
+function parseOverrides<T>(raw: unknown): Record<string, T> {
+    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, T> : {};
+}
+
+export function parseTemplateOverrideMap(raw: unknown): Record<string, TemplateOverride> {
+    return parseOverrides<TemplateOverride>(raw);
+}
+
+export function applyTemplateOverrides(raw: unknown): PageTemplate[] {
+    const overrides = parseOverrides<TemplateOverride>(raw);
     return PAGE_TEMPLATES.map((template) => ({
+        ...template,
+        label: overrides[template.moduleType]?.label?.trim() || template.label,
+        group: overrides[template.moduleType]?.group ?? template.group,
+    }));
+}
+
+export function applyBuiltInPageOverrides(raw: unknown, templates: PageTemplate[] = PAGE_TEMPLATES): Array<PageTemplate & { name: string; visible: boolean }> {
+    const overrides = parseOverrides<BuiltInPageOverride>(raw);
+    return templates.map((template) => ({
         ...template,
         name: typeof overrides[template.moduleType]?.name === 'string' ? overrides[template.moduleType].name!.trim() || template.label : template.label,
         visible: overrides[template.moduleType]?.visible !== false,
@@ -32,7 +51,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     { moduleType: 'HOUSEWORK', label: 'Housework', group: 'family', rootLabel: 'items', available: false },
     { moduleType: 'ASSET', label: 'Assets', group: 'family', rootLabel: 'assets', available: false },
     { moduleType: 'HEALTHBOOK', label: 'Healthbook', group: 'family', rootLabel: 'people', available: false },
-    { moduleType: 'KEYBOARD', label: 'Collections', group: 'hobby', rootLabel: 'collections', available: false },
+    { moduleType: 'KEYBOARD', label: 'Keyboard', group: 'hobby', rootLabel: 'collections', available: false },
     { moduleType: 'FUND', label: 'Funds', group: 'hobby', rootLabel: 'transactions', available: false },
     { moduleType: 'LEARNING', label: 'Learning', group: 'hobby', rootLabel: 'topics', available: false },
 ];

@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import request from 'supertest';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import app from '../app';
 import { prisma } from '../config/database';
+import { config } from '../config/env';
 
 async function tokenFor(role: 'OWNER' | 'ADMIN' | 'USER', email: string) {
     const password = 'Secret123!';
-    await prisma.user.create({
+    const user = await prisma.user.create({
         data: {
             email,
             name: role,
@@ -15,8 +17,9 @@ async function tokenFor(role: 'OWNER' | 'ADMIN' | 'USER', email: string) {
             active: true,
         },
     });
-    const login = await request(app).post('/api/auth/login').send({ email, password });
-    return login.body.data.accessToken as string;
+    // Sign the access token directly instead of hitting /api/auth/login, which is
+    // rate-limited to 10 attempts per window and this suite creates many users.
+    return jwt.sign({ userId: user.id, email: user.email, role: user.role }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRY as any });
 }
 
 function authed(token: string) {
@@ -144,5 +147,51 @@ describe('page instances', () => {
         expect((await authed(ownerToken).delete(`/api/users/${creator.id}`)).status).toBe(200);
         expect(await prisma.pageInstance.findUnique({ where: { id: page.id } })).toMatchObject({ createdById: owner.id });
         expect(await prisma.task.count({ where: { instanceId: page.id } })).toBe(1);
+    });
+});
+
+describe('template overrides', () => {
+    it('OWNER can override a template label and it round-trips through the catalog and reset', async () => {
+        const ownerToken = await tokenFor('OWNER', 'owner-label-override@example.com');
+
+        const updated = await authed(ownerToken).put('/api/pages/templates/KEYBOARD/override').send({ label: 'Kids' });
+        expect(updated.status).toBe(200);
+        expect(updated.body).toMatchObject({ moduleType: 'KEYBOARD', label: 'Kids' });
+
+        const catalog = await authed(ownerToken).get('/api/pages/templates');
+        expect(catalog.body.find((item: any) => item.moduleType === 'KEYBOARD')).toMatchObject({ label: 'Kids' });
+
+        const reset = await authed(ownerToken).delete('/api/pages/templates/KEYBOARD/override');
+        expect(reset.status).toBe(200);
+        expect(reset.body).toMatchObject({ moduleType: 'KEYBOARD', label: 'Keyboard' });
+    });
+
+    it('moving a template to another group updates existing pages and the effective group used for create validation', async () => {
+        const ownerToken = await tokenFor('OWNER', 'owner-group-move@example.com');
+        const page = (await authed(ownerToken).post('/api/pages').send({ name: 'My Learning', moduleType: 'TASK', group: 'personal' })).body;
+
+        const moved = await authed(ownerToken).put('/api/pages/templates/TASK/override').send({ group: 'hobby' });
+        expect(moved.status).toBe(200);
+        expect(moved.body).toMatchObject({ moduleType: 'TASK', group: 'hobby' });
+
+        expect(await prisma.pageInstance.findUnique({ where: { id: page.id } })).toMatchObject({ group: 'hobby' });
+
+        const wrongGroup = await authed(ownerToken).post('/api/pages').send({ name: 'Still personal', moduleType: 'TASK', group: 'personal' });
+        expect(wrongGroup.status).toBe(400);
+        const rightGroup = await authed(ownerToken).post('/api/pages').send({ name: 'Now hobby', moduleType: 'TASK', group: 'hobby' });
+        expect(rightGroup.status).toBe(201);
+
+        const reset = await authed(ownerToken).delete('/api/pages/templates/TASK/override');
+        expect(reset.status).toBe(200);
+        expect(await prisma.pageInstance.findUnique({ where: { id: page.id } })).toMatchObject({ group: 'personal' });
+    });
+
+    it('denies template overrides to non-OWNER roles', async () => {
+        const adminToken = await tokenFor('ADMIN', 'admin-override@example.com');
+        const userToken = await tokenFor('USER', 'user-override@example.com');
+
+        expect((await authed(adminToken).put('/api/pages/templates/KEYBOARD/override').send({ label: 'Kids' })).status).toBe(403);
+        expect((await authed(userToken).put('/api/pages/templates/KEYBOARD/override').send({ label: 'Kids' })).status).toBe(403);
+        expect((await authed(adminToken).delete('/api/pages/templates/KEYBOARD/override')).status).toBe(403);
     });
 });
