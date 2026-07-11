@@ -103,13 +103,10 @@ describe('page instances', () => {
         expect(updatedCatalog.body.find((item: any) => item.moduleType === 'TASK')).toMatchObject({ name: 'My Tasks', visible: false });
     });
 
-    it('enforces template groups and unavailable templates', async () => {
+    it('enforces template groups for enabled templates', async () => {
         const ownerToken = await tokenFor('OWNER', 'owner-contract@example.com');
         const wrongGroup = await authed(ownerToken).post('/api/pages').send({ name: 'Wrong', moduleType: 'TASK', group: 'family' });
-        const unavailable = await authed(ownerToken).post('/api/pages').send({ name: 'Funds', moduleType: 'FUND', group: 'hobby' });
-
         expect(wrongGroup.status).toBe(400);
-        expect(unavailable.status).toBe(400);
     });
 
     it('preserves the slug on rename and previews typed root counts', async () => {

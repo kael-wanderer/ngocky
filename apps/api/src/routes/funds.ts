@@ -166,6 +166,8 @@ router.post('/', validate(createFundSchema), async (req: Request, res: Response,
 
 router.post('/import', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : (req.body.instanceId ?? null);
+        await assertPageInstance(instanceId, 'FUND');
         const rows: any[] = Array.isArray(req.body.items) ? req.body.items : [];
         if (!rows.length) {
             return sendSuccess(res, { created: 0 });
@@ -224,6 +226,7 @@ router.post('/import', async (req: Request, res: Response, next: NextFunction) =
                     date: parseDate(row.date),
                     amount: parseAmount(row.amount),
                     userId: req.user!.userId,
+                    instanceId,
                 };
             })
             .filter((row) => row.description && row.amount > 0);
@@ -242,7 +245,7 @@ router.post('/import', async (req: Request, res: Response, next: NextFunction) =
 
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const fund = await prisma.fundTransaction.findUnique({ where: { id: req.params.id } });
+        const fund = await prisma.fundTransaction.findFirst({ where: { id: req.params.id, instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null } });
         if (!fund) throw new NotFoundError('Fund transaction');
         if (fund.userId !== req.user!.userId) throw new ForbiddenError('You do not have access to this fund transaction');
         sendSuccess(res, fund);
@@ -251,7 +254,9 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 
 router.patch('/:id', validate(updateFundSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const existing = await prisma.fundTransaction.findUnique({ where: { id: req.params.id } });
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'FUND');
+        const existing = await prisma.fundTransaction.findFirst({ where: { id: req.params.id, instanceId } });
         if (!existing) throw new NotFoundError('Fund transaction');
         if (existing.userId !== req.user!.userId) throw new ForbiddenError('Only the owner can update this fund transaction');
         const fundData = Object.fromEntries(
@@ -274,7 +279,9 @@ router.patch('/:id', validate(updateFundSchema), async (req: Request, res: Respo
 
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const existing = await prisma.fundTransaction.findUnique({ where: { id: req.params.id } });
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'FUND');
+        const existing = await prisma.fundTransaction.findFirst({ where: { id: req.params.id, instanceId } });
         if (!existing) throw new NotFoundError('Fund transaction');
         if (existing.userId !== req.user!.userId) throw new ForbiddenError('Only the owner can delete this fund transaction');
 

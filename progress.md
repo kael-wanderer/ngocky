@@ -9,3 +9,4 @@
 - Task 16 complete: Assets dedicated instance isolation test and availability enabled.
 - Task 17 complete: Healthbook person instance isolation test and availability enabled.
 - Task 18 complete: Keyboard instance isolation and import test, availability enabled.
+- Task 19 complete: Funds transaction/import isolation test and availability enabled.

@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-11] - Funds Page Instances
+
+### Added
+
+- **Funds Instances**: Added dedicated transaction and import isolation coverage.
+
+### Changed
+
+- **Availability**: Enabled the Funds template after focused tests passed.
+
+---
+
 ## [2026-07-11] - Keyboard Page Instances
 
 ### Added
