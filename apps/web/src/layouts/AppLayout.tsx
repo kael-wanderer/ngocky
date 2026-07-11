@@ -8,10 +8,13 @@ import AddPageModal from '../components/AddPageModal';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, Menu, X,
-    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, Coins, Keyboard, Baby, HeartPulse
+    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, Coins, Keyboard, Baby, HeartPulse, Bot
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-const navItems = [
+type NavigationItem = { to: string; icon: LucideIcon; label: string; ownerOnly?: boolean };
+
+const navItems: NavigationItem[] = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/reports', icon: BarChart3, label: 'Report' },
     { to: '/tasks', icon: ClipboardList, label: 'Tasks' },
@@ -32,8 +35,9 @@ const navItems = [
     { to: '/settings', icon: Settings, label: 'User Settings' },
 ];
 
-const adminItems = [
+const adminItems: NavigationItem[] = [
     { to: '/users', icon: Users, label: 'User Management' },
+    { to: '/admin/agent', icon: Bot, label: 'Agent Settings', ownerOnly: true },
 ];
 
 const navGroups = [
@@ -42,7 +46,7 @@ const navGroups = [
     { id: 'family', label: 'Family', items: ['/calendar', '/cakeo', '/housework', '/assets', '/healthbook'] },
     { id: 'hobby', label: 'Hobby', items: ['/keyboard', '/funds', '/learning'] },
     { id: 'settings', label: 'Settings', items: ['/scheduled-reports', '/notifications', '/settings'] },
-    { id: 'admin', label: 'Admin', items: ['/users'] },
+    { id: 'admin', label: 'Admin', items: ['/users', '/admin/agent'] },
 ] as const;
 
 const DEFAULT_GROUP_STATE: Record<string, boolean> = {
@@ -101,7 +105,7 @@ function normalizeGroupOrder(order: Record<string, string[]>, includeAdmin: bool
     }
 
     if (includeAdmin) {
-        next.admin = ['/users'];
+        next.admin = ['/users', '/admin/agent'];
     }
 
     return next;
@@ -255,6 +259,7 @@ export default function AppLayout() {
                             .filter((to) => isFeatureRouteEnabled(to, featureFlags))
                             .filter((to) => isRouteAccessible(to, user, appSettings?.enabledGroups))
                             .map((to) => resolveNavItem(to))
+                            .filter((item) => !item?.ownerOnly || user?.role === 'OWNER')
                             .filter(Boolean) as Array<(typeof navItems)[number]>;
                         const instanceItems = pages.filter((page) => page.group === group.id);
 

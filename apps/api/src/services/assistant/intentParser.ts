@@ -1,7 +1,7 @@
-import OpenAI from 'openai';
-import { AppSettingsService } from '../appSettings';
 import { ASSISTANT_INTENTS, type AssistantIntent } from './policies';
 import { todayISO } from './utils';
+import { getActiveProviderAdapter } from './providers/factory';
+import { sanitizedProviderError } from './providers/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -258,26 +258,15 @@ function regexFallback(text: string, today: string): ParsedIntent {
 
 // ─── LLM Parser ───────────────────────────────────────────────────────────────
 
-let openaiClient: OpenAI | null = null;
-let openaiClientKey: string | null = null;
-
-async function getClient(): Promise<OpenAI | null> {
-    const key = await AppSettingsService.getOpenaiKey();
-    if (!key) {
-        openaiClient = null;
-        openaiClientKey = null;
-        return null;
-    }
-    if (!openaiClient || openaiClientKey !== key) {
-        openaiClient = new OpenAI({ apiKey: key });
-        openaiClientKey = key;
-    }
-    return openaiClient;
-}
-
 export async function parseIntent(text: string, timezone: string): Promise<ParsedIntent> {
     const today = todayISO(timezone);
-    const client = await getClient();
+    let client;
+    try {
+        client = await getActiveProviderAdapter();
+    } catch (error) {
+        console.error('[intentParser] Provider initialization failed:', sanitizedProviderError(error).category);
+        return regexFallback(text, today);
+    }
 
     if (!client) {
         // No LLM key — use regex fallback
@@ -285,17 +274,12 @@ export async function parseIntent(text: string, timezone: string): Promise<Parse
     }
 
     try {
-        const response = await client.chat.completions.create({
-            model: 'gpt-4o-mini',
-            max_tokens: 512,
-            temperature: 0,
-            messages: [
-                { role: 'system', content: buildSystemPrompt(today, timezone) },
-                { role: 'user', content: text },
-            ],
+        const content = await client.generateStructuredIntent({
+            systemPrompt: buildSystemPrompt(today, timezone),
+            userText: text,
+            maxTokens: 512,
         });
-
-        const raw = (response.choices[0]?.message?.content ?? '')
+        const raw = content
             .replace(/^```(?:json)?\n?/, '')
             .replace(/\n?```$/, '')
             .trim();
@@ -313,8 +297,8 @@ export async function parseIntent(text: string, timezone: string): Promise<Parse
             confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.8,
             entities: parsed.entities ?? {},
         };
-    } catch (err) {
-        console.error('[intentParser] LLM call failed:', err);
+    } catch (error) {
+        console.error('[intentParser] LLM call failed:', sanitizedProviderError(error).category);
         return regexFallback(text, today);
     }
 }

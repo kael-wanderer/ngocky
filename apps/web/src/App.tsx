@@ -26,6 +26,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const SetupPage = lazy(() => import('./pages/SetupPage'));
 const InstancePage = lazy(() => import('./pages/InstancePage'));
+const AgentSettingsPage = lazy(() => import('./pages/admin/AgentSettingsPage'));
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -45,6 +46,11 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
         return <Navigate to="/" replace />;
     }
     return <>{children}</>;
+}
+
+function OwnerRoute({ children }: { children: React.ReactNode }) {
+    const { user } = useAuthStore();
+    return user?.role === 'OWNER' ? <>{children}</> : <Navigate to="/" replace />;
 }
 
 function FeatureRoute({ route, children }: { route: string; children: React.ReactNode }) {
@@ -106,6 +112,7 @@ function AppRoutes() {
                         <Route path="alerts" element={<Navigate to="/notifications" replace />} />
                         <Route path="settings" element={<SettingsPage />} />
                         <Route path="users" element={<AdminRoute><UsersPage /></AdminRoute>} />
+                        <Route path="admin/agent" element={<OwnerRoute><AgentSettingsPage /></OwnerRoute>} />
                         <Route path="p/:slug" element={<InstancePage />} />
                     </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />

@@ -5,16 +5,17 @@ import { validate } from '../middleware/validate';
 import { createFundSchema, updateFundSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { ForbiddenError, NotFoundError, ValidationError } from '../utils/errors';
+import type { HobbyFundCategory, HobbyFundScope, HobbyFundType } from '@prisma/client';
 
 const router = Router();
 router.use(authenticate);
 
-function normalizeCondition(type: unknown, condition: unknown) {
+function normalizeCondition(type: unknown, condition: unknown): string | null {
     if (type === 'TOP_UP') {
         return null;
     }
 
-    return condition ?? null;
+    return condition == null ? null : String(condition);
 }
 
 function isMechanicalKeyboardScope(scope: unknown) {
@@ -186,19 +187,19 @@ router.post('/import', async (req: Request, res: Response, next: NextFunction) =
             return Math.round(base * multiplier);
         };
 
-        const normalizeType = (value: unknown) => {
+        const normalizeType = (value: unknown): HobbyFundType => {
             const normalized = String(value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
-            return ['BUY', 'SELL', 'TOP_UP'].includes(normalized) ? normalized : 'BUY';
+            return (['BUY', 'SELL', 'TOP_UP'].includes(normalized) ? normalized : 'BUY') as HobbyFundType;
         };
 
-        const normalizeScope = (value: unknown) => {
+        const normalizeScope = (value: unknown): HobbyFundScope => {
             const normalized = String(value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
-            return ['MECHANICAL_KEYBOARD', 'PLAY_STATION'].includes(normalized) ? normalized : 'MECHANICAL_KEYBOARD';
+            return (['MECHANICAL_KEYBOARD', 'PLAY_STATION'].includes(normalized) ? normalized : 'MECHANICAL_KEYBOARD') as HobbyFundScope;
         };
 
-        const normalizeCategory = (value: unknown) => {
+        const normalizeCategory = (value: unknown): HobbyFundCategory => {
             const normalized = String(value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
-            return ['KEYCAP', 'KIT', 'SHIPPING', 'ACCESSORIES', 'OTHER'].includes(normalized) ? normalized : 'OTHER';
+            return (['KEYCAP', 'KIT', 'SHIPPING', 'ACCESSORIES', 'OTHER'].includes(normalized) ? normalized : 'OTHER') as HobbyFundCategory;
         };
 
         const parseConditionValue = (value: unknown) => {

@@ -212,6 +212,12 @@ enum PageModuleType {
   GOAL
 }
 
+enum AgentProvider {
+  OPENAI
+  ANTHROPIC
+  OPENAI_COMPATIBLE
+}
+
 // ─── User ───────────────────────────────────────────
 
 model User {
@@ -291,6 +297,24 @@ model AppSetting {
   openaiKeyCiphertext String?
   openaiKeyLast4      String?
   updatedAt           DateTime @updatedAt
+}
+
+model AgentSetting {
+  id             Int           @id @default(1)
+  activeProvider AgentProvider @default(OPENAI)
+  updatedAt      DateTime      @updatedAt
+}
+
+model AgentProviderConfig {
+  id            String        @id @default(cuid())
+  provider      AgentProvider @unique
+  baseUrl       String?
+  model         String
+  effort        String        @default("auto")
+  keyCiphertext String?
+  keyLast4      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model ModuleColorSetting {

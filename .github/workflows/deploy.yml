@@ -111,6 +111,7 @@ jobs:
             VITE_API_URL=https://api.ngocky.kael.io.vn
             ASSISTANT_API_KEY=${{ secrets.ASSISTANT_API_KEY }}
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            ALLOW_PRIVATE_AGENT_ENDPOINTS=false
             EOF
 
             # Rename prod compose to the one docker uses by default

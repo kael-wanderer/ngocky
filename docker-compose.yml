@@ -21,6 +21,7 @@ services:
       OWNER_NAME: ${OWNER_NAME:-Owner}
       OWNER_EMAIL: ${OWNER_EMAIL:-}
       OWNER_PASSWORD: ${OWNER_PASSWORD:-}
+      ALLOW_PRIVATE_AGENT_ENDPOINTS: ${ALLOW_PRIVATE_AGENT_ENDPOINTS:-false}
     depends_on:
       postgres:
         condition: service_healthy

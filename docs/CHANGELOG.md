@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-11] - Multi-Provider Agent Settings
+
+### Added
+
+- **Agent Providers**: Added encrypted, persistent configuration for OpenAI, Claude, and custom OpenAI-compatible endpoints.
+- **Agent Settings**: Added an OWNER-only Admin page for provider selection, API keys, model discovery, model ID entry, reasoning effort, and connection testing.
+- **Endpoint Security**: Added DNS-aware SSRF protection, redirect validation, connection pinning, timeouts, and response-size limits for custom providers.
+
+### Changed
+
+- **Assistant Parsing**: Replaced the hard-coded OpenAI client and model with provider adapters while preserving regex fallback behavior.
+- **User Settings**: Removed AI credentials from the Application tab; application identity and module-group controls remain until Application Management ships in Batch 2.
+- **Legacy Compatibility**: Existing encrypted OpenAI credentials and the `OPENAI_API_KEY` environment fallback continue to work through the new provider store.
+
+---
+
 ## [2026-07-11] - Deployment Verification
 
 ### Changed

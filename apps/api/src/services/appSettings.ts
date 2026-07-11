@@ -1,6 +1,5 @@
 import { prisma } from '../config/database';
-import { config } from '../config/env';
-import { encryptSecret, decryptSecret } from '../utils/secrets';
+import { AgentSettingsService } from './agentSettings';
 
 const GROUPS = ['personal', 'family', 'hobby'] as const;
 
@@ -52,39 +51,21 @@ export class AppSettingsService {
 
     /** Write-only status — never returns the key itself. */
     static async getOpenaiKeyStatus(): Promise<{ configured: boolean; last4: string | null; source: 'db' | 'env' | null }> {
-        const row = await prisma.appSetting.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
-        if (row.openaiKeyCiphertext) {
-            return { configured: true, last4: row.openaiKeyLast4, source: 'db' };
-        }
-        if (config.OPENAI_API_KEY) {
-            return { configured: true, last4: config.OPENAI_API_KEY.slice(-4), source: 'env' };
-        }
-        return { configured: false, last4: null, source: null };
+        const settings = await AgentSettingsService.get();
+        const openai = settings.providers.find((item) => item.provider === 'OPENAI')!;
+        return { configured: openai.configured, last4: openai.keyLast4, source: openai.keySource };
     }
 
     static async setOpenaiKey(key: string): Promise<void> {
-        await this.get();
-        await prisma.appSetting.update({
-            where: { id: 1 },
-            data: { openaiKeyCiphertext: encryptSecret(key), openaiKeyLast4: key.slice(-4) },
-        });
+        await AgentSettingsService.setProviderKey('OPENAI', key);
     }
 
     static async clearOpenaiKey(): Promise<void> {
-        await this.get();
-        await prisma.appSetting.update({
-            where: { id: 1 },
-            data: { openaiKeyCiphertext: null, openaiKeyLast4: null },
-        });
+        await AgentSettingsService.clearKey('OPENAI');
     }
 
     /** Decrypted key for internal use (OpenAI client). DB-stored key wins over env. */
     static async getOpenaiKey(): Promise<string | null> {
-        const row = await prisma.appSetting.findUnique({ where: { id: 1 } });
-        if (row?.openaiKeyCiphertext) {
-            const key = decryptSecret(row.openaiKeyCiphertext);
-            if (key) return key;
-        }
-        return config.OPENAI_API_KEY || null;
+        return (await AgentSettingsService.getProviderConfig('OPENAI'))?.apiKey ?? null;
     }
 }

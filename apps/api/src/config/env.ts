@@ -38,6 +38,7 @@ const envSchema = z.object({
     ASSISTANT_API_KEY: z.string().min(16).default('dev-assistant-key-change-me'),
     OPENAI_API_KEY: z.string().optional(),
     APP_ENCRYPTION_KEY: z.preprocess(emptyToUndefined, z.string().min(16).optional()),
+    ALLOW_PRIVATE_AGENT_ENDPOINTS: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
 });
 
 const parsed = envSchema.safeParse({

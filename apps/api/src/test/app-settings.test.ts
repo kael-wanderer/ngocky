@@ -94,9 +94,9 @@ describe('openai key management', () => {
         expect(JSON.stringify(setRes.body)).not.toContain(key);
 
         // stored encrypted, decryptable internally
-        const row = await prisma.appSetting.findUnique({ where: { id: 1 } });
-        expect(row.openaiKeyCiphertext).toBeTruthy();
-        expect(row.openaiKeyCiphertext).not.toContain(key);
+        const row = await prisma.agentProviderConfig.findUnique({ where: { provider: 'OPENAI' } });
+        expect(row?.keyCiphertext).toBeTruthy();
+        expect(row?.keyCiphertext).not.toContain(key);
         expect(await AppSettingsService.getOpenaiKey()).toBe(key);
 
         // public settings endpoint must not leak key status
