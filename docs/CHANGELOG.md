@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-11] - Ca Keo Page Instances
+
+### Added
+
+- **Ca Keo Instances**: Added dedicated instance isolation coverage for create, list, and cross-instance update protection.
+
+### Changed
+
+- **Availability**: Enabled the Ca Keo template after its focused tests passed.
+
+---
+
 ## [2026-07-11] - Calendar Page Instances
 
 ### Added

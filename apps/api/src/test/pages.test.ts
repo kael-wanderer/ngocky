@@ -106,7 +106,7 @@ describe('page instances', () => {
     it('enforces template groups and unavailable templates', async () => {
         const ownerToken = await tokenFor('OWNER', 'owner-contract@example.com');
         const wrongGroup = await authed(ownerToken).post('/api/pages').send({ name: 'Wrong', moduleType: 'TASK', group: 'family' });
-        const unavailable = await authed(ownerToken).post('/api/pages').send({ name: 'Ca Keo', moduleType: 'CAKEO', group: 'family' });
+        const unavailable = await authed(ownerToken).post('/api/pages').send({ name: 'Housework', moduleType: 'HOUSEWORK', group: 'family' });
 
         expect(wrongGroup.status).toBe(400);
         expect(unavailable.status).toBe(400);
