@@ -9,12 +9,13 @@ import type { ResolverContext, ResolverResult } from './types';
  * Entities: (none required)
  */
 export async function resolveProjectQuery(
-    _entities: Record<string, any>,
+    entities: Record<string, any>,
     ctx: ResolverContext,
 ): Promise<ResolverResult> {
     const projects = await prisma.project.findMany({
         where: {
             OR: [{ ownerId: ctx.userId }, { isShared: true }],
+            instanceId: entities.instanceId ?? null,
         },
         include: {
             tasks: {

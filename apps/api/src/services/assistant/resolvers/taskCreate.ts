@@ -41,6 +41,7 @@ export async function resolveTaskCreate(
             status: 'PLANNED',
             sortOrder,
             userId: ctx.userId,
+            instanceId: entities.instanceId ?? null,
         },
     });
 

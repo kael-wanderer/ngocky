@@ -25,6 +25,8 @@ import { resolveCaKeoQuery } from './resolvers/caKeoQuery';
 import { resolveCaKeoStatus } from './resolvers/caKeoStatus';
 import { resolveHealthbookQuery, resolveHealthLogsQuery } from './resolvers/healthbookQuery';
 import { resolveHealthLogCreate } from './resolvers/healthLogCreate';
+import { pageAmbiguityReply, resolveAssistantPage } from './pageResolution';
+import type { PageModuleType } from '@prisma/client';
 
 // ─── Main executor ────────────────────────────────────────────────────────────
 
@@ -56,7 +58,34 @@ export async function dispatchIntent(
     parsed: ParsedIntent,
     ctx: ResolverContext,
 ): Promise<ResolverResult> {
-    const { intent, entities } = parsed;
+    const { intent } = parsed;
+    const entities = { ...parsed.entities };
+    const pageModuleByIntent: Partial<Record<ParsedIntent['intent'], PageModuleType>> = {
+        create_task: 'TASK',
+        query_projects: 'PROJECT',
+        query_project_tasks: 'PROJECT',
+        query_calendar: 'CALENDAR',
+        create_expense: 'EXPENSE',
+        query_expenses: 'EXPENSE',
+        create_fund: 'FUND',
+        query_funds: 'FUND',
+        create_keyboard: 'KEYBOARD',
+        query_keyboards: 'KEYBOARD',
+        query_goals: 'GOAL',
+        query_housework: 'HOUSEWORK',
+        create_cakeo: 'CAKEO',
+        query_cakeos: 'CAKEO',
+        query_healthbook: 'HEALTHBOOK',
+        query_health_logs: 'HEALTHBOOK',
+        create_health_log: 'HEALTHBOOK',
+    };
+    if (entities.pageName && pageModuleByIntent[intent]) {
+        const resolution = await resolveAssistantPage(ctx.userId, entities.pageName, pageModuleByIntent[intent]);
+        if (resolution.status === 'ambiguous') {
+            return { reply: pageAmbiguityReply(resolution.pages), requiresConfirmation: false, pendingIntent: intent, pendingPayload: entities };
+        }
+        if (resolution.status === 'resolved') entities.instanceId = resolution.page.id;
+    }
 
     switch (intent) {
         case 'create_task':

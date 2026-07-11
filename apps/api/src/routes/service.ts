@@ -9,6 +9,11 @@ const router = Router();
 router.use(authenticate);
 router.use(authorize('OWNER', 'ADMIN'));
 
+function pageOrigin(record: any) {
+    const page = record.instance || record.project?.instance || record.asset?.instance || record.topic?.instance || record.person?.instance;
+    return page ? { id: page.id, name: page.name, slug: page.slug } : null;
+}
+
 /**
  * GET /api/service/due-reports
  * Returns all active ScheduledReports due to run within the next 15 minutes.
@@ -551,33 +556,33 @@ router.get('/due-notifications', async (_req: Request, res: Response, next: Next
         const [goals, projectTasks, tasks, housework, maintenance, calendar, alertRules] = await Promise.all([
             prisma.goal.findMany({
                 where: { notificationEnabled: true, active: true, notificationDate: { gte: windowStart, lte: windowEnd } },
-                include: { user: { select: userSelect } },
+                include: { user: { select: userSelect }, instance: { select: { id: true, name: true, slug: true } } },
             }),
             prisma.projectTask.findMany({
                 where: { notificationEnabled: true, notificationDate: { gte: windowStart, lte: windowEnd }, status: { not: 'DONE' } },
                 include: {
-                    project: { select: { name: true } },
+                    project: { select: { name: true, instance: { select: { id: true, name: true, slug: true } } } },
                     createdBy: { select: userSelect },
                 },
             }),
             prisma.task.findMany({
                 where: { notificationEnabled: true, notificationDate: { gte: windowStart, lte: windowEnd }, status: { not: 'DONE' } },
-                include: { user: { select: userSelect } },
+                include: { user: { select: userSelect }, instance: { select: { id: true, name: true, slug: true } } },
             }),
             prisma.houseworkItem.findMany({
                 where: { notificationEnabled: true, active: true, notificationDate: { gte: windowStart, lte: windowEnd } },
-                include: { createdBy: { select: userSelect } },
+                include: { createdBy: { select: userSelect }, instance: { select: { id: true, name: true, slug: true } } },
             }),
             prisma.maintenanceRecord.findMany({
                 where: { notificationEnabled: true, notificationDate: { gte: windowStart, lte: windowEnd } },
                 include: {
-                    asset: { select: { name: true } },
+                    asset: { select: { name: true, instance: { select: { id: true, name: true, slug: true } } } },
                     user: { select: userSelect },
                 },
             }),
             prisma.calendarEvent.findMany({
                 where: { notificationEnabled: true, notificationDate: { gte: windowStart, lte: windowEnd } },
-                include: { createdBy: { select: userSelect } },
+                include: { createdBy: { select: userSelect }, instance: { select: { id: true, name: true, slug: true } } },
             }),
             prisma.alertRule.findMany({
                 where: { active: true },
@@ -597,6 +602,7 @@ router.get('/due-notifications', async (_req: Request, res: Response, next: Next
                     notificationDate: g.notificationDate,
                     notificationTime: g.notificationTime,
                     user: g.user,
+                    page: pageOrigin(g),
                 })),
             ...projectTasks
                 .filter((t) => isReminderDue(now, t) && !!t.deadline && getReminderCutoff(t.deadline) > now)
@@ -611,6 +617,7 @@ router.get('/due-notifications', async (_req: Request, res: Response, next: Next
                     notificationDate: t.notificationDate,
                     notificationTime: t.notificationTime,
                     user: t.createdBy,
+                    page: pageOrigin(t),
                 })),
             ...tasks
                 .filter((t) => isReminderDue(now, t) && !!t.dueDate && getReminderCutoff(t.dueDate) > now)
@@ -623,6 +630,7 @@ router.get('/due-notifications', async (_req: Request, res: Response, next: Next
                     notificationDate: t.notificationDate,
                     notificationTime: t.notificationTime,
                     user: t.user,
+                    page: pageOrigin(t),
                 })),
             ...housework
                 .filter((h) => isReminderDue(now, h) && !!h.nextDueDate && getReminderCutoff(h.nextDueDate) > now)
@@ -635,6 +643,7 @@ router.get('/due-notifications', async (_req: Request, res: Response, next: Next
                     notificationDate: h.notificationDate,
                     notificationTime: h.notificationTime,
                     user: h.createdBy,
+                    page: pageOrigin(h),
                 })),
             ...maintenance
                 .filter((m) => isReminderDue(now, m) && !!m.nextRecommendedDate && getReminderCutoff(m.nextRecommendedDate) > now)
@@ -648,6 +657,7 @@ router.get('/due-notifications', async (_req: Request, res: Response, next: Next
                     notificationDate: m.notificationDate,
                     notificationTime: m.notificationTime,
                     user: m.user,
+                    page: pageOrigin(m),
                 })),
             ...calendar
                 .filter((e) => isReminderDue(now, e) && getReminderCutoff(e.startDate) > now)
@@ -662,6 +672,7 @@ router.get('/due-notifications', async (_req: Request, res: Response, next: Next
                     notificationDate: e.notificationDate,
                     notificationTime: e.notificationTime,
                     user: e.createdBy,
+                    page: pageOrigin(e),
                 })),
         ];
 
