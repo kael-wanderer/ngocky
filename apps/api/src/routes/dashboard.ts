@@ -194,7 +194,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 take: 50,
                 include: {
                     assignee: { select: { name: true } },
-                    project: { select: { name: true } },
+                    project: { select: { name: true, instance: { select: { id: true, name: true, slug: true } } } },
                 },
             }),
             prisma.task.findMany({
@@ -222,7 +222,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 },
                 orderBy: { dueDate: 'asc' },
                 take: 50,
-                include: { user: { select: { name: true } } },
+                include: { user: { select: { name: true } }, instance: { select: { id: true, name: true, slug: true } } },
             }),
             // Housework due in selected range
             prisma.houseworkItem.findMany({
@@ -267,7 +267,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                     : { ...visibleExpenseWhere, date: { gte: filterStart, lt: filterEnd } },
                 orderBy: { date: 'asc' },
                 take: 20,
-                include: { user: { select: { name: true } } },
+                include: { user: { select: { name: true }, }, instance: { select: { id: true, name: true, slug: true } } },
             }),
             // Asset maintenance records in selected range. Records do not participate in status/overdue.
             prisma.maintenanceRecord.findMany({
@@ -278,7 +278,6 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 orderBy: { serviceDate: 'asc' },
                 take: 20,
                 include: {
-                    asset: { select: { name: true } },
                     user: { select: { name: true } },
                 },
             }),
@@ -303,7 +302,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 take: 20,
                 include: {
                     assignee: { select: { name: true } },
-                    project: { select: { name: true } },
+                    project: { select: { name: true, instance: { select: { id: true, name: true, slug: true } } } },
                 },
             }),
             // Overdue housework items
@@ -317,7 +316,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             prisma.goal.findMany({
                 where: { ...visibleGoalWhere, pinToDashboard: true },
                 take: 10,
-                include: { user: { select: { name: true } } },
+                include: { user: { select: { name: true } }, instance: { select: { id: true, name: true, slug: true } } },
             }),
             // Pinned tasks
             prisma.projectTask.findMany({
@@ -349,7 +348,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                     active: true,
                 },
                 take: 10,
-                include: { assignee: { select: { name: true } } },
+                include: { assignee: { select: { name: true } }, instance: { select: { id: true, name: true, slug: true } } },
             }),
             prisma.project.findMany({
                 where: {
@@ -360,7 +359,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                     pinToDashboard: true,
                 },
                 take: 10,
-                include: { _count: { select: { tasks: true } } },
+                include: { _count: { select: { tasks: true } }, instance: { select: { id: true, name: true, slug: true } } },
             }),
             prisma.calendarEvent.findMany({
                 where: {
@@ -368,7 +367,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                     ...visibleEventWhere,
                 },
                 take: 10,
-                include: { createdBy: { select: { name: true } } },
+                include: { createdBy: { select: { name: true } }, instance: { select: { id: true, name: true, slug: true } } },
             }),
             prisma.maintenanceRecord.findMany({
                 where: {
@@ -377,8 +376,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 },
                 take: 10,
                 include: {
-                    asset: { select: { name: true } },
                     user: { select: { name: true } },
+                    // Maintenance records inherit the page origin from their asset.
+                    asset: { select: { name: true, instance: { select: { id: true, name: true, slug: true } } } },
                 },
             }),
             prisma.learningItem.findMany({
@@ -387,7 +387,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                     pinToDashboard: true,
                 },
                 take: 10,
-                include: { user: { select: { name: true } }, topic: { select: { title: true } } },
+                include: { user: { select: { name: true } }, topic: { select: { title: true, instance: { select: { id: true, name: true, slug: true } } } } },
             }),
             prisma.idea.findMany({
                 where: {
@@ -395,7 +395,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                     pinToDashboard: true,
                 },
                 take: 10,
-                include: { topic: { select: { title: true } } },
+                include: { topic: { select: { title: true, instance: { select: { id: true, name: true, slug: true } } } } },
                 orderBy: { createdAt: 'desc' },
             }),
             // Active goals for current user
@@ -458,6 +458,11 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             return ta - tb;
         }).slice(0, 10);
 
+        const pageOrigin = (record: any) => {
+            const page = record.instance || record.project?.instance || record.asset?.instance || record.topic?.instance;
+            return page ? { id: page.id, name: page.name, slug: page.slug } : null;
+        };
+
         const pinnedItems = [
             ...pinnedGoals.map((g: any) => ({
                 id: g.id,
@@ -465,6 +470,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 title: g.title,
                 date: g.startDate,
                 meta: g.user?.name || null,
+                page: pageOrigin(g),
             })),
             ...pinnedProjects.map((t: any) => ({
                 id: t.id,
@@ -473,6 +479,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 date: t.deadline,
                 projectId: t.projectId,
                 meta: [t.project?.name, t.status, t.assignee?.name].filter(Boolean).join(' · ') || null,
+                page: pageOrigin(t),
             })),
             ...pinnedStandaloneTasks.map((t: any) => ({
                 id: t.id,
@@ -480,6 +487,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 title: t.title,
                 date: t.dueDate,
                 meta: ['Personal task', t.status, t.user?.name].filter(Boolean).join(' · ') || null,
+                page: pageOrigin(t),
             })),
             ...pinnedHousework.map((h: any) => ({
                 id: h.id,
@@ -487,6 +495,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 title: h.title,
                 date: h.nextDueDate,
                 meta: [h.assignee?.name, h.lastCompletedDate ? 'Completed' : 'Pending'].filter(Boolean).join(' · ') || null,
+                page: pageOrigin(h),
             })),
             ...pinnedBoards.map((p: any) => ({
                 id: p.id,
@@ -494,6 +503,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 title: p.name,
                 date: p.updatedAt,
                 meta: `${p._count?.tasks || 0} tasks`,
+                page: pageOrigin(p),
             })),
             ...pinnedEvents.map((e: any) => ({
                 id: e.id,
@@ -501,6 +511,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 title: e.title,
                 date: e.startDate,
                 meta: e.createdBy?.name || null,
+                page: pageOrigin(e),
             })),
             ...pinnedAssets.map((a: any) => ({
                 id: a.id,
@@ -509,6 +520,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 assetId: a.assetId,
                 date: a.serviceDate,
                 meta: [a.description, a.user?.name].filter(Boolean).join(' · ') || null,
+                page: pageOrigin(a),
             })),
             ...pinnedLearning.map((l: any) => ({
                 id: l.id,
@@ -516,6 +528,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 title: l.title,
                 date: l.createdAt,
                 meta: [l.topic?.title, l.user?.name].filter(Boolean).join(' · ') || null,
+                page: pageOrigin(l),
             })),
             ...pinnedIdeas.map((i: any) => ({
                 id: i.id,
@@ -523,6 +536,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 title: i.title,
                 date: i.createdAt,
                 meta: i.topic?.title || null,
+                page: pageOrigin(i),
             })),
         ].sort((a, b) => {
             const ta = a.date ? new Date(a.date).getTime() : Number.MAX_SAFE_INTEGER;

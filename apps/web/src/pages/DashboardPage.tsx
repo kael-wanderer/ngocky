@@ -185,6 +185,10 @@ export default function DashboardPage() {
         openStandaloneTask(taskId);
     }
 
+    function pageTarget(item: any, fallback: string, query = '') {
+        return item?.page?.slug ? `/p/${encodeURIComponent(item.page.slug)}${query}` : fallback;
+    }
+
     function openOverdueProjectItem(taskId?: string | null, projectId?: string | null) {
         if (projectId) {
             openProjectTask(projectId, taskId);
@@ -665,14 +669,18 @@ export default function DashboardPage() {
                         {(data?.pinnedItems || []).map((p: any) => (
                             <button key={`${p.type}-${p.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1"
                                 onClick={() => {
-                                    if (p.type === 'GOAL') navigate(`/goals?editId=${p.id}`);
-                                    else if (p.type === 'TASK') openTaskTarget(p.id, p.projectId);
-                                    else if (p.type === 'PROJECT') navigate(`/projects?boardId=${p.id}`);
-                                    else if (p.type === 'HOUSEWORK') navigate(`/housework?editId=${p.id}`);
-                                    else if (p.type === 'CALENDAR') navigate(`/calendar?eventId=${p.id}`);
-                                    else if (p.type === 'ASSET') navigate(p.assetId ? `/assets/${p.assetId}` : '/assets');
-                                    else if (p.type === 'LEARNING') navigate('/learning');
-                                    else if (p.type === 'IDEA') navigate('/ideas');
+                                    if (p.type === 'GOAL') navigate(pageTarget(p, `/goals?editId=${p.id}`, `?editId=${p.id}`));
+                                    else if (p.type === 'TASK') {
+                                        const fallback = p.projectId ? `/projects?boardId=${p.projectId}&taskId=${p.id}` : `/tasks?editId=${p.id}`;
+                                        const query = p.projectId ? `?boardId=${p.projectId}&taskId=${p.id}` : `?editId=${p.id}`;
+                                        navigate(pageTarget(p, fallback, query));
+                                    }
+                                    else if (p.type === 'PROJECT') navigate(pageTarget(p, `/projects?boardId=${p.id}`, `?boardId=${p.id}`));
+                                    else if (p.type === 'HOUSEWORK') navigate(pageTarget(p, `/housework?editId=${p.id}`, `?editId=${p.id}`));
+                                    else if (p.type === 'CALENDAR') navigate(pageTarget(p, `/calendar?eventId=${p.id}`, `?eventId=${p.id}`));
+                                    else if (p.type === 'ASSET') navigate(pageTarget(p, p.assetId ? `/assets/${p.assetId}` : '/assets', p.assetId ? `?assetId=${p.assetId}` : ''));
+                                    else if (p.type === 'LEARNING') navigate(pageTarget(p, '/learning', `?editId=${p.id}`));
+                                    else if (p.type === 'IDEA') navigate(pageTarget(p, '/ideas', `?editId=${p.id}`));
                                 }}>
                                 <div className="min-w-0">
                                     <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{p.title}</p>
