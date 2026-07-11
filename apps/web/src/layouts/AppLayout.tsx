@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
-import { getEnabledGroups, getFeatureFlags, getMobileNavItems, isFeatureRouteEnabled, isRouteAccessible } from '../config/features';
-import { useAppSettings, type ModuleGroupId } from '../api/appSettings';
-import { useDeletePage, usePages } from '../api/pages';
-import AddPageModal from '../components/AddPageModal';
+import { getEnabledGroups, getFeatureFlags, getMobileNavItems, isFeatureRouteEnabled, isPageTemplateEnabled, isRouteAccessible } from '../config/features';
+import { useAppSettings } from '../api/appSettings';
+import { usePages } from '../api/pages';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, Menu, X,
-    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, Coins, Keyboard, Baby, HeartPulse, Bot
+    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, Coins, Keyboard, Baby, HeartPulse, Bot, AppWindow
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -37,6 +36,7 @@ const navItems: NavigationItem[] = [
 
 const adminItems: NavigationItem[] = [
     { to: '/users', icon: Users, label: 'User Management' },
+    { to: '/admin/application', icon: AppWindow, label: 'Application Management' },
     { to: '/admin/agent', icon: Bot, label: 'Agent Settings', ownerOnly: true },
 ];
 
@@ -46,7 +46,7 @@ const navGroups = [
     { id: 'family', label: 'Family', items: ['/calendar', '/cakeo', '/housework', '/assets', '/healthbook'] },
     { id: 'hobby', label: 'Hobby', items: ['/keyboard', '/funds', '/learning'] },
     { id: 'settings', label: 'Settings', items: ['/scheduled-reports', '/notifications', '/settings'] },
-    { id: 'admin', label: 'Admin', items: ['/users', '/admin/agent'] },
+    { id: 'admin', label: 'Admin', items: ['/users', '/admin/application', '/admin/agent'] },
 ] as const;
 
 const DEFAULT_GROUP_STATE: Record<string, boolean> = {
@@ -105,7 +105,7 @@ function normalizeGroupOrder(order: Record<string, string[]>, includeAdmin: bool
     }
 
     if (includeAdmin) {
-        next.admin = ['/users', '/admin/agent'];
+        next.admin = ['/users', '/admin/application', '/admin/agent'];
     }
 
     return next;
@@ -140,7 +140,6 @@ export default function AppLayout() {
     });
     const [showNotificationMenu, setShowNotificationMenu] = useState(false);
     const [showAccountMenu, setShowAccountMenu] = useState(false);
-    const [addPageGroup, setAddPageGroup] = useState<ModuleGroupId | null>(null);
     const notificationMenuRef = useRef<HTMLDivElement | null>(null);
     const accountMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -148,7 +147,6 @@ export default function AppLayout() {
     const featureFlags = getFeatureFlags(user);
     const { data: appSettings } = useAppSettings();
     const { data: pages = [] } = usePages();
-    const deletePage = useDeletePage();
     const appName = appSettings?.appName || 'NgốcKý';
     const enabledGroups = getEnabledGroups(appSettings?.enabledGroups);
 
@@ -218,7 +216,7 @@ export default function AppLayout() {
         if (group.id === 'admin') return isAdmin;
         if (group.id === 'personal' || group.id === 'family' || group.id === 'hobby') {
             if (!enabledGroups.includes(group.id)) return false;
-            return group.items.some((to) => isRouteAccessible(to, user, appSettings?.enabledGroups)) || pages.some((page) => page.group === group.id);
+            return group.items.some((to) => isRouteAccessible(to, user, appSettings?.enabledGroups)) || pages.some((page) => page.group === group.id && isPageTemplateEnabled(page.moduleType, featureFlags));
         }
         return true;
     });
@@ -261,7 +259,7 @@ export default function AppLayout() {
                             .map((to) => resolveNavItem(to))
                             .filter((item) => !item?.ownerOnly || user?.role === 'OWNER')
                             .filter(Boolean) as Array<(typeof navItems)[number]>;
-                        const instanceItems = pages.filter((page) => page.group === group.id);
+                        const instanceItems = pages.filter((page) => page.group === group.id && enabledGroups.includes(page.group) && isPageTemplateEnabled(page.moduleType, featureFlags));
 
                         if (items.length === 0 && instanceItems.length === 0) return null;
 
@@ -361,33 +359,8 @@ export default function AppLayout() {
                                                     <FileText className="w-5 h-5 flex-shrink-0" />
                                                     <span className="truncate">{page.name}</span>
                                                 </NavLink>
-                                                {isAdmin && (
-                                                    <button
-                                                        type="button"
-                                                        className="px-2 py-2 rounded-lg text-xs hover:bg-gray-50"
-                                                        style={{ color: 'var(--color-text-secondary)' }}
-                                                        onClick={async () => {
-                                                            if (!window.confirm(`Delete ${page.name}? Items on this page will also be deleted.`)) return;
-                                                            await deletePage.mutateAsync(page.id);
-                                                        }}
-                                                        title="Delete page"
-                                                    >
-                                                        ×
-                                                    </button>
-                                                )}
                                             </div>
                                         ))}
-                                        {isAdmin && (group.id === 'personal' || group.id === 'family' || group.id === 'hobby') && (
-                                            <button
-                                                type="button"
-                                                className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-gray-50 transition-colors"
-                                                style={{ color: 'var(--color-text-secondary)' }}
-                                                onClick={() => setAddPageGroup(group.id)}
-                                            >
-                                                <FileText className="w-4 h-4" />
-                                                <span>Add page</span>
-                                            </button>
-                                        )}
                                     </div>
                                 )}
                             </div>
@@ -402,7 +375,6 @@ export default function AppLayout() {
                     </div>
                 )}
             </aside>
-            {addPageGroup && <AddPageModal group={addPageGroup} onClose={() => setAddPageGroup(null)} />}
 
             {/* Overlay */}
             {sidebarOpen && (

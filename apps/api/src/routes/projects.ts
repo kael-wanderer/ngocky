@@ -4,8 +4,9 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createProjectSchema, updateProjectSchema, createTaskSchema, updateTaskSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
-import { NotFoundError, ForbiddenError, ValidationError } from '../utils/errors';
+import { NotFoundError, ForbiddenError } from '../utils/errors';
 import { resolveReminderFields } from '../utils/reminders';
+import { assertPageInstance } from '../services/pageInstances';
 
 const router = Router();
 router.use(authenticate);
@@ -37,15 +38,6 @@ const canAccessBoard = (board: { ownerId: string; isShared?: boolean }, userId: 
     board.ownerId === userId || !!board.isShared;
 const canAccessTask = (task: { createdById?: string; isShared?: boolean; project: { ownerId: string; isShared?: boolean } }, userId: string) =>
     task.project.ownerId === userId || !!task.project.isShared || !!task.isShared;
-
-async function assertPageInstance(instanceId: string | null | undefined) {
-    if (!instanceId) return null;
-    const page = await prisma.pageInstance.findUnique({ where: { id: instanceId } });
-    if (!page || page.moduleType !== 'PROJECT') {
-        throw new ValidationError('Invalid instanceId');
-    }
-    return page;
-}
 
 // --- Project Boards ---
 
@@ -109,7 +101,7 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
 router.post('/', validate(createProjectSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const instanceId = req.body.instanceId ?? null;
-        await assertPageInstance(instanceId);
+        await assertPageInstance(instanceId, 'PROJECT');
         const board = await prisma.project.create({
             data: {
                 ...req.body,

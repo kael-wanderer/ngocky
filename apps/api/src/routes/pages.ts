@@ -3,7 +3,8 @@ import { prisma } from '../config/database';
 import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createPageSchema, updatePageSchema } from '../validators/pages';
-import { NotFoundError } from '../utils/errors';
+import { PAGE_TEMPLATES, PAGE_TEMPLATE_BY_TYPE } from '../config/pageTemplates';
+import { countPageRoots, getPageInstance } from '../services/pageInstances';
 
 const router = Router();
 
@@ -19,12 +20,12 @@ function slugify(name: string) {
         .replace(/^-+|-+$/g, '') || 'page';
 }
 
-async function uniqueSlug(name: string, currentId?: string) {
+async function uniqueSlug(name: string) {
     const base = slugify(name);
     let slug = base;
     for (let i = 2; ; i++) {
         const existing = await prisma.pageInstance.findUnique({ where: { slug } });
-        if (!existing || existing.id === currentId) return slug;
+        if (!existing) return slug;
         slug = `${base}-${i}`;
     }
 }
@@ -38,6 +39,23 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
     } catch (err) {
         next(err);
     }
+});
+
+router.get('/templates', authorize('OWNER', 'ADMIN'), (_req: Request, res: Response) => {
+    res.json(PAGE_TEMPLATES);
+});
+
+router.get('/:id/delete-preview', authorize('OWNER', 'ADMIN'), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const page = await getPageInstance(req.params.id);
+        res.json({
+            id: page.id,
+            name: page.name,
+            moduleType: page.moduleType,
+            rootLabel: PAGE_TEMPLATE_BY_TYPE[page.moduleType].rootLabel,
+            itemCount: await countPageRoots(page.id, page.moduleType),
+        });
+    } catch (err) { next(err); }
 });
 
 router.post('/', authorize('OWNER', 'ADMIN'), validate(createPageSchema), async (req: Request, res: Response, next: NextFunction) => {
@@ -57,14 +75,12 @@ router.post('/', authorize('OWNER', 'ADMIN'), validate(createPageSchema), async 
 
 router.put('/:id', authorize('OWNER', 'ADMIN'), validate(updatePageSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const existing = await prisma.pageInstance.findUnique({ where: { id: req.params.id } });
-        if (!existing) throw new NotFoundError('Page');
+        await getPageInstance(req.params.id);
 
         const page = await prisma.pageInstance.update({
             where: { id: req.params.id },
             data: {
                 ...req.body,
-                ...(req.body.name ? { slug: await uniqueSlug(req.body.name, existing.id) } : {}),
             },
         });
         res.json(page);
@@ -75,16 +91,8 @@ router.put('/:id', authorize('OWNER', 'ADMIN'), validate(updatePageSchema), asyn
 
 router.delete('/:id', authorize('OWNER', 'ADMIN'), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const existing = await prisma.pageInstance.findUnique({ where: { id: req.params.id } });
-        if (!existing) throw new NotFoundError('Page');
-
-        const [tasks, projects, expenses, goals] = await Promise.all([
-            prisma.task.count({ where: { instanceId: existing.id } }),
-            prisma.project.count({ where: { instanceId: existing.id } }),
-            prisma.expense.count({ where: { instanceId: existing.id } }),
-            prisma.goal.count({ where: { instanceId: existing.id } }),
-        ]);
-        const deletedItems = tasks + projects + expenses + goals;
+        const existing = await getPageInstance(req.params.id);
+        const deletedItems = await countPageRoots(existing.id, existing.moduleType);
 
         await prisma.pageInstance.delete({ where: { id: existing.id } });
         res.json({ deletedItems });

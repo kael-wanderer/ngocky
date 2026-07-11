@@ -5,7 +5,9 @@ import {
     getMobileNavItems,
     isFeatureRouteEnabled,
     isRouteAccessible,
+    isPageTemplateEnabled,
 } from '../config/features';
+import { INSTANCE_TEMPLATE_REGISTRY } from '../config/pageTemplates';
 
 describe('feature flags', () => {
     it('defaults all flags on', () => {
@@ -38,5 +40,12 @@ describe('feature flags', () => {
 
     it('enabled app group keeps existing user flag behavior', () => {
         expect(isRouteAccessible('/keyboard', { featureKeyboard: true }, ['personal', 'hobby'])).toBe(true);
+    });
+
+    it.each([
+        ['TASK', 'featureTasks'], ['PROJECT', 'featureProjects'], ['EXPENSE', 'featureExpenses'], ['GOAL', 'featureGoals'],
+    ])('maps the available %s template to its component and user flag', (moduleType, featureFlag) => {
+        expect(INSTANCE_TEMPLATE_REGISTRY[moduleType as keyof typeof INSTANCE_TEMPLATE_REGISTRY]).toBeDefined();
+        expect(isPageTemplateEnabled(moduleType, { [featureFlag]: false })).toBe(false);
     });
 });

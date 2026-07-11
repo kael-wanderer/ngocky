@@ -210,6 +210,15 @@ enum PageModuleType {
   PROJECT
   EXPENSE
   GOAL
+  IDEA
+  CALENDAR
+  CAKEO
+  HOUSEWORK
+  ASSET
+  HEALTHBOOK
+  KEYBOARD
+  FUND
+  LEARNING
 }
 
 enum AgentProvider {
@@ -351,14 +360,23 @@ model PageInstance {
   group       String
   icon        String?
   createdById String
-  createdBy   User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy   User           @relation(fields: [createdById], references: [id], onDelete: Restrict)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  tasks    Task[]
-  projects Project[]
-  expenses Expense[]
-  goals    Goal[]
+  tasks            Task[]
+  projects         Project[]
+  expenses         Expense[]
+  goals            Goal[]
+  ideaTopics       IdeaTopic[]
+  calendarEvents   CalendarEvent[]
+  cakeos           CaKeo[]
+  houseworkItems   HouseworkItem[]
+  assets           Asset[]
+  healthPersons    HealthPerson[]
+  keyboards        Keyboard[]
+  fundTransactions FundTransaction[]
+  learningTopics   LearningTopic[]
 
   @@index([createdById])
   @@index([group])
@@ -531,13 +549,16 @@ model LearningTopic {
   isShared    Boolean  @default(false)
   sortOrder   Int      @default(0)
   userId      String
+  instanceId  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance  PageInstance?  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   histories LearningItem[]
 
   @@index([userId])
+  @@index([instanceId])
 }
 
 model LearningItem {
@@ -572,13 +593,16 @@ model IdeaTopic {
   isShared    Boolean  @default(false)
   sortOrder   Int      @default(0)
   userId      String
+  instanceId  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  logs Idea[]
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  logs     Idea[]
 
   @@index([userId])
+  @@index([instanceId])
 }
 
 model Idea {
@@ -610,6 +634,7 @@ model HouseworkItem {
   description               String?
   assigneeId                String?
   createdById               String
+  instanceId                String?
   isShared                  Boolean       @default(false)
   status                    ProjectStatus @default(PLANNED)
   frequencyType             FrequencyType @default(ONE_TIME)
@@ -634,11 +659,13 @@ model HouseworkItem {
   createdAt                 DateTime      @default(now())
   updatedAt                 DateTime      @updatedAt
 
-  assignee  User? @relation("HouseworkAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  createdBy User  @relation("HouseworkCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  assignee  User?         @relation("HouseworkAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy User          @relation("HouseworkCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  instance  PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([assigneeId])
   @@index([createdById])
+  @@index([instanceId])
 }
 
 // ─── Assets & Maintenance ───────────────────────────
@@ -656,13 +683,16 @@ model Asset {
   sortOrder      Int       @default(0)
   note           String?
   userId         String
+  instanceId     String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance           PageInstance?       @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   maintenanceRecords MaintenanceRecord[]
 
   @@index([userId])
+  @@index([instanceId])
 }
 
 model MaintenanceRecord {
@@ -723,14 +753,17 @@ model CalendarEvent {
   repeatEndType             RepeatEndType?
   repeatUntil               DateTime?
   createdById               String
+  instanceId                String?
   createdAt                 DateTime         @default(now())
   updatedAt                 DateTime         @updatedAt
 
   createdBy         User               @relation("EventCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  instance          PageInstance?      @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   maintenanceRecord MaintenanceRecord?
   participants      EventParticipant[]
 
   @@index([createdById])
+  @@index([instanceId])
   @@index([startDate])
 }
 
@@ -784,12 +817,15 @@ model FundTransaction {
   category    HobbyFundCategory
   condition   String?
   userId      String
+  instanceId  String?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([instanceId])
   @@index([date])
   @@index([type])
   @@index([scope])
@@ -963,13 +999,16 @@ model Keyboard {
   note        String?
   isShared    Boolean  @default(false)
   ownerId     String
+  instanceId  String?
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner    User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([ownerId])
+  @@index([instanceId])
   @@index([name])
 }
 
@@ -998,14 +1037,17 @@ model CaKeo {
   isShared                  Boolean       @default(true)
   pinToDashboard            Boolean       @default(false)
   ownerId                   String
+  instanceId                String?
   sortOrder                 Int           @default(0)
   createdAt                 DateTime      @default(now())
   updatedAt                 DateTime      @updatedAt
 
-  owner    User  @relation("CaKeoOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  assigner User? @relation("CaKeoAssigner", fields: [assignerId], references: [id], onDelete: SetNull)
+  owner    User          @relation("CaKeoOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  assigner User?         @relation("CaKeoAssigner", fields: [assignerId], references: [id], onDelete: SetNull)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([ownerId])
+  @@index([instanceId])
   @@index([assignerId])
   @@index([startDate])
   @@index([status])
@@ -1050,14 +1092,17 @@ model HealthPerson {
   isShared                      Boolean   @default(false)
   sortOrder                     Int       @default(0)
   userId                        String
+  instanceId                    String?
   createdAt                     DateTime  @default(now())
   updatedAt                     DateTime  @updatedAt
 
-  user  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  logs  HealthLog[]
-  files HealthPersonFile[]
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance?      @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  logs     HealthLog[]
+  files    HealthPersonFile[]
 
   @@index([userId])
+  @@index([instanceId])
 }
 
 model HealthLog {

@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-11] - Application Management and Template Foundation
+
+### Added
+
+- **Application Management**: Added an OWNER/ADMIN page for template inventory and centralized custom-page creation, stable rename, deletion previews, typed confirmation, and deletion.
+- **Template Catalog**: Added canonical metadata and schema support for Personal, Family, and Hobby page templates while keeping unfinished templates unavailable for creation.
+- **Instance Registry**: Added lazy frontend component registration for the four currently implemented custom-page templates.
+
+### Changed
+
+- **Page Ownership**: Custom pages and their root records are reassigned to an OWNER when their creator account is deleted.
+- **Navigation**: Removed page mutation controls from the sidebar and applied application group gates plus per-user template visibility to custom links.
+- **User Settings**: Moved application identity and group controls to Admin and redirected the legacy Application tab URL.
+
+---
+
 ## [2026-07-11] - Multi-Provider Agent Settings
 
 ### Added

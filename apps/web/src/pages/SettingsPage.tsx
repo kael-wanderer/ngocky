@@ -3,10 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
 import { Settings as SettingsIcon, User, Bell, Palette, Shield, Camera, Bot, Copy, Check, ExternalLink, Unlink, LayoutGrid, Smartphone, ChevronUp, ChevronDown } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DEFAULT_MOBILE_NAV_ITEMS, FEATURE_GROUPS, FEATURE_FLAGS, MOBILE_NAV_OPTIONS, getMobileNavItems, type FeatureFlags, type FeatureFlagKey } from '../config/features';
 import ColorPicker from '../components/ColorPicker';
-import { useAppSettings, useUpdateAppSettings, type ModuleGroupId } from '../api/appSettings';
 
 function resizeImageToBase64(file: File, maxSize = 128): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -30,6 +29,7 @@ export default function SettingsPage() {
     const { user, setUser } = useAuthStore();
     const qc = useQueryClient();
     const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
     const [tab, setTab] = useState(() => searchParams.get('tab') || 'profile');
     const [msg, setMsg] = useState('');
     const [linkCode, setLinkCode] = useState<{ code: string; expiresAt: string } | null>(null);
@@ -38,10 +38,6 @@ export default function SettingsPage() {
     const [mfaEnableCode, setMfaEnableCode] = useState('');
     const [mfaDisableCode, setMfaDisableCode] = useState('');
     const [profileForm, setProfileForm] = useState({ name: '', email: '', timezone: 'Asia/Ho_Chi_Minh' });
-    const [applicationForm, setApplicationForm] = useState<{ appName: string; enabledGroups: ModuleGroupId[] }>({
-        appName: 'NgốcKý',
-        enabledGroups: ['personal', 'family', 'hobby'],
-    });
     const [featureForm, setFeatureForm] = useState<FeatureFlags>(FEATURE_FLAGS);
     const [notificationForm, setNotificationForm] = useState({
         notificationEnabled: true,
@@ -53,9 +49,6 @@ export default function SettingsPage() {
     const [calendarColor, setCalendarColor] = useState('#94a3b8');
     const [phoneViewForm, setPhoneViewForm] = useState<string[]>([...DEFAULT_MOBILE_NAV_ITEMS]);
     const mfaDisableInputRef = useRef<HTMLInputElement>(null);
-    const isOwner = user?.role === 'OWNER';
-    const { data: appSettings } = useAppSettings();
-    const updateAppSettings = useUpdateAppSettings();
 
     const { data: assistantLink, refetch: refetchLink } = useQuery({
         queryKey: ['assistant-link-status'],
@@ -268,12 +261,9 @@ export default function SettingsPage() {
     }, [calendarColorSettings]);
 
     useEffect(() => {
-        if (!appSettings) return;
-        setApplicationForm({
-            appName: appSettings.appName,
-            enabledGroups: appSettings.enabledGroups,
-        });
-    }, [appSettings]);
+        if (searchParams.get('tab') !== 'application') return;
+        navigate(user?.role === 'OWNER' ? '/admin/application' : '/settings', { replace: true });
+    }, [navigate, searchParams, user?.role]);
 
     const handleTabClick = (id: string) => {
         setTab(id);
@@ -311,7 +301,6 @@ export default function SettingsPage() {
 
     const tabs = [
         { id: 'profile', label: 'Profile', icon: User },
-        ...(isOwner ? [{ id: 'application', label: 'Application', icon: SettingsIcon }] : []),
         { id: 'features', label: 'Desktop Features', icon: LayoutGrid },
         { id: 'phone-view', label: 'Phone View', icon: Smartphone },
         { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -325,16 +314,6 @@ export default function SettingsPage() {
         setFeatureForm((current) => ({
             ...current,
             [key]: checked,
-        }));
-    };
-
-    const handleApplicationGroupToggle = (group: ModuleGroupId, checked: boolean) => {
-        if (group === 'personal') return;
-        setApplicationForm((current) => ({
-            ...current,
-            enabledGroups: checked
-                ? [...new Set([...current.enabledGroups, group])]
-                : current.enabledGroups.filter((item) => item !== group),
         }));
     };
 
@@ -442,57 +421,6 @@ export default function SettingsPage() {
 
                 {/* Content */}
                 <div className="lg:col-span-3 card p-6">
-                    {tab === 'application' && isOwner && (
-                        <div className="space-y-5">
-                            <div>
-                                <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Application</h3>
-                                <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                                    App-wide name and module group availability.
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="label">App Name</label>
-                                <input
-                                    className="input max-w-md"
-                                    value={applicationForm.appName}
-                                    onChange={(e) => setApplicationForm({ ...applicationForm, appName: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="space-y-3">
-                                {[
-                                    { id: 'personal' as ModuleGroupId, label: 'Personal', disabled: true },
-                                    { id: 'family' as ModuleGroupId, label: 'Family' },
-                                    { id: 'hobby' as ModuleGroupId, label: 'Hobby' },
-                                ].map((group) => (
-                                    <label key={group.id} className="flex items-center justify-between gap-4 rounded-lg border px-3 py-3 cursor-pointer" style={{ borderColor: 'var(--color-border)' }}>
-                                        <div className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{group.label}</div>
-                                        <input
-                                            type="checkbox"
-                                            checked={applicationForm.enabledGroups.includes(group.id)}
-                                            disabled={group.disabled}
-                                            onChange={(e) => handleApplicationGroupToggle(group.id, e.target.checked)}
-                                        />
-                                    </label>
-                                ))}
-                            </div>
-
-                            <button
-                                className="btn-primary"
-                                onClick={async () => {
-                                    await updateAppSettings.mutateAsync(applicationForm);
-                                    setMsg('Application settings saved.');
-                                    setTimeout(() => setMsg(''), 2500);
-                                }}
-                                disabled={updateAppSettings.isPending}
-                            >
-                                {updateAppSettings.isPending ? 'Saving...' : 'Save'}
-                            </button>
-
-                        </div>
-                    )}
-
                     {/* Profile */}
                     {tab === 'profile' && profile && (
                         <div className="space-y-5">

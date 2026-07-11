@@ -206,15 +206,15 @@ type AgentProviderStatus = {
 
 **Steps:**
 
-- [ ] Extend `PageModuleType` with IDEA, CALENDAR, CAKEO, HOUSEWORK, ASSET, HEALTHBOOK, KEYBOARD, FUND, LEARNING.
-- [ ] Add nullable `instanceId` relations and indexes to IdeaTopic, CalendarEvent, CaKeo, HouseworkItem, Asset, HealthPerson, Keyboard, FundTransaction, and LearningTopic.
-- [ ] Add matching relation arrays on PageInstance.
-- [ ] Use `onDelete: Cascade` for root records.
-- [ ] Change `PageInstance.createdBy` from `onDelete: Cascade` to `Restrict`, and update the user-deletion flow (`routes/users.ts`) to reassign that user's pages to the acting OWNER first. Test that deleting a page creator does not delete the page or its records.
-- [ ] Verify generated SQLite schema handles the new enum and relations.
-- [ ] Test that existing records remain in the null partition and deleting a PageInstance cascades root records.
-- [ ] Run Prisma generation, focused/full tests, and lint.
-- [ ] Commit: `feat: expand page template schema`
+- [x] Extend `PageModuleType` with IDEA, CALENDAR, CAKEO, HOUSEWORK, ASSET, HEALTHBOOK, KEYBOARD, FUND, LEARNING.
+- [x] Add nullable `instanceId` relations and indexes to IdeaTopic, CalendarEvent, CaKeo, HouseworkItem, Asset, HealthPerson, Keyboard, FundTransaction, and LearningTopic.
+- [x] Add matching relation arrays on PageInstance.
+- [x] Use `onDelete: Cascade` for root records.
+- [x] Change `PageInstance.createdBy` from `onDelete: Cascade` to `Restrict`, and update the user-deletion flow (`routes/users.ts`) to reassign that user's pages to the acting OWNER first. Test that deleting a page creator does not delete the page or its records.
+- [x] Verify generated SQLite schema handles the new enum and relations.
+- [x] Test that existing records remain in the null partition and deleting a PageInstance cascades root records.
+- [x] Run Prisma generation, focused/full tests, and lint.
+- [x] Commit: `feat: expand page template schema`
 
 ### Task 9: Canonical page template catalog and instance service
 
@@ -233,15 +233,15 @@ type AgentProviderStatus = {
 
 **Steps:**
 
-- [ ] Define canonical template metadata: enum, label, group, root label, and availability flag.
-- [ ] Validate template/group combinations on create. (Move is out of scope for v1 — every template maps to exactly one group; do not build a move route.)
-- [ ] Refactor duplicated Task/Project/Expense/Goal instance assertions to the shared service.
-- [ ] Change rename to preserve slug.
-- [ ] Add deletion previews and typed counts for all templates.
-- [ ] Keep newly added templates unavailable until their implementation task enables them.
-- [ ] Test stable slug, invalid group/template combinations, preview counts, and permissions.
-- [ ] Run focused/full tests and lint.
-- [ ] Commit: `feat: centralize page template contracts`
+- [x] Define canonical template metadata: enum, label, group, root label, and availability flag.
+- [x] Validate template/group combinations on create. (Move is out of scope for v1 — every template maps to exactly one group; do not build a move route.)
+- [x] Refactor duplicated Task/Project/Expense/Goal instance assertions to the shared service.
+- [x] Change rename to preserve slug.
+- [x] Add deletion previews and typed counts for all templates.
+- [x] Keep newly added templates unavailable until their implementation task enables them.
+- [x] Test stable slug, invalid group/template combinations, preview counts, and permissions.
+- [x] Run focused/full tests and lint.
+- [x] Commit: `feat: centralize page template contracts`
 
 ### Task 10: Application Management Admin page
 
@@ -256,17 +256,17 @@ type AgentProviderStatus = {
 
 **Steps:**
 
-- [ ] Add `/admin/application` route for OWNER and ADMIN, with OWNER-only controls inside the page for app identity/group gates.
-- [ ] Fetch template catalog and page inventory.
-- [ ] Apply group gates and per-user template feature flags to custom-page navigation, while keeping the management inventory complete for OWNER/ADMIN.
-- [ ] Implement centralized create, rename, delete preview, typed confirmation, and delete. No move control (dead operation in v1).
-- [ ] Display built-in templates read-only and custom pages with item counts.
-- [ ] Remove sidebar Add page and inline custom-page delete controls.
-- [ ] Remove Application from User Settings and redirect legacy OWNER URLs.
-- [ ] Keep sidebar custom pages as navigation links.
-- [ ] Test role boundaries, disabled-group behavior, per-user template visibility, stable rename, and destructive confirmation.
-- [ ] Run web tests/build.
-- [ ] Commit: `feat: add Application Management admin page`
+- [x] Add `/admin/application` route for OWNER and ADMIN, with OWNER-only controls inside the page for app identity/group gates.
+- [x] Fetch template catalog and page inventory.
+- [x] Apply group gates and per-user template feature flags to custom-page navigation, while keeping the management inventory complete for OWNER/ADMIN.
+- [x] Implement centralized create, rename, delete preview, typed confirmation, and delete. No move control (dead operation in v1).
+- [x] Display built-in templates read-only and custom pages with item counts.
+- [x] Remove sidebar Add page and inline custom-page delete controls.
+- [x] Remove Application from User Settings and redirect legacy OWNER URLs.
+- [x] Keep sidebar custom pages as navigation links.
+- [x] Test role boundaries, disabled-group behavior, per-user template visibility, stable rename, and destructive confirmation.
+- [x] Run web tests/build.
+- [x] Commit: `feat: add Application Management admin page`
 
 ### Task 11: Frontend instance component registry
 
@@ -277,13 +277,13 @@ type AgentProviderStatus = {
 
 **Steps:**
 
-- [ ] Replace the current four-branch renderer with a lazy component registry.
-- [ ] Keep only implemented templates renderable; unavailable API catalog entries cannot be created.
-- [ ] Add a guarded unsupported-template state for old/future data.
-- [ ] Ensure registry metadata does not become a second authorization source.
-- [ ] Test all currently available template mappings.
-- [ ] Run web tests/build.
-- [ ] Commit: `refactor: add page template component registry`
+- [x] Replace the current four-branch renderer with a lazy component registry.
+- [x] Keep only implemented templates renderable; unavailable API catalog entries cannot be created.
+- [x] Add a guarded unsupported-template state for old/future data.
+- [x] Ensure registry metadata does not become a second authorization source.
+- [x] Test all currently available template mappings.
+- [x] Run web tests/build.
+- [x] Commit: `refactor: add page template component registry`
 
 ### Task 12: Ideas template
 

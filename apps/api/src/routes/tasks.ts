@@ -5,8 +5,9 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createStandaloneTaskSchema, updateStandaloneTaskSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
-import { NotFoundError, ValidationError } from '../utils/errors';
+import { NotFoundError } from '../utils/errors';
 import { resolveReminderFields } from '../utils/reminders';
+import { assertPageInstance } from '../services/pageInstances';
 
 const router = Router();
 router.use(authenticate);
@@ -17,15 +18,6 @@ async function getNextTaskSortOrder(userId: string, instanceId: string | null) {
         _max: { sortOrder: true },
     });
     return (aggregate._max.sortOrder ?? -1) + 1;
-}
-
-async function assertPageInstance(instanceId: string | null | undefined) {
-    if (!instanceId) return null;
-    const page = await prisma.pageInstance.findUnique({ where: { id: instanceId } });
-    if (!page || page.moduleType !== 'TASK') {
-        throw new ValidationError('Invalid instanceId');
-    }
-    return page;
 }
 
 function addRepeat(date: Date, repeatFrequency: 'DAILY' | 'WEEKLY' | 'BI_WEEKLY' | 'MONTHLY' | 'QUARTERLY') {
@@ -125,7 +117,7 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
 router.post('/', validate(createStandaloneTaskSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const instanceId = req.body.instanceId ?? null;
-        await assertPageInstance(instanceId);
+        await assertPageInstance(instanceId, 'TASK');
         const sortOrder = await getNextTaskSortOrder(req.user!.userId, instanceId);
         const task = await prisma.task.create({
             data: {

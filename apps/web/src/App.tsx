@@ -27,6 +27,7 @@ const UsersPage = lazy(() => import('./pages/UsersPage'));
 const SetupPage = lazy(() => import('./pages/SetupPage'));
 const InstancePage = lazy(() => import('./pages/InstancePage'));
 const AgentSettingsPage = lazy(() => import('./pages/admin/AgentSettingsPage'));
+const ApplicationManagementPage = lazy(() => import('./pages/admin/ApplicationManagementPage'));
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -113,6 +114,7 @@ function AppRoutes() {
                         <Route path="settings" element={<SettingsPage />} />
                         <Route path="users" element={<AdminRoute><UsersPage /></AdminRoute>} />
                         <Route path="admin/agent" element={<OwnerRoute><AgentSettingsPage /></OwnerRoute>} />
+                        <Route path="admin/application" element={<AdminRoute><ApplicationManagementPage /></AdminRoute>} />
                         <Route path="p/:slug" element={<InstancePage />} />
                     </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />

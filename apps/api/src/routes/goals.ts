@@ -4,20 +4,12 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createGoalSchema, updateGoalSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
-import { NotFoundError, ValidationError } from '../utils/errors';
+import { NotFoundError } from '../utils/errors';
 import { getGoalPeriodEnd, getGoalPeriodStart, resolveReminderFields } from '../utils/reminders';
+import { assertPageInstance } from '../services/pageInstances';
 
 const router = Router();
 router.use(authenticate);
-
-async function assertPageInstance(instanceId: string | null | undefined) {
-    if (!instanceId) return null;
-    const page = await prisma.pageInstance.findUnique({ where: { id: instanceId } });
-    if (!page || page.moduleType !== 'GOAL') {
-        throw new ValidationError('Invalid instanceId');
-    }
-    return page;
-}
 
 // List goals
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -107,7 +99,7 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
 router.post('/', validate(createGoalSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const instanceId = req.body.instanceId ?? null;
-        await assertPageInstance(instanceId);
+        await assertPageInstance(instanceId, 'GOAL');
         const periodStart = getGoalPeriodStart(req.body.periodType);
         const reminderFields = resolveReminderFields(req.body, {
             anchorDate: getGoalPeriodEnd(periodStart, req.body.periodType),

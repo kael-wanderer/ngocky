@@ -90,6 +90,17 @@ export const FEATURE_ROUTE_GROUP_MAP = Object.fromEntries(
     FEATURE_GROUPS.flatMap((group) => group.items.map((item) => [item.route, group.id]))
 ) as Record<string, FeatureGroup['id']>;
 
+export const PAGE_TEMPLATE_FEATURE_MAP: Record<string, FeatureFlagKey> = {
+    TASK: 'featureTasks', PROJECT: 'featureProjects', EXPENSE: 'featureExpenses', GOAL: 'featureGoals', IDEA: 'featureIdeas',
+    CALENDAR: 'featureCalendar', CAKEO: 'featureCaKeo', HOUSEWORK: 'featureHousework', ASSET: 'featureAssets', HEALTHBOOK: 'featureHealthbook',
+    KEYBOARD: 'featureKeyboard', FUND: 'featureFunds', LEARNING: 'featureLearning',
+};
+
+export function isPageTemplateEnabled(moduleType: string, source?: Partial<FeatureFlags> | null) {
+    const key = PAGE_TEMPLATE_FEATURE_MAP[moduleType];
+    return key ? getFeatureFlags(source)[key] : false;
+}
+
 export function getFeatureFlags(source?: Partial<FeatureFlags> | null): FeatureFlags {
     return {
         ...FEATURE_FLAGS,

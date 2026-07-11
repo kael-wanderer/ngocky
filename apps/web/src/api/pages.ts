@@ -2,7 +2,23 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from './client';
 import type { ModuleGroupId } from './appSettings';
 
-export type PageModuleType = 'TASK' | 'PROJECT' | 'EXPENSE' | 'GOAL';
+export type PageModuleType = 'TASK' | 'PROJECT' | 'EXPENSE' | 'GOAL' | 'IDEA' | 'CALENDAR' | 'CAKEO' | 'HOUSEWORK' | 'ASSET' | 'HEALTHBOOK' | 'KEYBOARD' | 'FUND' | 'LEARNING';
+
+export type PageTemplateDto = {
+    moduleType: PageModuleType;
+    label: string;
+    group: ModuleGroupId;
+    rootLabel: string;
+    available: boolean;
+};
+
+export type PageDeletePreview = {
+    id: string;
+    name: string;
+    moduleType: PageModuleType;
+    rootLabel: string;
+    itemCount: number;
+};
 
 export type PageInstanceDto = {
     id: string;
@@ -21,6 +37,18 @@ export function usePages() {
     });
 }
 
+export function usePageTemplates() {
+    return useQuery<PageTemplateDto[]>({
+        queryKey: ['page-templates'],
+        queryFn: async () => (await api.get('/pages/templates')).data,
+        staleTime: 5 * 60_000,
+    });
+}
+
+export async function getPageDeletePreview(id: string) {
+    return (await api.get(`/pages/${id}/delete-preview`)).data as PageDeletePreview;
+}
+
 export function useCreatePage() {
     const queryClient = useQueryClient();
     return useMutation({
@@ -32,7 +60,7 @@ export function useCreatePage() {
 export function useUpdatePage() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, body }: { id: string; body: Partial<Pick<PageInstanceDto, 'name' | 'group' | 'icon'>> }) => api.put(`/pages/${id}`, body),
+        mutationFn: ({ id, body }: { id: string; body: Partial<Pick<PageInstanceDto, 'name' | 'icon'>> }) => api.put(`/pages/${id}`, body),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pages'] }),
     });
 }

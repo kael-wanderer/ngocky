@@ -4,19 +4,11 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createExpenseSchema, updateExpenseSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
-import { ForbiddenError, NotFoundError, ValidationError } from '../utils/errors';
+import { ForbiddenError, NotFoundError } from '../utils/errors';
+import { assertPageInstance } from '../services/pageInstances';
 
 const router = Router();
 router.use(authenticate);
-
-async function assertPageInstance(instanceId: string | null | undefined) {
-    if (!instanceId) return null;
-    const page = await prisma.pageInstance.findUnique({ where: { id: instanceId } });
-    if (!page || page.moduleType !== 'EXPENSE') {
-        throw new ValidationError('Invalid instanceId');
-    }
-    return page;
-}
 
 // List expenses
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -67,7 +59,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 router.post('/', validate(createExpenseSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const instanceId = req.body.instanceId ?? null;
-        await assertPageInstance(instanceId);
+        await assertPageInstance(instanceId, 'EXPENSE');
         const expense = await prisma.expense.create({
             data: {
                 ...req.body,
