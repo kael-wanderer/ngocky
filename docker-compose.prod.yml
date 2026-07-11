@@ -1,6 +1,6 @@
 services:
   api:
-    image: ghcr.io/${GITHUB_REPOSITORY}/api:latest
+    image: ghcr.io/${GITHUB_REPOSITORY}/api:${IMAGE_TAG:-latest}
     container_name: ngocky-api
     restart: unless-stopped
     env_file: .env
@@ -16,7 +16,7 @@ services:
       - caddy-network
 
   web:
-    image: ghcr.io/${GITHUB_REPOSITORY}/web:latest
+    image: ghcr.io/${GITHUB_REPOSITORY}/web:${IMAGE_TAG:-latest}
     container_name: ngocky-web
     restart: unless-stopped
     depends_on:

@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-11] - Deployment Verification
+
+### Changed
+
+- **Immutable Releases**: GitHub Actions now publishes and deploys API and web images tagged with the triggering commit SHA while retaining `latest` for convenience.
+- **Build Identity**: Production images include the source revision label, and the web container exposes the deployed revision at `/version.json`.
+- **Frontend Caching**: Nginx now prevents caching of `index.html` and `version.json` while caching content-hashed assets immutably.
+- **Deployment Checks**: Production deployments are serialized, and the workflow verifies API health, frontend revision, and both running image revisions before reporting success.
+- **Manual Deployments**: The deployment workflow can now be started manually from GitHub Actions.
+
+---
+
 ## [2026-03-07] - Phase 2: Core Enhancements & UI/UX Polishing
 
 ### Added
