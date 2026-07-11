@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalStorage } from '../../utils/useLocalStorage';
 import api from '../../api/client';
+import { usePages } from '../../api/pages';
 import { useAuthStore } from '../../stores/auth';
 import { FEATURE_GROUPS, getFeatureFlags } from '../../config/features';
 import {
@@ -77,6 +78,12 @@ const scopeOptions = [
     { value: 'KEO', label: 'Ca Keo' },
     { value: 'PROJECT', label: 'Project' },
 ];
+
+export function buildReportPageQuery(baseQuery: string, moduleType: string, page: { id: string; moduleType: string } | null) {
+    const params = new URLSearchParams(baseQuery);
+    if (page?.moduleType === moduleType) params.set('instanceId', page.id);
+    return params.toString();
+}
 const typeOptions = [
     { value: 'PAY', label: 'Pay' },
     { value: 'RECEIVE', label: 'Receive' },
@@ -335,6 +342,9 @@ export default function ReportsPage() {
     }>('ngocky:reports:cakeoFilters', { ...DEFAULT_CAKEO_FILTERS });
     const [keyboardFilters, setKeyboardFilters] = useLocalStorage('ngocky:reports:keyboardFilters', { ...DEFAULT_KEYBOARD_FILTERS });
     const [fundsFilters, setFundsFilters] = useLocalStorage('ngocky:reports:fundsFilters', { ...DEFAULT_FUNDS_FILTERS });
+    const [reportPageId, setReportPageId] = useLocalStorage<string>('ngocky:reports:pageId', '');
+    const { data: reportPages = [] } = usePages();
+    const selectedReportPage = reportPages.find((page) => page.id === reportPageId) || null;
 
     const selectedRange = useMemo(() => {
         if (reportTimeRange === 'CUSTOM') return null;
@@ -438,8 +448,9 @@ export default function ReportsPage() {
         if (source.condition) params.set('condition', source.condition);
         if (source.dateFrom) params.set('dateFrom', new Date(`${source.dateFrom}T00:00:00`).toISOString());
         if (source.dateTo) params.set('dateTo', new Date(`${source.dateTo}T23:59:59.999`).toISOString());
+        if (selectedReportPage?.moduleType === 'FUND') params.set('instanceId', selectedReportPage.id);
         return params.toString();
-    }, [selectionMode, singleSelectedTab, fundsFilters]);
+    }, [selectionMode, singleSelectedTab, fundsFilters, selectedReportPage]);
     const cakeoAnalyticsQuery = useMemo(() => {
         const params = new URLSearchParams();
         const singleCakeo = selectionMode === 'single' && singleSelectedTab === 'cakeo';
@@ -463,8 +474,9 @@ export default function ReportsPage() {
                 if (filters.dateTo) params.set('startTo', new Date(`${filters.dateTo}T23:59:59.999`).toISOString());
             }
         }
+        if (selectedReportPage?.moduleType === 'CAKEO') params.set('instanceId', selectedReportPage.id);
         return params.toString();
-    }, [selectionMode, singleSelectedTab, cakeoFilters, cakeoSelectedRange, filters, selectedRange, reportTimeRange]);
+    }, [selectionMode, singleSelectedTab, cakeoFilters, cakeoSelectedRange, filters, selectedRange, reportTimeRange, selectedReportPage]);
 
     const { data: tasksByStatus } = useQuery({
         queryKey: ['reports', 'tasks-by-status', baseQuery],
@@ -557,52 +569,52 @@ export default function ReportsPage() {
         queryFn: async () => (await api.get(`/reports/idea-topics${reportQuery}`)).data.data,
     });
     const { data: rawProjectItems } = useQuery({
-        queryKey: ['reports', 'raw-project', baseQuery],
-        queryFn: async () => (await api.get(`/reports/raw-records?module=project&${baseQuery}`)).data.data,
+        queryKey: ['reports', 'raw-project', baseQuery, reportPageId],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=project&${buildReportPageQuery(baseQuery, 'PROJECT', selectedReportPage)}`)).data.data,
     });
     const { data: rawTasks } = useQuery({
-        queryKey: ['reports', 'raw-tasks', baseQuery],
-        queryFn: async () => (await api.get(`/reports/raw-records?module=tasks&${baseQuery}`)).data.data,
+        queryKey: ['reports', 'raw-tasks', baseQuery, reportPageId],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=tasks&${buildReportPageQuery(baseQuery, 'TASK', selectedReportPage)}`)).data.data,
     });
     const { data: rawGoals } = useQuery({
-        queryKey: ['reports', 'raw-goals', baseQuery],
-        queryFn: async () => (await api.get(`/reports/raw-records?module=goals&${baseQuery}`)).data.data,
+        queryKey: ['reports', 'raw-goals', baseQuery, reportPageId],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=goals&${buildReportPageQuery(baseQuery, 'GOAL', selectedReportPage)}`)).data.data,
     });
     const { data: rawCalendar } = useQuery({
-        queryKey: ['reports', 'raw-calendar', baseQuery],
-        queryFn: async () => (await api.get(`/reports/raw-records?module=calendar&${baseQuery}`)).data.data,
+        queryKey: ['reports', 'raw-calendar', baseQuery, reportPageId],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=calendar&${buildReportPageQuery(baseQuery, 'CALENDAR', selectedReportPage)}`)).data.data,
     });
     const { data: rawHousework } = useQuery({
-        queryKey: ['reports', 'raw-housework', baseQuery],
-        queryFn: async () => (await api.get(`/reports/raw-records?module=housework&${baseQuery}`)).data.data,
+        queryKey: ['reports', 'raw-housework', baseQuery, reportPageId],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=housework&${buildReportPageQuery(baseQuery, 'HOUSEWORK', selectedReportPage)}`)).data.data,
     });
     const { data: rawCakeoSource } = useQuery({
         queryKey: ['reports', 'raw-cakeo', cakeoAnalyticsQuery],
         queryFn: async () => (await api.get(`/cakeos?${cakeoAnalyticsQuery}`)).data.data,
     });
     const { data: rawExpenses } = useQuery({
-        queryKey: ['reports', 'raw-expenses', baseQuery],
-        queryFn: async () => (await api.get(`/reports/raw-records?module=expenses&${baseQuery}`)).data.data,
+        queryKey: ['reports', 'raw-expenses', baseQuery, reportPageId],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=expenses&${buildReportPageQuery(baseQuery, 'EXPENSE', selectedReportPage)}`)).data.data,
     });
     const { data: rawAssets } = useQuery({
-        queryKey: ['reports', 'raw-assets', baseQuery],
-        queryFn: async () => (await api.get(`/reports/raw-records?module=assets&${baseQuery}`)).data.data,
+        queryKey: ['reports', 'raw-assets', baseQuery, reportPageId],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=assets&${buildReportPageQuery(baseQuery, 'ASSET', selectedReportPage)}`)).data.data,
     });
     const { data: rawLearning } = useQuery({
-        queryKey: ['reports', 'raw-learning', baseQuery],
-        queryFn: async () => (await api.get(`/reports/raw-records?module=learning&${baseQuery}`)).data.data,
+        queryKey: ['reports', 'raw-learning', baseQuery, reportPageId],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=learning&${buildReportPageQuery(baseQuery, 'LEARNING', selectedReportPage)}`)).data.data,
     });
     const { data: rawHealthbook } = useQuery({
-        queryKey: ['reports', 'raw-healthbook', baseQuery],
-        queryFn: async () => (await api.get(`/reports/raw-records?module=healthbook&${baseQuery}`)).data.data,
+        queryKey: ['reports', 'raw-healthbook', baseQuery, reportPageId],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=healthbook&${buildReportPageQuery(baseQuery, 'HEALTHBOOK', selectedReportPage)}`)).data.data,
     });
     const { data: rawIdeas } = useQuery({
-        queryKey: ['reports', 'raw-ideas', baseQuery],
-        queryFn: async () => (await api.get(`/reports/raw-records?module=ideas&${baseQuery}`)).data.data,
+        queryKey: ['reports', 'raw-ideas', baseQuery, reportPageId],
+        queryFn: async () => (await api.get(`/reports/raw-records?module=ideas&${buildReportPageQuery(baseQuery, 'IDEA', selectedReportPage)}`)).data.data,
     });
     const { data: keyboardAnalyticsData } = useQuery({
-        queryKey: ['reports', 'keyboard-analytics'],
-        queryFn: async () => (await api.get('/keyboards?page=1&limit=1000')).data,
+        queryKey: ['reports', 'keyboard-analytics', reportPageId],
+        queryFn: async () => (await api.get(`/keyboards?page=1&limit=1000${selectedReportPage?.moduleType === 'KEYBOARD' ? `&instanceId=${selectedReportPage.id}` : ''}`)).data,
     });
     const { data: fundsAnalyticsData } = useQuery({
         queryKey: ['reports', 'funds-analytics', fundsAnalyticsQuery],
@@ -1257,6 +1269,29 @@ export default function ReportsPage() {
                 <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
                     <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                    <label className="text-sm font-medium whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }} htmlFor="report-page-filter">
+                        Page
+                    </label>
+                    <select
+                        id="report-page-filter"
+                        className="input text-sm min-w-[240px]"
+                        value={reportPageId}
+                        onChange={(event) => setReportPageId(event.target.value)}
+                    >
+                        <option value="">Built-in default</option>
+                        {reportPages.map((page) => (
+                            <option key={page.id} value={page.id}>
+                                {page.name} · {page.moduleType}
+                            </option>
+                        ))}
+                    </select>
+                    {selectedReportPage && (
+                        <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                            Filtering {selectedReportPage.name}; other template sections stay on the built-in default.
+                        </span>
+                    )}
                 </div>
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     {isSingleTaskView ? (
