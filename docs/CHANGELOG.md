@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-11] - Healthbook Page Instances
+
+### Added
+
+- **Healthbook Instances**: Added dedicated person list/create/detail isolation coverage and instance-aware person ownership boundaries.
+
+### Changed
+
+- **Availability**: Enabled the Healthbook template after focused tests passed.
+
+---
+
 ## [2026-07-11] - Assets Page Instances
 
 ### Added

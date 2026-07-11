@@ -8,6 +8,7 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { sendSuccess, sendCreated, sendMessage } from '../utils/response';
 import { NotFoundError, ValidationError } from '../utils/errors';
+import { assertPageInstance } from '../services/pageInstances';
 import { paramStr } from '../utils/query';
 import {
     createHealthPersonSchema,
@@ -174,7 +175,7 @@ router.delete('/files/log/:fileId', async (req: Request, res: Response, next: Ne
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const where: any = { OR: [{ userId: req.user!.userId }, { isShared: true }] };
+        const where: any = { instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null, OR: [{ userId: req.user!.userId }, { isShared: true }] };
         const persons = await prisma.healthPerson.findMany({
             where,
             include: {
@@ -189,6 +190,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
 router.post('/', validate(createHealthPersonSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        await assertPageInstance(req.body.instanceId ?? null, 'HEALTHBOOK');
         const maxOrder = await prisma.healthPerson.aggregate({
             where: { userId: req.user!.userId },
             _max: { sortOrder: true },
@@ -216,6 +218,7 @@ router.get('/:personId', async (req: Request, res: Response, next: NextFunction)
         const person = await prisma.healthPerson.findFirst({
             where: {
                 id: personId,
+                instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null,
                 OR: [{ userId: req.user!.userId }, { isShared: true }],
             },
             include: {
@@ -231,11 +234,14 @@ router.get('/:personId', async (req: Request, res: Response, next: NextFunction)
 router.patch('/:personId', validate(updateHealthPersonSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const personId = paramStr(req, 'personId');
-        await assertPersonOwner(personId, req.user!.userId);
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'HEALTHBOOK');
+        const person = await assertPersonOwner(personId, req.user!.userId);
         const updated = await prisma.healthPerson.update({
             where: { id: personId },
             data: {
                 ...req.body,
+                instanceId: undefined,
                 dateOfBirth: req.body.dateOfBirth === null ? null : req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : undefined,
                 idIssueDate: req.body.idIssueDate === null ? null : req.body.idIssueDate ? new Date(req.body.idIssueDate) : undefined,
                 passportIssueDate: req.body.passportIssueDate === null ? null : req.body.passportIssueDate ? new Date(req.body.passportIssueDate) : undefined,
@@ -250,6 +256,8 @@ router.patch('/:personId', validate(updateHealthPersonSchema), async (req: Reque
 router.delete('/:personId', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const personId = paramStr(req, 'personId');
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'HEALTHBOOK');
         await assertPersonOwner(personId, req.user!.userId);
         // delete files on disk
         const files = await prisma.healthPersonFile.findMany({ where: { personId } });
