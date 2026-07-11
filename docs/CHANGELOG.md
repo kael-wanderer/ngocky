@@ -17,6 +17,12 @@ All notable changes to this project will be documented in this file.
 
 - Documented Admin pages, provider setup, custom endpoint security, template isolation, deletion behavior, and legacy OpenAI compatibility.
 
+## [2026-07-11] - Production Verification
+
+- GitHub Actions immutable-image deployment completed successfully.
+- Production `/version.json` matched revision `9ce94ce069d7638c5f393328164fa8afe54fd639`.
+- Production API health check returned `{"status":"ok","version":"1.0.0"}`.
+
 
 ## [2026-07-11] - Funds Page Instances
 

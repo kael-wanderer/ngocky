@@ -12,3 +12,8 @@
 - Task 19 complete: Funds transaction/import isolation test and availability enabled.
 - Final sequential Task 13-19 commits pushed; API and web verification passed.
 - Registered all Task 13-19 templates for custom instance rendering.
+- Task 21 complete: Dashboard pinned records now preserve page origins and custom deep links.
+- Task 22 complete: Reports and CSV exports support validated instance filters with built-in-only defaults.
+- Task 23 complete: Automation metadata and assistant page resolution support custom pages.
+- Task 24 complete: Admin, provider, template, partition, deletion, and legacy compatibility documentation updated.
+- Task 25 complete: GitHub Actions deployment succeeded and production revision matched the pushed commit.
