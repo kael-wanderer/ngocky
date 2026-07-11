@@ -3,9 +3,20 @@ import { prisma } from '../../config/database';
 import { authenticate } from '../../middleware/auth';
 import { sendSuccess } from '../../utils/response';
 import { buildVisibleCalendarEventWhere } from '../../utils/calendarVisibility';
+import { assertPageInstance } from '../../services/pageInstances';
 
 const router = Router();
 router.use(authenticate);
+
+function requestedInstanceId(req: Request) {
+    return typeof req.query.instanceId === 'string' && req.query.instanceId ? req.query.instanceId : null;
+}
+
+async function validateReportInstance(req: Request, moduleType: Parameters<typeof assertPageInstance>[1]) {
+    const instanceId = requestedInstanceId(req);
+    await assertPageInstance(instanceId, moduleType);
+    return instanceId;
+}
 
 function getRangeFromPreset(preset?: string) {
     const now = new Date();
@@ -198,6 +209,13 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
         const status = req.query.status as string;
         const periodType = req.query.periodType as string;
         const frequency = req.query.frequency as string;
+        const instanceId = requestedInstanceId(req);
+        const reportModuleTypes: Record<string, Parameters<typeof assertPageInstance>[1]> = {
+            project: 'PROJECT', tasks: 'TASK', goals: 'GOAL', calendar: 'CALENDAR',
+            housework: 'HOUSEWORK', cakeo: 'CAKEO', expenses: 'EXPENSE', assets: 'ASSET',
+            learning: 'LEARNING', ideas: 'IDEA', healthbook: 'HEALTHBOOK',
+        };
+        if (reportModuleTypes[module]) await validateReportInstance(req, reportModuleTypes[module]);
 
         switch (module) {
             case 'project': {
@@ -205,6 +223,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                     where: {
                         AND: [
                             buildVisibleProjectItemWhere(userId),
+                            { project: { instanceId } },
                             buildDateFilter(req, 'deadline', 'createdAt'),
                             ...(type ? [{ type: type as any }] : []),
                             ...(category ? [{ category }] : []),
@@ -235,6 +254,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                     where: {
                         AND: [
                             buildVisibleStandaloneTaskWhere(userId),
+                            { instanceId },
                             buildDateFilter(req, 'dueDate', 'createdAt'),
                             ...(type ? [{ taskType: type as any }] : []),
                             ...(priority ? [{ priority: priority as any }] : []),
@@ -267,6 +287,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                                     { isShared: true },
                                 ],
                             },
+                            { instanceId },
                             ...(periodType ? [{ periodType: periodType as any }] : []),
                         ],
                     },
@@ -295,6 +316,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                     where: {
                         AND: [
                             buildVisibleCalendarEventWhere(userId),
+                            { instanceId },
                             buildDateFilter(req, 'startDate'),
                             ...(category ? [{ category }] : []),
                         ],
@@ -325,6 +347,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                                     { isShared: true },
                                 ],
                             },
+                            { instanceId },
                             buildDateFilter(req, 'nextDueDate', 'createdAt'),
                             ...(frequency ? [{ frequencyType: frequency as any }] : []),
                             ...(status ? [{ status: status as any }] : []),
@@ -360,6 +383,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                                     { isShared: true },
                                 ],
                             },
+                            { instanceId },
                             buildDateFilter(req, 'startDate', 'createdAt'),
                             ...(type ? [{ type }] : []),
                             ...(status ? [{ status }] : []),
@@ -387,6 +411,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
             }
             case 'expenses': {
                 const where: any = {
+                    instanceId,
                     OR: [
                         { userId },
                         { isShared: true },
@@ -425,6 +450,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                     where: {
                         AND: [
                             buildVisibleAssetWhere(userId),
+                            { instanceId },
                             buildDateFilter(req, 'purchaseDate', 'createdAt'),
                             ...(type ? [{ type }] : []),
                         ],
@@ -456,6 +482,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                                     { topic: { isShared: true } },
                                 ],
                             },
+                            { topic: { instanceId } },
                             buildDateFilter(req, 'deadline', 'createdAt'),
                         ],
                     },
@@ -485,6 +512,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                                     { topic: { isShared: true } },
                                 ],
                             },
+                            { topic: { instanceId } },
                             buildDateFilter(req, 'createdAt'),
                         ],
                         ...(category ? { category } : {}),
@@ -515,6 +543,7 @@ router.get('/raw-records', async (req: Request, res: Response, next: NextFunctio
                                     { person: { isShared: true } },
                                 ],
                             },
+                            { person: { instanceId } },
                             buildDateFilter(req, 'date', 'createdAt'),
                             ...(type ? [{ type: type as any }] : []),
                         ],
@@ -1227,10 +1256,12 @@ router.get('/expense-summary', async (req: Request, res: Response, next: NextFun
 });
 
 // CSV export for tasks
-router.get('/export/tasks', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/export/tasks', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const instanceId = await validateReportInstance(req, 'PROJECT');
         const tasks = await prisma.projectTask.findMany({
-            include: { assignee: { select: { name: true } }, createdBy: { select: { name: true } } },
+            where: { project: { instanceId } },
+            include: { assignee: { select: { name: true } }, createdBy: { select: { name: true } }, project: { select: { instanceId: true } } },
             orderBy: { createdAt: 'desc' },
         });
 
@@ -1250,7 +1281,8 @@ router.get('/export/expenses', async (req: Request, res: Response, next: NextFun
     try {
         const dateFrom = req.query.dateFrom as string;
         const dateTo = req.query.dateTo as string;
-        const where: any = {};
+        const instanceId = await validateReportInstance(req, 'EXPENSE');
+        const where: any = { instanceId };
         if (dateFrom || dateTo) {
             where.date = {};
             if (dateFrom) where.date.gte = new Date(dateFrom);
