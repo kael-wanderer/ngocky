@@ -5,6 +5,7 @@ import api from '../api/client';
 import { Bell, BellRing, ChevronDown, ChevronUp, Copy, FileText, Info, LayoutGrid, List, Mail, Pencil, Plus, Send, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { FEATURE_GROUPS } from '../config/features';
+import { usePages } from '../api/pages';
 
 type SortDir = 'asc' | 'desc';
 function SortHeader({ label, col, sort, onSort, className }: { label: string; col: string; sort: { col: string; dir: SortDir }; onSort: (col: string) => void; className?: string }) {
@@ -58,6 +59,7 @@ const emptyRuleForm = () => ({
     conditionType: 'PROGRESS_BELOW',
     conditionValue: '50',
     active: true,
+    instanceId: '',
 });
 
 // Section key for each feature flag key
@@ -86,6 +88,8 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
     TOMORROW_TASKS: 'Tomorrow Tasks',
 };
 
+const ALERT_PAGE_TYPE: Record<string, string> = { GOAL: 'GOAL', TASK: 'TASK', HOUSEWORK: 'HOUSEWORK', EXPENSE: 'EXPENSE', CALENDAR: 'CALENDAR', ASSETS: 'ASSET' };
+
 function getDefaultSections(_reportType?: string) {
     return ['TASKS', 'CALENDAR', 'CAKEO', 'HOUSEWORK'];
 }
@@ -109,6 +113,7 @@ const emptyReportForm = (reportType = 'WEEKLY_SUMMARY') => ({
     time: '08:00',
     sections: getDefaultSections(reportType),
     active: true,
+    instanceId: '',
 });
 
 type AlertsPageProps = {
@@ -130,6 +135,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
     const [reportsListView, setReportsListView] = useLocalStorage('ngocky:alerts:reportsListView', false);
     const [rulesSort, setRulesSort] = useLocalStorage<{ col: string; dir: SortDir }>('ngocky:alerts:rulesSort', { col: 'name', dir: 'asc' });
     const [reportsSort, setReportsSort] = useLocalStorage<{ col: string; dir: SortDir }>('ngocky:alerts:reportsSort', { col: 'name', dir: 'asc' });
+    const { data: pages = [] } = usePages();
 
     function toggleRulesSort(col: string) {
         setRulesSort(s => s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' });
@@ -217,6 +223,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
             conditionType: rule.conditionType || (CONDITIONS_BY_MODULE[mod]?.[0]?.value ?? 'OVERDUE'),
             conditionValue: rule.conditionValue || '',
             active: rule.active ?? true,
+            instanceId: rule.instanceId || '',
         });
         setShowRuleModal(true);
     }
@@ -232,6 +239,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
             conditionType: rule.conditionType,
             conditionValue: rule.conditionValue || '',
             active: rule.active,
+            instanceId: rule.instanceId || '',
         });
     }
 
@@ -258,6 +266,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
             time: report.time || '08:00',
             sections: report.sections?.length ? report.sections : getDefaultSections(report.reportType || 'WEEKLY_SUMMARY'),
             active: report.active ?? true,
+            instanceId: report.instanceId || '',
         });
         setShowReportModal(true);
     }
@@ -272,6 +281,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
             time: report.time,
             sections: report.sections?.length ? report.sections : getDefaultSections(report.reportType),
             active: report.active,
+            instanceId: report.instanceId || '',
         });
     }
 
@@ -629,6 +639,20 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 )}
                             </div>
 
+                            <div>
+                                <label className="label">Page</label>
+                                <select
+                                    className="input"
+                                    value={ruleForm.instanceId}
+                                    onChange={(e) => setRuleForm({ ...ruleForm, instanceId: e.target.value })}
+                                >
+                                    <option value="">Built-in default</option>
+                                    {pages.filter((page) => page.moduleType === ALERT_PAGE_TYPE[ruleForm.moduleType]).map((page) => (
+                                        <option key={page.id} value={page.id}>{page.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             {/* Action */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -753,6 +777,13 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                         <option value="NEXT_WEEK_TASKS">Next Week Tasks</option>
                                         <option value="TODAY_TASKS">Today Tasks</option>
                                         <option value="TOMORROW_TASKS">Tomorrow Tasks</option>
+                                    </select>
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="label">Page</label>
+                                    <select className="input" value={reportForm.instanceId} onChange={(e) => setReportForm({ ...reportForm, instanceId: e.target.value })}>
+                                        <option value="">Built-in default</option>
+                                        {pages.map((page) => <option key={page.id} value={page.id}>{page.name} · {page.moduleType}</option>)}
                                     </select>
                                 </div>
                                 <div>

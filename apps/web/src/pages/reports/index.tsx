@@ -141,6 +141,11 @@ const ANALYTICS_ROUTE_TAB_MAP = {
     '/learning': { id: 'learning', label: 'Learning' },
 } as const;
 
+const REPORT_TAB_MODULE: Record<string, string> = {
+    tasks: 'TASK', project: 'PROJECT', expenses: 'EXPENSE', goals: 'GOAL', ideas: 'IDEA', calendar: 'CALENDAR',
+    cakeo: 'CAKEO', housework: 'HOUSEWORK', assets: 'ASSET', healthbook: 'HEALTHBOOK', keyboard: 'KEYBOARD', funds: 'FUND', learning: 'LEARNING',
+};
+
 type AnalyticsTab = (typeof ANALYTICS_ROUTE_TAB_MAP)[keyof typeof ANALYTICS_ROUTE_TAB_MAP];
 type AnalyticsTabId = AnalyticsTab['id'];
 
@@ -345,6 +350,9 @@ export default function ReportsPage() {
     const [reportPageId, setReportPageId] = useLocalStorage<string>('ngocky:reports:pageId', '');
     const { data: reportPages = [] } = usePages();
     const selectedReportPage = reportPages.find((page) => page.id === reportPageId) || null;
+    const reportPageOptions = selectionMode === 'single' && singleSelectedTab !== 'all' && REPORT_TAB_MODULE[singleSelectedTab]
+        ? reportPages.filter((page) => page.moduleType === REPORT_TAB_MODULE[singleSelectedTab])
+        : reportPages;
 
     const selectedRange = useMemo(() => {
         if (reportTimeRange === 'CUSTOM') return null;
@@ -1281,7 +1289,7 @@ export default function ReportsPage() {
                         onChange={(event) => setReportPageId(event.target.value)}
                     >
                         <option value="">Built-in default</option>
-                        {reportPages.map((page) => (
+                        {reportPageOptions.map((page) => (
                             <option key={page.id} value={page.id}>
                                 {page.name} · {page.moduleType}
                             </option>
