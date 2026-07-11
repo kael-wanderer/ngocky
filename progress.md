@@ -6,3 +6,4 @@
 - Task 13 complete: Calendar routes, custom overlay suppression, dedicated calendar instance test, and availability enabled.
 - Task 14 complete: Ca Keo dedicated instance isolation test and availability enabled.
 - Task 15 complete: Housework dedicated instance isolation test and availability enabled.
+- Task 16 complete: Assets dedicated instance isolation test and availability enabled.

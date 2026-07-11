@@ -194,7 +194,7 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
     try {
         const id = paramStr(req, 'id');
         const asset = await prisma.asset.findFirst({
-            where: { id, userId: req.user!.userId },
+            where: { id, userId: req.user!.userId, instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null },
         });
         if (!asset) throw new NotFoundError('Asset not found');
 

@@ -49,7 +49,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     { moduleType: 'CALENDAR', label: 'Calendar', group: 'family', rootLabel: 'events', available: true },
     { moduleType: 'CAKEO', label: 'Ca Keo (Child)', group: 'family', rootLabel: 'items', available: true },
     { moduleType: 'HOUSEWORK', label: 'Housework', group: 'family', rootLabel: 'items', available: true },
-    { moduleType: 'ASSET', label: 'Assets', group: 'family', rootLabel: 'assets', available: false },
+    { moduleType: 'ASSET', label: 'Assets', group: 'family', rootLabel: 'assets', available: true },
     { moduleType: 'HEALTHBOOK', label: 'Healthbook', group: 'family', rootLabel: 'people', available: false },
     { moduleType: 'KEYBOARD', label: 'Keyboard', group: 'hobby', rootLabel: 'collections', available: false },
     { moduleType: 'FUND', label: 'Funds', group: 'hobby', rootLabel: 'transactions', available: false },

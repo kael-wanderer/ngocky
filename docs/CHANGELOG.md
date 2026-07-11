@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-11] - Assets Page Instances
+
+### Added
+
+- **Assets Instances**: Added dedicated asset list/create/update/delete isolation coverage.
+
+### Changed
+
+- **Availability**: Enabled the Assets template after focused tests passed.
+
+---
+
 ## [2026-07-11] - Housework Page Instances
 
 ### Added
