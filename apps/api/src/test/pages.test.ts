@@ -92,7 +92,7 @@ describe('page instances', () => {
 
         expect(catalog.status).toBe(200);
         expect(catalog.body).toHaveLength(13);
-        expect(catalog.body.find((item: any) => item.moduleType === 'IDEA')).toMatchObject({ group: 'personal', available: false });
+        expect(catalog.body.find((item: any) => item.moduleType === 'IDEA')).toMatchObject({ group: 'personal', available: true });
         expect((await authed(userToken).get('/api/pages/templates')).status).toBe(200);
 
         expect((await authed(userToken).put('/api/pages/templates/TASK').send({ name: 'My Tasks' })).status).toBe(403);
@@ -106,7 +106,7 @@ describe('page instances', () => {
     it('enforces template groups and unavailable templates', async () => {
         const ownerToken = await tokenFor('OWNER', 'owner-contract@example.com');
         const wrongGroup = await authed(ownerToken).post('/api/pages').send({ name: 'Wrong', moduleType: 'TASK', group: 'family' });
-        const unavailable = await authed(ownerToken).post('/api/pages').send({ name: 'Ideas', moduleType: 'IDEA', group: 'personal' });
+        const unavailable = await authed(ownerToken).post('/api/pages').send({ name: 'Calendar', moduleType: 'CALENDAR', group: 'family' });
 
         expect(wrongGroup.status).toBe(400);
         expect(unavailable.status).toBe(400);

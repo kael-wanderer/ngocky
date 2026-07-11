@@ -218,6 +218,7 @@ const houseworkSchemaBase = z.object({
     showOnCalendar: z.boolean().optional(),
     ...notificationFields,
     pinToDashboard: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 });
 
 export const createHouseworkSchema = houseworkSchemaBase.superRefine((data, ctx) => {
@@ -300,6 +301,7 @@ const eventSchemaBase = z.object({
     isShared: z.boolean().optional(),
     ...notificationFields,
     pinToDashboard: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
     repeatFrequency: z.enum(['DAILY', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY', 'QUARTERLY']).nullable().optional(),
     repeatEndType: z.enum(['NEVER', 'ON_DATE']).nullable().optional(),
     repeatUntil: z.string().datetime().nullable().optional(),
@@ -376,6 +378,7 @@ const fundSchemaBase = z.object({
     removeKeyboardItem: z.boolean().optional(),
     date: z.string().datetime(),
     amount: z.number().positive(),
+    instanceId: z.string().min(1).nullable().optional(),
 });
 
 function validateFundCondition(data: any, ctx: z.RefinementCtx) {

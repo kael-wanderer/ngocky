@@ -80,7 +80,7 @@ const emptyForm = {
     ...emptyNotification,
 };
 
-export default function CalendarPage() {
+export default function CalendarPage({ instanceId, pageTitle }: { instanceId?: string; pageTitle?: string }) {
     const qc = useQueryClient();
     const navigate = useNavigate();
     const { user } = useAuthStore();
@@ -118,8 +118,8 @@ export default function CalendarPage() {
     }, [currentDate, view]);
 
     const { data } = useQuery({
-        queryKey: ['calendar', view, format(range.start, 'yyyy-MM-dd'), format(range.end, 'yyyy-MM-dd')],
-        queryFn: async () => (await api.get(`/calendar?startFrom=${range.start.toISOString()}&startTo=${range.end.toISOString()}&limit=200`)).data.data,
+        queryKey: ['calendar', instanceId ?? null, view, format(range.start, 'yyyy-MM-dd'), format(range.end, 'yyyy-MM-dd')],
+        queryFn: async () => (await api.get(`/calendar?startFrom=${range.start.toISOString()}&startTo=${range.end.toISOString()}&limit=200${instanceId ? `&instanceId=${instanceId}` : ''}`)).data.data,
     });
     const { data: calendarColorSettings } = useQuery({
         queryKey: ['settings', 'color-settings', 'calendar'],
@@ -146,7 +146,7 @@ export default function CalendarPage() {
     });
 
     const createMut = useMutation({
-        mutationFn: (body: any) => api.post('/calendar', body),
+        mutationFn: (body: any) => api.post('/calendar', { ...body, instanceId: instanceId ?? null }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['calendar'] });
             setShowCreate(false);
@@ -159,7 +159,7 @@ export default function CalendarPage() {
     });
 
     const updateMut = useMutation({
-        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/calendar/${id}`, body),
+        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/calendar/${id}`, body, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['calendar'] });
             setEditingEvent(null);
@@ -172,7 +172,7 @@ export default function CalendarPage() {
     });
 
     const deleteMut = useMutation({
-        mutationFn: (id: string) => api.delete(`/calendar/${id}`),
+        mutationFn: (id: string) => api.delete(`/calendar/${id}`, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => {
             closeEditor();
             qc.invalidateQueries({ queryKey: ['calendar'] });
@@ -463,7 +463,7 @@ export default function CalendarPage() {
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2">
                     <CalIcon className="w-6 h-6" style={{ color: '#7c3aed' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Calendar</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{pageTitle || 'Calendar'}</h2>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>

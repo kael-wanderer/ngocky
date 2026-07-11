@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { sendSuccess, sendCreated, sendMessage } from '../utils/response';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
 import { resolveReminderFields } from '../utils/reminders';
+import { assertPageInstance } from '../services/pageInstances';
 
 const router = Router();
 router.use(authenticate);
@@ -51,6 +52,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const { status, assignerId, category, type, startFrom, startTo } = req.query as Record<string, string>;
 
         const where: any = buildWhere(userId);
+        where.instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
 
         if (status) where.status = status;
         if (assignerId) where.assignerId = assignerId;
@@ -77,6 +79,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
         const { title, description, type, category, status, assignerId, startDate, endDate, allDay, color, showOnCalendar, isShared, ...rest } = req.body;
+        await assertPageInstance(req.body.instanceId ?? null, 'CAKEO');
 
         const reminderFields = resolveReminderFields(req.body, {
             anchorDate: startDate,
@@ -98,6 +101,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
                 showOnCalendar: showOnCalendar !== false,
                 isShared: isShared !== false,
                 ownerId: userId,
+                instanceId: req.body.instanceId ?? null,
                 ...reminderFields,
             },
             include: itemInclude,
@@ -109,7 +113,9 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 // PATCH /api/cakeos/:id — update item
 router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const existing = await prisma.caKeo.findUnique({ where: { id: req.params.id } });
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'CAKEO');
+        const existing = await prisma.caKeo.findFirst({ where: { id: req.params.id, instanceId } });
         if (!existing) throw new NotFoundError('CaKeo item');
         if (!canEditCakeoItem(req, existing.ownerId)) throw new ForbiddenError('Not allowed to edit this item');
 
@@ -151,7 +157,9 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
-        const existing = await prisma.caKeo.findUnique({ where: { id: req.params.id } });
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'CAKEO');
+        const existing = await prisma.caKeo.findFirst({ where: { id: req.params.id, instanceId } });
         if (!existing) throw new NotFoundError('CaKeo item');
         if (existing.ownerId !== userId) throw new ForbiddenError('Not your item');
         await prisma.caKeo.delete({ where: { id: req.params.id } });

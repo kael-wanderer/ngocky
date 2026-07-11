@@ -126,7 +126,7 @@ const emptyForm = () => ({
     removeKeyboardItem: true,
 });
 
-export default function FundsPage() {
+export default function FundsPage({ instanceId, pageTitle }: { instanceId?: string; pageTitle?: string }) {
     const qc = useQueryClient();
     const { user } = useAuthStore();
     const [showModal, setShowModal] = useState(false);
@@ -154,8 +154,8 @@ export default function FundsPage() {
     if (effectiveDateTo) queryParams.set('dateTo', new Date(`${effectiveDateTo}T23:59:59.999`).toISOString());
 
     const { data, isLoading } = useQuery({
-        queryKey: ['funds', filters, page, pageSize],
-        queryFn: async () => (await api.get(`/funds?${queryParams}`)).data,
+        queryKey: ['funds', instanceId ?? null, filters, page, pageSize],
+        queryFn: async () => (await api.get(`/funds?${queryParams}${instanceId ? `&instanceId=${instanceId}` : ''}`)).data,
     });
     const { data: keyboardData } = useQuery({
         queryKey: ['keyboard-options'],
@@ -164,7 +164,7 @@ export default function FundsPage() {
     });
 
     const createMut = useMutation({
-        mutationFn: (body: any) => api.post('/funds', body),
+        mutationFn: (body: any) => api.post('/funds', { ...body, instanceId: instanceId ?? null }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['funds'] });
             qc.invalidateQueries({ queryKey: ['keyboards'] });
@@ -176,7 +176,7 @@ export default function FundsPage() {
     });
 
     const updateMut = useMutation({
-        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/funds/${id}`, body),
+        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/funds/${id}`, body, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['funds'] });
             closeModal();
@@ -187,11 +187,11 @@ export default function FundsPage() {
     });
 
     const deleteMut = useMutation({
-        mutationFn: (id: string) => api.delete(`/funds/${id}`),
+        mutationFn: (id: string) => api.delete(`/funds/${id}`, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['funds'] }),
     });
     const importMut = useMutation({
-        mutationFn: (items: any[]) => api.post('/funds/import', { items }),
+        mutationFn: (items: any[]) => api.post(`/funds/import${instanceId ? `?instanceId=${instanceId}` : ''}`, { items, instanceId }),
         onSuccess: ({ data }) => {
             qc.invalidateQueries({ queryKey: ['funds'] });
             setShowImport(false);

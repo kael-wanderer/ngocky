@@ -341,7 +341,7 @@ function HouseworkForm({
     );
 }
 
-export default function HouseworkPage() {
+export default function HouseworkPage({ instanceId, pageTitle }: { instanceId?: string; pageTitle?: string }) {
     const qc = useQueryClient();
     const { user } = useAuthStore();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -361,12 +361,12 @@ export default function HouseworkPage() {
     const editIdParam = searchParams.get('editId');
 
     const { data, isLoading } = useQuery({
-        queryKey: ['housework'],
-        queryFn: async () => (await api.get('/housework?limit=200')).data.data,
+        queryKey: ['housework', instanceId ?? null],
+        queryFn: async () => (await api.get(`/housework?limit=200${instanceId ? `&instanceId=${instanceId}` : ''}`)).data.data,
     });
 
     const createMut = useMutation({
-        mutationFn: (body: any) => api.post('/housework', body),
+        mutationFn: (body: any) => api.post('/housework', { ...body, instanceId: instanceId ?? null }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['housework'] });
             qc.invalidateQueries({ queryKey: ['calendar'] });
@@ -377,7 +377,7 @@ export default function HouseworkPage() {
     });
 
     const updateMut = useMutation({
-        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/housework/${id}`, body),
+        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/housework/${id}`, body, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['housework'] });
             qc.invalidateQueries({ queryKey: ['calendar'] });
@@ -388,7 +388,7 @@ export default function HouseworkPage() {
     });
 
     const deleteMut = useMutation({
-        mutationFn: (id: string) => api.delete(`/housework/${id}`),
+        mutationFn: (id: string) => api.delete(`/housework/${id}`, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['housework'] });
             qc.invalidateQueries({ queryKey: ['calendar'] });
@@ -397,7 +397,7 @@ export default function HouseworkPage() {
     });
 
     const completeMut = useMutation({
-        mutationFn: (id: string) => api.post(`/housework/${id}/complete`),
+        mutationFn: (id: string) => api.post(`/housework/${id}/complete${instanceId ? `?instanceId=${instanceId}` : ''}`),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['housework'] });
             qc.invalidateQueries({ queryKey: ['calendar'] });

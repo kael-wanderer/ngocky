@@ -6,6 +6,7 @@ import { createFundSchema, updateFundSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { ForbiddenError, NotFoundError, ValidationError } from '../utils/errors';
 import type { HobbyFundCategory, HobbyFundScope, HobbyFundType } from '@prisma/client';
+import { assertPageInstance } from '../services/pageInstances';
 
 const router = Router();
 router.use(authenticate);
@@ -49,7 +50,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const dateFrom = req.query.dateFrom as string;
         const dateTo = req.query.dateTo as string;
 
-        const where: any = { userId: req.user!.userId };
+        const where: any = { userId: req.user!.userId, instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null };
         if (type) where.type = type;
         if (scope) where.scope = scope;
         if (category) where.category = category;
@@ -108,6 +109,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 router.post('/', validate(createFundSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.userId;
+        await assertPageInstance(req.body.instanceId ?? null, 'FUND');
         const fund = await prisma.$transaction(async (tx: any) => {
             const normalizedCondition = normalizeCondition(req.body.type, req.body.condition);
             const { keyboardItemId, keyboardItemName, addKeyboardItem, removeKeyboardItem, ...fundData } = req.body;

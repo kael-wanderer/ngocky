@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { sendSuccess, sendCreated, sendMessage } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
+import { assertPageInstance } from '../services/pageInstances';
 import {
     createLearningTopicSchema,
     updateLearningTopicSchema,
@@ -14,9 +15,9 @@ import {
 const router = Router();
 router.use(authenticate);
 
-async function getNextLearningTopicSortOrder(userId: string) {
+async function getNextLearningTopicSortOrder(userId: string, instanceId: string | null) {
     const aggregate = await prisma.learningTopic.aggregate({
-        where: { userId },
+        where: { userId, instanceId },
         _max: { sortOrder: true },
     });
     return (aggregate._max.sortOrder ?? -1) + 1;
@@ -26,6 +27,7 @@ router.get('/topics', async (req: Request, res: Response, next: NextFunction) =>
     try {
         const userId = req.user!.userId;
         const where: any = {
+            instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null,
             OR: [
                 { userId },
                 { isShared: true },
@@ -50,8 +52,10 @@ router.post('/topics/reorder', async (req: Request, res: Response, next: NextFun
         const { ids } = req.body as { ids: string[] };
         if (!Array.isArray(ids)) return sendMessage(res, 'Invalid');
 
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'LEARNING');
         const ownedTopics = await prisma.learningTopic.findMany({
-            where: { id: { in: ids }, userId: req.user!.userId },
+            where: { id: { in: ids }, userId: req.user!.userId, instanceId },
             select: { id: true },
         });
         const ownedIds = ids.filter((id) => ownedTopics.some((topic) => topic.id === id));
@@ -67,7 +71,9 @@ router.post('/topics/reorder', async (req: Request, res: Response, next: NextFun
 
 router.post('/topics', validate(createLearningTopicSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const sortOrder = await getNextLearningTopicSortOrder(req.user!.userId);
+        const instanceId = req.body.instanceId ?? null;
+        await assertPageInstance(instanceId, 'LEARNING');
+        const sortOrder = await getNextLearningTopicSortOrder(req.user!.userId, instanceId);
         const topic = await prisma.learningTopic.create({
             data: {
                 ...req.body,
@@ -83,7 +89,7 @@ router.post('/topics', validate(createLearningTopicSchema), async (req: Request,
 router.patch('/topics/:id', validate(updateLearningTopicSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const existing = await prisma.learningTopic.findFirst({
-            where: { id: req.params.id, userId: req.user!.userId },
+            where: { id: req.params.id, userId: req.user!.userId, instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null },
         });
         if (!existing) throw new NotFoundError('Learning topic not found');
 
@@ -98,8 +104,10 @@ router.patch('/topics/:id', validate(updateLearningTopicSchema), async (req: Req
 
 router.delete('/topics/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'LEARNING');
         const existing = await prisma.learningTopic.findFirst({
-            where: { id: req.params.id, userId: req.user!.userId },
+            where: { id: req.params.id, userId: req.user!.userId, instanceId },
         });
         if (!existing) throw new NotFoundError('Learning topic not found');
 
@@ -110,8 +118,10 @@ router.delete('/topics/:id', async (req: Request, res: Response, next: NextFunct
 
 router.post('/histories', validate(createLearningHistorySchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const instanceId = req.body.instanceId ?? null;
+        await assertPageInstance(instanceId, 'LEARNING');
         const topic = await prisma.learningTopic.findFirst({
-            where: { id: req.body.topicId, userId: req.user!.userId },
+            where: { id: req.body.topicId, userId: req.user!.userId, instanceId },
         });
         if (!topic) throw new NotFoundError('Learning topic not found');
 
@@ -129,8 +139,10 @@ router.post('/histories', validate(createLearningHistorySchema), async (req: Req
 
 router.patch('/histories/:id', validate(updateLearningHistorySchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'LEARNING');
         const existing = await prisma.learningItem.findFirst({
-            where: { id: req.params.id, userId: req.user!.userId },
+            where: { id: req.params.id, userId: req.user!.userId, topic: { instanceId } },
         });
         if (!existing) throw new NotFoundError('Learning history not found');
 
@@ -148,8 +160,10 @@ router.patch('/histories/:id', validate(updateLearningHistorySchema), async (req
 
 router.delete('/histories/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'LEARNING');
         const existing = await prisma.learningItem.findFirst({
-            where: { id: req.params.id, userId: req.user!.userId },
+            where: { id: req.params.id, userId: req.user!.userId, topic: { instanceId } },
         });
         if (!existing) throw new NotFoundError('Learning history not found');
 

@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-11] - Template Instance Foundations
+
+### Added
+
+- **Ideas and Learning Instances**: Added instance-aware topic/history partitioning, scoped mutations, and custom-page query keys for the Ideas and Learning templates.
+- **Module UI Preparation**: Added instance props and query-key plumbing to Calendar, Ca Keo, Housework, Assets, Keyboard, and Funds pages.
+
+### Changed
+
+- **Template Availability**: Ideas and Learning are enabled; the remaining expanded templates stay unavailable until their nested routes and import/file/overlay behavior are fully isolated.
+
+### Verification
+
+- API page tests: 12 passed.
+- Web tests: 24 passed.
+
+---
+
 ## [2026-07-11] - Application Management and Template Foundation
 
 ### Added

@@ -7,6 +7,7 @@ import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/r
 import { NotFoundError, ValidationError } from '../utils/errors';
 import { buildVisibleCalendarEventWhere } from '../utils/calendarVisibility';
 import { resolveReminderFields } from '../utils/reminders';
+import { assertPageInstance } from '../services/pageInstances';
 
 const router = Router();
 router.use(authenticate);
@@ -87,6 +88,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const rangeEnd = startTo ? new Date(startTo) : undefined;
 
         const where: any = buildVisibleCalendarEventWhere(req.user!.userId);
+        where.instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
 
         if (rangeStart || rangeEnd) {
             const effectiveStart = rangeStart || new Date(0);
@@ -144,6 +146,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 router.post('/', validate(createEventSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { participantIds, ...data } = req.body;
+        await assertPageInstance(data.instanceId ?? null, 'CALENDAR');
         assertEndAfterStart(data.startDate, data.endDate);
         const reminderFields = resolveReminderFields(data, {
             anchorDate: data.startDate,
@@ -174,8 +177,8 @@ router.post('/', validate(createEventSchema), async (req: Request, res: Response
 // Get event
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const event = await prisma.calendarEvent.findUnique({
-            where: { id: req.params.id },
+        const event = await prisma.calendarEvent.findFirst({
+            where: { id: req.params.id, instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null },
             include: {
                 createdBy: { select: { id: true, name: true } },
                 participants: { include: { user: { select: { id: true, name: true } } } },
@@ -190,8 +193,10 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 router.patch('/:id', validate(updateEventSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { participantIds, ...data } = req.body;
-        const existing = await prisma.calendarEvent.findUnique({
-            where: { id: req.params.id },
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'CALENDAR');
+        const existing = await prisma.calendarEvent.findFirst({
+            where: { id: req.params.id, instanceId },
             select: {
                 id: true,
                 startDate: true,
@@ -231,7 +236,7 @@ router.patch('/:id', validate(updateEventSchema), async (req: Request, res: Resp
         }
 
         const event = await prisma.calendarEvent.update({
-            where: { id: req.params.id },
+            where: { id: existing.id },
             data: {
                 ...data,
                 ...reminderFields,
@@ -250,7 +255,11 @@ router.patch('/:id', validate(updateEventSchema), async (req: Request, res: Resp
 // Delete event
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        await prisma.calendarEvent.delete({ where: { id: req.params.id } });
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'CALENDAR');
+        const event = await prisma.calendarEvent.findFirst({ where: { id: req.params.id, instanceId } });
+        if (!event) throw new NotFoundError('Event');
+        await prisma.calendarEvent.delete({ where: { id: event.id } });
         sendMessage(res, 'Event deleted');
     } catch (err) { next(err); }
 });

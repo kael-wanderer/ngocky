@@ -236,7 +236,7 @@ const CSV_HEADER_MAP: Record<string, string> = {
 
 // ─── Main Page ───────────────────────────────────────
 
-export default function KeyboardPage() {
+export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: string; pageTitle?: string }) {
     const qc = useQueryClient();
 
     // Filters
@@ -270,8 +270,8 @@ export default function KeyboardPage() {
     }
 
     const { data } = useQuery({
-        queryKey: ['keyboards'],
-        queryFn: async () => (await api.get('/keyboards?page=1&limit=1000')).data,
+        queryKey: ['keyboards', instanceId ?? null],
+        queryFn: async () => (await api.get(`/keyboards?page=1&limit=1000${instanceId ? `&instanceId=${instanceId}` : ''}`)).data,
     });
     const items: KeyboardItem[] = data?.data || [];
 
@@ -280,19 +280,19 @@ export default function KeyboardPage() {
     }, [filters, sortBy, sortOrder, pageSize]);
 
     const createMut = useMutation({
-        mutationFn: (body: any) => api.post('/keyboards', body),
+        mutationFn: (body: any) => api.post('/keyboards', { ...body, instanceId: instanceId ?? null }),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['keyboards'] }); closeModal(); },
     });
     const updateMut = useMutation({
-        mutationFn: ({ id, body }: any) => api.patch(`/keyboards/${id}`, body),
+        mutationFn: ({ id, body }: any) => api.patch(`/keyboards/${id}`, body, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['keyboards'] }); closeModal(); },
     });
     const deleteMut = useMutation({
-        mutationFn: (id: string) => api.delete(`/keyboards/${id}`),
+        mutationFn: (id: string) => api.delete(`/keyboards/${id}`, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['keyboards'] }),
     });
     const importMut = useMutation({
-        mutationFn: (importItems: any[]) => api.post('/keyboards/import', { items: importItems }),
+        mutationFn: (importItems: any[]) => api.post(`/keyboards/import${instanceId ? `?instanceId=${instanceId}` : ''}`, { items: importItems, instanceId }),
         onSuccess: ({ data }) => {
             qc.invalidateQueries({ queryKey: ['keyboards'] });
             setShowImport(false);

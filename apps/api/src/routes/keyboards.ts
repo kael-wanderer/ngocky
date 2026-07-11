@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { sendSuccess, sendCreated, sendMessage, sendPaginated } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
 import { parseCompactAmountInput } from '../utils/amount';
+import { assertPageInstance } from '../services/pageInstances';
 
 const router = Router();
 router.use(authenticate);
@@ -68,7 +69,7 @@ router.get('/', async (req, res, next) => {
         const userId = req.user!.userId;
         const page = Math.max(1, parseInt(req.query.page as string) || 1);
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 25));
-        const where = { OR: [{ ownerId: userId }, { isShared: true }] };
+        const where: any = { instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null, OR: [{ ownerId: userId }, { isShared: true }] };
 
         const [keyboards, total] = await Promise.all([
             prisma.keyboard.findMany({
@@ -86,6 +87,7 @@ router.get('/', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
     try {
         const userId = req.user!.userId;
+        await assertPageInstance(req.body.instanceId ?? null, 'KEYBOARD');
         const { name, price, category, tag, color, spec, description, note, isShared } = req.body;
         const last = await prisma.keyboard.aggregate({ where: { ownerId: userId }, _max: { sortOrder: true } });
         const keyboard = await prisma.keyboard.create({
@@ -100,6 +102,7 @@ router.post('/', async (req, res, next) => {
                 note: note ?? null,
                 isShared: !!isShared,
                 ownerId: userId,
+                instanceId: req.body.instanceId ?? null,
                 sortOrder: (last._max.sortOrder ?? -1) + 1,
             },
         });
@@ -111,7 +114,7 @@ router.patch('/:id', async (req, res, next) => {
     try {
         const userId = req.user!.userId;
         const kb = await prisma.keyboard.findFirst({
-            where: { id: req.params.id, OR: [{ ownerId: userId }, { isShared: true }] },
+            where: { id: req.params.id, instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null, OR: [{ ownerId: userId }, { isShared: true }] },
         });
         if (!kb) throw new NotFoundError('Keyboard not found');
         const { name, price, category, tag, color, spec, description, note, isShared } = req.body;
@@ -136,7 +139,7 @@ router.patch('/:id', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
     try {
         const userId = req.user!.userId;
-        const kb = await prisma.keyboard.findFirst({ where: { id: req.params.id, ownerId: userId } });
+        const kb = await prisma.keyboard.findFirst({ where: { id: req.params.id, ownerId: userId, instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null } });
         if (!kb) throw new NotFoundError('Keyboard not found');
         await prisma.keyboard.delete({ where: { id: kb.id } });
         sendMessage(res, 'Deleted');
@@ -146,6 +149,8 @@ router.delete('/:id', async (req, res, next) => {
 router.post('/import', async (req, res, next) => {
     try {
         const userId = req.user!.userId;
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : (req.body.instanceId ?? null);
+        await assertPageInstance(instanceId, 'KEYBOARD');
         const rows: any[] = req.body.items ?? [];
         if (!rows.length) return sendSuccess(res, { created: 0 });
 
@@ -165,6 +170,7 @@ router.post('/import', async (req, res, next) => {
                     note: r.note ?? null,
                     isShared: false,
                     ownerId: userId,
+                    instanceId,
                     sortOrder: order++,
                 };
             }),

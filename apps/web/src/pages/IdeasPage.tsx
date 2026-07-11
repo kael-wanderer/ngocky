@@ -32,7 +32,7 @@ function toRichTextHtml(value?: string | null) {
         .replace(/\n/g, '<br />');
 }
 
-export default function IdeasPage() {
+export default function IdeasPage({ instanceId, pageTitle }: { instanceId?: string; pageTitle?: string }) {
     const qc = useQueryClient();
     const { user } = useAuthStore();
     const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
@@ -50,12 +50,12 @@ export default function IdeasPage() {
     }
 
     const { data: topics, isLoading } = useQuery({
-        queryKey: ['idea_topics'],
-        queryFn: async () => (await api.get('/ideas/topics')).data.data,
+        queryKey: ['idea_topics', instanceId ?? null],
+        queryFn: async () => (await api.get('/ideas/topics', { params: instanceId ? { instanceId } : {} })).data.data,
     });
 
     const createTopicMut = useMutation({
-        mutationFn: (body: any) => api.post('/ideas/topics', body),
+        mutationFn: (body: any) => api.post('/ideas/topics', { ...body, instanceId: instanceId ?? null }),
         onSuccess: ({ data }) => {
             qc.invalidateQueries({ queryKey: ['idea_topics'] });
             setSelectedTopicId(data.data.id);
@@ -64,7 +64,7 @@ export default function IdeasPage() {
     });
 
     const updateTopicMut = useMutation({
-        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/ideas/topics/${id}`, body),
+        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/ideas/topics/${id}`, body, { params: instanceId ? { instanceId } : {} }),
         onSuccess: ({ data }) => {
             qc.invalidateQueries({ queryKey: ['idea_topics'] });
             setSelectedTopicId(data.data.id);
@@ -73,7 +73,7 @@ export default function IdeasPage() {
     });
 
     const deleteTopicMut = useMutation({
-        mutationFn: (id: string) => api.delete(`/ideas/topics/${id}`),
+        mutationFn: (id: string) => api.delete(`/ideas/topics/${id}`, { params: instanceId ? { instanceId } : {} }),
         onSuccess: (_, id) => {
             qc.invalidateQueries({ queryKey: ['idea_topics'] });
             if (selectedTopicId === id) setSelectedTopicId(null);
@@ -81,7 +81,7 @@ export default function IdeasPage() {
     });
 
     const createLogMut = useMutation({
-        mutationFn: (body: any) => api.post('/ideas/logs', body),
+        mutationFn: (body: any) => api.post('/ideas/logs', { ...body, instanceId: instanceId ?? null }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['idea_topics'] });
             closeLogModal();
@@ -89,7 +89,7 @@ export default function IdeasPage() {
     });
 
     const updateLogMut = useMutation({
-        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/ideas/logs/${id}`, body),
+        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/ideas/logs/${id}`, body, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['idea_topics'] });
             closeLogModal();
@@ -97,11 +97,11 @@ export default function IdeasPage() {
     });
 
     const deleteLogMut = useMutation({
-        mutationFn: (id: string) => api.delete(`/ideas/logs/${id}`),
+        mutationFn: (id: string) => api.delete(`/ideas/logs/${id}`, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['idea_topics'] }),
     });
     const togglePinLogMut = useMutation({
-        mutationFn: ({ id, pinToDashboard }: { id: string; pinToDashboard: boolean }) => api.patch(`/ideas/logs/${id}`, { pinToDashboard }),
+        mutationFn: ({ id, pinToDashboard }: { id: string; pinToDashboard: boolean }) => api.patch(`/ideas/logs/${id}`, { pinToDashboard }, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['idea_topics'] }),
     });
 
@@ -192,7 +192,7 @@ export default function IdeasPage() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Lightbulb className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Idea Bank</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{pageTitle || 'Idea Bank'}</h2>
                 </div>
                 <button className="btn-primary" onClick={openCreateTopic}>
                     <Plus className="w-4 h-4" /> New Idea Topic

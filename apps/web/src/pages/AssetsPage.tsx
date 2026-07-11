@@ -210,7 +210,7 @@ function AssetCard({
     );
 }
 
-export default function AssetsPage() {
+export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: string; pageTitle?: string }) {
     const qc = useQueryClient();
     const navigate = useNavigate();
     const { assetId } = useParams();
@@ -234,8 +234,8 @@ export default function AssetsPage() {
     const [recordOpenFilter, setRecordOpenFilter] = useState<RecordFilterDropdownKey>(null);
 
     const { data: assets, isLoading: assetsLoading } = useQuery({
-        queryKey: ['assets'],
-        queryFn: async () => (await api.get('/assets')).data.data,
+        queryKey: ['assets', instanceId ?? null],
+        queryFn: async () => (await api.get(`/assets${instanceId ? `?instanceId=${instanceId}` : ''}`)).data.data,
     });
 
     const selectedAsset = useMemo(
@@ -333,7 +333,7 @@ export default function AssetsPage() {
     }, [sortedRecords, recordSearch, recordDateFilter, recordNextFilter, recordPriceFilter]);
 
     const createAssetMut = useMutation({
-        mutationFn: (body: any) => api.post('/assets', body),
+        mutationFn: (body: any) => api.post('/assets', { ...body, instanceId: instanceId ?? null }),
         onSuccess: ({ data }) => {
             qc.invalidateQueries({ queryKey: ['assets'] });
             closeAssetModal();
@@ -342,7 +342,7 @@ export default function AssetsPage() {
     });
 
     const updateAssetMut = useMutation({
-        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/assets/${id}`, body),
+        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/assets/${id}`, body, { params: instanceId ? { instanceId } : {} }),
         onSuccess: ({ data }) => {
             qc.invalidateQueries({ queryKey: ['assets'] });
             closeAssetModal();
@@ -351,7 +351,7 @@ export default function AssetsPage() {
     });
 
     const deleteAssetMut = useMutation({
-        mutationFn: (id: string) => api.delete(`/assets/${id}`),
+        mutationFn: (id: string) => api.delete(`/assets/${id}`, { params: instanceId ? { instanceId } : {} }),
         onSuccess: (_, id) => {
             qc.invalidateQueries({ queryKey: ['assets'] });
             if (selectedAsset?.id === id) navigate('/assets', { replace: true });
@@ -359,7 +359,7 @@ export default function AssetsPage() {
     });
 
     const createRecordMut = useMutation({
-        mutationFn: ({ assetId: currentAssetId, body }: { assetId: string; body: any }) => api.post(`/assets/${currentAssetId}/maintenance`, body),
+        mutationFn: ({ assetId: currentAssetId, body }: { assetId: string; body: any }) => api.post(`/assets/${currentAssetId}/maintenance`, body, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['maintenance', selectedAsset?.id] });
             closeRecordModal();
@@ -367,7 +367,7 @@ export default function AssetsPage() {
     });
 
     const updateRecordMut = useMutation({
-        mutationFn: ({ assetId: currentAssetId, recordId, body }: { assetId: string; recordId: string; body: any }) => api.patch(`/assets/${currentAssetId}/maintenance/${recordId}`, body),
+        mutationFn: ({ assetId: currentAssetId, recordId, body }: { assetId: string; recordId: string; body: any }) => api.patch(`/assets/${currentAssetId}/maintenance/${recordId}`, body, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['maintenance', selectedAsset?.id] });
             closeRecordModal();
@@ -375,7 +375,7 @@ export default function AssetsPage() {
     });
 
     const deleteRecordMut = useMutation({
-        mutationFn: ({ assetId: currentAssetId, recordId }: { assetId: string; recordId: string }) => api.delete(`/assets/${currentAssetId}/maintenance/${recordId}`),
+        mutationFn: ({ assetId: currentAssetId, recordId }: { assetId: string; recordId: string }) => api.delete(`/assets/${currentAssetId}/maintenance/${recordId}`, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['maintenance', selectedAsset?.id] }),
     });
 

@@ -24,6 +24,7 @@ export const createAssetSchema = z.object({
     warrantyMonths: z.number().int().nonnegative().optional(),
     isShared: z.boolean().optional(),
     note: z.string().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 });
 
 export const updateAssetSchema = createAssetSchema.partial();
@@ -57,6 +58,7 @@ export const createLearningTopicSchema = z.object({
     description: z.string().optional(),
     category: z.enum(['Soft-skill', 'Expertise', 'AI', 'Other']).optional(),
     isShared: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 });
 
 export const updateLearningTopicSchema = createLearningTopicSchema.partial();
@@ -71,6 +73,7 @@ export const createLearningHistorySchema = z.object({
     status: z.enum(['PLANNED', 'IN_PROGRESS', 'DONE', 'ARCHIVED']).optional(),
     notificationEnabled: z.boolean().optional(),
     pinToDashboard: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 });
 
 export const updateLearningHistorySchema = createLearningHistorySchema.partial().omit({ topicId: true });
@@ -79,6 +82,7 @@ export const createIdeaTopicSchema = z.object({
     title: z.string().min(1).max(200),
     description: z.string().optional(),
     isShared: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 });
 
 export const updateIdeaTopicSchema = createIdeaTopicSchema.partial();
@@ -92,6 +96,7 @@ export const createIdeaLogSchema = z.object({
     tags: z.array(z.string()).optional(),
     status: z.enum(['OPEN', 'REVIEWING', 'ARCHIVED']).optional(),
     pinToDashboard: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
 });
 
 export const updateIdeaLogSchema = createIdeaLogSchema.partial().omit({ topicId: true });
@@ -131,6 +136,7 @@ export const updateScheduledReportSchema = createScheduledReportSchema.partial()
 
 export const createHealthPersonSchema = z.object({
     name: z.string().min(1).max(200),
+    instanceId: z.string().min(1).nullable().optional(),
     dateOfBirth: z.string().datetime().nullable().optional(),
     gender: z.string().optional(),
     mobile: z.string().optional(),

@@ -78,7 +78,7 @@ const emptyForm = () => ({
 
 // ─── Main Page ───────────────────────────────────────
 
-export default function CaKeoPage() {
+export default function CaKeoPage({ instanceId, pageTitle }: { instanceId?: string; pageTitle?: string }) {
     const qc = useQueryClient();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -106,14 +106,14 @@ export default function CaKeoPage() {
     const users: any[] = usersData || [];
 
     const { data: itemsData, isLoading } = useQuery({
-        queryKey: ['cakeos', filters],
+        queryKey: ['cakeos', instanceId ?? null, filters],
         queryFn: async () => {
             const params = new URLSearchParams();
             if (filters.status !== 'ALL') params.set('status', filters.status);
             if (filters.assignerId) params.set('assignerId', filters.assignerId);
             if (filters.category) params.set('category', filters.category);
             if (filters.type !== 'ALL') params.set('type', filters.type);
-            return (await api.get(`/cakeos?${params}`)).data.data;
+            return (await api.get(`/cakeos?${params}${instanceId ? `&instanceId=${instanceId}` : ''}`)).data.data;
         },
     });
     const items: any[] = itemsData || [];
@@ -125,17 +125,17 @@ export default function CaKeoPage() {
 
     // Mutations
     const createMut = useMutation({
-        mutationFn: (body: any) => api.post('/cakeos', body),
+        mutationFn: (body: any) => api.post('/cakeos', { ...body, instanceId: instanceId ?? null }),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['cakeos'] }); closeModal(); },
         onError: (err: any) => window.alert(err?.response?.data?.message || 'Failed to create'),
     });
     const updateMut = useMutation({
-        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/cakeos/${id}`, body),
+        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/cakeos/${id}`, body, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['cakeos'] }); closeModal(); },
         onError: (err: any) => window.alert(err?.response?.data?.message || 'Failed to update'),
     });
     const deleteMut = useMutation({
-        mutationFn: (id: string) => api.delete(`/cakeos/${id}`),
+        mutationFn: (id: string) => api.delete(`/cakeos/${id}`, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['cakeos'] }),
     });
 

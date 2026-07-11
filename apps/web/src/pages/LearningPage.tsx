@@ -48,7 +48,7 @@ const getStatusColor = (status: string) => {
     }
 };
 
-export default function LearningPage() {
+export default function LearningPage({ instanceId, pageTitle }: { instanceId?: string; pageTitle?: string }) {
     const qc = useQueryClient();
     const { user } = useAuthStore();
     const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
@@ -65,12 +65,12 @@ export default function LearningPage() {
     const [historyForm, setHistoryForm] = useState(emptyHistoryForm());
 
     const { data: topics, isLoading } = useQuery({
-        queryKey: ['learning_topics'],
-        queryFn: async () => (await api.get('/learning/topics')).data.data,
+        queryKey: ['learning_topics', instanceId ?? null],
+        queryFn: async () => (await api.get('/learning/topics', { params: instanceId ? { instanceId } : {} })).data.data,
     });
 
     const createTopicMut = useMutation({
-        mutationFn: (body: any) => api.post('/learning/topics', body),
+        mutationFn: (body: any) => api.post('/learning/topics', { ...body, instanceId: instanceId ?? null }),
         onSuccess: ({ data }) => {
             qc.invalidateQueries({ queryKey: ['learning_topics'] });
             setSelectedTopicId(data.data.id);
@@ -79,7 +79,7 @@ export default function LearningPage() {
     });
 
     const updateTopicMut = useMutation({
-        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/learning/topics/${id}`, body),
+        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/learning/topics/${id}`, body, { params: instanceId ? { instanceId } : {} }),
         onSuccess: ({ data }) => {
             qc.invalidateQueries({ queryKey: ['learning_topics'] });
             setSelectedTopicId(data.data.id);
@@ -88,7 +88,7 @@ export default function LearningPage() {
     });
 
     const deleteTopicMut = useMutation({
-        mutationFn: (id: string) => api.delete(`/learning/topics/${id}`),
+        mutationFn: (id: string) => api.delete(`/learning/topics/${id}`, { params: instanceId ? { instanceId } : {} }),
         onSuccess: (_, id) => {
             qc.invalidateQueries({ queryKey: ['learning_topics'] });
             if (selectedTopicId === id) setSelectedTopicId(null);
@@ -96,7 +96,7 @@ export default function LearningPage() {
     });
 
     const createHistoryMut = useMutation({
-        mutationFn: (body: any) => api.post('/learning/histories', body),
+        mutationFn: (body: any) => api.post('/learning/histories', { ...body, instanceId: instanceId ?? null }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['learning_topics'] });
             closeHistoryModal();
@@ -104,7 +104,7 @@ export default function LearningPage() {
     });
 
     const updateHistoryMut = useMutation({
-        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/learning/histories/${id}`, body),
+        mutationFn: ({ id, body }: { id: string; body: any }) => api.patch(`/learning/histories/${id}`, body, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['learning_topics'] });
             closeHistoryModal();
@@ -112,11 +112,11 @@ export default function LearningPage() {
     });
 
     const deleteHistoryMut = useMutation({
-        mutationFn: (id: string) => api.delete(`/learning/histories/${id}`),
+        mutationFn: (id: string) => api.delete(`/learning/histories/${id}`, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['learning_topics'] }),
     });
     const togglePinHistoryMut = useMutation({
-        mutationFn: ({ id, pinToDashboard }: { id: string; pinToDashboard: boolean }) => api.patch(`/learning/histories/${id}`, { pinToDashboard }),
+        mutationFn: ({ id, pinToDashboard }: { id: string; pinToDashboard: boolean }) => api.patch(`/learning/histories/${id}`, { pinToDashboard }, { params: instanceId ? { instanceId } : {} }),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['learning_topics'] }),
     });
 
@@ -222,7 +222,7 @@ export default function LearningPage() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <GraduationCap className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Learning Management</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{pageTitle || 'Learning Management'}</h2>
                 </div>
                 <button className="btn-primary" onClick={openCreateTopic}>
                     <Plus className="w-4 h-4" /> Add Topic

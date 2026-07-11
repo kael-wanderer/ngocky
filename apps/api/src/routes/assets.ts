@@ -7,6 +7,7 @@ import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/r
 import { NotFoundError } from '../utils/errors';
 import { paramStr, queryInt } from '../utils/query';
 import { resolveReminderFields } from '../utils/reminders';
+import { assertPageInstance } from '../services/pageInstances';
 import {
     createAssetSchema,
     updateAssetSchema,
@@ -126,6 +127,7 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
 
 router.post('/', validate(createAssetSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        await assertPageInstance(req.body.instanceId ?? null, 'ASSET');
         const sortOrder = await getNextAssetSortOrder(req.user!.userId);
         const asset = await prisma.asset.create({
             data: {
@@ -145,6 +147,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const limit = queryInt(req, 'limit', 20);
         const skip = (page - 1) * limit;
         const where: any = {
+            instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null,
             OR: [
                 { userId: req.user!.userId },
                 { isShared: true },
@@ -172,7 +175,7 @@ router.patch('/:id', validate(updateAssetSchema), async (req: Request, res: Resp
     try {
         const id = paramStr(req, 'id');
         const asset = await prisma.asset.findFirst({
-            where: { id, userId: req.user!.userId },
+            where: { id, userId: req.user!.userId, instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null },
         });
         if (!asset) throw new NotFoundError('Asset not found');
 

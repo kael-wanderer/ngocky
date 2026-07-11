@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { sendSuccess, sendCreated, sendMessage } from '../utils/response';
 import { NotFoundError } from '../utils/errors';
+import { assertPageInstance } from '../services/pageInstances';
 import {
     createIdeaTopicSchema,
     updateIdeaTopicSchema,
@@ -14,9 +15,9 @@ import {
 const router = Router();
 router.use(authenticate);
 
-async function getNextIdeaTopicSortOrder(userId: string) {
+async function getNextIdeaTopicSortOrder(userId: string, instanceId: string | null) {
     const aggregate = await prisma.ideaTopic.aggregate({
-        where: { userId },
+        where: { userId, instanceId },
         _max: { sortOrder: true },
     });
     return (aggregate._max.sortOrder ?? -1) + 1;
@@ -25,6 +26,7 @@ async function getNextIdeaTopicSortOrder(userId: string) {
 router.get('/topics', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const where: any = {
+            instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null,
             OR: [
                 { userId: req.user!.userId },
                 { isShared: true },
@@ -49,8 +51,10 @@ router.post('/topics/reorder', async (req: Request, res: Response, next: NextFun
         const { ids } = req.body as { ids: string[] };
         if (!Array.isArray(ids)) return sendMessage(res, 'Invalid');
 
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'IDEA');
         const ownedTopics = await prisma.ideaTopic.findMany({
-            where: { id: { in: ids }, userId: req.user!.userId },
+            where: { id: { in: ids }, userId: req.user!.userId, instanceId },
             select: { id: true },
         });
         const ownedIds = ids.filter((id) => ownedTopics.some((topic) => topic.id === id));
@@ -66,7 +70,9 @@ router.post('/topics/reorder', async (req: Request, res: Response, next: NextFun
 
 router.post('/topics', validate(createIdeaTopicSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const sortOrder = await getNextIdeaTopicSortOrder(req.user!.userId);
+        const instanceId = req.body.instanceId ?? null;
+        await assertPageInstance(instanceId, 'IDEA');
+        const sortOrder = await getNextIdeaTopicSortOrder(req.user!.userId, instanceId);
         const topic = await prisma.ideaTopic.create({
             data: {
                 ...req.body,
@@ -82,7 +88,7 @@ router.post('/topics', validate(createIdeaTopicSchema), async (req: Request, res
 router.patch('/topics/:id', validate(updateIdeaTopicSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const existing = await prisma.ideaTopic.findFirst({
-            where: { id: req.params.id, userId: req.user!.userId },
+            where: { id: req.params.id, userId: req.user!.userId, instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null },
         });
         if (!existing) throw new NotFoundError('Idea topic not found');
 
@@ -98,7 +104,7 @@ router.patch('/topics/:id', validate(updateIdeaTopicSchema), async (req: Request
 router.delete('/topics/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const existing = await prisma.ideaTopic.findFirst({
-            where: { id: req.params.id, userId: req.user!.userId },
+            where: { id: req.params.id, userId: req.user!.userId, instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null },
         });
         if (!existing) throw new NotFoundError('Idea topic not found');
 
@@ -110,7 +116,7 @@ router.delete('/topics/:id', async (req: Request, res: Response, next: NextFunct
 router.post('/logs', validate(createIdeaLogSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const topic = await prisma.ideaTopic.findFirst({
-            where: { id: req.body.topicId, userId: req.user!.userId },
+            where: { id: req.body.topicId, userId: req.user!.userId, instanceId: req.body.instanceId ?? null },
         });
         if (!topic) throw new NotFoundError('Idea topic not found');
 
@@ -127,8 +133,10 @@ router.post('/logs', validate(createIdeaLogSchema), async (req: Request, res: Re
 
 router.patch('/logs/:id', validate(updateIdeaLogSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'IDEA');
         const existing = await prisma.idea.findFirst({
-            where: { id: req.params.id, userId: req.user!.userId },
+            where: { id: req.params.id, userId: req.user!.userId, topic: { instanceId } },
         });
         if (!existing) throw new NotFoundError('Idea log not found');
 
@@ -144,7 +152,7 @@ router.patch('/logs/:id', validate(updateIdeaLogSchema), async (req: Request, re
 router.delete('/logs/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const existing = await prisma.idea.findFirst({
-            where: { id: req.params.id, userId: req.user!.userId },
+            where: { id: req.params.id, userId: req.user!.userId, topic: { instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null } },
         });
         if (!existing) throw new NotFoundError('Idea log not found');
 

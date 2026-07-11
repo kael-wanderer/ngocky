@@ -7,6 +7,7 @@ import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/r
 import { NotFoundError } from '../utils/errors';
 import { FrequencyType, HouseworkItem } from '@prisma/client';
 import { resolveReminderFields } from '../utils/reminders';
+import { assertPageInstance } from '../services/pageInstances';
 
 const router = Router();
 router.use(authenticate);
@@ -113,6 +114,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const currentUserId = req.user!.userId;
 
         const where: any = {
+            instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null,
             OR: [
                 { createdById: currentUserId },
                 { isShared: true },
@@ -139,6 +141,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 // Create housework
 router.post('/', validate(createHouseworkSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        await assertPageInstance(req.body.instanceId ?? null, 'HOUSEWORK');
         const item = await prisma.houseworkItem.create({
             data: {
                 ...req.body,
@@ -161,8 +164,8 @@ router.post('/', validate(createHouseworkSchema), async (req: Request, res: Resp
 // Get housework item
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const item = await prisma.houseworkItem.findUnique({
-            where: { id: req.params.id },
+        const item = await prisma.houseworkItem.findFirst({
+            where: { id: req.params.id, instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null },
             include: {
                 assignee: { select: { id: true, name: true } },
                 createdBy: { select: { id: true, name: true } },
@@ -177,7 +180,9 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 // Update housework
 router.patch('/:id', validate(updateHouseworkSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const existing = await prisma.houseworkItem.findUnique({ where: { id: req.params.id } });
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'HOUSEWORK');
+        const existing = await prisma.houseworkItem.findFirst({ where: { id: req.params.id, instanceId } });
         if (!existing) throw new NotFoundError('Housework item');
         if (existing.createdById !== req.user!.userId) throw new NotFoundError('Housework item');
         const reminderFields = resolveReminderFields(
@@ -208,7 +213,9 @@ router.patch('/:id', validate(updateHouseworkSchema), async (req: Request, res: 
 // Mark as complete (advances next due date for recurring)
 router.post('/:id/complete', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const item = await prisma.houseworkItem.findUnique({ where: { id: req.params.id } });
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
+        await assertPageInstance(instanceId, 'HOUSEWORK');
+        const item = await prisma.houseworkItem.findFirst({ where: { id: req.params.id, instanceId } });
         if (!item) throw new NotFoundError('Housework item');
         if (item.createdById !== req.user!.userId) throw new NotFoundError('Housework item');
 
