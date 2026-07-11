@@ -36,16 +36,31 @@ NgocKy has three top-level module groups:
 - `Family` can be enabled or disabled by the owner.
 - `Hobby` can be enabled or disabled by the owner.
 
-Owners can also create new pages from four built-in templates:
+Owners and admins can manage custom pages from **Admin > Application Management**. The catalog currently contains these templates:
 
 - Task
 - Project
 - Expense
 - Goal
+- Ideas
+- Calendar
+- Ca Keo (Child)
+- Housework
+- Assets
+- Healthbook
+- Keyboard
+- Funds
+- Learning
 
-Template pages are isolated from the built-in pages. For example, tasks created in a custom "Work Tasks" page do not appear in the default `/tasks` page, and default tasks do not appear in that custom page. Dashboards and reports currently aggregate across default and custom page data.
+Template pages are isolated from built-in pages by `instanceId`. A custom page can be renamed without changing its slug, and deleting it shows a typed deletion preview before its root records and children are removed. Dashboard pinned records and report queries preserve the originating page `{id, name, slug}` so links can return to `/p/:slug`.
 
 Per-user feature visibility still applies under the app-wide group gate. A route is visible only when its module group is enabled and the signed-in user has that feature enabled.
+
+## Admin And Agent Providers
+
+The owner can configure the assistant from **Admin > Agent Settings**. Credentials are encrypted at rest, write-only, and never returned to the browser. Supported providers are OpenAI, Anthropic Claude, and Custom OpenAI-compatible endpoints. Custom endpoints must be public HTTPS URLs unless `ALLOW_PRIVATE_AGENT_ENDPOINTS=true` is explicitly enabled for a trusted deployment.
+
+The legacy `OPENAI_API_KEY` environment fallback and `/api/app-settings/openai-key` compatibility endpoints remain temporarily available for existing deployments. Move credentials to Agent Settings before removing those legacy fields in a future migration.
 
 ## Development
 

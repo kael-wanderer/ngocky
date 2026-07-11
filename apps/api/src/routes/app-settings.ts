@@ -29,6 +29,7 @@ router.put(
 );
 
 // OpenAI key management — write-only: responses carry status, never the key.
+// Deprecated compatibility endpoint. New clients must use /api/agent-settings.
 router.get('/openai-key', authenticate, authorize('OWNER'), async (_req: Request, res: Response, next: NextFunction) => {
     try {
         res.json(await AppSettingsService.getOpenaiKeyStatus());
@@ -52,6 +53,7 @@ router.put(
     },
 );
 
+// Deprecated compatibility endpoint. Keep until production credentials have been migrated.
 router.delete('/openai-key', authenticate, authorize('OWNER'), async (_req: Request, res: Response, next: NextFunction) => {
     try {
         await AppSettingsService.clearOpenaiKey();

@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-11] - Cross-Cutting Page Instance Integration
+
+### Added
+
+- **Dashboard Links**: Pinned records now carry originating custom-page metadata and route back through `/p/:slug`.
+- **Report Filters**: Report raw-record queries and CSV exports accept validated `instanceId` filters; omitted filters remain built-in-only.
+- **Automation Metadata**: Due notifications preserve page origin metadata for custom records.
+- **Assistant Resolution**: Assistant page names resolve case-insensitively and return clarification instead of guessing when names are ambiguous.
+
+### Documentation
+
+- Documented Admin pages, provider setup, custom endpoint security, template isolation, deletion behavior, and legacy OpenAI compatibility.
+
+
 ## [2026-07-11] - Funds Page Instances
 
 ### Added
