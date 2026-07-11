@@ -1,0 +1,2 @@
+ALTER TABLE "AppSetting" ADD COLUMN "logoUrl" TEXT;
+ALTER TABLE "AppSetting" ADD COLUMN "builtInPages" JSONB NOT NULL DEFAULT '{}';

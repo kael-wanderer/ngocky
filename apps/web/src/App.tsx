@@ -4,8 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './stores/auth';
 import AppLayout from './layouts/AppLayout';
 import LoginPage from './pages/LoginPage';
-import { isRouteAccessible } from './config/features';
+import { BUILT_IN_ROUTE_TEMPLATE_MAP, isRouteAccessible } from './config/features';
 import { useAppSettings, useSetupStatus } from './api/appSettings';
+import { usePageTemplates } from './api/pages';
 
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const GoalsPage = lazy(() => import('./pages/goals'));
@@ -57,6 +58,9 @@ function OwnerRoute({ children }: { children: React.ReactNode }) {
 function FeatureRoute({ route, children }: { route: string; children: React.ReactNode }) {
     const { user } = useAuthStore();
     const { data: appSettings } = useAppSettings();
+    const { data: pageTemplates } = usePageTemplates();
+    const builtInTemplate = pageTemplates?.find((template) => template.moduleType === BUILT_IN_ROUTE_TEMPLATE_MAP[route]);
+    if (builtInTemplate?.visible === false) return <Navigate to="/" replace />;
     if (!isRouteAccessible(route, user, appSettings?.enabledGroups)) {
         return <Navigate to="/" replace />;
     }

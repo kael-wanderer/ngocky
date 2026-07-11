@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - **Application Management**: Added an OWNER/ADMIN page for template inventory and centralized custom-page creation, stable rename, deletion previews, typed confirmation, and deletion.
+- **Application Branding**: Added an OWNER-only logo uploader with preview and default-logo restoration.
 - **Template Catalog**: Added canonical metadata and schema support for Personal, Family, and Hobby page templates while keeping unfinished templates unavailable for creation.
 - **Instance Registry**: Added lazy frontend component registration for the four currently implemented custom-page templates.
 
@@ -16,6 +17,8 @@ All notable changes to this project will be documented in this file.
 
 - **Page Ownership**: Custom pages and their root records are reassigned to an OWNER when their creator account is deleted.
 - **Navigation**: Removed page mutation controls from the sidebar and applied application group gates plus per-user template visibility to custom links.
+- **Built-in Pages**: Added rename, safe removal, and restore controls while preserving existing module data.
+- **Page Creation**: Split creation into Module, filtered Template, and Page name controls.
 - **User Settings**: Moved application identity and group controls to Admin and redirected the legacy Application tab URL.
 
 ---

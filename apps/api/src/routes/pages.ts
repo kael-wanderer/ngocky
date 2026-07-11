@@ -2,8 +2,8 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
 import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validate';
-import { createPageSchema, updatePageSchema } from '../validators/pages';
-import { PAGE_TEMPLATES, PAGE_TEMPLATE_BY_TYPE } from '../config/pageTemplates';
+import { builtInPageParamsSchema, createPageSchema, updateBuiltInPageSchema, updatePageSchema } from '../validators/pages';
+import { applyBuiltInPageOverrides, PAGE_TEMPLATES, PAGE_TEMPLATE_BY_TYPE, type BuiltInPageOverride } from '../config/pageTemplates';
 import { countPageRoots, getPageInstance } from '../services/pageInstances';
 
 const router = Router();
@@ -41,9 +41,31 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
     }
 });
 
-router.get('/templates', authorize('OWNER', 'ADMIN'), (_req: Request, res: Response) => {
-    res.json(PAGE_TEMPLATES);
+router.get('/templates', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const settings = await prisma.appSetting.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
+        res.json(applyBuiltInPageOverrides(settings.builtInPages));
+    } catch (err) { next(err); }
 });
+
+router.put(
+    '/templates/:moduleType',
+    authorize('OWNER', 'ADMIN'),
+    validate(builtInPageParamsSchema, 'params'),
+    validate(updateBuiltInPageSchema),
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const settings = await prisma.appSetting.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
+            const current = settings.builtInPages && typeof settings.builtInPages === 'object' && !Array.isArray(settings.builtInPages)
+                ? settings.builtInPages as Record<string, BuiltInPageOverride>
+                : {};
+            const moduleType = req.params.moduleType;
+            const builtInPages = { ...current, [moduleType]: { ...current[moduleType], ...req.body } };
+            const updated = await prisma.appSetting.update({ where: { id: 1 }, data: { builtInPages } });
+            res.json(applyBuiltInPageOverrides(updated.builtInPages).find((template) => template.moduleType === moduleType));
+        } catch (err) { next(err); }
+    },
+);
 
 router.get('/:id/delete-preview', authorize('OWNER', 'ADMIN'), async (req: Request, res: Response, next: NextFunction) => {
     try {

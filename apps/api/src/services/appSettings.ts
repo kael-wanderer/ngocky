@@ -7,6 +7,7 @@ export type ModuleGroup = (typeof GROUPS)[number];
 
 export type AppSettingsDto = {
     appName: string;
+    logoUrl: string | null;
     enabledGroups: ModuleGroup[];
     setupCompleted: boolean;
 };
@@ -27,23 +28,26 @@ export class AppSettingsService {
         });
         return {
             appName: row.appName,
+            logoUrl: row.logoUrl,
             enabledGroups: normalizeGroups(row.enabledGroups),
             setupCompleted: row.setupCompleted,
         };
     }
 
-    static async update(data: { appName?: string; enabledGroups?: string[]; setupCompleted?: boolean }): Promise<AppSettingsDto> {
+    static async update(data: { appName?: string; logoUrl?: string | null; enabledGroups?: string[]; setupCompleted?: boolean }): Promise<AppSettingsDto> {
         await this.get();
         const row = await prisma.appSetting.update({
             where: { id: 1 },
             data: {
                 ...(data.appName !== undefined ? { appName: data.appName } : {}),
+                ...(data.logoUrl !== undefined ? { logoUrl: data.logoUrl } : {}),
                 ...(data.enabledGroups !== undefined ? { enabledGroups: normalizeGroups(data.enabledGroups) } : {}),
                 ...(data.setupCompleted !== undefined ? { setupCompleted: data.setupCompleted } : {}),
             },
         });
         return {
             appName: row.appName,
+            logoUrl: row.logoUrl,
             enabledGroups: normalizeGroups(row.enabledGroups),
             setupCompleted: row.setupCompleted,
         };

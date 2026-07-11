@@ -82,7 +82,7 @@ describe('page instances', () => {
         expect(res.status).toBe(400);
     });
 
-    it('returns the complete canonical template catalog only to admins', async () => {
+    it('returns the complete canonical template catalog to authenticated users', async () => {
         const ownerToken = await tokenFor('OWNER', 'owner-catalog@example.com');
         const userToken = await tokenFor('USER', 'user-catalog@example.com');
         const catalog = await authed(ownerToken).get('/api/pages/templates');
@@ -90,7 +90,14 @@ describe('page instances', () => {
         expect(catalog.status).toBe(200);
         expect(catalog.body).toHaveLength(13);
         expect(catalog.body.find((item: any) => item.moduleType === 'IDEA')).toMatchObject({ group: 'personal', available: false });
-        expect((await authed(userToken).get('/api/pages/templates')).status).toBe(403);
+        expect((await authed(userToken).get('/api/pages/templates')).status).toBe(200);
+
+        expect((await authed(userToken).put('/api/pages/templates/TASK').send({ name: 'My Tasks' })).status).toBe(403);
+        const renamed = await authed(ownerToken).put('/api/pages/templates/TASK').send({ name: 'My Tasks', visible: false });
+        expect(renamed.status).toBe(200);
+        expect(renamed.body).toMatchObject({ name: 'My Tasks', visible: false });
+        const updatedCatalog = await authed(userToken).get('/api/pages/templates');
+        expect(updatedCatalog.body.find((item: any) => item.moduleType === 'TASK')).toMatchObject({ name: 'My Tasks', visible: false });
     });
 
     it('enforces template groups and unavailable templates', async () => {

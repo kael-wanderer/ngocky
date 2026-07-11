@@ -1,9 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AppWindow, Plus } from 'lucide-react';
+import { AppWindow, Camera, Plus, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../../stores/auth';
 import { useAppSettings, useUpdateAppSettings, type ModuleGroupId } from '../../api/appSettings';
-import { getPageDeletePreview, useCreatePage, useDeletePage, usePages, usePageTemplates, useUpdatePage, type PageInstanceDto, type PageModuleType } from '../../api/pages';
+import { getPageDeletePreview, useCreatePage, useDeletePage, usePages, usePageTemplates, useUpdateBuiltInPage, useUpdatePage, type PageInstanceDto, type PageModuleType, type PageTemplateDto } from '../../api/pages';
 import PageManagementTable from '../../components/PageManagementTable';
+
+function resizeLogo(file: File, maxSize = 256): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        const url = URL.createObjectURL(file);
+        image.onload = () => {
+            URL.revokeObjectURL(url);
+            const canvas = document.createElement('canvas');
+            const scale = Math.min(maxSize / image.width, maxSize / image.height, 1);
+            canvas.width = Math.max(1, Math.round(image.width * scale));
+            canvas.height = Math.max(1, Math.round(image.height * scale));
+            canvas.getContext('2d')!.drawImage(image, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/png'));
+        };
+        image.onerror = reject;
+        image.src = url;
+    });
+}
 
 export default function ApplicationManagementPage() {
     const user = useAuthStore((state) => state.user);
@@ -14,22 +32,30 @@ export default function ApplicationManagementPage() {
     const updateSettings = useUpdateAppSettings();
     const createPage = useCreatePage();
     const updatePage = useUpdatePage();
+    const updateBuiltInPage = useUpdateBuiltInPage();
     const deletePage = useDeletePage();
     const [appName, setAppName] = useState('NgốcKý');
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [enabledGroups, setEnabledGroups] = useState<ModuleGroupId[]>(['personal', 'family', 'hobby']);
     const [templateType, setTemplateType] = useState<PageModuleType>('TASK');
+    const [moduleGroup, setModuleGroup] = useState<ModuleGroupId>('personal');
     const [pageName, setPageName] = useState('');
     const [counts, setCounts] = useState<Record<string, number>>({});
     const [message, setMessage] = useState('');
 
-    const availableTemplates = useMemo(() => templates.filter((item) => item.available), [templates]);
-    const selectedTemplate = templates.find((item) => item.moduleType === templateType);
+    const availableTemplates = useMemo(() => templates.filter((item) => item.available && item.group === moduleGroup), [moduleGroup, templates]);
+    const selectedTemplate = availableTemplates.find((item) => item.moduleType === templateType) ?? availableTemplates[0];
 
     useEffect(() => {
         if (!appSettings) return;
         setAppName(appSettings.appName);
+        setLogoUrl(appSettings.logoUrl);
         setEnabledGroups(appSettings.enabledGroups);
     }, [appSettings]);
+
+    useEffect(() => {
+        if (selectedTemplate && selectedTemplate.moduleType !== templateType) setTemplateType(selectedTemplate.moduleType);
+    }, [selectedTemplate, templateType]);
 
     useEffect(() => {
         Promise.all(pages.map(async (page) => [page.id, (await getPageDeletePreview(page.id)).itemCount] as const))
@@ -52,6 +78,19 @@ export default function ApplicationManagementPage() {
         setMessage('Page deleted.');
     };
 
+    const renameBuiltIn = async (template: PageTemplateDto) => {
+        const name = window.prompt('New page name', template.name)?.trim();
+        if (!name || name === template.name) return;
+        await updateBuiltInPage.mutateAsync({ moduleType: template.moduleType, body: { name } });
+        setMessage('Built-in page renamed.');
+    };
+
+    const toggleBuiltIn = async (template: PageTemplateDto) => {
+        if (template.visible && !window.confirm(`Remove ${template.name} from the application? Existing data will be preserved.`)) return;
+        await updateBuiltInPage.mutateAsync({ moduleType: template.moduleType, body: { visible: !template.visible } });
+        setMessage(template.visible ? 'Page removed. Existing data was preserved.' : 'Page restored.');
+    };
+
     return (
         <div className="space-y-6 pb-20 lg:pb-0 max-w-6xl">
             <div className="flex items-center gap-3"><AppWindow className="w-6 h-6" style={{ color: 'var(--color-primary)' }} /><div><h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Application Management</h2><p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Manage application availability and custom pages.</p></div></div>
@@ -64,14 +103,24 @@ export default function ApplicationManagementPage() {
                 <button className="btn-primary" disabled={updateSettings.isPending} onClick={async () => { await updateSettings.mutateAsync({ appName, enabledGroups }); setMessage('Application settings saved.'); }}>Save</button>
             </section>}
 
+            {isOwner && <section className="space-y-4 border-b pb-6" style={{ borderColor: 'var(--color-border)' }}>
+                <div><h3 className="font-semibold">Application logo</h3><p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Upload a square PNG, JPG, GIF, or WebP image for the top-left sidebar logo.</p></div>
+                <div className="flex items-center gap-4">
+                    <img src={logoUrl || '/ladybug-logo.svg'} alt="Application logo preview" className="w-16 h-16 object-contain border rounded-lg p-1" style={{ borderColor: 'var(--color-border)' }} />
+                    <label className="btn-secondary inline-flex items-center gap-2 cursor-pointer"><Camera className="w-4 h-4" />Upload<input className="sr-only" type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; try { const nextLogo = await resizeLogo(file); setLogoUrl(nextLogo); await updateSettings.mutateAsync({ logoUrl: nextLogo }); setMessage('Application logo updated.'); } catch { setMessage('Could not process that image.'); } event.target.value = ''; }} /></label>
+                    {logoUrl && <button type="button" className="btn-ghost inline-flex items-center gap-2 text-red-600" onClick={async () => { setLogoUrl(null); await updateSettings.mutateAsync({ logoUrl: null }); setMessage('Default logo restored.'); }}><Trash2 className="w-4 h-4" />Remove</button>}
+                </div>
+            </section>}
+
             <section className="space-y-4">
-                <div><h3 className="font-semibold">Pages</h3><p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Built-in pages are fixed. Custom pages use the selected template and its assigned group.</p></div>
-                <form className="grid gap-3 sm:grid-cols-[minmax(180px,1fr)_minmax(220px,2fr)_auto]" onSubmit={async (event) => { event.preventDefault(); if (!selectedTemplate || !pageName.trim()) return; await createPage.mutateAsync({ name: pageName.trim(), moduleType: selectedTemplate.moduleType, group: selectedTemplate.group }); setPageName(''); setMessage('Page created.'); }}>
-                    <select aria-label="Page template" className="input" value={templateType} onChange={(event) => setTemplateType(event.target.value as PageModuleType)}>{availableTemplates.map((template) => <option key={template.moduleType} value={template.moduleType}>{template.label} · {template.group}</option>)}</select>
+                <div><h3 className="font-semibold">Pages</h3><p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Rename or remove built-in pages, and create new pages from templates within a module.</p></div>
+                <form className="grid gap-3 sm:grid-cols-[minmax(150px,1fr)_minmax(180px,1fr)_minmax(220px,2fr)_auto]" onSubmit={async (event) => { event.preventDefault(); if (!selectedTemplate || !pageName.trim()) return; await createPage.mutateAsync({ name: pageName.trim(), moduleType: selectedTemplate.moduleType, group: moduleGroup }); setPageName(''); setMessage('Page created.'); }}>
+                    <select aria-label="Module" className="input capitalize" value={moduleGroup} onChange={(event) => setModuleGroup(event.target.value as ModuleGroupId)}><option value="personal">Personal</option><option value="family">Family</option><option value="hobby">Hobby</option></select>
+                    <select aria-label="Page template" className="input" value={selectedTemplate?.moduleType ?? ''} disabled={availableTemplates.length === 0} onChange={(event) => setTemplateType(event.target.value as PageModuleType)}>{availableTemplates.length === 0 && <option value="">No templates available yet</option>}{availableTemplates.map((template) => <option key={template.moduleType} value={template.moduleType}>{template.label}</option>)}</select>
                     <input aria-label="Page name" className="input" placeholder="Page name" value={pageName} onChange={(event) => setPageName(event.target.value)} />
-                    <button className="btn-primary inline-flex items-center gap-2" disabled={!pageName.trim() || createPage.isPending}><Plus className="w-4 h-4" />Create</button>
+                    <button className="btn-primary inline-flex items-center gap-2" disabled={!selectedTemplate || !pageName.trim() || createPage.isPending}><Plus className="w-4 h-4" />Create</button>
                 </form>
-                <PageManagementTable templates={templates} pages={pages} counts={counts} onRename={rename} onDelete={remove} />
+                <PageManagementTable templates={templates} pages={pages} counts={counts} onRename={rename} onDelete={remove} onRenameBuiltIn={renameBuiltIn} onToggleBuiltIn={toggleBuiltIn} />
             </section>
         </div>
     );

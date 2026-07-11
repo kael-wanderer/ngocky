@@ -96,6 +96,12 @@ export const PAGE_TEMPLATE_FEATURE_MAP: Record<string, FeatureFlagKey> = {
     KEYBOARD: 'featureKeyboard', FUND: 'featureFunds', LEARNING: 'featureLearning',
 };
 
+export const BUILT_IN_ROUTE_TEMPLATE_MAP: Record<string, string> = {
+    '/tasks': 'TASK', '/projects': 'PROJECT', '/expenses': 'EXPENSE', '/goals': 'GOAL', '/ideas': 'IDEA',
+    '/calendar': 'CALENDAR', '/cakeo': 'CAKEO', '/housework': 'HOUSEWORK', '/assets': 'ASSET', '/healthbook': 'HEALTHBOOK',
+    '/keyboard': 'KEYBOARD', '/funds': 'FUND', '/learning': 'LEARNING',
+};
+
 export function isPageTemplateEnabled(moduleType: string, source?: Partial<FeatureFlags> | null) {
     const key = PAGE_TEMPLATE_FEATURE_MAP[moduleType];
     return key ? getFeatureFlags(source)[key] : false;

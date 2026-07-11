@@ -23,7 +23,10 @@ const body = source
     .replace(/generator client \{[^}]*\}\s*/m, '')
     .replace(/datasource db \{[^}]*\}\s*/m, '')
     // SQLite has no scalar lists — store them as Json (arrays round-trip fine)
-    .replace(/\b(String|Int|Float|Boolean|DateTime)\[\]/g, 'Json?');
+    .replace(/\b(String|Int|Float|Boolean|DateTime)\[\]/g, 'Json?')
+    // Prisma's SQLite DDL renderer does not quote JSON object/array defaults.
+    // Keep these nullable in tests; application normalization supplies defaults.
+    .replace(/\bJson\s+@default\([^\n]+\)/g, 'Json?');
 
 writeFileSync(join(root, 'prisma', 'schema.test.prisma'), header + '\n' + body);
 console.log('schema.test.prisma regenerated from schema.prisma');

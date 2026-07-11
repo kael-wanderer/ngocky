@@ -10,6 +10,8 @@ export type PageTemplateDto = {
     group: ModuleGroupId;
     rootLabel: string;
     available: boolean;
+    name: string;
+    visible: boolean;
 };
 
 export type PageDeletePreview = {
@@ -62,6 +64,14 @@ export function useUpdatePage() {
     return useMutation({
         mutationFn: ({ id, body }: { id: string; body: Partial<Pick<PageInstanceDto, 'name' | 'icon'>> }) => api.put(`/pages/${id}`, body),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pages'] }),
+    });
+}
+
+export function useUpdateBuiltInPage() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ moduleType, body }: { moduleType: PageModuleType; body: { name?: string; visible?: boolean } }) => api.put(`/pages/templates/${moduleType}`, body),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['page-templates'] }),
     });
 }
 

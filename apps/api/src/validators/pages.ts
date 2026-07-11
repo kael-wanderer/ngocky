@@ -18,3 +18,12 @@ export const updatePageSchema = z.object({
     name: z.string().trim().min(1).max(60).optional(),
     icon: z.string().max(40).nullable().optional(),
 });
+
+export const builtInPageParamsSchema = z.object({
+    moduleType: z.enum(moduleTypes),
+});
+
+export const updateBuiltInPageSchema = z.object({
+    name: z.string().trim().min(1).max(60).optional(),
+    visible: z.boolean().optional(),
+}).refine((value) => value.name !== undefined || value.visible !== undefined, 'No changes supplied');

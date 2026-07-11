@@ -42,10 +42,11 @@ describe('app-settings', () => {
         const res = await request(app)
             .put('/api/app-settings')
             .set('Authorization', `Bearer ${token}`)
-            .send({ appName: 'FamilyHub', enabledGroups: ['family'] });
+            .send({ appName: 'FamilyHub', logoUrl: 'data:image/png;base64,dGVzdA==', enabledGroups: ['family'] });
 
         expect(res.status).toBe(200);
         expect(res.body.appName).toBe('FamilyHub');
+        expect(res.body.logoUrl).toBe('data:image/png;base64,dGVzdA==');
         expect(res.body.enabledGroups).toEqual(expect.arrayContaining(['personal', 'family']));
         expect(res.body.enabledGroups).not.toContain('hobby');
     });

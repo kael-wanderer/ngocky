@@ -10,6 +10,17 @@ export type PageTemplate = {
     available: boolean;
 };
 
+export type BuiltInPageOverride = { name?: string; visible?: boolean };
+
+export function applyBuiltInPageOverrides(raw: unknown): Array<PageTemplate & { name: string; visible: boolean }> {
+    const overrides = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, BuiltInPageOverride> : {};
+    return PAGE_TEMPLATES.map((template) => ({
+        ...template,
+        name: typeof overrides[template.moduleType]?.name === 'string' ? overrides[template.moduleType].name!.trim() || template.label : template.label,
+        visible: overrides[template.moduleType]?.visible !== false,
+    }));
+}
+
 export const PAGE_TEMPLATES: PageTemplate[] = [
     { moduleType: 'TASK', label: 'Tasks', group: 'personal', rootLabel: 'tasks', available: true },
     { moduleType: 'PROJECT', label: 'Projects', group: 'personal', rootLabel: 'projects', available: true },

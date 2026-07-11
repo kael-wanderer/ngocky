@@ -5,6 +5,7 @@ export type ModuleGroupId = 'personal' | 'family' | 'hobby';
 
 export type AppSettings = {
     appName: string;
+    logoUrl: string | null;
     enabledGroups: ModuleGroupId[];
     setupCompleted: boolean;
 };
@@ -29,7 +30,7 @@ export function useSetupStatus(enabled = true) {
 export function useUpdateAppSettings() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (body: Partial<Pick<AppSettings, 'appName' | 'enabledGroups'>>) => api.put('/app-settings', body),
+        mutationFn: (body: Partial<Pick<AppSettings, 'appName' | 'logoUrl' | 'enabledGroups'>>) => api.put('/app-settings', body),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['app-settings'] });
         },

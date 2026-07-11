@@ -301,7 +301,9 @@ model User {
 model AppSetting {
   id                  Int      @id @default(1)
   appName             String   @default("NgốcKý")
+  logoUrl             String?
   enabledGroups       Json     @default("[\"personal\",\"family\",\"hobby\"]")
+  builtInPages        Json     @default("{}")
   setupCompleted      Boolean  @default(false)
   openaiKeyCiphertext String?
   openaiKeyLast4      String?

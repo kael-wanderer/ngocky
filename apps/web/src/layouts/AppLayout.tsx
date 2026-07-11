@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
-import { getEnabledGroups, getFeatureFlags, getMobileNavItems, isFeatureRouteEnabled, isPageTemplateEnabled, isRouteAccessible } from '../config/features';
+import { BUILT_IN_ROUTE_TEMPLATE_MAP, getEnabledGroups, getFeatureFlags, getMobileNavItems, isFeatureRouteEnabled, isPageTemplateEnabled, isRouteAccessible } from '../config/features';
 import { useAppSettings } from '../api/appSettings';
-import { usePages } from '../api/pages';
+import { usePages, usePageTemplates } from '../api/pages';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, Menu, X,
@@ -147,6 +147,7 @@ export default function AppLayout() {
     const featureFlags = getFeatureFlags(user);
     const { data: appSettings } = useAppSettings();
     const { data: pages = [] } = usePages();
+    const { data: pageTemplates = [] } = usePageTemplates();
     const appName = appSettings?.appName || 'NgốcKý';
     const enabledGroups = getEnabledGroups(appSettings?.enabledGroups);
 
@@ -159,8 +160,9 @@ export default function AppLayout() {
         const current = [...navItems, ...adminItems].find(
             (i) => i.to === location.pathname || (i.to !== '/' && location.pathname.startsWith(i.to))
         );
+        const builtIn = pageTemplates.find((template) => template.moduleType === BUILT_IN_ROUTE_TEMPLATE_MAP[current?.to ?? '']);
         const instance = pages.find((page) => location.pathname === `/p/${page.slug}`);
-        return instance?.name || current?.label || appName;
+        return instance?.name || builtIn?.name || current?.label || appName;
     })();
 
     useEffect(() => {
@@ -211,17 +213,27 @@ export default function AppLayout() {
         }));
     };
 
-    const resolveNavItem = (to: string) => [...navItems, ...adminItems].find((item) => item.to === to);
+    const resolveNavItem = (to: string) => {
+        const item = [...navItems, ...adminItems].find((candidate) => candidate.to === to);
+        if (!item) return undefined;
+        const template = pageTemplates.find((candidate) => candidate.moduleType === BUILT_IN_ROUTE_TEMPLATE_MAP[to]);
+        return template ? { ...item, label: template.name } : item;
+    };
+    const isBuiltInVisible = (to: string) => {
+        const moduleType = BUILT_IN_ROUTE_TEMPLATE_MAP[to];
+        return !moduleType || pageTemplates.find((template) => template.moduleType === moduleType)?.visible !== false;
+    };
     const visibleGroups = navGroups.filter((group) => {
         if (group.id === 'admin') return isAdmin;
         if (group.id === 'personal' || group.id === 'family' || group.id === 'hobby') {
             if (!enabledGroups.includes(group.id)) return false;
-            return group.items.some((to) => isRouteAccessible(to, user, appSettings?.enabledGroups)) || pages.some((page) => page.group === group.id && isPageTemplateEnabled(page.moduleType, featureFlags));
+            return group.items.some((to) => isBuiltInVisible(to) && isRouteAccessible(to, user, appSettings?.enabledGroups)) || pages.some((page) => page.group === group.id && isPageTemplateEnabled(page.moduleType, featureFlags));
         }
         return true;
     });
     const mobileItems = getMobileNavItems(user)
         .filter((to) => isRouteAccessible(to, user, appSettings?.enabledGroups))
+        .filter(isBuiltInVisible)
         .map((to) => resolveNavItem(to))
         .filter(Boolean) as Array<(typeof navItems)[number]>;
 
@@ -235,7 +247,7 @@ export default function AppLayout() {
             >
                 {/* Logo */}
                 <div className="flex items-center gap-3 px-5 h-16 border-b" style={{ borderColor: 'var(--color-border)' }}>
-                    <img src="/ladybug-logo.svg" alt={`${appName} logo`} className="w-8 h-8" />
+                    <img src={appSettings?.logoUrl || '/ladybug-logo.svg'} alt={`${appName} logo`} className="w-8 h-8 object-contain" />
                     {!collapsed && (
                         <span className="font-bold text-lg tracking-tight" style={{ color: 'var(--color-text)' }}>
                             {appName}
@@ -255,6 +267,7 @@ export default function AppLayout() {
                         const orderedPaths = groupOrder[group.id] || group.items;
                         const items = orderedPaths
                             .filter((to) => isFeatureRouteEnabled(to, featureFlags))
+                            .filter(isBuiltInVisible)
                             .filter((to) => isRouteAccessible(to, user, appSettings?.enabledGroups))
                             .map((to) => resolveNavItem(to))
                             .filter((item) => !item?.ownerOnly || user?.role === 'OWNER')
