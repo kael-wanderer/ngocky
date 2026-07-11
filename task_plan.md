@@ -7,4 +7,4 @@
 - [x] Task 17: Healthbook instance/file cleanup support, dedicated tests, availability, commit.
 - [x] Task 18: Keyboard instance support, dedicated tests, availability, commit.
 - [x] Task 19: Funds instance support, dedicated tests, availability, commit.
-- [ ] Run final full API/web verification and confirm clean push.
+- [x] Run final full API/web verification and confirm clean push.

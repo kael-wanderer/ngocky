@@ -13,6 +13,13 @@ const Projects = lazy(() => import('../pages/projects')) as ComponentType<Instan
 const Expenses = lazy(() => import('../pages/ExpensesPage')) as ComponentType<InstanceTemplateProps>;
 const Ideas = lazy(() => import('../pages/IdeasPage')) as ComponentType<InstanceTemplateProps>;
 const Learning = lazy(() => import('../pages/LearningPage')) as ComponentType<InstanceTemplateProps>;
+const Calendar = lazy(() => import('../pages/CalendarPage')) as ComponentType<InstanceTemplateProps>;
+const CaKeo = lazy(() => import('../pages/CaKeoPage')) as ComponentType<InstanceTemplateProps>;
+const Housework = lazy(() => import('../pages/HouseworkPage')) as ComponentType<InstanceTemplateProps>;
+const Assets = lazy(() => import('../pages/AssetsPage')) as ComponentType<InstanceTemplateProps>;
+const Healthbook = lazy(() => import('../pages/healthbook')) as ComponentType<InstanceTemplateProps>;
+const Keyboard = lazy(() => import('../pages/KeyboardPage')) as ComponentType<InstanceTemplateProps>;
+const Funds = lazy(() => import('../pages/FundsPage')) as ComponentType<InstanceTemplateProps>;
 
 export const INSTANCE_TEMPLATE_REGISTRY: Partial<Record<PageModuleType, ComponentType<InstanceTemplateProps>>> = {
     TASK: Tasks,
@@ -21,6 +28,13 @@ export const INSTANCE_TEMPLATE_REGISTRY: Partial<Record<PageModuleType, Componen
     GOAL: Goals,
     IDEA: Ideas,
     LEARNING: Learning,
+    CALENDAR: Calendar,
+    CAKEO: CaKeo,
+    HOUSEWORK: Housework,
+    ASSET: Assets,
+    HEALTHBOOK: Healthbook,
+    KEYBOARD: Keyboard,
+    FUND: Funds,
 };
 
 export function getInstanceTemplate(page: PageInstanceDto) {

@@ -10,3 +10,5 @@
 - Task 17 complete: Healthbook person instance isolation test and availability enabled.
 - Task 18 complete: Keyboard instance isolation and import test, availability enabled.
 - Task 19 complete: Funds transaction/import isolation test and availability enabled.
+- Final sequential Task 13-19 commits pushed; API and web verification passed.
+- Registered all Task 13-19 templates for custom instance rendering.
