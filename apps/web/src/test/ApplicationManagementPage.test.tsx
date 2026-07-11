@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-    create: vi.fn(), update: vi.fn(), remove: vi.fn(), updateSettings: vi.fn(),
+    create: vi.fn(), update: vi.fn(), remove: vi.fn(), updateSettings: vi.fn(), updateOverride: vi.fn(), resetOverride: vi.fn(),
     appSettings: { appName: 'NgốcKý', logoUrl: null, enabledGroups: ['personal', 'family', 'hobby'] },
     pages: [{ id: 'page-1', name: 'Work', slug: 'work', moduleType: 'TASK', group: 'personal' }],
     templates: [
@@ -24,6 +24,8 @@ vi.mock('../api/pages', () => ({
     useUpdatePage: () => ({ mutateAsync: mocks.update }),
     useUpdateBuiltInPage: () => ({ mutateAsync: mocks.update }),
     useDeletePage: () => ({ mutateAsync: mocks.remove }),
+    useUpdateTemplateOverride: () => ({ mutateAsync: mocks.updateOverride }),
+    useResetTemplateOverride: () => ({ mutateAsync: mocks.resetOverride }),
     getPageDeletePreview: () => Promise.resolve({ id: 'page-1', name: 'Work', moduleType: 'TASK', rootLabel: 'tasks', itemCount: 2 }),
 }));
 
@@ -32,15 +34,19 @@ import ApplicationManagementPage from '../pages/admin/ApplicationManagementPage'
 describe('ApplicationManagementPage', () => {
     beforeEach(() => {
         role = 'OWNER';
-        [mocks.create, mocks.update, mocks.remove, mocks.updateSettings].forEach((mock) => mock.mockReset());
+        [mocks.create, mocks.update, mocks.remove, mocks.updateSettings, mocks.updateOverride, mocks.resetOverride].forEach((mock) => mock.mockReset());
         mocks.create.mockResolvedValue({});
+        mocks.update.mockResolvedValue({});
+        mocks.updateOverride.mockResolvedValue({});
+        mocks.resetOverride.mockResolvedValue({});
     });
 
-    it('shows owner application controls and only available create templates', async () => {
+    it('shows owner application controls and lists unavailable templates as disabled', async () => {
         render(<ApplicationManagementPage />);
         expect(screen.getByLabelText(/app name/i)).toBeInTheDocument();
-        expect(screen.getByRole('option', { name: /tasks/i })).toBeInTheDocument();
-        expect(screen.queryByRole('option', { name: /ideas/i })).not.toBeInTheDocument();
+        expect(screen.getByRole('option', { name: /^tasks$/i })).toBeInTheDocument();
+        const ideasOption = screen.getByRole('option', { name: /ideas.*coming soon/i }) as HTMLOptionElement;
+        expect(ideasOption).toBeDisabled();
         expect(await screen.findByText(/2 items/i)).toBeInTheDocument();
     });
 
@@ -61,7 +67,7 @@ describe('ApplicationManagementPage', () => {
     it('filters templates after selecting a module', () => {
         render(<ApplicationManagementPage />);
         fireEvent.change(screen.getByLabelText(/^module$/i), { target: { value: 'family' } });
-        expect(screen.getByLabelText(/page template/i)).toBeDisabled();
+        expect(screen.getByLabelText(/^template$/i)).toBeDisabled();
         expect(screen.getByRole('option', { name: /no templates available yet/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /create/i })).toBeDisabled();
     });
@@ -76,5 +82,35 @@ describe('ApplicationManagementPage', () => {
         fireEvent.click(screen.getAllByTitle(/delete page/i).at(-1)!);
         await waitFor(() => expect(mocks.remove).toHaveBeenCalledWith('page-1'));
         prompt.mockRestore();
+    });
+
+    it('renames a page inline with Enter, without a prompt dialog', async () => {
+        const prompt = vi.spyOn(window, 'prompt');
+        render(<ApplicationManagementPage />);
+        fireEvent.click(screen.getAllByTitle(/rename page/i).at(-1)!);
+        const input = screen.getByDisplayValue('Work');
+        fireEvent.change(input, { target: { value: 'Home Tasks' } });
+        fireEvent.keyDown(input, { key: 'Enter' });
+        await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ id: 'page-1', body: { name: 'Home Tasks' } }));
+        expect(prompt).not.toHaveBeenCalled();
+        prompt.mockRestore();
+    });
+
+    it('cancels inline rename on Escape without saving', () => {
+        render(<ApplicationManagementPage />);
+        fireEvent.click(screen.getAllByTitle(/rename page/i).at(-1)!);
+        const input = screen.getByDisplayValue('Work');
+        fireEvent.change(input, { target: { value: 'Something else' } });
+        fireEvent.keyDown(input, { key: 'Escape' });
+        expect(mocks.update).not.toHaveBeenCalled();
+        expect(screen.getByText('Work')).toBeInTheDocument();
+    });
+
+    it('lets an OWNER move a template to another module group', async () => {
+        render(<ApplicationManagementPage />);
+        const groupSelects = screen.getAllByDisplayValue(/personal/i);
+        const templateGroupSelect = groupSelects[groupSelects.length - 1];
+        fireEvent.change(templateGroupSelect, { target: { value: 'hobby' } });
+        await waitFor(() => expect(mocks.updateOverride).toHaveBeenCalledWith({ moduleType: 'IDEA', body: { group: 'hobby' } }));
     });
 });

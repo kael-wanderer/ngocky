@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AppWindow, Camera, Plus, Trash2 } from 'lucide-react';
+import { AppWindow, Camera, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../../stores/auth';
 import { useAppSettings, useUpdateAppSettings, type ModuleGroupId } from '../../api/appSettings';
-import { getPageDeletePreview, useCreatePage, useDeletePage, usePages, usePageTemplates, useUpdateBuiltInPage, useUpdatePage, type PageInstanceDto, type PageModuleType, type PageTemplateDto } from '../../api/pages';
+import { getPageDeletePreview, useCreatePage, useDeletePage, usePages, usePageTemplates, useResetTemplateOverride, useUpdateBuiltInPage, useUpdatePage, useUpdateTemplateOverride, type PageInstanceDto, type PageModuleType, type PageTemplateDto } from '../../api/pages';
 import PageManagementTable from '../../components/PageManagementTable';
 
 function resizeLogo(file: File, maxSize = 256): Promise<string> {
@@ -34,6 +34,8 @@ export default function ApplicationManagementPage() {
     const updatePage = useUpdatePage();
     const updateBuiltInPage = useUpdateBuiltInPage();
     const deletePage = useDeletePage();
+    const updateTemplateOverride = useUpdateTemplateOverride();
+    const resetTemplateOverride = useResetTemplateOverride();
     const [appName, setAppName] = useState('NgốcKý');
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [enabledGroups, setEnabledGroups] = useState<ModuleGroupId[]>(['personal', 'family', 'hobby']);
@@ -43,7 +45,8 @@ export default function ApplicationManagementPage() {
     const [counts, setCounts] = useState<Record<string, number>>({});
     const [message, setMessage] = useState('');
 
-    const availableTemplates = useMemo(() => templates.filter((item) => item.available && item.group === moduleGroup), [moduleGroup, templates]);
+    const groupTemplates = useMemo(() => templates.filter((item) => item.group === moduleGroup), [moduleGroup, templates]);
+    const availableTemplates = useMemo(() => groupTemplates.filter((item) => item.available), [groupTemplates]);
     const selectedTemplate = availableTemplates.find((item) => item.moduleType === templateType) ?? availableTemplates[0];
 
     useEffect(() => {
@@ -63,9 +66,7 @@ export default function ApplicationManagementPage() {
             .catch(() => setCounts({}));
     }, [pages]);
 
-    const rename = async (page: PageInstanceDto) => {
-        const name = window.prompt('New page name', page.name)?.trim();
-        if (!name || name === page.name) return;
+    const rename = async (page: PageInstanceDto, name: string) => {
         await updatePage.mutateAsync({ id: page.id, body: { name } });
         setMessage('Page renamed. Its URL remains unchanged.');
     };
@@ -78,9 +79,7 @@ export default function ApplicationManagementPage() {
         setMessage('Page deleted.');
     };
 
-    const renameBuiltIn = async (template: PageTemplateDto) => {
-        const name = window.prompt('New page name', template.name)?.trim();
-        if (!name || name === template.name) return;
+    const renameBuiltIn = async (template: PageTemplateDto, name: string) => {
         await updateBuiltInPage.mutateAsync({ moduleType: template.moduleType, body: { name } });
         setMessage('Built-in page renamed.');
     };
@@ -115,13 +114,64 @@ export default function ApplicationManagementPage() {
             <section className="space-y-4">
                 <div><h3 className="font-semibold">Pages</h3><p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Rename or remove built-in pages, and create new pages from templates within a module.</p></div>
                 <form className="grid gap-3 sm:grid-cols-[minmax(150px,1fr)_minmax(180px,1fr)_minmax(220px,2fr)_auto]" onSubmit={async (event) => { event.preventDefault(); if (!selectedTemplate || !pageName.trim()) return; await createPage.mutateAsync({ name: pageName.trim(), moduleType: selectedTemplate.moduleType, group: moduleGroup }); setPageName(''); setMessage('Page created.'); }}>
-                    <select aria-label="Module" className="input capitalize" value={moduleGroup} onChange={(event) => setModuleGroup(event.target.value as ModuleGroupId)}><option value="personal">Personal</option><option value="family">Family</option><option value="hobby">Hobby</option></select>
-                    <select aria-label="Page template" className="input" value={selectedTemplate?.moduleType ?? ''} disabled={availableTemplates.length === 0} onChange={(event) => setTemplateType(event.target.value as PageModuleType)}>{availableTemplates.length === 0 && <option value="">No templates available yet</option>}{availableTemplates.map((template) => <option key={template.moduleType} value={template.moduleType}>{template.label}</option>)}</select>
-                    <input aria-label="Page name" className="input" placeholder="Page name" value={pageName} onChange={(event) => setPageName(event.target.value)} />
-                    <button className="btn-primary inline-flex items-center gap-2" disabled={!selectedTemplate || !pageName.trim() || createPage.isPending}><Plus className="w-4 h-4" />Create</button>
+                    <div><label className="label" htmlFor="page-module">Module</label><select id="page-module" className="input capitalize" value={moduleGroup} onChange={(event) => setModuleGroup(event.target.value as ModuleGroupId)}><option value="personal">Personal</option><option value="family">Family</option><option value="hobby">Hobby</option></select></div>
+                    <div><label className="label" htmlFor="page-template">Template</label><select id="page-template" className="input" value={selectedTemplate?.moduleType ?? ''} disabled={groupTemplates.length === 0} onChange={(event) => setTemplateType(event.target.value as PageModuleType)}>{groupTemplates.length === 0 && <option value="">No templates available yet</option>}{groupTemplates.map((template) => <option key={template.moduleType} value={template.moduleType} disabled={!template.available}>{template.label}{!template.available && ' (Coming soon)'}</option>)}</select></div>
+                    <div><label className="label" htmlFor="page-name">Page name</label><input id="page-name" className="input" placeholder="Page name" value={pageName} onChange={(event) => setPageName(event.target.value)} /></div>
+                    <button className="btn-primary inline-flex items-center gap-2 self-end" disabled={!selectedTemplate || !pageName.trim() || createPage.isPending}><Plus className="w-4 h-4" />Create</button>
                 </form>
                 <PageManagementTable templates={templates} pages={pages} counts={counts} onRename={rename} onDelete={remove} onRenameBuiltIn={renameBuiltIn} onToggleBuiltIn={toggleBuiltIn} />
             </section>
+
+            {isOwner && <section className="space-y-4 border-t pt-6" style={{ borderColor: 'var(--color-border)' }}>
+                <div><h3 className="font-semibold">Template management</h3><p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Rename a template's display label or move it to a different module for this installation.</p></div>
+                <TemplateOverrideTable
+                    templates={templates}
+                    onSave={async (template, changes) => { await updateTemplateOverride.mutateAsync({ moduleType: template.moduleType, body: changes }); setMessage(`${template.label} updated.`); }}
+                    onReset={async (template) => { await resetTemplateOverride.mutateAsync(template.moduleType); setMessage(`${template.label} reset to default.`); }}
+                />
+            </section>}
+        </div>
+    );
+}
+
+function TemplateOverrideTable({ templates, onSave, onReset }: {
+    templates: PageTemplateDto[];
+    onSave: (template: PageTemplateDto, changes: { label?: string; group?: ModuleGroupId }) => void;
+    onReset: (template: PageTemplateDto) => void;
+}) {
+    const [labelDrafts, setLabelDrafts] = useState<Record<string, string>>({});
+
+    return (
+        <div className="overflow-x-auto border rounded-lg" style={{ borderColor: 'var(--color-border)' }}>
+            <table className="w-full text-sm">
+                <thead style={{ backgroundColor: 'var(--color-bg)' }}><tr className="text-left">
+                    <th className="p-3">Template label</th><th className="p-3">Module</th><th className="p-3 w-24">Actions</th>
+                </tr></thead>
+                <tbody>
+                    {templates.map((template) => {
+                        const draft = labelDrafts[template.moduleType] ?? template.label;
+                        return (
+                            <tr key={template.moduleType} className="border-t" style={{ borderColor: 'var(--color-border)' }}>
+                                <td className="p-3">
+                                    <input
+                                        className="input py-1"
+                                        value={draft}
+                                        onChange={(event) => setLabelDrafts((current) => ({ ...current, [template.moduleType]: event.target.value }))}
+                                        onBlur={() => { const trimmed = draft.trim(); if (trimmed && trimmed !== template.label) onSave(template, { label: trimmed }); }}
+                                        onKeyDown={(event) => { if (event.key === 'Enter') (event.target as HTMLInputElement).blur(); }}
+                                    />
+                                </td>
+                                <td className="p-3 capitalize">
+                                    <select className="input capitalize" value={template.group} onChange={(event) => onSave(template, { group: event.target.value as ModuleGroupId })}>
+                                        <option value="personal">Personal</option><option value="family">Family</option><option value="hobby">Hobby</option>
+                                    </select>
+                                </td>
+                                <td className="p-3"><button type="button" title="Reset to default" className="p-2 rounded hover:bg-gray-50" onClick={() => onReset(template)}><RotateCcw className="w-4 h-4" /></button></td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
         </div>
     );
 }

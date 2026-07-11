@@ -75,6 +75,28 @@ export function useUpdateBuiltInPage() {
     });
 }
 
+export function useUpdateTemplateOverride() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ moduleType, body }: { moduleType: PageModuleType; body: { label?: string; group?: ModuleGroupId } }) => api.put(`/pages/templates/${moduleType}/override`, body),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['page-templates'] });
+            queryClient.invalidateQueries({ queryKey: ['pages'] });
+        },
+    });
+}
+
+export function useResetTemplateOverride() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (moduleType: PageModuleType) => api.delete(`/pages/templates/${moduleType}/override`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['page-templates'] });
+            queryClient.invalidateQueries({ queryKey: ['pages'] });
+        },
+    });
+}
+
 export function useDeletePage() {
     const queryClient = useQueryClient();
     return useMutation({
