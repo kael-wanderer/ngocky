@@ -35,7 +35,11 @@ describe('Auth API', () => {
         expect(res.status).toBe(200);
         expect(res.body.data).toHaveProperty('accessToken');
         // Refresh token is delivered as an httpOnly cookie, not in the body
-        expect(res.headers['set-cookie']!.toString()).toContain('ngocky_refresh_token=');
+        const cookie = res.headers['set-cookie']!.toString();
+        expect(cookie).toContain('ngocky_refresh_token=');
+        expect(cookie).toContain('HttpOnly');
+        expect(cookie).toContain('Path=/api/auth');
+        expect(cookie).toContain('SameSite=Lax');
         expect(res.body.data.user.email).toBe(testUser.email);
     });
 

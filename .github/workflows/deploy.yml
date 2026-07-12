@@ -107,7 +107,7 @@ jobs:
             OWNER_NAME="${{ secrets.OWNER_NAME }}"
             OWNER_EMAIL="${{ secrets.OWNER_EMAIL }}"
             OWNER_PASSWORD="${{ secrets.OWNER_PASSWORD }}"
-            CORS_ORIGIN=https://ngocky.kael.io.vn
+            CORS_ORIGIN=https://ngocky.kael.io.vn,tauri://localhost,http://tauri.localhost
             VITE_API_URL=https://api.ngocky.kael.io.vn
             ASSISTANT_API_KEY=${{ secrets.ASSISTANT_API_KEY }}
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}

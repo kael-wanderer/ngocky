@@ -15,7 +15,7 @@ const setRefreshTokenCookie = (res: Response, token: string) => {
     res.cookie(REFRESH_TOKEN_COOKIE, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         path: '/api/auth', // Only sent to auth routes
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });

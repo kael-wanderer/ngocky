@@ -53,3 +53,8 @@ if (!parsed.success) {
 }
 
 export const config = parsed.data;
+
+export const corsOrigins = config.CORS_ORIGIN
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);

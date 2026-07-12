@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { config } from './config/env';
+import { config, corsOrigins } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
 
 // Import routes
@@ -36,7 +36,7 @@ import healthbookRoutes from './routes/healthbook';
 const app = express();
 
 // Middleware
-app.use(cors({ origin: config.CORS_ORIGIN, credentials: true }));
+app.use(cors({ origin: corsOrigins, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
