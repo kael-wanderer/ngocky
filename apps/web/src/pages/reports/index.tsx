@@ -235,6 +235,67 @@ function getRangeForPreset(preset: Exclude<ReportTimeRange, 'CUSTOM'>) {
     }
 }
 
+type DateRangePreset = 'THIS_MONTH' | 'LAST_MONTH' | 'LAST_3_MONTHS' | 'THIS_YEAR';
+
+const dateRangePresetOptions: Array<{ value: DateRangePreset; label: string }> = [
+    { value: 'THIS_MONTH', label: 'This month' },
+    { value: 'LAST_MONTH', label: 'Last month' },
+    { value: 'LAST_3_MONTHS', label: 'Last 3 months' },
+    { value: 'THIS_YEAR', label: 'This year' },
+];
+
+function formatDateInput(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function getDateRangePreset(preset: DateRangePreset) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let start: Date;
+    let end = today;
+
+    switch (preset) {
+        case 'LAST_MONTH':
+            start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            end = new Date(now.getFullYear(), now.getMonth(), 0);
+            break;
+        case 'LAST_3_MONTHS':
+            start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+            break;
+        case 'THIS_YEAR':
+            start = new Date(now.getFullYear(), 0, 1);
+            break;
+        case 'THIS_MONTH':
+        default:
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+    }
+
+    return { dateFrom: formatDateInput(start), dateTo: formatDateInput(end) };
+}
+
+function DateRangePresetButtons({ onSelect }: { onSelect: (range: { dateFrom: string; dateTo: string }) => void }) {
+    return (
+        <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold" style={{ color: 'var(--color-text-secondary)' }}>Presets:</span>
+            {dateRangePresetOptions.map((option) => (
+                <button
+                    key={option.value}
+                    type="button"
+                    className="rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                    onClick={() => onSelect(getDateRangePreset(option.value))}
+                >
+                    {option.label}
+                </button>
+            ))}
+        </div>
+    );
+}
+
 function formatTableValue(value: unknown) {
     if (value === null || value === undefined || value === '') return '—';
     if (typeof value === 'number') return value.toLocaleString('en-US');
@@ -1551,14 +1612,23 @@ export default function ReportsPage() {
                     </div>
                 </div>
                 {isSingleExpenseView && expenseFilters.timePreset === 'CUSTOM' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-3">
+                        <DateRangePresetButtons onSelect={(range) => setExpenseFilters((current) => ({ ...current, timePreset: 'CUSTOM', ...range }))} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input type="date" className="input text-sm" value={expenseFilters.dateFrom} onChange={(e) => setExpenseFilters((current) => ({ ...current, dateFrom: e.target.value }))} />
                         <input type="date" className="input text-sm" value={expenseFilters.dateTo} min={expenseFilters.dateFrom || undefined} onChange={(e) => setExpenseFilters((current) => ({ ...current, dateTo: e.target.value }))} />
+                        </div>
                     </div>
                 ) : reportTimeRange === 'CUSTOM' && !isSingleTaskView && !isSingleGoalView && !isSingleExpenseView && !isSingleHouseworkView && !isSingleCakeoView && !isSingleKeyboardView && !isSingleFundsView && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input type="date" className="input text-sm" value={filters.dateFrom} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} />
-                        <input type="date" className="input text-sm" value={filters.dateTo} min={filters.dateFrom || undefined} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
+                    <div className="space-y-3">
+                        <DateRangePresetButtons onSelect={(range) => {
+                            setReportTimeRange('CUSTOM');
+                            setFilters((current) => ({ ...current, ...range }));
+                        }} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input type="date" className="input text-sm" value={filters.dateFrom} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} />
+                            <input type="date" className="input text-sm" value={filters.dateTo} min={filters.dateFrom || undefined} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
+                        </div>
                     </div>
                 )}
             </div>
