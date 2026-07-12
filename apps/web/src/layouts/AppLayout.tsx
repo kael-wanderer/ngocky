@@ -10,6 +10,7 @@ import {
     ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, Coins, Keyboard, Baby, HeartPulse, Bot, AppWindow
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { openExternal } from '../utils/externalLinks';
 
 type NavigationItem = { to: string; icon: LucideIcon; label: string; ownerOnly?: boolean };
 
@@ -205,6 +206,22 @@ export default function AppLayout() {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [showAccountMenu]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !(window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__) return;
+
+        const handleExternalClick = (event: MouseEvent) => {
+            const anchor = (event.target as HTMLElement).closest('a');
+            if (!anchor || anchor.target !== '_blank') return;
+            const href = anchor.href;
+            if (!/^https?:$/.test(new URL(href).protocol)) return;
+            event.preventDefault();
+            void openExternal(href);
+        };
+
+        document.addEventListener('click', handleExternalClick, true);
+        return () => document.removeEventListener('click', handleExternalClick, true);
+    }, []);
 
     const toggleGroup = (groupId: string) => {
         setGroupOpen((current) => ({

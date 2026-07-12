@@ -9,6 +9,7 @@ import {
     LayoutGrid, List, Filter, Bell, Copy, Pin,
 } from 'lucide-react';
 import api from '../../api/client';
+import { openExternal } from '../../utils/externalLinks';
 import { useAuthStore } from '../../stores/auth';
 import { getFundsDateRange } from '../../config/fundsFilters';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../../components/NotificationFields';
@@ -228,7 +229,7 @@ function FileItem({ file, kind, onDelete }: { file: HealthFile; kind: 'person' |
             const res = await api.get(`/healthbook/files/${kind}/${file.id}`, { responseType: 'blob' });
             const url = URL.createObjectURL(res.data);
             if (!isImage) {
-                window.open(url, '_blank');
+                void openExternal(url);
             } else {
                 setBlobUrl(url);
                 setViewing(true);
