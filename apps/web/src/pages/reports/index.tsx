@@ -534,6 +534,11 @@ export default function ReportsPage() {
         queryKey: ['reports', 'expense-trend', expenseTrendQuery],
         queryFn: async () => (await api.get(`/reports/expense-summary?${expenseTrendQuery}`)).data.data,
     });
+    const expenseComparisonQuery = buildReportPageQuery(baseQuery, 'EXPENSE', selectedReportPage);
+    const { data: expenseComparison } = useQuery({
+        queryKey: ['reports', 'expense-month-comparison', expenseComparisonQuery],
+        queryFn: async () => (await api.get(`/reports/expense-month-comparison?${expenseComparisonQuery}`)).data.data,
+    });
 
     const { data: assetOverview } = useQuery({
         queryKey: ['reports', 'asset-overview', baseQuery],
@@ -1923,6 +1928,32 @@ export default function ReportsPage() {
 
             {selectedTabs.includes('expenses') && (
                 <div className="space-y-6">
+                    {showTables && expenseComparison && (
+                        <div className="card p-5">
+                            <div className="flex items-start justify-between gap-4 mb-4">
+                                <div>
+                                    <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Month-over-month comparison</h3>
+                                    <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Current month vs previous month by category</p>
+                                </div>
+                                <span className="text-sm font-semibold" style={{ color: expenseComparison.overallPercentChange >= 0 ? '#dc2626' : '#059669' }}>
+                                    {expenseComparison.overallPercentChange >= 0 ? '+' : ''}{Number(expenseComparison.overallPercentChange || 0).toFixed(1)}%
+                                </span>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead><tr className="border-b" style={{ borderColor: 'var(--color-border)' }}><th className="text-left py-2">Category</th><th className="text-right py-2">Current</th><th className="text-right py-2">Previous</th><th className="text-right py-2">Change</th></tr></thead>
+                                    <tbody>{(expenseComparison.categories || []).map((item: any) => (
+                                        <tr key={item.category} className="border-b last:border-0" style={{ borderColor: 'var(--color-border)' }}>
+                                            <td className="py-2">{item.category}</td>
+                                            <td className="py-2 text-right">{formatVND(item.current)}</td>
+                                            <td className="py-2 text-right">{formatVND(item.previous)}</td>
+                                            <td className="py-2 text-right font-medium" style={{ color: item.percentChange >= 0 ? '#dc2626' : '#059669' }}>{item.percentChange >= 0 ? '+' : ''}{Number(item.percentChange || 0).toFixed(1)}%</td>
+                                        </tr>
+                                    ))}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                     {showCharts && (
                         <div className="grid gap-6 md:grid-cols-2">
                             <div className="card p-5">

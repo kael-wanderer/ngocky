@@ -1255,6 +1255,44 @@ router.get('/expense-summary', async (req: Request, res: Response, next: NextFun
     } catch (err) { next(err); }
 });
 
+router.get('/expense-month-comparison', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const instanceId = await validateReportInstance(req, 'EXPENSE');
+        const now = new Date();
+        const currentStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const previousStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const expenses = await prisma.expense.findMany({
+            where: {
+                instanceId,
+                OR: [{ userId: req.user!.userId }, { isShared: true }],
+                date: { gte: previousStart, lt: new Date(now.getFullYear(), now.getMonth() + 1, 1) },
+            },
+            select: { category: true, amount: true, date: true },
+        });
+
+        const buckets = new Map<string, { current: number; previous: number }>();
+        for (const expense of expenses) {
+            const category = expense.category || 'Uncategorized';
+            const bucket = buckets.get(category) || { current: 0, previous: 0 };
+            if (expense.date >= currentStart) bucket.current += expense.amount;
+            else bucket.previous += expense.amount;
+            buckets.set(category, bucket);
+        }
+        const percentChange = (current: number, previous: number) => previous === 0 ? (current === 0 ? 0 : 100) : ((current - previous) / previous) * 100;
+        const categories = Array.from(buckets.entries())
+            .map(([category, values]) => ({ category, ...values, percentChange: percentChange(values.current, values.previous) }))
+            .sort((a, b) => (b.current + b.previous) - (a.current + a.previous));
+        const currentTotal = categories.reduce((sum, item) => sum + item.current, 0);
+        const previousTotal = categories.reduce((sum, item) => sum + item.previous, 0);
+        sendSuccess(res, {
+            currentMonth: { start: currentStart, total: currentTotal },
+            previousMonth: { start: previousStart, total: previousTotal },
+            overallPercentChange: percentChange(currentTotal, previousTotal),
+            categories,
+        });
+    } catch (err) { next(err); }
+});
+
 // CSV export for tasks
 router.get('/export/tasks', async (req: Request, res: Response, next: NextFunction) => {
     try {
