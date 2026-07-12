@@ -8,7 +8,7 @@ import {
     FolderKanban, Home, Calendar, Wallet,
     AlertTriangle, Target, CheckCircle2, Pin, Package, ChevronDown,
     Lightbulb, Trophy, Microwave, GraduationCap,
-    Filter, Keyboard, HeartPulse, TrendingUp,
+    Filter, Keyboard, HeartPulse, TrendingUp, ArrowUp, ArrowDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -129,6 +129,17 @@ export default function DashboardPage() {
     };
     const uncheckAllGroup = (items: Category[]) => {
         setCategories(prev => prev.filter(c => !items.includes(c)));
+    };
+
+    const moveCategory = (category: Category, direction: -1 | 1) => {
+        setCategories((current) => {
+            const index = current.indexOf(category);
+            const nextIndex = index + direction;
+            if (index < 0 || nextIndex < 0 || nextIndex >= current.length) return current;
+            const next = [...current];
+            [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+            return next;
+        });
     };
 
     const scrollToDashboardSection = (section: string) => {
@@ -614,10 +625,16 @@ export default function DashboardPage() {
                                                 </div>
                                             </div>
                                             {group.items.map(c => (
-                                                <label key={c} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer text-sm">
-                                                    <input type="checkbox" checked={categories.includes(c)} onChange={() => toggleCategory(c)} />
-                                                    <span style={{ color: 'var(--color-text)' }}>{categoryLabels[c]}</span>
-                                                </label>
+                                                <div key={c} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 text-sm">
+                                                    <label className="flex items-center gap-2 cursor-pointer min-w-0 flex-1">
+                                                        <input type="checkbox" checked={categories.includes(c)} onChange={() => toggleCategory(c)} />
+                                                        <span className="truncate" style={{ color: 'var(--color-text)' }}>{categoryLabels[c]}</span>
+                                                    </label>
+                                                    <div className="flex items-center gap-0.5">
+                                                        <button type="button" className="p-1 rounded hover:bg-gray-200 disabled:opacity-30" title={`Move ${categoryLabels[c]} up`} disabled={!categories.includes(c) || categories.indexOf(c) === 0} onClick={() => moveCategory(c, -1)}><ArrowUp className="w-3 h-3" /></button>
+                                                        <button type="button" className="p-1 rounded hover:bg-gray-200 disabled:opacity-30" title={`Move ${categoryLabels[c]} down`} disabled={!categories.includes(c) || categories.indexOf(c) === categories.length - 1} onClick={() => moveCategory(c, 1)}><ArrowDown className="w-3 h-3" /></button>
+                                                    </div>
+                                                </div>
                                             ))}
                                         </div>
                                     ))}
