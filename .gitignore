@@ -10,3 +10,5 @@ coverage/
 apps/api/prisma/test.db*
 apps/api/src/test/client/
 apps/api/prisma/schema.test.prisma
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
