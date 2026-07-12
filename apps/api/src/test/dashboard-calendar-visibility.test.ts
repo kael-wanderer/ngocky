@@ -37,13 +37,12 @@ describe('Dashboard calendar visibility', () => {
             });
 
         const accessToken = loginRes.body.data.accessToken;
+        // Event 60s from now: always inside the current Monday-Sunday dashboard week,
+        // unlike "tomorrow 22:00" which falls into next week when the test runs on Sunday.
         const now = new Date();
-        const eventStart = new Date(now);
-        eventStart.setDate(now.getDate() + 1);
-        eventStart.setHours(22, 0, 0, 0);
+        const eventStart = new Date(now.getTime() + 60_000);
 
-        const eventEnd = new Date(eventStart);
-        eventEnd.setMinutes(30);
+        const eventEnd = new Date(eventStart.getTime() + 30 * 60_000);
 
         const event = await prisma.calendarEvent.create({
             data: {
