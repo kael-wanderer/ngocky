@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
 import api from '../api/client';
+import { getApiBaseUrl } from '../api/client';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
 import { useAppSettings } from '../api/appSettings';
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
+    const isDesktop = typeof window !== 'undefined' && Boolean((window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__);
+    const [savedEmail] = useState(() => typeof window !== 'undefined' ? window.localStorage?.getItem('ngocky_saved_email') || '' : '');
+    const [email, setEmail] = useState(savedEmail);
     const [password, setPassword] = useState('');
     const [mfaCode, setMfaCode] = useState('');
     const [mfaToken, setMfaToken] = useState('');
@@ -14,10 +17,34 @@ export default function LoginPage() {
     const [showPw, setShowPw] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [rememberMe, setRememberMe] = useState(Boolean(savedEmail));
+    const [advancedOpen, setAdvancedOpen] = useState(false);
+    const [serverUrl, setServerUrl] = useState(() => getApiBaseUrl());
+    const [serverUrlError, setServerUrlError] = useState('');
     const { login } = useAuthStore();
     const navigate = useNavigate();
     const { data: appSettings } = useAppSettings();
     const appName = appSettings?.appName || 'NgốcKý';
+
+    const saveRememberedEmail = (nextEmail: string) => {
+        if (rememberMe) {
+            window.localStorage?.setItem('ngocky_saved_email', nextEmail.trim());
+        } else {
+            window.localStorage?.removeItem('ngocky_saved_email');
+        }
+    };
+
+    const saveServerUrl = () => {
+        const trimmed = serverUrl.trim();
+        if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+            setServerUrlError('Server URL must start with http:// or https://.');
+            return;
+        }
+        setServerUrlError('');
+        if (trimmed) window.localStorage?.setItem('ngocky_api_url', trimmed);
+        else window.localStorage?.removeItem('ngocky_api_url');
+        window.location.reload();
+    };
 
     const handlePasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -32,6 +59,7 @@ export default function LoginPage() {
                 setMfaCode('');
                 return;
             }
+            saveRememberedEmail(user.email || email);
             login(user, accessToken);
             navigate('/');
         } catch (err: any) {
@@ -48,6 +76,7 @@ export default function LoginPage() {
         try {
             const res = await api.post('/auth/verify-mfa', { mfaToken, code: mfaCode });
             const { user, accessToken } = res.data.data;
+            saveRememberedEmail(user.email || mfaUserEmail || email);
             login(user, accessToken);
             navigate('/');
         } catch (err: any) {
@@ -116,6 +145,47 @@ export default function LoginPage() {
                                     </button>
                                 </div>
                             </div>
+
+                            <label className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                />
+                                Remember me
+                            </label>
+
+                            {isDesktop && (
+                                <div className="border-t pt-4" style={{ borderColor: 'var(--color-border)' }}>
+                                    <button
+                                        type="button"
+                                        className="text-sm font-semibold"
+                                        style={{ color: 'var(--color-primary)' }}
+                                        onClick={() => setAdvancedOpen((current) => !current)}
+                                    >
+                                        {advancedOpen ? 'Hide advanced settings' : 'Advanced / Server URL'}
+                                    </button>
+                                    {advancedOpen && (
+                                        <div className="mt-3 space-y-2">
+                                            <label htmlFor="server-url" className="label">Server URL</label>
+                                            <input
+                                                id="server-url"
+                                                type="url"
+                                                className="input"
+                                                value={serverUrl}
+                                                onChange={(e) => {
+                                                    setServerUrl(e.target.value);
+                                                    if (serverUrlError) setServerUrlError('');
+                                                }}
+                                                onBlur={saveServerUrl}
+                                                placeholder="https://api.example.com"
+                                            />
+                                            {serverUrlError && <p className="text-sm text-red-600">{serverUrlError}</p>}
+                                            <button type="button" className="btn-secondary text-sm" onClick={saveServerUrl}>Save server URL</button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <button
                                 type="submit"

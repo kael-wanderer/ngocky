@@ -1,10 +1,16 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
 const AUTH_BYPASS_PATHS = ['/auth/login', '/auth/verify-mfa', '/auth/refresh', '/auth/logout'];
 
+export function getApiBaseUrl() {
+    if (typeof window !== 'undefined') {
+        return window.localStorage?.getItem('ngocky_api_url')?.trim() || import.meta.env.VITE_API_URL || '/api';
+    }
+    return import.meta.env.VITE_API_URL || '/api';
+}
+
 const api = axios.create({
-    baseURL: API_URL,
+    baseURL: getApiBaseUrl(),
     headers: { 'Content-Type': 'application/json' },
     withCredentials: true, // Enable cookies
 });
@@ -30,7 +36,7 @@ api.interceptors.response.use(
             original._retry = true;
             try {
                 // refreshToken is now in HTTP-only cookie
-                const res = await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+                const res = await axios.post(`${getApiBaseUrl()}/auth/refresh`, {}, { withCredentials: true });
                 const { accessToken } = res.data.data;
                 localStorage.setItem('ngocky_token', accessToken);
                 original.headers.Authorization = `Bearer ${accessToken}`;

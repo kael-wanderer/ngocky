@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import LoginPage from '../pages/LoginPage';
 
 vi.mock('../api/client', () => ({
+    getApiBaseUrl: vi.fn(() => '/api'),
     default: {
         get: vi.fn(async () => ({ data: { appName: 'NgốcKý', enabledGroups: ['personal', 'family', 'hobby'], setupCompleted: true } })),
         post: vi.fn(),
