@@ -20,6 +20,7 @@ const AssetsPage = lazy(() => import('./pages/AssetsPage'));
 const LearningPage = lazy(() => import('./pages/LearningPage'));
 const IdeasPage = lazy(() => import('./pages/IdeasPage'));
 const KeyboardPage = lazy(() => import('./pages/KeyboardPage'));
+const FoodPage = lazy(() => import('./pages/FoodPage'));
 const CaKeoPage = lazy(() => import('./pages/CaKeoPage'));
 const HealthbookPage = lazy(() => import('./pages/healthbook'));
 const AlertsPage = lazy(() => import('./pages/AlertsPage'));
@@ -109,6 +110,7 @@ function AppRoutes() {
                         <Route path="learning" element={<FeatureRoute route="/learning"><LearningPage /></FeatureRoute>} />
                         <Route path="ideas" element={<FeatureRoute route="/ideas"><IdeasPage /></FeatureRoute>} />
                         <Route path="keyboard" element={<FeatureRoute route="/keyboard"><KeyboardPage /></FeatureRoute>} />
+                        <Route path="food" element={<FeatureRoute route="/food"><FoodPage /></FeatureRoute>} />
                         <Route path="cakeo" element={<FeatureRoute route="/cakeo"><CaKeoPage /></FeatureRoute>} />
                         <Route path="healthbook" element={<FeatureRoute route="/healthbook"><HealthbookPage /></FeatureRoute>} />
                         <Route path="healthbook/:personId" element={<FeatureRoute route="/healthbook"><HealthbookPage /></FeatureRoute>} />

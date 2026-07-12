@@ -19,6 +19,7 @@ const Housework = lazy(() => import('../pages/HouseworkPage')) as ComponentType<
 const Assets = lazy(() => import('../pages/AssetsPage')) as ComponentType<InstanceTemplateProps>;
 const Healthbook = lazy(() => import('../pages/healthbook')) as ComponentType<InstanceTemplateProps>;
 const Keyboard = lazy(() => import('../pages/KeyboardPage')) as ComponentType<InstanceTemplateProps>;
+const Food = lazy(() => import('../pages/FoodPage')) as ComponentType<InstanceTemplateProps>;
 const Funds = lazy(() => import('../pages/FundsPage')) as ComponentType<InstanceTemplateProps>;
 
 export const INSTANCE_TEMPLATE_REGISTRY: Partial<Record<PageModuleType, ComponentType<InstanceTemplateProps>>> = {
@@ -34,6 +35,7 @@ export const INSTANCE_TEMPLATE_REGISTRY: Partial<Record<PageModuleType, Componen
     ASSET: Assets,
     HEALTHBOOK: Healthbook,
     KEYBOARD: Keyboard,
+    FOODPLACE: Food,
     FUND: Funds,
 };
 

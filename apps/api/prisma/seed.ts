@@ -27,6 +27,24 @@ async function main() {
     });
     console.log(`✅ Owner: ${owner.email}`);
 
+    const appSettings = await prisma.appSetting.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
+    const foodOptions = appSettings.foodOptions && typeof appSettings.foodOptions === 'object' && !Array.isArray(appSettings.foodOptions)
+        ? appSettings.foodOptions as { tags?: unknown[]; types?: unknown[]; distances?: unknown[] }
+        : {};
+    if (!(foodOptions.tags?.length || foodOptions.types?.length || foodOptions.distances?.length)) {
+        await prisma.appSetting.update({
+            where: { id: 1 },
+            data: {
+                foodOptions: {
+                    tags: ['All day', 'Breakfast', 'Dinner', 'Dessert'],
+                    types: ['Bún', 'Cab', 'Cơm', 'Meat', 'Light', 'Beer', 'General', 'Cuốn'],
+                    distances: ['Nearby', 'Not far', 'Far'],
+                },
+            },
+        });
+        console.log('✅ Food menu options seeded');
+    }
+
     let admin = await prisma.user.findUnique({ where: { email: 'admin@ngocky.local' } });
     let user = await prisma.user.findUnique({ where: { email: 'user@ngocky.local' } });
 

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from './client';
 import type { ModuleGroupId } from './appSettings';
 
-export type PageModuleType = 'TASK' | 'PROJECT' | 'EXPENSE' | 'GOAL' | 'IDEA' | 'CALENDAR' | 'CAKEO' | 'HOUSEWORK' | 'ASSET' | 'HEALTHBOOK' | 'KEYBOARD' | 'FUND' | 'LEARNING';
+export type PageModuleType = 'TASK' | 'PROJECT' | 'EXPENSE' | 'GOAL' | 'IDEA' | 'CALENDAR' | 'CAKEO' | 'HOUSEWORK' | 'ASSET' | 'HEALTHBOOK' | 'KEYBOARD' | 'FOODPLACE' | 'FUND' | 'LEARNING';
 
 export type PageTemplateDto = {
     moduleType: PageModuleType;
@@ -29,6 +29,32 @@ export type PageInstanceDto = {
     moduleType: PageModuleType;
     group: ModuleGroupId;
     icon?: string | null;
+};
+
+export type FoodPlace = {
+    id: string;
+    name: string;
+    tag: string | null;
+    type: string | null;
+    distance: string | null;
+    rating: number | null;
+    mapLink: string | null;
+    note: string | null;
+    isShared: boolean;
+    ownerId: string;
+    sortOrder: number;
+};
+
+export type FoodOptions = { tags: string[]; types: string[]; distances: string[] };
+
+export const foods = {
+    list: (params: { instanceId?: string; tag?: string; type?: string; distance?: string } = {}) => api.get('/foods', { params: { ...params, page: 1, limit: 1000 } }),
+    create: (body: Partial<FoodPlace> & { name: string; instanceId?: string }) => api.post('/foods', body),
+    update: (id: string, body: Partial<FoodPlace>, instanceId?: string) => api.patch(`/foods/${id}`, body, { params: instanceId ? { instanceId } : {} }),
+    remove: (id: string, instanceId?: string) => api.delete(`/foods/${id}`, { params: instanceId ? { instanceId } : {} }),
+    import: (items: Array<Partial<FoodPlace>>, instanceId?: string) => api.post('/foods/import', { items, instanceId }, { params: instanceId ? { instanceId } : {} }),
+    getOptions: () => api.get<FoodOptions>('/app-settings/food-options'),
+    updateOptions: (body: Partial<FoodOptions>) => api.patch<FoodOptions>('/app-settings/food-options', body),
 };
 
 export function usePages() {

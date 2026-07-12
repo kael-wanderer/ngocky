@@ -6,7 +6,9 @@ export default defineConfig({
         globals: true,
         environment: 'node',
         setupFiles: ['./src/test/setup.ts'],
+        pool: 'threads',
+        maxWorkers: 1,
+        minWorkers: 1,
         fileParallelism: false,
-        //threads: false, // SQLite doesn't handle multiple connections well in dev
     },
 });

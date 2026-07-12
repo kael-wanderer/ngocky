@@ -46,6 +46,7 @@ export async function countPageRoots(id: string, moduleType: PageModuleType): Pr
         case 'ASSET': return prisma.asset.count({ where: { instanceId: id } });
         case 'HEALTHBOOK': return prisma.healthPerson.count({ where: { instanceId: id } });
         case 'KEYBOARD': return prisma.keyboard.count({ where: { instanceId: id } });
+        case 'FOODPLACE': return prisma.foodPlace.count({ where: { instanceId: id } });
         case 'FUND': return prisma.fundTransaction.count({ where: { instanceId: id } });
         case 'LEARNING': return prisma.learningTopic.count({ where: { instanceId: id } });
     }

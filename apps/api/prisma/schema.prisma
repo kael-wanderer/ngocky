@@ -217,6 +217,7 @@ enum PageModuleType {
   ASSET
   HEALTHBOOK
   KEYBOARD
+  FOODPLACE
   FUND
   LEARNING
 }
@@ -257,6 +258,7 @@ model User {
   featureAssets       Boolean             @default(true)
   featureCalendar     Boolean             @default(true)
   featureKeyboard     Boolean             @default(true)
+  featureFood         Boolean             @default(true)
   featureFunds        Boolean             @default(true)
   featureCaKeo        Boolean             @default(true)
   featureHealthbook   Boolean             @default(true)
@@ -291,6 +293,7 @@ model User {
   assistantActionLogs     AssistantActionLog[]
   assistantPendingActions AssistantPendingAction[]
   keyboards               Keyboard[]
+  foodPlaces              FoodPlace[]
   cakeos                  CaKeo[]                  @relation("CaKeoOwner")
   assignedCaKeos          CaKeo[]                  @relation("CaKeoAssigner")
   healthPersons           HealthPerson[]
@@ -305,6 +308,7 @@ model AppSetting {
   enabledGroups       Json     @default("[\"personal\",\"family\",\"hobby\"]")
   builtInPages        Json     @default("{}")
   templateOverrides   Json     @default("{}")
+  foodOptions         Json     @default("{\"tags\":[],\"types\":[],\"distances\":[]}")
   setupCompleted      Boolean  @default(false)
   openaiKeyCiphertext String?
   openaiKeyLast4      String?
@@ -378,6 +382,7 @@ model PageInstance {
   assets           Asset[]
   healthPersons    HealthPerson[]
   keyboards        Keyboard[]
+  foodPlaces       FoodPlace[]
   fundTransactions FundTransaction[]
   learningTopics   LearningTopic[]
   alertRules       AlertRule[]
@@ -1021,6 +1026,31 @@ model Keyboard {
   @@index([ownerId])
   @@index([instanceId])
   @@index([name])
+}
+
+// ─── Food Menu ──────────────────────────────────────
+
+model FoodPlace {
+  id         String   @id @default(cuid())
+  name       String
+  tag        String?
+  type       String?
+  distance   String?
+  rating     Int?
+  mapLink    String?
+  note       String?
+  isShared   Boolean  @default(false)
+  ownerId    String
+  instanceId String?
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  owner    User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([instanceId])
 }
 
 // ─── Ca Keo ──────────────────────────────────────────

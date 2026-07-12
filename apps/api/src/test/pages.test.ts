@@ -91,8 +91,9 @@ describe('page instances', () => {
         const catalog = await authed(ownerToken).get('/api/pages/templates');
 
         expect(catalog.status).toBe(200);
-        expect(catalog.body).toHaveLength(13);
+        expect(catalog.body).toHaveLength(14);
         expect(catalog.body.find((item: any) => item.moduleType === 'IDEA')).toMatchObject({ group: 'personal', available: true });
+        expect(catalog.body.find((item: any) => item.moduleType === 'FOODPLACE')).toMatchObject({ label: 'Food Menu', group: 'family', available: true });
         expect((await authed(userToken).get('/api/pages/templates')).status).toBe(200);
 
         expect((await authed(userToken).put('/api/pages/templates/TASK').send({ name: 'My Tasks' })).status).toBe(403);

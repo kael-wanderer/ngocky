@@ -75,6 +75,7 @@ const FEATURE_KEY_TO_SECTION: Record<string, string> = {
     featureAssets: 'ASSETS',
     featureHealthbook: 'HEALTHBOOK',
     featureKeyboard: 'KEYBOARD',
+    featureFood: 'FOODPLACE',
     featureFunds: 'FUNDS',
     featureLearning: 'LEARNING',
 };

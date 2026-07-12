@@ -126,6 +126,7 @@ router.get('/me', authenticate, async (req: Request, res: Response, next: NextFu
                 featureAssets: true,
                 featureCalendar: true,
                 featureKeyboard: true,
+                featureFood: true,
                 featureFunds: true,
                 featureCaKeo: true,
             } as any,

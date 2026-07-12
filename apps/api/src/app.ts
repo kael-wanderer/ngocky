@@ -30,6 +30,7 @@ import scheduledReportRoutes from './routes/scheduled-reports';
 import serviceRoutes from './routes/service';
 import assistantRoutes from './routes/assistant';
 import keyboardRoutes from './routes/keyboards';
+import foodRoutes from './routes/foods';
 import cakeoRoutes from './routes/cakeos';
 import healthbookRoutes from './routes/healthbook';
 
@@ -71,6 +72,7 @@ app.use('/api/scheduled-reports', scheduledReportRoutes);
 app.use('/api/service', serviceRoutes);
 app.use('/api/assistant', assistantRoutes);
 app.use('/api/keyboards', keyboardRoutes);
+app.use('/api/foods', foodRoutes);
 app.use('/api/cakeos', cakeoRoutes);
 app.use('/api/healthbook', healthbookRoutes);
 

@@ -2,9 +2,31 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { AppSettingsService } from '../services/appSettings';
-import { updateAppSettingsSchema, setOpenaiKeySchema } from '../validators/appSettings';
+import { updateAppSettingsSchema, updateFoodOptionsSchema, setOpenaiKeySchema } from '../validators/appSettings';
 
 const router = Router();
+
+router.get('/food-options', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        res.json((await AppSettingsService.get()).foodOptions);
+    } catch (err) {
+        next(err);
+    }
+});
+
+router.patch(
+    '/food-options',
+    authenticate,
+    authorize('OWNER', 'ADMIN'),
+    validate(updateFoodOptionsSchema),
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            res.json(await AppSettingsService.updateFoodOptions(req.body));
+        } catch (err) {
+            next(err);
+        }
+    },
+);
 
 router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
     try {

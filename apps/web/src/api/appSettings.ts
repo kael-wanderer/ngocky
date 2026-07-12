@@ -2,12 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from './client';
 
 export type ModuleGroupId = 'personal' | 'family' | 'hobby';
+export type FoodOptions = { tags: string[]; types: string[]; distances: string[] };
 
 export type AppSettings = {
     appName: string;
     logoUrl: string | null;
     enabledGroups: ModuleGroupId[];
     setupCompleted: boolean;
+    foodOptions: FoodOptions;
 };
 
 export function useAppSettings() {

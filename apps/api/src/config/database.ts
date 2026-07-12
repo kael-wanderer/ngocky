@@ -8,8 +8,10 @@ type PrismaClientWithLegacyCollections = PrismaClientType & {
 
 type PrismaClientConstructor = new () => PrismaClientWithLegacyCollections;
 
+const isTestDatabase = process.env.NODE_ENV === 'test' || process.env.DATABASE_URL?.startsWith('file:');
+
 const { PrismaClient } = (
-    process.env.NODE_ENV === 'test'
+    isTestDatabase
         ? require('../test/client')
         : require('@prisma/client')
 ) as { PrismaClient: PrismaClientConstructor };
@@ -20,7 +22,7 @@ export const prisma: PrismaClientWithLegacyCollections = new PrismaClient();
 // the SQLite client (tests, desktop builds) rejects `mode`, and SQLite's
 // LIKE is already case-insensitive for ASCII.
 export function iContains(value: string): { contains: string; mode?: 'insensitive' } {
-    return process.env.NODE_ENV === 'test' || process.env.DB_PROVIDER === 'sqlite'
+    return isTestDatabase || process.env.DB_PROVIDER === 'sqlite'
         ? { contains: value }
         : { contains: value, mode: 'insensitive' };
 }

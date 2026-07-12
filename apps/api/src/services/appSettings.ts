@@ -10,7 +10,25 @@ export type AppSettingsDto = {
     logoUrl: string | null;
     enabledGroups: ModuleGroup[];
     setupCompleted: boolean;
+    foodOptions: FoodOptions;
 };
+
+export type FoodOptions = { tags: string[]; types: string[]; distances: string[] };
+
+function normalizeOptionList(value: unknown) {
+    return Array.isArray(value)
+        ? [...new Set(value.map((item) => String(item).trim()).filter(Boolean))]
+        : [];
+}
+
+export function normalizeFoodOptions(raw: unknown): FoodOptions {
+    const value = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+    return {
+        tags: normalizeOptionList(value.tags),
+        types: normalizeOptionList(value.types),
+        distances: normalizeOptionList(value.distances),
+    };
+}
 
 export function normalizeGroups(raw: unknown): ModuleGroup[] {
     const list = Array.isArray(raw)
@@ -31,6 +49,7 @@ export class AppSettingsService {
             logoUrl: row.logoUrl,
             enabledGroups: normalizeGroups(row.enabledGroups),
             setupCompleted: row.setupCompleted,
+            foodOptions: normalizeFoodOptions(row.foodOptions),
         };
     }
 
@@ -50,7 +69,15 @@ export class AppSettingsService {
             logoUrl: row.logoUrl,
             enabledGroups: normalizeGroups(row.enabledGroups),
             setupCompleted: row.setupCompleted,
+            foodOptions: normalizeFoodOptions(row.foodOptions),
         };
+    }
+
+    static async updateFoodOptions(data: Partial<FoodOptions>): Promise<FoodOptions> {
+        const current = await this.get();
+        const foodOptions = normalizeFoodOptions({ ...current.foodOptions, ...data });
+        await prisma.appSetting.update({ where: { id: 1 }, data: { foodOptions } });
+        return foodOptions;
     }
 
     /** Write-only status — never returns the key itself. */

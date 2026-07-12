@@ -9,6 +9,7 @@ export const FEATURE_FLAGS = {
     featureAssets: true,
     featureCalendar: true,
     featureKeyboard: true,
+    featureFood: true,
     featureFunds: true,
     featureCaKeo: true,
     featureHealthbook: true,
@@ -28,6 +29,7 @@ export const MOBILE_NAV_OPTIONS = [
     { to: '/assets', label: 'Assets' },
     { to: '/healthbook', label: 'Healthbook' },
     { to: '/keyboard', label: 'Keyboard' },
+    { to: '/food', label: 'Food Menu' },
     { to: '/funds', label: 'Funds' },
     { to: '/learning', label: 'Learning' },
     { to: '/settings', label: 'User Settings' },
@@ -69,6 +71,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
             { key: 'featureHousework', label: 'Housework', route: '/housework' },
             { key: 'featureAssets', label: 'Assets', route: '/assets' },
             { key: 'featureHealthbook', label: 'Healthbook', route: '/healthbook' },
+            { key: 'featureFood', label: 'Food Menu', route: '/food' },
         ],
     },
     {
@@ -93,13 +96,13 @@ export const FEATURE_ROUTE_GROUP_MAP = Object.fromEntries(
 export const PAGE_TEMPLATE_FEATURE_MAP: Record<string, FeatureFlagKey> = {
     TASK: 'featureTasks', PROJECT: 'featureProjects', EXPENSE: 'featureExpenses', GOAL: 'featureGoals', IDEA: 'featureIdeas',
     CALENDAR: 'featureCalendar', CAKEO: 'featureCaKeo', HOUSEWORK: 'featureHousework', ASSET: 'featureAssets', HEALTHBOOK: 'featureHealthbook',
-    KEYBOARD: 'featureKeyboard', FUND: 'featureFunds', LEARNING: 'featureLearning',
+    KEYBOARD: 'featureKeyboard', FOODPLACE: 'featureFood', FUND: 'featureFunds', LEARNING: 'featureLearning',
 };
 
 export const BUILT_IN_ROUTE_TEMPLATE_MAP: Record<string, string> = {
     '/tasks': 'TASK', '/projects': 'PROJECT', '/expenses': 'EXPENSE', '/goals': 'GOAL', '/ideas': 'IDEA',
     '/calendar': 'CALENDAR', '/cakeo': 'CAKEO', '/housework': 'HOUSEWORK', '/assets': 'ASSET', '/healthbook': 'HEALTHBOOK',
-    '/keyboard': 'KEYBOARD', '/funds': 'FUND', '/learning': 'LEARNING',
+    '/keyboard': 'KEYBOARD', '/food': 'FOODPLACE', '/funds': 'FUND', '/learning': 'LEARNING',
 };
 
 export function isPageTemplateEnabled(moduleType: string, source?: Partial<FeatureFlags> | null) {

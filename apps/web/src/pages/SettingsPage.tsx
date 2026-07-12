@@ -243,6 +243,7 @@ export default function SettingsPage() {
             featureAssets: profile.featureAssets ?? true,
             featureCalendar: profile.featureCalendar ?? true,
             featureKeyboard: profile.featureKeyboard ?? true,
+            featureFood: profile.featureFood ?? true,
             featureFunds: profile.featureFunds ?? true,
             featureCaKeo: profile.featureCaKeo ?? true,
             featureHealthbook: profile.featureHealthbook ?? true,

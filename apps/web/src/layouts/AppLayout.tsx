@@ -7,7 +7,7 @@ import { usePages, usePageTemplates } from '../api/pages';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, Menu, X,
-    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, Coins, Keyboard, Baby, HeartPulse, Bot, AppWindow
+    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, Coins, Keyboard, Baby, HeartPulse, Bot, AppWindow, Utensils
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { openExternal } from '../utils/externalLinks';
@@ -27,6 +27,7 @@ const navItems: NavigationItem[] = [
     { to: '/housework', icon: Home, label: 'Housework' },
     { to: '/assets', icon: Microwave, label: 'Assets' },
     { to: '/healthbook', icon: HeartPulse, label: 'Healthbook' },
+    { to: '/food', icon: Utensils, label: 'Food Menu' },
     { to: '/keyboard', icon: Keyboard, label: 'Keyboard' },
     { to: '/funds', icon: Coins, label: 'Funds' },
     { to: '/learning', icon: GraduationCap, label: 'Learning' },
@@ -44,7 +45,7 @@ const adminItems: NavigationItem[] = [
 const navGroups = [
     { id: 'dashboard', label: 'Dashboard', items: ['/', '/reports'] },
     { id: 'personal', label: 'Personal', items: ['/tasks', '/projects', '/expenses', '/goals', '/ideas'] },
-    { id: 'family', label: 'Family', items: ['/calendar', '/cakeo', '/housework', '/assets', '/healthbook'] },
+    { id: 'family', label: 'Family', items: ['/calendar', '/cakeo', '/housework', '/assets', '/healthbook', '/food'] },
     { id: 'hobby', label: 'Hobby', items: ['/keyboard', '/funds', '/learning'] },
     { id: 'settings', label: 'Settings', items: ['/scheduled-reports', '/notifications', '/settings'] },
     { id: 'admin', label: 'Admin', items: ['/users', '/admin/application', '/admin/agent'] },
