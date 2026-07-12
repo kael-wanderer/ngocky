@@ -3,7 +3,7 @@
     "version": "1.1.0",
     "private": true,
     "scripts": {
-        "build:web": "cross-env VITE_API_URL=https://api.ngocky.kael.io.vn npm --prefix ../web run build",
+        "build:web": "cross-env VITE_API_URL=https://api.ngocky.kael.io.vn/api npm --prefix ../web run build",
         "tauri": "tauri",
         "dev": "npm run build:web && tauri dev",
         "build": "npm run build:web && tauri build"
