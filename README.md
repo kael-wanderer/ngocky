@@ -96,6 +96,23 @@ cd apps/web && npm run dev
 
 Open <http://localhost:5173>.
 
+## Desktop App
+
+The desktop app is a thin Tauri v2 shell around the existing React build. It does not add a local database, offline mode, embedded server, updater, or business logic. The app connects to the production API at `https://api.ngocky.kael.io.vn`.
+
+Build locally on macOS or Windows:
+
+```bash
+npm install
+npm run build:desktop
+```
+
+The installers are written under `apps/desktop/src-tauri/target/release/bundle/`. The Tauri frontend reuses `apps/web`; browser behavior and the web build remain unchanged. For a local shell run, use `npm run dev -w apps/desktop` after the web production bundle has been built.
+
+Pushing a tag matching `desktop-v*` starts `.github/workflows/desktop.yml`. GitHub Actions builds a DMG on macOS and MSI/NSIS installers on Windows, publishes them to the tagged GitHub release, and stores them as workflow artifacts. Builds are intentionally unsigned for v1.
+
+Because the builds are unsigned, macOS may require right-clicking the app and choosing **Open** on first launch. Windows SmartScreen may display a warning before allowing the installer to run.
+
 ## Tests
 
 Backend:
