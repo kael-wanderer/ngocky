@@ -131,6 +131,10 @@ export default function DashboardPage() {
         setCategories(prev => prev.filter(c => !items.includes(c)));
     };
 
+    const scrollToDashboardSection = (section: string) => {
+        document.getElementById(section)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
     const searchLower = dashSearch.trim().toLowerCase();
     const applySearch = (items: any[], ...fields: string[]) =>
         !searchLower ? items : items.filter((item: any) => fields.some(f => item[f]?.toLowerCase?.().includes(searchLower)));
@@ -376,7 +380,7 @@ export default function DashboardPage() {
             case 'expense':
                 if (!sectionVisible('expense')) return null;
                 return (
-                    <div className="card p-5 h-full">
+                    <div id="dashboard-section-expense" className="card p-5 h-full">
                         <div className="flex items-center gap-2 mb-4 pr-7">
                             <Wallet className="w-5 h-5" style={{ color: '#d97706' }} />
                             <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Expenses</h3>
@@ -546,6 +550,26 @@ export default function DashboardPage() {
                     {format(new Date(), 'EEEE, MMMM d, yyyy')}
                 </p>
 
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                    <button type="button" className="card px-4 py-3 text-left hover:shadow-md transition-shadow" onClick={() => { setStatusFilter('OVERDUE'); scrollToDashboardSection('dashboard-overdue'); }}>
+                        <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Overdue items</p>
+                        <p className="text-xl font-bold" style={{ color: 'var(--color-danger)' }}>{s.overdueItemsTotal ?? 0}</p>
+                    </button>
+                    <button type="button" className="card px-4 py-3 text-left hover:shadow-md transition-shadow" onClick={() => { setTimeRange('TODAY'); scrollToDashboardSection('dashboard-section-task'); }}>
+                        <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Due today</p>
+                        <p className="text-xl font-bold" style={{ color: '#d97706' }}>{s.dueToday ?? 0}</p>
+                    </button>
+                    <button type="button" className="card px-4 py-3 text-left hover:shadow-md transition-shadow" onClick={() => scrollToDashboardSection('dashboard-section-expense')}>
+                        <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>This week expenses</p>
+                        <p className="text-xl font-bold truncate" style={{ color: '#059669' }}>{Number(s.thisWeekExpenseTotal || 0).toLocaleString('vi-VN')} VND</p>
+                    </button>
+                    <button type="button" className="card px-4 py-3 text-left hover:shadow-md transition-shadow" onClick={() => navigate(s.nextUpcomingEvent?.id ? `/calendar?eventId=${s.nextUpcomingEvent.id}` : '/calendar')}>
+                        <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Next calendar event</p>
+                        <p className="text-sm font-bold truncate" style={{ color: '#7c3aed' }}>{s.nextUpcomingEvent?.title || 'None scheduled'}</p>
+                        {s.nextUpcomingEvent?.startDate && <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(s.nextUpcomingEvent.startDate), 'MMM d, h:mm a')}</p>}
+                    </button>
+                </div>
+
                 <div className="mt-4 rounded-xl border p-3" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
                     <div className="flex items-center gap-2 mb-3">
                         <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
@@ -628,7 +652,7 @@ export default function DashboardPage() {
 
             {/* Overdue + Pin Items side by side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="card p-5" style={{ borderColor: 'color-mix(in srgb, var(--color-danger) 30%, var(--color-border))', backgroundColor: 'color-mix(in srgb, var(--color-danger) 6%, var(--color-surface))' }}>
+                <div id="dashboard-overdue" className="card p-5" style={{ borderColor: 'color-mix(in srgb, var(--color-danger) 30%, var(--color-border))', backgroundColor: 'color-mix(in srgb, var(--color-danger) 6%, var(--color-surface))' }}>
                     <div className="flex items-center gap-2 mb-4">
                         <AlertTriangle className="w-5 h-5" style={{ color: 'var(--color-danger)' }} />
                         <h3 className="font-semibold" style={{ color: 'var(--color-danger)' }}>Overdue</h3>
@@ -697,7 +721,7 @@ export default function DashboardPage() {
                 {visibleSections.map(id => {
                     const content = renderSection(id);
                     if (!content) return null;
-                    return <div key={id}>{content}</div>;
+                    return <div id={`dashboard-section-${id}`} key={id}>{content}</div>;
                 })}
             </div>
         </div>

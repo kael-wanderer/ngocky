@@ -119,6 +119,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             overdueTaskItems, overduePersonalTaskItems, overdueHouseworkItems,
             pinnedGoals, pinnedProjects, pinnedStandaloneTasks, pinnedHousework, pinnedBoards, pinnedEvents, pinnedAssets, pinnedLearning, pinnedIdeas,
             goals, recentIdeas,
+            dueTodayProjectTasks, dueTodayTasks, dueTodayHousework, dueTodayEvents, weekExpenseAggregate,
         ] = await Promise.all([
             prisma.projectTask.count({
                 where: {
@@ -414,6 +415,22 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 take: 8,
                 include: { topic: { select: { title: true } } },
             }),
+            prisma.projectTask.count({
+                where: { ...visibleTaskWhere, deadline: { gte: todayStart, lt: new Date(todayStart.getTime() + 24 * 60 * 60 * 1000) }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+            }),
+            prisma.task.count({
+                where: { ...visibleStandaloneTaskWhere, dueDate: { gte: todayStart, lt: new Date(todayStart.getTime() + 24 * 60 * 60 * 1000) }, status: { notIn: ['DONE', 'ARCHIVED'] } },
+            }),
+            prisma.houseworkItem.count({
+                where: { nextDueDate: { gte: todayStart, lt: new Date(todayStart.getTime() + 24 * 60 * 60 * 1000) }, active: true },
+            }),
+            prisma.calendarEvent.count({
+                where: { ...visibleEventWhere, startDate: { gte: todayStart, lt: new Date(todayStart.getTime() + 24 * 60 * 60 * 1000) } },
+            }),
+            prisma.expense.aggregate({
+                where: { ...visibleExpenseWhere, date: { gte: weekStart, lt: weekEnd } },
+                _sum: { amount: true },
+            }),
         ]);
 
         const filteredGoals = goals.slice(0, 10);
@@ -593,6 +610,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 overdueAssets: 0,
                 overdueEvents: 0,
                 overdueItemsTotal: overdueHousework + overdueProjects + overduePersonalTaskItems.length,
+                dueToday: dueTodayProjectTasks + dueTodayTasks + dueTodayHousework + dueTodayEvents,
+                thisWeekExpenseTotal: weekExpenseAggregate._sum.amount || 0,
+                nextUpcomingEvent: upcomingEvents[0] || null,
             },
             upcomingEvents,
             dueTasks: mergedDueTasks,
