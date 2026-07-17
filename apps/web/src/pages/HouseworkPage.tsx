@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router-dom';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
+import ColumnToggle, { useHiddenColumns } from '../components/ColumnToggle';
 import {
     DEFAULT_HOUSEWORK_FILTERS,
     getHouseworkDueDateRange,
@@ -63,6 +64,16 @@ type HouseworkStatusFilter = SharedHouseworkStatusFilter;
 type HouseworkFrequencyFilter = SharedHouseworkFrequencyFilter;
 type HouseworkSortKey = 'title' | 'description' | 'frequencyType' | 'status' | 'nextDueDate' | 'notification' | 'showOnCalendar';
 type HouseworkGridSort = 'TITLE_ASC' | 'TITLE_DESC' | 'DUE_ASC' | 'DUE_DESC';
+
+const HOUSEWORK_COLUMNS: Array<{ key: string; label: string; sortKey: HouseworkSortKey }> = [
+    { key: 'title', label: 'Title', sortKey: 'title' },
+    { key: 'description', label: 'Description', sortKey: 'description' },
+    { key: 'frequency', label: 'Frequency', sortKey: 'frequencyType' },
+    { key: 'status', label: 'Status', sortKey: 'status' },
+    { key: 'dueDate', label: 'Due Date', sortKey: 'nextDueDate' },
+    { key: 'notification', label: 'Notification', sortKey: 'notification' },
+    { key: 'options', label: 'Options', sortKey: 'showOnCalendar' },
+];
 type HouseworkListSortOption = 'TITLE_ASC' | 'TITLE_DESC' | 'DESCRIPTION_ASC' | 'DESCRIPTION_DESC' | 'FREQUENCY_ASC' | 'FREQUENCY_DESC' | 'STATUS_ASC' | 'STATUS_DESC' | 'DUE_ASC' | 'DUE_DESC' | 'NOTIFICATION_ASC' | 'NOTIFICATION_DESC' | 'OPTIONS_ASC' | 'OPTIONS_DESC';
 
 function getNormalizedFormByFrequency(form: HouseworkFormState, frequencyType: string): HouseworkFormState {
@@ -357,6 +368,7 @@ export default function HouseworkPage({ instanceId, pageTitle }: { instanceId?: 
     const [sortBy, setSortBy] = useLocalStorage<HouseworkSortKey>('ngocky:housework:sortBy', 'nextDueDate');
     const [sortOrder, setSortOrder] = useLocalStorage<'asc' | 'desc'>('ngocky:housework:sortOrder', 'asc');
     const [gridSort, setGridSort] = useState<HouseworkGridSort>('DUE_ASC');
+    const { hidden, toggle, isVisible } = useHiddenColumns('ngocky:housework:hiddenColumns');
     const [hwSearch, setHwSearch] = useState('');
     const editIdParam = searchParams.get('editId');
 
@@ -769,7 +781,7 @@ export default function HouseworkPage({ instanceId, pageTitle }: { instanceId?: 
                 className={`${canManage ? 'cursor-pointer hover:bg-slate-50' : ''} transition-colors`}
                 onClick={() => { if (canManage) openEdit(item); }}
             >
-                <td className="py-3 px-4">
+                {isVisible('title') && <td className="py-3 px-4">
                     <div className="min-w-[180px]">
                         <p className="font-semibold" style={{ color: 'var(--color-text)' }}>{item.title}</p>
                         {notifBadges.length > 0 && (
@@ -782,33 +794,33 @@ export default function HouseworkPage({ instanceId, pageTitle }: { instanceId?: 
                         )}
                         {sharedOwnerName && <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
                     </div>
-                </td>
-                <td className="py-3 px-4 max-w-[240px]">
+                </td>}
+                {isVisible('description') && <td className="py-3 px-4 max-w-[240px]">
                     <p className="text-sm line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>{item.description || 'No description'}</p>
-                </td>
-                <td className="py-3 px-4">
+                </td>}
+                {isVisible('frequency') && <td className="py-3 px-4">
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">{freqLabels[item.frequencyType]}</span>
-                </td>
-                <td className="py-3 px-4">
+                </td>}
+                {isVisible('status') && <td className="py-3 px-4">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getStatusTone(item.status || 'PLANNED')}`}>{getStatusLabel(item.status || 'PLANNED')}</span>
-                </td>
-                <td className="py-3 px-4">
+                </td>}
+                {isVisible('dueDate') && <td className="py-3 px-4">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${dueBadge.tone}`}>{dueBadge.label}</span>
-                </td>
-                <td className="py-3 px-4">
+                </td>}
+                {isVisible('notification') && <td className="py-3 px-4">
                     {notification ? (
                         <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700">Notify {notification}</span>
                     ) : (
                         <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>None</span>
                     )}
-                </td>
-                <td className="py-3 px-4">
+                </td>}
+                {isVisible('options') && <td className="py-3 px-4">
                     <div className="flex items-center gap-1 flex-wrap">
                         {item.pinToDashboard && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Pinned</span>}
                         {item.showOnCalendar && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-700 font-semibold">Housework</span>}
                         {item.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                     </div>
-                </td>
+                </td>}
                 <td className="py-3 px-4">
                     <div className="flex items-center gap-1 justify-end">
                         {canManage && item.status !== 'DONE' && item.active !== false && (
@@ -840,6 +852,7 @@ export default function HouseworkPage({ instanceId, pageTitle }: { instanceId?: 
                         <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
                         <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
                     </div>
+                    {viewMode === 'list' && <ColumnToggle columns={HOUSEWORK_COLUMNS} hidden={hidden} onToggle={toggle} />}
                     <button className="btn-primary whitespace-nowrap" onClick={openCreate}>
                         <Plus className="w-4 h-4" /> New Item
                     </button>
@@ -919,13 +932,7 @@ export default function HouseworkPage({ instanceId, pageTitle }: { instanceId?: 
                     <table className="w-full">
                         <thead>
                             <tr>
-                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('title')}>Title {renderSortIcon('title')}</button></th>
-                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('description')}>Description {renderSortIcon('description')}</button></th>
-                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('frequencyType')}>Frequency {renderSortIcon('frequencyType')}</button></th>
-                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('status')}>Status {renderSortIcon('status')}</button></th>
-                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('nextDueDate')}>Due Date {renderSortIcon('nextDueDate')}</button></th>
-                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('notification')}>Notification {renderSortIcon('notification')}</button></th>
-                                <th><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('showOnCalendar')}>Options {renderSortIcon('showOnCalendar')}</button></th>
+                                {HOUSEWORK_COLUMNS.filter((column) => isVisible(column.key)).map((column) => <th key={column.key}><button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort(column.sortKey)}>{column.label} {renderSortIcon(column.sortKey)}</button></th>)}
                                 <th className="text-right">Actions</th>
                             </tr>
                         </thead>

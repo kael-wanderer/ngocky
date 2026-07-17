@@ -3,6 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
 import { Users, Plus, X, Shield, UserCheck, UserX, KeyRound, Trash2 } from 'lucide-react';
+import ColumnToggle, { useHiddenColumns } from '../components/ColumnToggle';
+
+const USER_COLUMNS = [{ key: 'user', label: 'User' }, { key: 'email', label: 'Email' }, { key: 'role', label: 'Role' }, { key: 'status', label: 'Status' }];
 
 export default function UsersPage() {
     const { user: currentUser } = useAuthStore();
@@ -12,6 +15,7 @@ export default function UsersPage() {
     const [resetTarget, setResetTarget] = useState<any>(null);
     const [form, setForm] = useState({ name: '', email: '', password: '', role: 'USER' });
     const [resetPassword, setResetPassword] = useState('');
+    const { hidden, toggle, isVisible } = useHiddenColumns('ngocky:users:hiddenColumns');
 
     const { data, isLoading } = useQuery({
         queryKey: ['users'],
@@ -82,9 +86,12 @@ export default function UsersPage() {
                     <Users className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>User Management</h2>
                 </div>
+                <div className="flex items-center gap-2">
+                <ColumnToggle columns={USER_COLUMNS} hidden={hidden} onToggle={toggle} />
                 <button className="btn-primary" onClick={() => setShowCreate(true)}>
                     <Plus className="w-4 h-4" /> Add User
                 </button>
+                </div>
             </div>
 
             {showCreate && (
@@ -137,26 +144,26 @@ export default function UsersPage() {
                     <div className="table-container">
                         <table>
                             <thead>
-                                <tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+                                <tr>{USER_COLUMNS.filter((column) => isVisible(column.key)).map((column) => <th key={column.key}>{column.label}</th>)}<th>Actions</th></tr>
                             </thead>
                             <tbody>
                                 {users.map((u: any) => (
                                     <tr key={u.id}>
-                                        <td>
+                                        {isVisible('user') && <td>
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium" style={{ backgroundColor: roleColors[u.role] }}>
                                                     {u.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <span className="font-medium" style={{ color: 'var(--color-text)' }}>{u.name}</span>
                                             </div>
-                                        </td>
-                                        <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{u.email}</td>
-                                        <td>
+                                        </td>}
+                                        {isVisible('email') && <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{u.email}</td>}
+                                        {isVisible('role') && <td>
                                             <span className="badge" style={{ backgroundColor: `${roleColors[u.role]}20`, color: roleColors[u.role] }}>
                                                 <Shield className="w-3 h-3 mr-1" />{u.role}
                                             </span>
-                                        </td>
-                                        <td><span className={u.active ? 'badge-success' : 'badge-danger'}>{u.active ? 'Active' : 'Inactive'}</span></td>
+                                        </td>}
+                                        {isVisible('status') && <td><span className={u.active ? 'badge-success' : 'badge-danger'}>{u.active ? 'Active' : 'Inactive'}</span></td>}
                                         <td>
                                             <div className="flex items-center gap-2">
                                                 {u.role !== 'OWNER' && (

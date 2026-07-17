@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, Coins, Copy, Filter, Pencil, Plus, Trash2, Upload, 
 import { format } from 'date-fns';
 import api from '../api/client';
 import PaginationControls from '../components/PaginationControls';
+import ColumnToggle, { useHiddenColumns } from '../components/ColumnToggle';
 import { parseCompactAmountInput } from '../utils/amount';
 import { useAuthStore } from '../stores/auth';
 import {
@@ -139,6 +140,7 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
     const [sortOrder, setSortOrder] = useLocalStorage<SortOrder>('ngocky:funds:sortOrder', 'desc');
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useLocalStorage('ngocky:funds:pageSize', 25);
+    const { hidden, toggle, isVisible } = useHiddenColumns('ngocky:funds:hiddenColumns');
     const presetDateRange = filters.time === 'CUSTOM' ? null : getFundsDateRange(filters.time);
     const effectiveDateFrom = filters.time === 'CUSTOM' ? filters.dateFrom : (presetDateRange ? format(presetDateRange.start, 'yyyy-MM-dd') : '');
     const effectiveDateTo = filters.time === 'CUSTOM' ? filters.dateTo : (presetDateRange ? format(presetDateRange.end, 'yyyy-MM-dd') : '');
@@ -352,6 +354,7 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>Funds</h2>
                 </div>
                 <div className="flex items-center gap-2">
+                    <ColumnToggle columns={columns as unknown as Array<{ key: string; label: string }>} hidden={hidden} onToggle={toggle} />
                     <button className="btn-secondary" onClick={() => setShowImport(true)}>
                         <Upload className="w-4 h-4" /> Import CSV
                     </button>
@@ -594,7 +597,7 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
                             <table>
                                 <thead>
                                     <tr>
-                                        {columns.map((column) => (
+                                        {columns.filter((column) => isVisible(column.key)).map((column) => (
                                             <th key={column.key} className={column.key === 'amount' ? 'text-right' : ''}>
                                                 <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort(column.key)}>
                                                     {column.label}
@@ -614,19 +617,19 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
                                                 onClick={() => openEdit(fund)}
                                                 className={`cursor-pointer ${index % 2 === 0 ? 'bg-[#ecfdf5]' : 'bg-white'} hover:bg-[#d1fae5] transition-colors`}
                                             >
-                                                <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(fund.date), 'MMM d, yyyy')}</td>
-                                                <td>
+                                                {isVisible('date') && <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(fund.date), 'MMM d, yyyy')}</td>}
+                                                {isVisible('type') && <td>
                                                     <span className="badge badge-primary" style={getTypeBadgeStyle(fund.type)}>
                                                         {typeOptions.find((option) => option.value === fund.type)?.label || fund.type}
                                                     </span>
-                                                </td>
-                                                <td><span className="badge badge-warning">{scopeOptions.find((option) => option.value === fund.scope)?.label || fund.scope}</span></td>
-                                                <td><span className="badge-success">{categoryOptions.find((option) => option.value === fund.category)?.label || fund.category}</span></td>
-                                                <td><span className="badge badge-secondary">{conditionOptions.find((option) => option.value === fund.condition)?.label || fund.condition || '—'}</span></td>
-                                                <td className="text-right font-semibold" style={{ color: tone }}>{formatAmount(fund.amount)}</td>
-                                                <td>
+                                                </td>}
+                                                {isVisible('scope') && <td><span className="badge badge-warning">{scopeOptions.find((option) => option.value === fund.scope)?.label || fund.scope}</span></td>}
+                                                {isVisible('category') && <td><span className="badge-success">{categoryOptions.find((option) => option.value === fund.category)?.label || fund.category}</span></td>}
+                                                {isVisible('condition') && <td><span className="badge badge-secondary">{conditionOptions.find((option) => option.value === fund.condition)?.label || fund.condition || '—'}</span></td>}
+                                                {isVisible('amount') && <td className="text-right font-semibold" style={{ color: tone }}>{formatAmount(fund.amount)}</td>}
+                                                {isVisible('description') && <td>
                                                     <div className="font-medium" style={{ color: 'var(--color-text)' }}>{fund.description}</div>
-                                                </td>
+                                                </td>}
                                                 <td>
                                                     <div className="flex items-center gap-1">
                                                         <button type="button" className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={(e) => { e.stopPropagation(); openEdit(fund); }}>

@@ -12,6 +12,16 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../components/NotificationFields';
 import ColorPicker from '../components/ColorPicker';
+import ColumnToggle, { useHiddenColumns } from '../components/ColumnToggle';
+
+const CAKEO_COLUMNS = [
+    { key: 'title', label: 'Title' },
+    { key: 'type', label: 'Type' },
+    { key: 'category', label: 'Category' },
+    { key: 'status', label: 'Status' },
+    { key: 'assignee', label: 'Assignee' },
+    { key: 'date', label: 'Date' },
+];
 import {
     CAKEO_CATEGORY_OPTIONS,
     CAKEO_DATE_FILTER_OPTIONS,
@@ -83,6 +93,7 @@ export default function CaKeoPage({ instanceId, pageTitle }: { instanceId?: stri
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const [view, setView] = useState<CaKeoView>('calendar');
+    const { hidden, toggle, isVisible } = useHiddenColumns('ngocky:cakeo:hiddenColumns');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedRange, setSelectedRange] = useState<{ start: Date; end: Date } | null>(null);
@@ -304,6 +315,7 @@ export default function CaKeoPage({ instanceId, pageTitle }: { instanceId?: stri
                         <button onClick={() => setView('list')} className={`px-3 py-2 text-sm flex items-center gap-1.5 ${view === 'list' ? 'bg-gray-100' : ''}`} title="List"><List className="w-4 h-4" /></button>
                         <button onClick={() => setView('kanban')} className={`px-3 py-2 text-sm flex items-center gap-1.5 ${view === 'kanban' ? 'bg-gray-100' : ''}`} title="Kanban"><LayoutGrid className="w-4 h-4" /></button>
                     </div>
+                    {view === 'list' && <ColumnToggle columns={CAKEO_COLUMNS} hidden={hidden} onToggle={toggle} />}
                     <button className="btn-primary" onClick={() => openCreate()}>
                         <Plus className="w-4 h-4" /> New
                     </button>
@@ -599,12 +611,7 @@ export default function CaKeoPage({ instanceId, pageTitle }: { instanceId?: stri
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>Title</th>
-                                            <th>Type</th>
-                                            <th>Category</th>
-                                            <th>Status</th>
-                                            <th>Assignee</th>
-                                            <th>Date</th>
+                                            {CAKEO_COLUMNS.filter((column) => isVisible(column.key)).map((column) => <th key={column.key}>{column.label}</th>)}
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -614,22 +621,22 @@ export default function CaKeoPage({ instanceId, pageTitle }: { instanceId?: stri
                                         )}
                                         {filteredItems.map((item: any) => (
                                             <tr key={item.id} className="group hover:bg-gray-50 cursor-pointer" onClick={() => openEdit(item)}>
-                                                <td>
+                                                {isVisible('title') && <td>
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-1.5 h-5 rounded-sm flex-shrink-0" style={{ backgroundColor: getAssigneeColor(item.assignerId) }} />
                                                         <span className="font-medium" style={{ color: 'var(--color-text)' }}>{item.title}</span>
                                                     </div>
                                                     {item.description && <p className="text-xs mt-0.5 truncate max-w-xs pl-3.5" style={{ color: 'var(--color-text-secondary)' }}>{item.description}</p>}
-                                                </td>
-                                                <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{item.type || 'Task'}</td>
-                                                <td>{item.category ? <span className="badge badge-secondary">{item.category}</span> : '—'}</td>
-                                                <td>
+                                                </td>}
+                                                {isVisible('type') && <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{item.type || 'Task'}</td>}
+                                                {isVisible('category') && <td>{item.category ? <span className="badge badge-secondary">{item.category}</span> : '—'}</td>}
+                                                {isVisible('status') && <td>
                                                     <span className="px-2 py-0.5 rounded-full text-xs font-medium"
                                                         style={{ color: STATUS_COLOR[item.status], backgroundColor: STATUS_BG[item.status] }}>
                                                         {STATUS_LABEL[item.status] || item.status}
                                                     </span>
-                                                </td>
-                                                <td>
+                                                </td>}
+                                                {isVisible('assignee') && <td>
                                                     {item.assigner ? (
                                                         <span className="inline-flex items-center gap-1.5 text-sm">
                                                             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getAssigneeColor(item.assignerId) }} />
@@ -638,10 +645,10 @@ export default function CaKeoPage({ instanceId, pageTitle }: { instanceId?: stri
                                                     ) : (
                                                         <span className="text-sm" style={{ color: UNASSIGNED_COLOR }}>Unassigned</span>
                                                     )}
-                                                </td>
-                                                <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                                                </td>}
+                                                {isVisible('date') && <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                                                     {item.startDate ? format(new Date(item.startDate), 'MMM d, yyyy') : '—'}
-                                                </td>
+                                                </td>}
                                                 <td>
                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button type="button" className="p-1 rounded hover:bg-indigo-50" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-3.5 h-3.5" style={{ color: 'var(--color-primary)' }} /></button>

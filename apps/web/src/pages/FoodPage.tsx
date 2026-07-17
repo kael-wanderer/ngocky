@@ -6,6 +6,7 @@ import { foods, type FoodOptions, type FoodPlace } from '../api/pages';
 import { DEFAULT_FOOD_FILTERS, matchesFoodFilters, type FoodFilters } from '../config/foodFilters';
 import { openExternal } from '../utils/externalLinks';
 import PaginationControls from '../components/PaginationControls';
+import ColumnToggle, { useHiddenColumns } from '../components/ColumnToggle';
 
 type FoodForm = {
     name: string;
@@ -26,6 +27,9 @@ type SortKey = 'name' | 'tag' | 'type' | 'distance' | 'address' | 'district' | '
 type OptionKey = keyof FoodOptions;
 
 const EMPTY_OPTIONS: FoodOptions = { tags: [], types: [], distances: [] };
+
+const SORT_COLUMNS: Array<[SortKey, string]> = [['name', 'Name'], ['tag', 'Tag'], ['type', 'Type'], ['distance', 'Distance'], ['address', 'Address'], ['district', 'District'], ['openHours', 'Open hours'], ['priceEst', 'Price (estimated)'], ['rating', 'Rating'], ['note', 'Note']];
+const TOGGLE_COLUMNS = [...SORT_COLUMNS.map(([key, label]) => ({ key, label })), { key: 'map', label: 'Map' }];
 
 function emptyForm(): FoodForm {
     return { name: '', tag: '', type: '', distance: '', address: '', district: '', openHours: '', priceEst: '', rating: '', mapLink: '', note: '', isShared: false };
@@ -96,6 +100,7 @@ export default function FoodPage({ instanceId, pageTitle }: { instanceId?: strin
     const [draftOptions, setDraftOptions] = useState<FoodOptions>(EMPTY_OPTIONS);
     const [newOption, setNewOption] = useState<Record<OptionKey, string>>({ tags: '', types: '', distances: '' });
     const [pickedId, setPickedId] = useState<string | null>(null);
+    const { hidden, toggle, isVisible } = useHiddenColumns('ngocky:food:hiddenColumns');
 
     const { data: foodResponse, isLoading } = useQuery({
         queryKey: ['foods', instanceId ?? null],
@@ -222,6 +227,7 @@ export default function FoodPage({ instanceId, pageTitle }: { instanceId?: strin
                     <input ref={fileInputRef} type="file" accept=".csv,.json,application/json,text/csv" className="hidden" onChange={handleImport} />
                     <button type="button" className="btn-secondary inline-flex items-center gap-2" onClick={() => fileInputRef.current?.click()}><Upload className="h-4 w-4" />Import</button>
                     <button type="button" className="btn-secondary inline-flex items-center gap-2" onClick={openOptionManager}><Settings className="h-4 w-4" />Manage options</button>
+                    <ColumnToggle columns={TOGGLE_COLUMNS} hidden={hidden} onToggle={toggle} />
                     <button type="button" className="btn-secondary inline-flex items-center gap-2" onClick={pickForMe}><Shuffle className="h-4 w-4" />Pick for me</button>
                     <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={openNew}><Plus className="h-4 w-4" />Add place</button>
                 </div>
@@ -241,15 +247,15 @@ export default function FoodPage({ instanceId, pageTitle }: { instanceId?: strin
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead><tr className="border-b" style={{ borderColor: 'var(--color-border)' }}>
-                            {([['name', 'Name'], ['tag', 'Tag'], ['type', 'Type'], ['distance', 'Distance'], ['address', 'Address'], ['district', 'District'], ['openHours', 'Open hours'], ['priceEst', 'Price (estimated)'], ['rating', 'Rating'], ['note', 'Note']] as Array<[SortKey, string]>).map(([key, label]) => <th key={key} className="whitespace-nowrap px-3 py-3 text-left font-semibold" style={{ color: 'var(--color-text-secondary)' }}><button type="button" className="inline-flex items-center gap-1" onClick={() => toggleSort(key)}>{label}{renderSortIcon(key)}</button></th>)}
-                            <th className="px-3 py-3 text-left font-semibold" style={{ color: 'var(--color-text-secondary)' }}>Map</th><th className="px-3 py-3 text-left font-semibold" style={{ color: 'var(--color-text-secondary)' }}>Actions</th>
+                            {SORT_COLUMNS.filter(([key]) => isVisible(key)).map(([key, label]) => <th key={key} className="whitespace-nowrap px-3 py-3 text-left font-semibold" style={{ color: 'var(--color-text-secondary)' }}><button type="button" className="inline-flex items-center gap-1" onClick={() => toggleSort(key)}>{label}{renderSortIcon(key)}</button></th>)}
+                            {isVisible('map') && <th className="px-3 py-3 text-left font-semibold" style={{ color: 'var(--color-text-secondary)' }}>Map</th>}<th className="px-3 py-3 text-left font-semibold" style={{ color: 'var(--color-text-secondary)' }}>Actions</th>
                         </tr></thead>
                         <tbody>
                             {isLoading && <tr><td colSpan={12} className="py-10 text-center" style={{ color: 'var(--color-text-secondary)' }}>Loading food places...</td></tr>}
                             {!isLoading && visibleItems.length === 0 && <tr><td colSpan={12} className="py-10 text-center" style={{ color: 'var(--color-text-secondary)' }}>No food places found.</td></tr>}
                             {visibleItems.map((item) => <tr key={item.id} className={`border-t ${pickedId === item.id ? 'bg-amber-100 dark:bg-amber-900/30' : ''}`} style={{ borderColor: 'var(--color-border)' }}>
-                                <td className="px-3 py-3 font-semibold" style={{ color: 'var(--color-text)' }}>{item.name}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.tag || '—'}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.type || '—'}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.distance || '—'}</td><td className="max-w-xs px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.address || '—'}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.district || '—'}</td><td className="whitespace-nowrap px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.openHours || '—'}</td><td className="whitespace-nowrap px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.priceEst || '—'}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.rating ? '★'.repeat(item.rating) : '—'}</td><td className="max-w-xs px-3 py-3" style={{ color: 'var(--color-text-secondary)' }}>{item.note || '—'}</td>
-                                <td className="px-3 py-3">{item.mapLink ? <button type="button" title="Open map" className="text-blue-600" onClick={() => void openExternal(item.mapLink!)}><MapPin className="h-4 w-4" /></button> : '—'}</td>
+                                {isVisible('name') && <td className="px-3 py-3 font-semibold" style={{ color: 'var(--color-text)' }}>{item.name}</td>}{isVisible('tag') && <td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.tag || '—'}</td>}{isVisible('type') && <td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.type || '—'}</td>}{isVisible('distance') && <td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.distance || '—'}</td>}{isVisible('address') && <td className="max-w-xs px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.address || '—'}</td>}{isVisible('district') && <td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.district || '—'}</td>}{isVisible('openHours') && <td className="whitespace-nowrap px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.openHours || '—'}</td>}{isVisible('priceEst') && <td className="whitespace-nowrap px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.priceEst || '—'}</td>}{isVisible('rating') && <td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.rating ? '★'.repeat(item.rating) : '—'}</td>}{isVisible('note') && <td className="max-w-xs px-3 py-3" style={{ color: 'var(--color-text-secondary)' }}>{item.note || '—'}</td>}
+                                {isVisible('map') && <td className="px-3 py-3">{item.mapLink ? <button type="button" title="Open map" className="text-blue-600" onClick={() => void openExternal(item.mapLink!)}><MapPin className="h-4 w-4" /></button> : '—'}</td>}
                                 <td className="px-3 py-3"><div className="flex items-center gap-1"><button type="button" title="Edit" className="btn-ghost p-1" onClick={() => openEdit(item)}><Pencil className="h-4 w-4" /></button><button type="button" title="Delete" className="btn-ghost p-1 text-red-600" onClick={() => deleteMut.mutate(item.id)}><Trash2 className="h-4 w-4" /></button></div></td>
                             </tr>)}
                         </tbody>

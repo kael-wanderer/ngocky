@@ -7,6 +7,7 @@ import api from '../api/client';
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
 import PaginationControls from '../components/PaginationControls';
+import ColumnToggle, { useHiddenColumns } from '../components/ColumnToggle';
 import { parseCompactAmountInput } from '../utils/amount';
 import {
     DEFAULT_EXPENSE_FILTERS,
@@ -98,6 +99,7 @@ export default function ExpensesPage({ instanceId, pageTitle }: ExpensesPageProp
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useLocalStorage('ngocky:expenses:pageSize', 25);
     const [expenseSearch, setExpenseSearch] = useState('');
+    const { hidden, toggle, isVisible } = useHiddenColumns('ngocky:expenses:hiddenColumns');
     const instanceKey = instanceId ?? 'default';
 
     const effectiveRange = filters.timePreset === 'CUSTOM'
@@ -417,6 +419,7 @@ export default function ExpensesPage({ instanceId, pageTitle }: ExpensesPageProp
                         <FileText className="w-4 h-4" />
                         Export PDF
                     </button>
+                    <ColumnToggle columns={columns as unknown as Array<{ key: string; label: string }>} hidden={hidden} onToggle={toggle} />
                     <button className="btn-primary" onClick={openCreate}>
                         <Plus className="w-4 h-4" /> Add Expense
                     </button>
@@ -592,7 +595,7 @@ export default function ExpensesPage({ instanceId, pageTitle }: ExpensesPageProp
                             <table>
                                 <thead>
                                     <tr>
-                                        {columns.map((column) => (
+                                        {columns.filter((column) => isVisible(column.key)).map((column) => (
                                             <th key={column.key} className={column.key === 'amount' ? 'text-right' : ''}>
                                                 <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort(column.key)}>
                                                     {column.label}
@@ -614,30 +617,30 @@ export default function ExpensesPage({ instanceId, pageTitle }: ExpensesPageProp
                                                 onClick={() => canEdit && openEdit(expense)}
                                                 className={`${canEdit ? 'cursor-pointer' : ''} ${index % 2 === 0 ? 'bg-[#ecfdf5]' : 'bg-white'} hover:bg-[#d1fae5] transition-colors`}
                                             >
-                                                <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(expense.date), 'MMM d, yyyy')}</td>
-                                                <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{expense.user?.name || '-'}</td>
-                                                <td><span className={`badge ${isReceive ? 'badge-success' : 'badge-danger'}`}>{isReceive ? 'Receive' : 'Pay'}</span></td>
-                                                <td>
+                                                {isVisible('date') && <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(expense.date), 'MMM d, yyyy')}</td>}
+                                                {isVisible('user') && <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{expense.user?.name || '-'}</td>}
+                                                {isVisible('type') && <td><span className={`badge ${isReceive ? 'badge-success' : 'badge-danger'}`}>{isReceive ? 'Receive' : 'Pay'}</span></td>}
+                                                {isVisible('scope') && <td>
                                                     <div className="flex items-center gap-1 flex-wrap">
                                                         <ScopeBadge scope={expense.scope} />
                                                         {expense.sourceModule && (
                                                             <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-slate-100 text-slate-500">{expense.sourceModule}</span>
                                                         )}
                                                     </div>
-                                                </td>
-                                                <td><span className="badge-primary">{expense.category || '-'}</span></td>
-                                                <td><span className="badge-primary">{paymentOptions.find((option) => option.value === expense.payment)?.label || expense.payment || '-'}</span></td>
-                                                <td>
+                                                </td>}
+                                                {isVisible('category') && <td><span className="badge-primary">{expense.category || '-'}</span></td>}
+                                                {isVisible('payment') && <td><span className="badge-primary">{paymentOptions.find((option) => option.value === expense.payment)?.label || expense.payment || '-'}</span></td>}
+                                                {isVisible('description') && <td>
                                                     <div className="font-medium" style={{ color: 'var(--color-text)' }}>{expense.description}</div>
                                                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                                                         {expense.isShared && <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                                                         {sharedOwnerName && <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</span>}
                                                         {expense.note && <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{expense.note}</span>}
                                                     </div>
-                                                </td>
-                                                <td className="text-right font-semibold" style={{ color: isReceive ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                                                </td>}
+                                                {isVisible('amount') && <td className="text-right font-semibold" style={{ color: isReceive ? 'var(--color-success)' : 'var(--color-danger)' }}>
                                                     {formatAmount(expense.amount)}
-                                                </td>
+                                                </td>}
                                                 <td className="px-3 py-2.5">
                                                     {canEdit && (
                                                         <div className="flex items-center gap-1 justify-end">

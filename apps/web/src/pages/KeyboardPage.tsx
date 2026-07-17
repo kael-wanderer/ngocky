@@ -6,6 +6,18 @@ import { ArrowDown, ArrowUp, Copy, Filter, Keyboard, Pencil, Plus, Trash2, Uploa
 import PaginationControls from '../components/PaginationControls';
 import { parseCompactAmountInput } from '../utils/amount';
 import MultiSelectFilter from '../components/MultiSelectFilter';
+import ColumnToggle, { useHiddenColumns } from '../components/ColumnToggle';
+
+const KEYBOARD_COLUMNS = [
+    { key: 'name', label: 'Name' },
+    { key: 'category', label: 'Category' },
+    { key: 'tag', label: 'Tag' },
+    { key: 'color', label: 'Color' },
+    { key: 'spec', label: 'Spec' },
+    { key: 'condition', label: 'Condition' },
+    { key: 'price', label: 'Price' },
+    { key: 'note', label: 'Note' },
+];
 import {
     DEFAULT_KEYBOARD_FILTERS,
     KEYBOARD_FILTER_CATEGORIES,
@@ -245,6 +257,7 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
     const [sortOrder, setSortOrder] = useLocalStorage<SortOrder>('ngocky:keyboard:sortOrder', 'asc');
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useLocalStorage('ngocky:keyboard:pageSize', 25);
+    const { hidden, toggle, isVisible } = useHiddenColumns('ngocky:keyboard:hiddenColumns');
 
     // Modal
     const [showModal, setShowModal] = useState(false);
@@ -398,6 +411,7 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <ColumnToggle columns={KEYBOARD_COLUMNS} hidden={hidden} onToggle={toggle} />
                     <button onClick={() => setShowImport(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200">
                         <Upload className="w-4 h-4" />Import CSV
                     </button>
@@ -495,54 +509,54 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
                     <table className="w-full text-sm">
                         <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                             <tr>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[140px]">
+                                {isVisible('name') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[140px]">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('name')}>
                                         Name
                                         {renderSortIcon('name')}
                                     </button>
-                                </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">
+                                </th>}
+                                {isVisible('category') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('category')}>
                                         Category
                                         {renderSortIcon('category')}
                                     </button>
-                                </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">
+                                </th>}
+                                {isVisible('tag') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('tag')}>
                                         Tag
                                         {renderSortIcon('tag')}
                                     </button>
-                                </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
+                                </th>}
+                                {isVisible('color') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('color')}>
                                         Color
                                         {renderSortIcon('color')}
                                     </button>
-                                </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[280px]">
+                                </th>}
+                                {isVisible('spec') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[280px]">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('spec')}>
                                         Spec
                                         {renderSortIcon('spec')}
                                     </button>
-                                </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-20">
+                                </th>}
+                                {isVisible('condition') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-20">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('condition')}>
                                         Condition
                                         {renderSortIcon('condition')}
                                     </button>
-                                </th>
-                                <th className="text-right px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
+                                </th>}
+                                {isVisible('price') && <th className="text-right px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('price')}>
                                         Price
                                         {renderSortIcon('price')}
                                     </button>
-                                </th>
-                                <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[360px]">
+                                </th>}
+                                {isVisible('note') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[360px]">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('note')}>
                                         Note
                                         {renderSortIcon('note')}
                                     </button>
-                                </th>
+                                </th>}
                                 <th className="px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-16">Action</th>
                             </tr>
                         </thead>
@@ -558,29 +572,29 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
                                     onClick={() => openEdit(item)}
                                     className={`group border-t border-gray-200 dark:border-gray-800 cursor-pointer ${index % 2 === 0 ? 'bg-[#ecfdf5] dark:bg-[#202225]' : 'bg-white dark:bg-gray-900'} hover:bg-[#d1fae5] dark:hover:bg-[#2a2d31]'}`}
                                 >
-                                    <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{item.name}</td>
-                                    <td className="px-3 py-2">
+                                    {isVisible('name') && <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{item.name}</td>}
+                                    {isVisible('category') && <td className="px-3 py-2">
                                         {item.category ? <KeyboardCategoryBadge category={item.category} /> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
-                                    </td>
-                                    <td className="px-3 py-2 text-xs">
+                                    </td>}
+                                    {isVisible('tag') && <td className="px-3 py-2 text-xs">
                                         {item.tag ? <span style={{ color: item.color ? (COLOR_TEXT_MAP[item.color] || 'var(--color-text-secondary)') : 'var(--color-text-secondary)' }}>{item.tag}</span> : <span className="text-gray-300 dark:text-gray-600">—</span>}
-                                    </td>
-                                    <td className="px-3 py-2">
+                                    </td>}
+                                    {isVisible('color') && <td className="px-3 py-2">
                                         {item.color ? <span className="text-xs font-semibold" style={{ color: COLOR_TEXT_MAP[item.color] || 'var(--color-text)' }}>{item.color}</span> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
-                                    </td>
-                                    <td className="px-3 py-2">
+                                    </td>}
+                                    {isVisible('spec') && <td className="px-3 py-2">
                                         <div className="flex flex-wrap gap-0.5">
                                             {item.spec?.length ? item.spec.map(s => <Chip key={s} label={s} />) : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
                                         </div>
-                                    </td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.description ?? ''}>{item.description || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
-                                    <td
+                                    </td>}
+                                    {isVisible('condition') && <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.description ?? ''}>{item.description || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>}
+                                    {isVisible('price') && <td
                                         className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300 whitespace-nowrap"
                                         style={item.price != null ? { color: getKeyboardPriceColor(item.category, item.price) } : undefined}
                                     >
                                         {item.price != null ? formatVND(item.price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
-                                    </td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.note ?? ''}>{item.note || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                                    </td>}
+                                    {isVisible('note') && <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.note ?? ''}>{item.note || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>}
                                     <td className="px-3 py-2">
                                         <div className="flex items-center gap-1">
                                             <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit">
