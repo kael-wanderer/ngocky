@@ -12,19 +12,23 @@ type FoodForm = {
     tag: string;
     type: string;
     distance: string;
+    address: string;
+    district: string;
+    openHours: string;
+    priceEst: string;
     rating: string;
     mapLink: string;
     note: string;
     isShared: boolean;
 };
 
-type SortKey = 'name' | 'tag' | 'type' | 'distance' | 'rating' | 'note';
+type SortKey = 'name' | 'tag' | 'type' | 'distance' | 'address' | 'district' | 'openHours' | 'priceEst' | 'rating' | 'note';
 type OptionKey = keyof FoodOptions;
 
 const EMPTY_OPTIONS: FoodOptions = { tags: [], types: [], distances: [] };
 
 function emptyForm(): FoodForm {
-    return { name: '', tag: '', type: '', distance: '', rating: '', mapLink: '', note: '', isShared: false };
+    return { name: '', tag: '', type: '', distance: '', address: '', district: '', openHours: '', priceEst: '', rating: '', mapLink: '', note: '', isShared: false };
 }
 
 function formFromPlace(place: FoodPlace): FoodForm {
@@ -33,6 +37,10 @@ function formFromPlace(place: FoodPlace): FoodForm {
         tag: place.tag || '',
         type: place.type || '',
         distance: place.distance || '',
+        address: place.address || '',
+        district: place.district || '',
+        openHours: place.openHours || '',
+        priceEst: place.priceEst || '',
         rating: place.rating == null ? '' : String(place.rating),
         mapLink: place.mapLink || '',
         note: place.note || '',
@@ -46,6 +54,10 @@ function formToBody(form: FoodForm) {
         tag: form.tag || null,
         type: form.type || null,
         distance: form.distance || null,
+        address: form.address.trim() || null,
+        district: form.district.trim() || null,
+        openHours: form.openHours.trim() || null,
+        priceEst: form.priceEst.trim() || null,
         rating: form.rating ? Number(form.rating) : null,
         mapLink: form.mapLink.trim() || null,
         note: form.note.trim() || null,
@@ -229,14 +241,14 @@ export default function FoodPage({ instanceId, pageTitle }: { instanceId?: strin
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead><tr className="border-b" style={{ borderColor: 'var(--color-border)' }}>
-                            {([['name', 'Name'], ['tag', 'Tag'], ['type', 'Type'], ['distance', 'Distance'], ['rating', 'Rating'], ['note', 'Note']] as Array<[SortKey, string]>).map(([key, label]) => <th key={key} className="whitespace-nowrap px-3 py-3 text-left font-semibold" style={{ color: 'var(--color-text-secondary)' }}><button type="button" className="inline-flex items-center gap-1" onClick={() => toggleSort(key)}>{label}{renderSortIcon(key)}</button></th>)}
+                            {([['name', 'Name'], ['tag', 'Tag'], ['type', 'Type'], ['distance', 'Distance'], ['address', 'Address'], ['district', 'District'], ['openHours', 'Open hours'], ['priceEst', 'Price (estimated)'], ['rating', 'Rating'], ['note', 'Note']] as Array<[SortKey, string]>).map(([key, label]) => <th key={key} className="whitespace-nowrap px-3 py-3 text-left font-semibold" style={{ color: 'var(--color-text-secondary)' }}><button type="button" className="inline-flex items-center gap-1" onClick={() => toggleSort(key)}>{label}{renderSortIcon(key)}</button></th>)}
                             <th className="px-3 py-3 text-left font-semibold" style={{ color: 'var(--color-text-secondary)' }}>Map</th><th className="px-3 py-3 text-left font-semibold" style={{ color: 'var(--color-text-secondary)' }}>Actions</th>
                         </tr></thead>
                         <tbody>
-                            {isLoading && <tr><td colSpan={8} className="py-10 text-center" style={{ color: 'var(--color-text-secondary)' }}>Loading food places...</td></tr>}
-                            {!isLoading && visibleItems.length === 0 && <tr><td colSpan={8} className="py-10 text-center" style={{ color: 'var(--color-text-secondary)' }}>No food places found.</td></tr>}
+                            {isLoading && <tr><td colSpan={12} className="py-10 text-center" style={{ color: 'var(--color-text-secondary)' }}>Loading food places...</td></tr>}
+                            {!isLoading && visibleItems.length === 0 && <tr><td colSpan={12} className="py-10 text-center" style={{ color: 'var(--color-text-secondary)' }}>No food places found.</td></tr>}
                             {visibleItems.map((item) => <tr key={item.id} className={`border-t ${pickedId === item.id ? 'bg-amber-100 dark:bg-amber-900/30' : ''}`} style={{ borderColor: 'var(--color-border)' }}>
-                                <td className="px-3 py-3 font-semibold" style={{ color: 'var(--color-text)' }}>{item.name}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.tag || '—'}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.type || '—'}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.distance || '—'}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.rating ? '★'.repeat(item.rating) : '—'}</td><td className="max-w-xs px-3 py-3" style={{ color: 'var(--color-text-secondary)' }}>{item.note || '—'}</td>
+                                <td className="px-3 py-3 font-semibold" style={{ color: 'var(--color-text)' }}>{item.name}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.tag || '—'}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.type || '—'}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.distance || '—'}</td><td className="max-w-xs px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.address || '—'}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.district || '—'}</td><td className="whitespace-nowrap px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.openHours || '—'}</td><td className="whitespace-nowrap px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.priceEst || '—'}</td><td className="px-3 py-3" style={{ color: 'var(--color-text)' }}>{item.rating ? '★'.repeat(item.rating) : '—'}</td><td className="max-w-xs px-3 py-3" style={{ color: 'var(--color-text-secondary)' }}>{item.note || '—'}</td>
                                 <td className="px-3 py-3">{item.mapLink ? <button type="button" title="Open map" className="text-blue-600" onClick={() => void openExternal(item.mapLink!)}><MapPin className="h-4 w-4" /></button> : '—'}</td>
                                 <td className="px-3 py-3"><div className="flex items-center gap-1"><button type="button" title="Edit" className="btn-ghost p-1" onClick={() => openEdit(item)}><Pencil className="h-4 w-4" /></button><button type="button" title="Delete" className="btn-ghost p-1 text-red-600" onClick={() => deleteMut.mutate(item.id)}><Trash2 className="h-4 w-4" /></button></div></td>
                             </tr>)}
@@ -251,6 +263,10 @@ export default function FoodPage({ instanceId, pageTitle }: { instanceId?: strin
                 <label className="label">Tag<input className="input mt-1" list="food-tags" value={form.tag} onChange={(e) => setForm((current) => ({ ...current, tag: e.target.value }))} /><datalist id="food-tags">{options.tags.map((value) => <option key={value} value={value} />)}</datalist></label>
                 <label className="label">Type<input className="input mt-1" list="food-types" value={form.type} onChange={(e) => setForm((current) => ({ ...current, type: e.target.value }))} /><datalist id="food-types">{options.types.map((value) => <option key={value} value={value} />)}</datalist></label>
                 <label className="label">Distance<input className="input mt-1" list="food-distances" value={form.distance} onChange={(e) => setForm((current) => ({ ...current, distance: e.target.value }))} /><datalist id="food-distances">{options.distances.map((value) => <option key={value} value={value} />)}</datalist></label>
+                <label className="label">Address<input className="input mt-1" value={form.address} onChange={(e) => setForm((current) => ({ ...current, address: e.target.value }))} /></label>
+                <label className="label">District<input className="input mt-1" value={form.district} onChange={(e) => setForm((current) => ({ ...current, district: e.target.value }))} /></label>
+                <label className="label">Open hours<input className="input mt-1" placeholder="e.g. 08:00–22:00" value={form.openHours} onChange={(e) => setForm((current) => ({ ...current, openHours: e.target.value }))} /></label>
+                <label className="label">Price (estimated)<input className="input mt-1" placeholder="e.g. 50.000–100.000đ" value={form.priceEst} onChange={(e) => setForm((current) => ({ ...current, priceEst: e.target.value }))} /></label>
                 <label className="label">Rating<select className="input mt-1" value={form.rating} onChange={(e) => setForm((current) => ({ ...current, rating: e.target.value }))}><option value="">Unrated</option>{[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>{value} / 5</option>)}</select></label>
                 <label className="label">Google Maps URL<input className="input mt-1" type="url" value={form.mapLink} onChange={(e) => setForm((current) => ({ ...current, mapLink: e.target.value }))} /></label>
                 <label className="label md:col-span-2">Note<textarea className="input mt-1 min-h-24" value={form.note} onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))} /></label>

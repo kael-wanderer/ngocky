@@ -1036,6 +1036,10 @@ model FoodPlace {
   tag        String?
   type       String?
   distance   String?
+  address    String?
+  district   String?
+  openHours  String?
+  priceEst   String?
   rating     Int?
   mapLink    String?
   note       String?

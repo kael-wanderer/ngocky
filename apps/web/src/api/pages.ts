@@ -37,6 +37,10 @@ export type FoodPlace = {
     tag: string | null;
     type: string | null;
     distance: string | null;
+    address: string | null;
+    district: string | null;
+    openHours: string | null;
+    priceEst: string | null;
     rating: number | null;
     mapLink: string | null;
     note: string | null;
