@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import { BUILT_IN_ROUTE_TEMPLATE_MAP, isRouteAccessible } from './config/features';
 import { useAppSettings, useSetupStatus } from './api/appSettings';
 import { usePageTemplates } from './api/pages';
+import DesktopGate from './components/DesktopGate';
 
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const GoalsPage = lazy(() => import('./pages/goals'));
@@ -133,7 +134,9 @@ function AppRoutes() {
 export default function App() {
     return (
         <QueryClientProvider client={queryClient}>
-            <AppRoutes />
+            <DesktopGate>
+                <AppRoutes />
+            </DesktopGate>
         </QueryClientProvider>
     );
 }
