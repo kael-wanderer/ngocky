@@ -739,3 +739,38 @@ Interaction rule:
   - `Due Today`
   - `Upcoming`
   - `Unscheduled`
+
+## Desktop App Deployment Modes (implemented 2026-07)
+
+Discussed 2026-07-17. One Tauri binary, three modes chosen at onboarding:
+
+| Mode | Frontend | API | DB | Use case |
+|---|---|---|---|---|
+| 1. Thin client | loads remote webapp URL | on VPS | VPS Postgres | current behavior; family shared, always-on server |
+| 2. Single-user offline | bundled | local Node sidecar | local SQLite file | personal, no sync, no network |
+| 3. Thick client + shared DB | bundled | local Node sidecar | remote Postgres (LAN or Supabase) | family shared without webapp hosting |
+
+Key decisions/constraints:
+
+- **Mode 3 = Mode 2 architecture with remote `DATABASE_URL`** — same sidecar build; onboarding difference is one connection string.
+- **SQLite needs no installer** — embedded library, app creates the db file silently. No install/download onboarding step.
+- **API sidecar is required** in modes 2/3 — all business logic + Prisma lives in Express (23 route files). Rewrite in Rust rejected.
+- **Scheduler** replaces n8n locally: in-process cron inside the API sidecar. Must be **idempotent** (mark fired in DB, first writer wins) — in mode 3 multiple family clients run schedulers concurrently; whichever machine is awake fires the alert.
+- **Alert reliability limit**: local scheduler only runs while the machine is awake (lid closed = suspended). Mitigation: catch-up scan on launch/wake fires due-but-unfired notifications late. Guaranteed delivery requires an always-on server = mode 1. Mode 3 partial option: Supabase `pg_cron` + edge function for server-side marking/email.
+- **Security trade-off (mode 3)**: thick client holds DB credentials = full DB access; role enforcement becomes client-side only. Acceptable for family trust model, not for untrusted users.
+- **Prisma wrinkle**: provider is fixed per generated client — supporting SQLite (mode 2) and Postgres (modes 1/3) in one binary needs two schema copies + two generated clients + runtime switch.
+- **Supabase free tier**: 500MB DB, pauses after ~1 week inactivity, use connection pooler (port 6543).
+- **No sync**: mode 2 is an isolated island by design; mode 3 has a single source of truth so no sync needed.
+
+Suggested build order: sidecar packaging → mode 3 (no schema port) → mode 2 (SQLite enum/array audit) → scheduler idempotency + wake catch-up.
+
+**Deltas from plan (as shipped 2026-07):**
+
+- **Sidecar packaging**: Express bundled with esbuild, packaged as a Node SEA binary. The SEA base is an *official self-contained node* fetched at package time — the host's homebrew node is dynamically linked and not injectable.
+- **Migrations**: a custom runtime migration runner (`services/migrationRunner.ts`) applies shipped baseline SQL, not the Prisma CLI. Concurrency safety comes from a Postgres transaction advisory lock (the tracking-table creation sits *inside* the lock — `CREATE TABLE IF NOT EXISTS` is not concurrency-safe on Postgres).
+- **Idempotency mechanism**: reuses the existing `lastNotificationSentAt` + `notificationCooldownHours` (`isReminderDue`), not a new `firedAt` column — zero schema change.
+- **Fired-notification history**: exposed via in-memory `GET /api/notifications/recent` (last 100), not persisted; boot catch-up refires anything still unmarked. Add a `NotificationLog` model later if history is wanted.
+- **Channels**: OS notification (Tauri) + Telegram (`TELEGRAM_BOT_TOKEN`, direct Bot API). Email deferred.
+- **Scheduled reports** (`due-reports`) stay n8n/VPS-only; the local scheduler covers item reminders only.
+- **Wake catch-up**: no Tauri resume event; the 5-min interval computes lookback from the wall-clock gap since the last tick, which covers sleep.
+- **Service auth**: `/api/service` routes now accept the assistant API key *or* a JWT owner/admin session (the in-process scheduler has no JWT).
