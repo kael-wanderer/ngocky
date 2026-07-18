@@ -10,6 +10,8 @@ type PrismaClientConstructor = new () => PrismaClientWithLegacyCollections;
 
 const isTestDatabase = process.env.NODE_ENV === 'test' || process.env.DATABASE_URL?.startsWith('file:');
 
+export const usesSqlite = isTestDatabase || process.env.DB_PROVIDER === 'sqlite';
+
 const { PrismaClient } = (
     isTestDatabase
         ? require('../test/client')

@@ -8,6 +8,12 @@ async function main() {
     await prisma.$connect();
     console.log('✅ Database connected');
 
+    // Desktop modes ship migration SQL as a resource; apply before seeding.
+    if (process.env.MIGRATIONS_DIR) {
+        const { runMigrations } = await import('./services/migrationRunner');
+        await runMigrations(process.env.MIGRATIONS_DIR);
+    }
+
     // Seed owner account on first boot
     await AuthService.seedOwner();
 
