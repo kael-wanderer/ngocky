@@ -22,3 +22,4 @@ apps/api/.cache/
 # Desktop build artifacts (sidecar binary + prisma engine)
 apps/desktop/src-tauri/binaries/
 apps/desktop/src-tauri/resources/prisma/
+apps/desktop/src-tauri/resources/migrations/

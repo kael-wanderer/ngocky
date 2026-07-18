@@ -48,4 +48,7 @@ ENGINE=$(ls node_modules/.prisma/client/libquery_engine-*.node ../../node_module
 [[ -n "$ENGINE" ]] || { echo "prisma query engine not found; run 'npm run db:generate' first" >&2; exit 1; }
 cp "$ENGINE" "$RES/prisma/query-engine.node"
 
+# Per-provider baseline migration SQL (consumed at runtime via MIGRATIONS_DIR).
+node scripts/generate-baselines.mjs
+
 echo "Sidecar packaged: $OUT_BIN"

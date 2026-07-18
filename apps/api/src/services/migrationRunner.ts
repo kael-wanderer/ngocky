@@ -15,7 +15,9 @@ export async function runMigrations(dir: string) {
     await prisma.$transaction(
         async (tx) => {
             // xact-scoped lock: same connection guaranteed, auto-released on commit.
-            if (!usesSqlite) await tx.$queryRawUnsafe(`SELECT pg_advisory_xact_lock(${LOCK_KEY})`);
+            // executeRaw (not queryRaw): pg_advisory_xact_lock returns void, which
+            // queryRaw fails to deserialize.
+            if (!usesSqlite) await tx.$executeRawUnsafe(`SELECT pg_advisory_xact_lock(${LOCK_KEY})`);
             const appliedRows = await tx.$queryRawUnsafe<{ name: string }[]>('SELECT name FROM _app_migrations');
             const applied = new Set(appliedRows.map((r) => r.name));
             for (const file of files) {
