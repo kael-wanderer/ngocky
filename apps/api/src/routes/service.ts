@@ -549,10 +549,11 @@ router.get('/report-data/:reportId', async (req: Request, res: Response, next: N
  * Returns all notification-enabled items whose notificationDate falls within the next 15-minute window.
  * Used by n8n to send reminders via Telegram/Email.
  */
-router.get('/due-notifications', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/due-notifications', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const now = new Date();
-        const windowStart = new Date(now.getTime() - 60 * 1000);       // -1 min (catch just-passed)
+        const lookback = Math.min(Math.max(parseInt(String(req.query.lookbackMinutes ?? ''), 10) || 1, 1), 7 * 24 * 60);
+        const windowStart = new Date(now.getTime() - lookback * 60 * 1000); // catch just-passed / missed-while-asleep
         const windowEnd = new Date(now.getTime() + 14 * 60 * 1000);    // +14 min
 
         const userSelect = {
