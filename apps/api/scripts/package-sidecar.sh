@@ -29,6 +29,9 @@ if [[ ! -x "$SEA_BASE" ]]; then
         | tar -xz -C .cache
 fi
 
+# Desktop SQLite client must exist before bundling — esbuild statically includes
+# the require('../../prisma/desktop-client') branch in database.ts.
+npm run db:generate:desktop
 npm run build:sidecar
 # Generate the SEA blob with the SAME node the blob is injected into — the blob
 # format is node-version-specific, so the host node must not be used here.

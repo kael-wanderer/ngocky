@@ -1,21 +1,37 @@
-// Generates prisma/schema.test.prisma from prisma/schema.prisma.
-// Run automatically by the test setup — never edit schema.test.prisma by hand.
+// Generates prisma/schema.test.prisma (default) or prisma/schema.desktop.prisma
+// (--variant desktop) from prisma/schema.prisma. Never edit outputs by hand.
 import { readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
+const variant = process.argv.includes('--variant') ? process.argv[process.argv.indexOf('--variant') + 1] : 'test';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const source = readFileSync(join(root, 'prisma', 'schema.prisma'), 'utf8');
+
+const variants = {
+    test: {
+        file: 'schema.test.prisma',
+        output: '../src/test/client',
+        url: '"file:./test.db"',
+    },
+    desktop: {
+        file: 'schema.desktop.prisma',
+        output: './desktop-client',
+        url: 'env("DATABASE_URL")',
+    },
+};
+const v = variants[variant];
+if (!v) throw new Error(`Unknown variant: ${variant}`);
 
 const header = `// AUTO-GENERATED from schema.prisma by scripts/generate-test-schema.mjs — do not edit.
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/test/client"
+  output   = "${v.output}"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./test.db"
+  url      = ${v.url}
 }
 `;
 
@@ -28,5 +44,5 @@ const body = source
     // Keep these nullable in tests; application normalization supplies defaults.
     .replace(/\bJson\s+@default\([^\n]+\)/g, 'Json?');
 
-writeFileSync(join(root, 'prisma', 'schema.test.prisma'), header + '\n' + body);
-console.log('schema.test.prisma regenerated from schema.prisma');
+writeFileSync(join(root, 'prisma', v.file), header + '\n' + body);
+console.log(`${v.file} regenerated from schema.prisma`);

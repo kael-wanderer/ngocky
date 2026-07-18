@@ -10,6 +10,7 @@
         "db:migrate:dev": "prisma migrate dev",
         "db:seed": "tsx prisma/seed.ts",
         "db:generate": "prisma generate",
+        "db:generate:desktop": "node scripts/generate-test-schema.mjs --variant desktop && prisma generate --schema prisma/schema.desktop.prisma",
         "build:sidecar": "node scripts/build-sidecar.mjs",
         "package:sidecar": "scripts/package-sidecar.sh",
         "lint": "tsc --noEmit",

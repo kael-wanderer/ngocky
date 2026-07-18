@@ -23,3 +23,5 @@ apps/api/.cache/
 apps/desktop/src-tauri/binaries/
 apps/desktop/src-tauri/resources/prisma/
 apps/desktop/src-tauri/resources/migrations/
+apps/api/prisma/desktop-client/
+apps/api/prisma/schema.desktop.prisma
