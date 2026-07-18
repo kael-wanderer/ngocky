@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Desktop mode 2 (single-user offline, SQLite)**: `--variant desktop` generates a SQLite Prisma client; `DB_PROVIDER=sqlite` selects it at runtime with an env-driven `DATABASE_URL`. Fully local, no network. Baseline SQL generated per provider.
 - **Desktop mode 3 (thick client + shared Postgres)**: the Express API is bundled (esbuild) and packaged as a Node SEA binary, spawned by Tauri as a sidecar on `127.0.0.1:21473`. Onboarding mode-chooser (thin / offline / shared) writes `desktop-config.json` and relaunches.
 - **Runtime migration runner** (`services/migrationRunner.ts`): applies shipped baseline SQL at boot via `MIGRATIONS_DIR`, tracked in `_app_migrations`, idempotent and safe under concurrent mode-3 clients (Postgres advisory lock).
 
