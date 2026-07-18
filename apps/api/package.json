@@ -11,6 +11,7 @@
         "db:seed": "tsx prisma/seed.ts",
         "db:generate": "prisma generate",
         "build:sidecar": "node scripts/build-sidecar.mjs",
+        "package:sidecar": "scripts/package-sidecar.sh",
         "lint": "tsc --noEmit",
         "test": "vitest run"
     },

@@ -1,0 +1,5 @@
+{
+    "main": "dist-sidecar/sidecar.cjs",
+    "output": "dist-sidecar/sea-prep.blob",
+    "disableExperimentalSEAWarning": true
+}
