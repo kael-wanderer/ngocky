@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/auth';
 import { BUILT_IN_ROUTE_TEMPLATE_MAP, getEnabledGroups, getFeatureFlags, getMobileNavItems, isFeatureRouteEnabled, isPageTemplateEnabled, isRouteAccessible } from '../config/features';
 import { useAppSettings } from '../api/appSettings';
 import { usePages, usePageTemplates } from '../api/pages';
+import DesktopNotifier from '../components/DesktopNotifier';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, Menu, X,
@@ -257,6 +258,7 @@ export default function AppLayout() {
 
     return (
         <div className="flex min-h-screen h-[100dvh] overflow-hidden" style={{ backgroundColor: 'var(--color-bg)' }}>
+            <DesktopNotifier />
             {/* Sidebar */}
             <aside
                 className={`fixed lg:relative z-30 h-full flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'

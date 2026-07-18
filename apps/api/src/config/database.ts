@@ -9,11 +9,18 @@ type PrismaClientWithLegacyCollections = PrismaClientType & {
 type PrismaClientConstructor = new () => PrismaClientWithLegacyCollections;
 
 const isTestDatabase = process.env.NODE_ENV === 'test' || process.env.DATABASE_URL?.startsWith('file:');
+const isDesktopSqlite = process.env.DB_PROVIDER === 'sqlite' && process.env.NODE_ENV !== 'test';
+
+export const usesSqlite = isTestDatabase || process.env.DB_PROVIDER === 'sqlite';
 
 const { PrismaClient } = (
-    isTestDatabase
-        ? require('../test/client')
-        : require('@prisma/client')
+    // Desktop branch first: mode-2 DATABASE_URL starts with `file:`, which would
+    // otherwise select the test client (its URL is hardcoded to test.db).
+    isDesktopSqlite
+        ? require('../../prisma/desktop-client')
+        : isTestDatabase
+            ? require('../test/client')
+            : require('@prisma/client')
 ) as { PrismaClient: PrismaClientConstructor };
 
 export const prisma: PrismaClientWithLegacyCollections = new PrismaClient();

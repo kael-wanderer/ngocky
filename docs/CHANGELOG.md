@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-18] - Desktop Offline Modes
+
+### Added
+
+- **Desktop mode 2 (single-user offline, SQLite)**: `--variant desktop` generates a SQLite Prisma client; `DB_PROVIDER=sqlite` selects it at runtime with an env-driven `DATABASE_URL`. Fully local, no network. Baseline SQL generated per provider.
+- **Desktop mode 3 (thick client + shared Postgres)**: the Express API is bundled (esbuild) and packaged as a Node SEA binary, spawned by Tauri as a sidecar on `127.0.0.1:21473`. Onboarding mode-chooser (thin / offline / shared) writes `desktop-config.json` and relaunches.
+- **Runtime migration runner** (`services/migrationRunner.ts`): applies shipped baseline SQL at boot via `MIGRATIONS_DIR`, tracked in `_app_migrations`, idempotent and safe under concurrent mode-3 clients (Postgres advisory lock).
+- **Local scheduler** (`services/scheduler.ts`, `SCHEDULER_ENABLED=true`): in-sidecar replacement for n8n reminder delivery. Boot catch-up (24h) + 5-min interval with wall-clock-gap lookback. Delivers via Telegram (`TELEGRAM_BOT_TOKEN`) and exposes fired reminders at `GET /api/notifications/recent`; the desktop frontend turns those into OS notifications.
+- **`lookbackMinutes`** query param on `GET /api/service/due-notifications` (default 1, max 7 days) for catch-up scans. `/api/service` routes now accept the assistant API key or a JWT owner/admin session.
+
+### Notes
+
+- SEA base uses an official self-contained node fetched at package time (host homebrew node is dynamically linked / not injectable).
+
+## [2026-07-17] - Food Menu Columns & Table Column Toggle
+
+### Added
+
+- **Food Menu**: 4 new optional fields — Address, District, Open hours, Price (estimated) — shown after Distance in table, form, CSV/JSON import (`address`, `district`, `openHours`/`open hours`, `priceEst`/`price`). Migration `20260717000000_add_food_place_details`.
+- **Column show/hide toggle**: shared `ColumnToggle` component + `useHiddenColumns` hook (localStorage-persisted per template). Wired into Food, Expenses, Housework (list view), Ca Keo (list view), Funds, Keyboard, Users.
+
+### Documentation
+
+- DESIGN.md: planned desktop deployment modes (thin client / single-user offline SQLite / thick client + shared Postgres), scheduler idempotency and alert-reliability constraints.
+
 ## [2026-07-11] - Cross-Cutting Page Instance Integration
 
 ### Added

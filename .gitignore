@@ -12,3 +12,16 @@ apps/api/src/test/client/
 apps/api/prisma/schema.test.prisma
 apps/desktop/src-tauri/target/
 apps/desktop/src-tauri/gen/
+
+# Desktop sidecar build artifacts
+apps/api/dist-sidecar/
+
+# Build cache
+apps/api/.cache/
+
+# Desktop build artifacts (sidecar binary + prisma engine)
+apps/desktop/src-tauri/binaries/
+apps/desktop/src-tauri/resources/prisma/
+apps/desktop/src-tauri/resources/migrations/
+apps/api/prisma/desktop-client/
+apps/api/prisma/schema.desktop.prisma

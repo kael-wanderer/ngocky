@@ -10,6 +10,9 @@
         "db:migrate:dev": "prisma migrate dev",
         "db:seed": "tsx prisma/seed.ts",
         "db:generate": "prisma generate",
+        "db:generate:desktop": "node scripts/generate-test-schema.mjs --variant desktop && prisma generate --schema prisma/schema.desktop.prisma",
+        "build:sidecar": "node scripts/build-sidecar.mjs",
+        "package:sidecar": "scripts/package-sidecar.sh",
         "lint": "tsc --noEmit",
         "test": "vitest run"
     },
@@ -36,6 +39,7 @@
         "@types/multer": "^2.1.0",
         "@types/node": "^22.13.5",
         "@types/supertest": "^7.2.0",
+        "esbuild": "^0.27.3",
         "prisma": "^6.4.1",
         "supertest": "^7.2.2",
         "tsx": "^4.19.3",
