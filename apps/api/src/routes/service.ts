@@ -1,13 +1,22 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
 import { authenticate, authorize } from '../middleware/auth';
+import { config } from '../config/env';
 import { sendSuccess } from '../utils/response';
 import { ValidationError } from '../utils/errors';
 import { getGoalPeriodEnd, getReminderCutoff, isReminderDue } from '../utils/reminders';
 
 const router = Router();
-router.use(authenticate);
-router.use(authorize('OWNER', 'ADMIN'));
+// Service-to-service auth: the local scheduler (and n8n) call these routes with
+// the assistant API key; interactive OWNER/ADMIN sessions use their JWT.
+router.use((req: Request, res: Response, next: NextFunction) => {
+    const key = req.headers['x-assistant-api-key'];
+    if (key && key === config.ASSISTANT_API_KEY) return next();
+    authenticate(req, res, (err?: unknown) => {
+        if (err) return next(err);
+        authorize('OWNER', 'ADMIN')(req, res, next);
+    });
+});
 
 function pageOrigin(record: any) {
     const page = record.instance || record.project?.instance || record.asset?.instance || record.topic?.instance || record.person?.instance;

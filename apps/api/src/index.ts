@@ -21,6 +21,12 @@ async function main() {
     app.listen(parseInt(config.APP_PORT), '0.0.0.0', () => {
         console.log(`🚀 NgocKy API running on port ${config.APP_PORT} (${config.NODE_ENV})`);
     });
+
+    // Desktop modes 2/3 run the reminder scheduler in-process (replaces n8n).
+    if (process.env.SCHEDULER_ENABLED === 'true') {
+        const { startScheduler } = await import('./services/scheduler');
+        startScheduler();
+    }
 }
 
 main().catch((err) => {
