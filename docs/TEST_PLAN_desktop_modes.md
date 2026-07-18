@@ -3,9 +3,11 @@
 Manual verification for the Tauri desktop app (thin / offline / shared modes) + local scheduler.
 Branch: `feat/desktop-offline-modes`. Platform notes assume macOS (arm64).
 
-Automated coverage already green (run `cd apps/api && npm test` → 88 passing): migration runner,
+Automated coverage already green (run `npm test` from `apps/api` → 88 passing): migration runner,
 `lookbackMinutes` param, scheduler tick (fire-once / mark-sent / cooldown). The cases below are the
 **GUI + end-to-end** paths that automation can't drive.
+
+> All commands below run from the **repo root** unless a `cd` is shown.
 
 ---
 
@@ -13,8 +15,8 @@ Automated coverage already green (run `cd apps/api && npm test` → 88 passing):
 
 | ID | Step | Command | Expected |
 | :--- | :--- | :--- | :--- |
-| P-1 | Package the API sidecar (downloads official node first run) | `cd apps/api && npm run package:sidecar` | Ends with `Sidecar packaged: …/binaries/ngocky-api-<triple>`; `baseline written: postgres` + `sqlite` |
-| P-2 | Confirm artifacts exist | `ls apps/desktop/src-tauri/binaries apps/desktop/src-tauri/resources/prisma apps/desktop/src-tauri/resources/migrations/{postgres,sqlite}` | binary (~107MB), `query-engine.node`, `000_baseline.sql` in each provider dir |
+| P-1 | Package the API sidecar (downloads official node first run) | `npm run --workspace @ngocky/api package:sidecar` | Ends with `Sidecar packaged: …/binaries/ngocky-api-<triple>`; `baseline written: postgres` + `sqlite` |
+| P-2 | Confirm artifacts exist | `ls apps/desktop/src-tauri/binaries apps/desktop/src-tauri/resources/prisma apps/desktop/src-tauri/resources/migrations/{postgres,sqlite}` | binary (~108MB), `query-engine.node`, `000_baseline.sql` in each provider dir |
 | P-3 | Build the desktop app | `cd apps/desktop && npm run build` | Build succeeds; bundle under `src-tauri/target/release/bundle/` |
 
 **Config reset** (to re-trigger onboarding between modes):
