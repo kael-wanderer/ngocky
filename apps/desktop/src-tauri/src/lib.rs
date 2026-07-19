@@ -40,6 +40,17 @@ fn set_desktop_config(app: tauri::AppHandle, config: DesktopConfig) -> Result<()
     fs::write(config_path(&app), json).map_err(|e| e.to_string())
 }
 
+// Delete the saved config so the next launch shows the mode-picker onboarding
+// again. Used by Settings -> "Switch mode / reset". Missing file is fine.
+#[tauri::command]
+fn clear_desktop_config(app: tauri::AppHandle) -> Result<(), String> {
+    match fs::remove_file(config_path(&app)) {
+        Ok(()) => Ok(()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 fn spawn_sidecar(app: &tauri::AppHandle, cfg: &DesktopConfig) -> CommandChild {
     let mode = cfg.mode.clone().unwrap_or_default();
     let data_dir = app.path().app_data_dir().expect("no app data dir");
@@ -52,6 +63,9 @@ fn spawn_sidecar(app: &tauri::AppHandle, cfg: &DesktopConfig) -> CommandChild {
     let mut envs: Vec<(String, String)> = vec![
         ("NODE_ENV".into(), "production".into()),
         ("APP_PORT".into(), "21473".into()),
+        // Tauri spawns the sidecar with cwd "/", so cwd-relative writes (uploads)
+        // fail. Pin writable dirs under the app data dir.
+        ("UPLOAD_DIR".into(), data_dir.display().to_string()),
         ("DATABASE_URL".into(), db_url),
         ("DB_PROVIDER".into(), provider.into()),
         ("JWT_SECRET".into(), cfg.jwt_secret.clone().unwrap_or_default()),
@@ -81,7 +95,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_notification::init())
-        .invoke_handler(tauri::generate_handler![get_desktop_config, set_desktop_config])
+        .invoke_handler(tauri::generate_handler![get_desktop_config, set_desktop_config, clear_desktop_config])
         .setup(|app| {
             let cfg = load_config(app.handle());
             let child = match cfg.mode.as_deref() {
