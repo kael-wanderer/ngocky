@@ -90,7 +90,23 @@ router.get('/due-reports', async (_req: Request, res: Response, next: NextFuncti
             });
         }
 
-        sendSuccess(res, due);
+        // Claim-on-read: atomically stamp lastSentAt so concurrent pollers
+        // (two family desktops, or n8n double-fire) send each report once.
+        const GUARD_MS = 20 * 60 * 1000;
+        const cutoff = new Date(now.getTime() - GUARD_MS);
+        const claimed: typeof due = [];
+        for (const report of due) {
+            const result = await prisma.scheduledReport.updateMany({
+                where: {
+                    id: report.id,
+                    OR: [{ lastSentAt: null }, { lastSentAt: { lt: cutoff } }],
+                },
+                data: { lastSentAt: now },
+            });
+            if (result.count === 1) claimed.push(report);
+        }
+
+        sendSuccess(res, claimed);
     } catch (err) { next(err); }
 });
 
