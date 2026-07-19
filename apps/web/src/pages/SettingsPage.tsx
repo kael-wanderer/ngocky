@@ -49,7 +49,16 @@ export default function SettingsPage() {
     const [cakeoColor, setCakeoColor] = useState('#94a3b8');
     const [calendarColor, setCalendarColor] = useState('#94a3b8');
     const [phoneViewForm, setPhoneViewForm] = useState<string[]>([...DEFAULT_MOBILE_NAV_ITEMS]);
+    const [storageInfo, setStorageInfo] = useState<{ mode: string; engine: string; location: string } | null>(null);
+    const [resetArmed, setResetArmed] = useState(false);
     const mfaDisableInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!isTauri) return;
+        import('@tauri-apps/api/core').then(({ invoke }) =>
+            invoke<{ mode: string; engine: string; location: string }>('get_storage_info').then(setStorageInfo).catch(() => {})
+        );
+    }, []);
 
     const { data: assistantLink, refetch: refetchLink } = useQuery({
         queryKey: ['assistant-link-status'],
@@ -560,6 +569,33 @@ export default function SettingsPage() {
                                             Switch between family server, offline, or shared database. This signs you out and returns to the setup screen on restart.
                                         </p>
                                     </div>
+                                    {storageInfo && storageInfo.engine !== 'Server' && (
+                                        <div className="text-sm space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                            <div><span className="font-medium" style={{ color: 'var(--color-text)' }}>Engine:</span> {storageInfo.engine}</div>
+                                            <div className="break-all"><span className="font-medium" style={{ color: 'var(--color-text)' }}>Location:</span> {storageInfo.location}</div>
+                                        </div>
+                                    )}
+                                    {storageInfo?.engine === 'SQLite' && (
+                                        <button
+                                            className="btn-secondary"
+                                            style={{ color: 'var(--color-danger, #dc2626)' }}
+                                            onClick={async () => {
+                                                if (!resetArmed) {
+                                                    setResetArmed(true);
+                                                    setTimeout(() => setResetArmed(false), 5000);
+                                                    return;
+                                                }
+                                                const { invoke } = await import('@tauri-apps/api/core');
+                                                await invoke('reset_offline_data');
+                                                localStorage.removeItem('ngocky_token');
+                                                localStorage.removeItem('ngocky_user');
+                                                const { relaunch } = await import('@tauri-apps/plugin-process');
+                                                await relaunch();
+                                            }}
+                                        >
+                                            {resetArmed ? 'Click again to erase all data' : 'Reset data (erase everything)'}
+                                        </button>
+                                    )}
                                     <button
                                         className="btn-secondary"
                                         onClick={async () => {
