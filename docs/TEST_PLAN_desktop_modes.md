@@ -3,8 +3,9 @@
 Manual verification for the Tauri desktop app (thin / offline / shared modes) + local scheduler.
 Branch: `feat/desktop-offline-modes`. Platform notes assume macOS (arm64).
 
-Automated coverage already green (run `npm test` from `apps/api` → 88 passing): migration runner,
-`lookbackMinutes` param, scheduler tick (fire-once / mark-sent / cooldown). The cases below are the
+Automated coverage already green (run `npm test` from `apps/api` → 95 passing): migration runner,
+`lookbackMinutes` param, scheduler tick (fire-once / mark-sent / cooldown), due-reports claim,
+report formatter. The cases below are the
 **GUI + end-to-end** paths that automation can't drive.
 
 > All commands below run from the **repo root** unless a `cd` is shown.
@@ -90,7 +91,7 @@ Use a reachable Postgres (LAN or Supabase). For local testing: `postgresql://ngo
 
 | ID | Test Case | Command | Expected |
 | :--- | :--- | :--- | :--- |
-| R-1 | API test suite | `cd apps/api && npm test` | 88 passing |
+| R-1 | API test suite | `cd apps/api && npm test` | 95 passing |
 | R-2 | Typecheck | `cd apps/api && npx tsc --noEmit` and `cd apps/web && npx tsc --noEmit` | No errors, both |
 | R-3 | Web build | `cd apps/web && npm run build` | Builds clean |
 | R-4 | Rust compiles | `cd apps/desktop/src-tauri && cargo check` | Finished, no errors |

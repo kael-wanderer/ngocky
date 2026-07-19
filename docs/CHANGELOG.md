@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-07-19] - Desktop DB Connection UX & Scheduled Reports
+
+### Added
+
+- **Split-field DB form** in desktop onboarding (host/port/database/user/password) with a **Test connection** button (`test_db_connection` Tauri command — spawns the sidecar in `DB_CHECK_ONLY=true` probe mode, same driver semantics as runtime) and an Advanced raw-connection-string toggle.
+- **Offline engine choice**: built-in SQLite (default) or bring-your-own PostgreSQL (host prefilled `127.0.0.1`, install link). Sidecar provider now follows `database_url` presence, not mode.
+- **Settings storage panel** (desktop): shows engine + location (credential-stripped for Postgres) via `get_storage_info`; SQLite gets a two-click **Reset data** button (`reset_offline_data` kills the sidecar and deletes `ngocky.db*`).
+- **Setup wizard page selection**: per-template checkboxes under each module group; unchecked templates land as `builtInPages: { visible: false }` overrides (`POST /api/setup` accepts optional `hiddenPages`). Setup now runs in a single transaction.
+- **Scheduled reports on desktop** (modes 2/3): `tickReports()` in the local scheduler polls `GET /api/service/due-reports` + `report-data/:id`, formats via new `services/reportFormatter.ts` (plain text, ≤4000 chars, `sections` filter, VND `vi-VN`), delivers via Telegram + OS notification feed.
+- **Report send dedupe**: `ScheduledReport.lastSentAt` + atomic claim-on-read in `due-reports` (20-min guard) — two shared-mode desktops (or a double-firing n8n) send each report exactly once. Migration `20260719120000_scheduled_report_last_sent`.
+- **Shared-mode scheduler choice** in onboarding: built-in scheduler (recommended) or self-hosted n8n (`schedulerMode: "n8n"` → sidecar starts with `SCHEDULER_ENABLED=false`).
+
+### Changed
+
+- **Frozen desktop migration baselines**: `generate-baselines.mjs` now renders `000_baseline.sql` from committed snapshots (`prisma/baseline/`); post-baseline schema changes ship as numbered diffs (`prisma/desktop-diffs/<provider>/`) copied into resources at package time.
+
+### Notes
+
+- Report catch-up after downtime is intentionally not done (server-side 15-min due window is the contract). Email channel still deferred.
+
 ## [2026-07-18] - Desktop Offline Modes
 
 ### Added
