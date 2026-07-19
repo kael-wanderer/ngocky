@@ -16,6 +16,14 @@ struct DesktopConfig {
 
 struct SidecarChild(Mutex<Option<CommandChild>>);
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct StorageInfo {
+    mode: String,
+    engine: String,
+    location: String,
+}
+
 fn config_path(app: &tauri::AppHandle) -> PathBuf {
     let dir = app.path().app_data_dir().expect("no app data dir");
     fs::create_dir_all(&dir).ok();
@@ -51,6 +59,61 @@ fn clear_desktop_config(app: tauri::AppHandle) -> Result<(), String> {
     }
 }
 
+fn strip_postgres_credentials(url: &str) -> String {
+    match url.rfind('@') {
+        Some(at) => format!("postgresql://{}", &url[at + 1..]),
+        None => url.to_string(),
+    }
+}
+
+#[tauri::command]
+fn get_storage_info(app: tauri::AppHandle) -> StorageInfo {
+    let cfg = load_config(&app);
+    let mode = cfg.mode.clone().unwrap_or_default();
+    match cfg.database_url.as_deref() {
+        Some(url) if !url.is_empty() => StorageInfo {
+            mode,
+            engine: "PostgreSQL".into(),
+            location: strip_postgres_credentials(url),
+        },
+        _ if mode == "offline" => {
+            let data_dir = app.path().app_data_dir().expect("no app data dir");
+            StorageInfo {
+                mode,
+                engine: "SQLite".into(),
+                location: data_dir.join("ngocky.db").display().to_string(),
+            }
+        }
+        _ => StorageInfo {
+            mode,
+            engine: "Server".into(),
+            location: String::new(),
+        },
+    }
+}
+
+// Wipe the offline SQLite database. Kills the sidecar first so the file
+// isn't recreated mid-delete; caller relaunches the app afterwards.
+#[tauri::command]
+fn reset_offline_data(
+    app: tauri::AppHandle,
+    state: tauri::State<SidecarChild>,
+) -> Result<(), String> {
+    if let Some(child) = state.0.lock().unwrap().take() {
+        child.kill().ok();
+    }
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    for suffix in ["", "-wal", "-shm"] {
+        let path = data_dir.join(format!("ngocky.db{suffix}"));
+        match fs::remove_file(&path) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(e.to_string()),
+        }
+    }
+    Ok(())
+}
+
 // Spawn the sidecar in check-only mode (Task 1 contract): it connects,
 // prints DB_CHECK_OK, and exits. Same driver + TLS behavior as real runtime.
 #[tauri::command]
@@ -64,7 +127,14 @@ async fn test_db_connection(app: tauri::AppHandle, database_url: String) -> Resu
         // env.ts requires >=16 chars; values are never used in check mode.
         ("JWT_SECRET".into(), "check-only-secret-0000".into()),
         ("JWT_REFRESH_SECRET".into(), "check-only-secret-0000".into()),
-        ("PRISMA_QUERY_ENGINE_LIBRARY".into(), resources.join("prisma").join("query-engine.node").display().to_string()),
+        (
+            "PRISMA_QUERY_ENGINE_LIBRARY".into(),
+            resources
+                .join("prisma")
+                .join("query-engine.node")
+                .display()
+                .to_string(),
+        ),
     ];
     let output = app
         .shell()
@@ -94,7 +164,10 @@ fn spawn_sidecar(app: &tauri::AppHandle, cfg: &DesktopConfig) -> CommandChild {
     // only an empty url falls back to the bundled SQLite file.
     let configured_url = cfg.database_url.clone().unwrap_or_default();
     let (db_url, provider) = if configured_url.is_empty() {
-        (format!("file:{}", data_dir.join("ngocky.db").display()), "sqlite")
+        (
+            format!("file:{}", data_dir.join("ngocky.db").display()),
+            "sqlite",
+        )
     } else {
         (configured_url, "postgres")
     };
@@ -106,11 +179,34 @@ fn spawn_sidecar(app: &tauri::AppHandle, cfg: &DesktopConfig) -> CommandChild {
         ("UPLOAD_DIR".into(), data_dir.display().to_string()),
         ("DATABASE_URL".into(), db_url),
         ("DB_PROVIDER".into(), provider.into()),
-        ("JWT_SECRET".into(), cfg.jwt_secret.clone().unwrap_or_default()),
-        ("JWT_REFRESH_SECRET".into(), cfg.jwt_refresh_secret.clone().unwrap_or_default()),
-        ("CORS_ORIGIN".into(), "tauri://localhost,http://tauri.localhost".into()),
-        ("MIGRATIONS_DIR".into(), resources.join("migrations").join(provider).display().to_string()),
-        ("PRISMA_QUERY_ENGINE_LIBRARY".into(), resources.join("prisma").join("query-engine.node").display().to_string()),
+        (
+            "JWT_SECRET".into(),
+            cfg.jwt_secret.clone().unwrap_or_default(),
+        ),
+        (
+            "JWT_REFRESH_SECRET".into(),
+            cfg.jwt_refresh_secret.clone().unwrap_or_default(),
+        ),
+        (
+            "CORS_ORIGIN".into(),
+            "tauri://localhost,http://tauri.localhost".into(),
+        ),
+        (
+            "MIGRATIONS_DIR".into(),
+            resources
+                .join("migrations")
+                .join(provider)
+                .display()
+                .to_string(),
+        ),
+        (
+            "PRISMA_QUERY_ENGINE_LIBRARY".into(),
+            resources
+                .join("prisma")
+                .join("query-engine.node")
+                .display()
+                .to_string(),
+        ),
         ("SCHEDULER_ENABLED".into(), "true".into()),
     ];
     if let Some(t) = &cfg.telegram_bot_token {
@@ -126,6 +222,19 @@ fn spawn_sidecar(app: &tauri::AppHandle, cfg: &DesktopConfig) -> CommandChild {
     child
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn strips_postgres_credentials_from_storage_location() {
+        assert_eq!(
+            strip_postgres_credentials("postgresql://user:secret@localhost:5432/ngocky"),
+            "postgresql://localhost:5432/ngocky"
+        );
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -133,7 +242,14 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_notification::init())
-        .invoke_handler(tauri::generate_handler![get_desktop_config, set_desktop_config, clear_desktop_config, test_db_connection])
+        .invoke_handler(tauri::generate_handler![
+            get_desktop_config,
+            set_desktop_config,
+            clear_desktop_config,
+            test_db_connection,
+            get_storage_info,
+            reset_offline_data
+        ])
         .setup(|app| {
             let cfg = load_config(app.handle());
             let child = match cfg.mode.as_deref() {
