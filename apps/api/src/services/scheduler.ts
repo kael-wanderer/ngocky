@@ -73,7 +73,7 @@ export async function tickReports(base = `http://127.0.0.1:${config.APP_PORT}/ap
             if (!report?.user?.id) continue;
             const dataRes = await fetch(`${base}/service/report-data/${report.id}`, { headers: serviceHeaders });
             if (!dataRes.ok) continue;
-            const { data: reportData } = await dataRes.json();
+            const { data: reportData } = (await dataRes.json()) as { data: any };
             if (report.user.telegramChatId) {
                 await sendTelegram(report.user.telegramChatId, formatReport(report.name, reportData));
             }

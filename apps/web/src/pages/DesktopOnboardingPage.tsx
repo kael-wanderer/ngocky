@@ -106,6 +106,7 @@ export default function DesktopOnboardingPage() {
     const [advanced, setAdvanced] = useState(false);
     const [rawUrl, setRawUrl] = useState('');
     const [telegramBotToken, setTelegramBotToken] = useState('');
+    const [schedulerMode, setSchedulerMode] = useState<'builtin' | 'n8n'>('builtin');
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
 
@@ -129,6 +130,7 @@ export default function DesktopOnboardingPage() {
                     mode,
                     databaseUrl: usesPostgres ? effectiveDbUrl : null,
                     telegramBotToken: telegramBotToken.trim() || null,
+                    schedulerMode: mode === 'shared' ? schedulerMode : null,
                     jwtSecret: randomSecret(),
                     jwtRefreshSecret: randomSecret(),
                 },
@@ -206,9 +208,26 @@ export default function DesktopOnboardingPage() {
                         <div className="text-sm font-medium">Family Postgres database</div>
                         <p className="text-xs text-gray-500">Any database name works — it just has to exist on the server. Tables are created automatically on first start.</p>
                         <DbConnectionForm db={db} setDb={setDb} advanced={advanced} setAdvanced={setAdvanced} rawUrl={rawUrl} setRawUrl={setRawUrl} />
+                        <div className="space-y-2">
+                            <div className="text-sm font-medium">Reminders &amp; reports</div>
+                            <label className="flex items-start gap-2 text-sm">
+                                <input type="radio" className="mt-1" checked={schedulerMode === 'builtin'} onChange={() => setSchedulerMode('builtin')} />
+                                <span>
+                                    <span className="font-medium">Built-in scheduler (recommended)</span>
+                                    <span className="block text-gray-500">This app checks and delivers reminders and reports while it is open. If several family computers use the same database, only one sends each alert.</span>
+                                </span>
+                            </label>
+                            <label className="flex items-start gap-2 text-sm">
+                                <input type="radio" className="mt-1" checked={schedulerMode === 'n8n'} onChange={() => setSchedulerMode('n8n')} />
+                                <span>
+                                    <span className="font-medium">I run my own n8n</span>
+                                    <span className="block text-gray-500">The app sends nothing. Your n8n workflows must reach a running desktop API on port 21473 to poll <code>/api/service/due-notifications</code> and <code>/api/service/due-reports</code>.</span>
+                                </span>
+                            </label>
+                        </div>
                     </div>
                 )}
-                {(mode === 'offline' || mode === 'shared') && (
+                {(mode === 'offline' || (mode === 'shared' && schedulerMode === 'builtin')) && (
                     <label className="block text-sm">
                         Telegram bot token (optional, for reminder delivery)
                         <input className="mt-1 w-full rounded border p-2" value={telegramBotToken} onChange={(e) => setTelegramBotToken(e.target.value)} />

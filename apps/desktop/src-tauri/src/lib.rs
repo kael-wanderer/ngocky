@@ -12,6 +12,7 @@ struct DesktopConfig {
     jwt_secret: Option<String>,
     jwt_refresh_secret: Option<String>,
     telegram_bot_token: Option<String>,
+    scheduler_mode: Option<String>,
 }
 
 struct SidecarChild(Mutex<Option<CommandChild>>);
@@ -213,7 +214,16 @@ fn spawn_sidecar(app: &tauri::AppHandle, cfg: &DesktopConfig) -> CommandChild {
                 .display()
                 .to_string(),
         ),
-        ("SCHEDULER_ENABLED".into(), "true".into()),
+        (
+            "SCHEDULER_ENABLED".into(),
+            // "n8n" means the user runs their own scheduler against the shared DB,
+            // so this sidecar must not double-send reminders or reports.
+            if cfg.scheduler_mode.as_deref() == Some("n8n") {
+                "false".into()
+            } else {
+                "true".into()
+            },
+        ),
     ];
     if let Some(t) = &cfg.telegram_bot_token {
         envs.push(("TELEGRAM_BOT_TOKEN".into(), t.clone()));
