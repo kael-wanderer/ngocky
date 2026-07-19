@@ -51,6 +51,42 @@ fn clear_desktop_config(app: tauri::AppHandle) -> Result<(), String> {
     }
 }
 
+// Spawn the sidecar in check-only mode (Task 1 contract): it connects,
+// prints DB_CHECK_OK, and exits. Same driver + TLS behavior as real runtime.
+#[tauri::command]
+async fn test_db_connection(app: tauri::AppHandle, database_url: String) -> Result<(), String> {
+    let resources = app.path().resource_dir().map_err(|e| e.to_string())?;
+    let envs: Vec<(String, String)> = vec![
+        ("NODE_ENV".into(), "production".into()),
+        ("DB_CHECK_ONLY".into(), "true".into()),
+        ("DATABASE_URL".into(), database_url),
+        ("DB_PROVIDER".into(), "postgres".into()),
+        // env.ts requires >=16 chars; values are never used in check mode.
+        ("JWT_SECRET".into(), "check-only-secret-0000".into()),
+        ("JWT_REFRESH_SECRET".into(), "check-only-secret-0000".into()),
+        ("PRISMA_QUERY_ENGINE_LIBRARY".into(), resources.join("prisma").join("query-engine.node").display().to_string()),
+    ];
+    let output = app
+        .shell()
+        .sidecar("ngocky-api")
+        .map_err(|e| e.to_string())?
+        .envs(envs)
+        .output()
+        .await
+        .map_err(|e| e.to_string())?;
+    if output.status.success() && String::from_utf8_lossy(&output.stdout).contains("DB_CHECK_OK") {
+        Ok(())
+    } else {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        Err(stderr
+            .lines()
+            .rev()
+            .find(|l| !l.trim().is_empty())
+            .unwrap_or("Connection failed")
+            .to_string())
+    }
+}
+
 fn spawn_sidecar(app: &tauri::AppHandle, cfg: &DesktopConfig) -> CommandChild {
     let mode = cfg.mode.clone().unwrap_or_default();
     let data_dir = app.path().app_data_dir().expect("no app data dir");
@@ -95,7 +131,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_notification::init())
-        .invoke_handler(tauri::generate_handler![get_desktop_config, set_desktop_config, clear_desktop_config])
+        .invoke_handler(tauri::generate_handler![get_desktop_config, set_desktop_config, clear_desktop_config, test_db_connection])
         .setup(|app| {
             let cfg = load_config(app.handle());
             let child = match cfg.mode.as_deref() {
