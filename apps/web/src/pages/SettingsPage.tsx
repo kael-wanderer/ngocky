@@ -6,6 +6,7 @@ import { Settings as SettingsIcon, User, Bell, Palette, Shield, Camera, Bot, Cop
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DEFAULT_MOBILE_NAV_ITEMS, FEATURE_GROUPS, FEATURE_FLAGS, MOBILE_NAV_OPTIONS, getMobileNavItems, type FeatureFlags, type FeatureFlagKey } from '../config/features';
 import ColorPicker from '../components/ColorPicker';
+import { isTauri } from '../components/DesktopGate';
 
 function resizeImageToBase64(file: File, maxSize = 128): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -550,6 +551,31 @@ export default function SettingsPage() {
                                     {updateProfile.isPending ? 'Saving...' : 'Save'}
                                 </button>
                             </div>
+
+                            {isTauri && (
+                                <div className="rounded-xl border p-4 space-y-3" style={{ borderColor: 'var(--color-border)' }}>
+                                    <div>
+                                        <h4 className="font-semibold" style={{ color: 'var(--color-text)' }}>Storage mode</h4>
+                                        <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                                            Switch between family server, offline, or shared database. This signs you out and returns to the setup screen on restart.
+                                        </p>
+                                    </div>
+                                    <button
+                                        className="btn-secondary"
+                                        onClick={async () => {
+                                            const { invoke } = await import('@tauri-apps/api/core');
+                                            await invoke('clear_desktop_config');
+                                            localStorage.removeItem('ngocky_token');
+                                            localStorage.removeItem('ngocky_user');
+                                            localStorage.removeItem('ngocky_api_url');
+                                            const { relaunch } = await import('@tauri-apps/plugin-process');
+                                            await relaunch();
+                                        }}
+                                    >
+                                        Switch mode / reset
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 

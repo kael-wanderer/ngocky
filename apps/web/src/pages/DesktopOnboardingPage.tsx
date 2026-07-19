@@ -37,6 +37,11 @@ export default function DesktopOnboardingPage() {
                     jwtRefreshSecret: randomSecret(),
                 },
             });
+            // Drop any session carried over from a previous mode/install so the
+            // new backend runs its own login / first-run setup instead of riding
+            // a stale token (wrong secret + empty local DB = "logged in, no data").
+            window.localStorage.removeItem('ngocky_token');
+            window.localStorage.removeItem('ngocky_user');
             if (mode === 'thin') window.localStorage.setItem('ngocky_api_url', serverUrl.trim());
             else window.localStorage.setItem('ngocky_api_url', 'http://127.0.0.1:21473/api');
             const { relaunch } = await import('@tauri-apps/plugin-process');

@@ -34,6 +34,22 @@ export default function LoginPage() {
         }
     };
 
+    const [resetError, setResetError] = useState('');
+    const switchMode = async () => {
+        setResetError('');
+        try {
+            const { invoke } = await import('@tauri-apps/api/core');
+            await invoke('clear_desktop_config');
+            localStorage.removeItem('ngocky_token');
+            localStorage.removeItem('ngocky_user');
+            localStorage.removeItem('ngocky_api_url');
+            const { relaunch } = await import('@tauri-apps/plugin-process');
+            await relaunch();
+        } catch (e: any) {
+            setResetError(e?.message || String(e));
+        }
+    };
+
     const saveServerUrl = () => {
         const trimmed = serverUrl.trim();
         if (trimmed && !/^https?:\/\//i.test(trimmed)) {
@@ -88,6 +104,14 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--color-bg)' }}>
+            {isDesktop && (
+                <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
+                    <button type="button" onClick={switchMode} className="btn-secondary text-sm">
+                        Switch mode / reset
+                    </button>
+                    {resetError && <p className="text-xs text-red-600 max-w-xs text-right">{resetError}</p>}
+                </div>
+            )}
             <div className="w-full max-w-md animate-slide-up">
                 {/* Logo */}
                 <div className="text-center mb-8">
