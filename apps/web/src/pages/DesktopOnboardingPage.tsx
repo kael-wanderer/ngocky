@@ -12,10 +12,98 @@ const MODES = [
     { id: 'shared', title: 'Shared database', desc: 'Run locally but share a family Postgres database (LAN or Supabase).' },
 ] as const;
 
+type DbFields = { host: string; port: string; database: string; user: string; password: string };
+
+const emptyDb: DbFields = { host: '', port: '5432', database: 'ngocky', user: '', password: '' };
+
+function buildDbUrl(db: DbFields) {
+    return `postgresql://${encodeURIComponent(db.user)}:${encodeURIComponent(db.password)}@${db.host.trim()}:${db.port.trim()}/${db.database.trim()}`;
+}
+
+function DbConnectionForm({ db, setDb, advanced, setAdvanced, rawUrl, setRawUrl }: {
+    db: DbFields;
+    setDb: (db: DbFields) => void;
+    advanced: boolean;
+    setAdvanced: (v: boolean) => void;
+    rawUrl: string;
+    setRawUrl: (v: string) => void;
+}) {
+    const [testing, setTesting] = useState(false);
+    const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+    const effectiveUrl = advanced ? rawUrl.trim() : buildDbUrl(db);
+
+    async function testConnection() {
+        setTesting(true);
+        setTestResult(null);
+        try {
+            const { invoke } = await import('@tauri-apps/api/core');
+            await invoke('test_db_connection', { databaseUrl: effectiveUrl });
+            setTestResult({ ok: true, message: 'Connected' });
+        } catch (e: any) {
+            setTestResult({ ok: false, message: e?.message || String(e) });
+        }
+        setTesting(false);
+    }
+
+    return (
+        <div className="space-y-3">
+            {!advanced ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                    <label className="block text-sm">
+                        Host
+                        <input className="mt-1 w-full rounded border p-2" placeholder="192.168.1.10 or db.abc.supabase.co" value={db.host} onChange={(e) => setDb({ ...db, host: e.target.value })} />
+                    </label>
+                    <label className="block text-sm">
+                        Port
+                        <input className="mt-1 w-full rounded border p-2" value={db.port} onChange={(e) => setDb({ ...db, port: e.target.value })} />
+                    </label>
+                    <label className="block text-sm">
+                        Database
+                        <input className="mt-1 w-full rounded border p-2" value={db.database} onChange={(e) => setDb({ ...db, database: e.target.value })} />
+                    </label>
+                    <label className="block text-sm">
+                        User
+                        <input className="mt-1 w-full rounded border p-2" value={db.user} onChange={(e) => setDb({ ...db, user: e.target.value })} />
+                    </label>
+                    <label className="block text-sm md:col-span-2">
+                        Password
+                        <input type="password" className="mt-1 w-full rounded border p-2" value={db.password} onChange={(e) => setDb({ ...db, password: e.target.value })} />
+                    </label>
+                </div>
+            ) : (
+                <label className="block text-sm">
+                    Connection string
+                    <input
+                        className="mt-1 w-full rounded border p-2"
+                        placeholder="postgresql://user:pass@host:5432/dbname (Supabase: use pooler port 6543 and append ?pgbouncer=true)"
+                        value={rawUrl}
+                        onChange={(e) => setRawUrl(e.target.value)}
+                    />
+                </label>
+            )}
+            <div className="flex items-center gap-3">
+                <button type="button" onClick={testConnection} disabled={testing} className="rounded border px-3 py-1.5 text-sm disabled:opacity-50">
+                    {testing ? 'Testing…' : 'Test connection'}
+                </button>
+                <button type="button" onClick={() => setAdvanced(!advanced)} className="text-sm text-blue-600 underline">
+                    {advanced ? 'Use simple form' : 'Advanced: paste connection string'}
+                </button>
+            </div>
+            {testResult && (
+                <p className={`text-sm ${testResult.ok ? 'text-green-600' : 'text-red-600'}`}>
+                    {testResult.ok ? '✓ ' : '✗ '}{testResult.message}
+                </p>
+            )}
+        </div>
+    );
+}
+
 export default function DesktopOnboardingPage() {
     const [mode, setMode] = useState<string | null>(null);
     const [serverUrl, setServerUrl] = useState('https://api.ngocky.kael.io.vn/api');
-    const [databaseUrl, setDatabaseUrl] = useState('');
+    const [db, setDb] = useState<DbFields>(emptyDb);
+    const [advanced, setAdvanced] = useState(false);
+    const [rawUrl, setRawUrl] = useState('');
     const [telegramBotToken, setTelegramBotToken] = useState('');
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
@@ -24,14 +112,20 @@ export default function DesktopOnboardingPage() {
         setSaving(true);
         setError('');
         try {
-            if (mode === 'shared' && !/^postgres(ql)?:\/\//.test(databaseUrl.trim())) {
-                throw new Error('Connection string must start with postgresql://');
+            const effectiveDbUrl = advanced ? rawUrl.trim() : buildDbUrl(db);
+            if (mode === 'shared') {
+                if (advanced && !/^postgres(ql)?:\/\//.test(effectiveDbUrl)) {
+                    throw new Error('Connection string must start with postgresql://');
+                }
+                if (!advanced && (!db.host.trim() || !db.database.trim() || !db.user.trim())) {
+                    throw new Error('Host, database, and user are required');
+                }
             }
             const { invoke } = await import('@tauri-apps/api/core');
             await invoke('set_desktop_config', {
                 config: {
                     mode,
-                    databaseUrl: mode === 'shared' ? databaseUrl.trim() : null,
+                    databaseUrl: mode === 'shared' ? effectiveDbUrl : null,
                     telegramBotToken: telegramBotToken.trim() || null,
                     jwtSecret: randomSecret(),
                     jwtRefreshSecret: randomSecret(),
@@ -76,15 +170,11 @@ export default function DesktopOnboardingPage() {
                     </label>
                 )}
                 {mode === 'shared' && (
-                    <label className="block text-sm">
-                        Postgres connection string
-                        <input
-                            className="mt-1 w-full rounded border p-2"
-                            placeholder="postgresql://user:pass@host:5432/ngocky (Supabase: use pooler port 6543 and append ?pgbouncer=true)"
-                            value={databaseUrl}
-                            onChange={(e) => setDatabaseUrl(e.target.value)}
-                        />
-                    </label>
+                    <div className="space-y-2">
+                        <div className="text-sm font-medium">Family Postgres database</div>
+                        <p className="text-xs text-gray-500">Any database name works — it just has to exist on the server. Tables are created automatically on first start.</p>
+                        <DbConnectionForm db={db} setDb={setDb} advanced={advanced} setAdvanced={setAdvanced} rawUrl={rawUrl} setRawUrl={setRawUrl} />
+                    </div>
                 )}
                 {(mode === 'offline' || mode === 'shared') && (
                     <label className="block text-sm">
