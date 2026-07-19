@@ -8,6 +8,13 @@ async function main() {
     await prisma.$connect();
     console.log('✅ Database connected');
 
+    // Desktop onboarding "Test connection": probe and exit, no server.
+    if (process.env.DB_CHECK_ONLY === 'true') {
+        await prisma.$queryRawUnsafe('SELECT 1');
+        console.log('DB_CHECK_OK');
+        process.exit(0);
+    }
+
     // Desktop modes ship migration SQL as a resource; apply before seeding.
     if (process.env.MIGRATIONS_DIR) {
         const { runMigrations } = await import('./services/migrationRunner');
