@@ -88,13 +88,15 @@ async fn test_db_connection(app: tauri::AppHandle, database_url: String) -> Resu
 }
 
 fn spawn_sidecar(app: &tauri::AppHandle, cfg: &DesktopConfig) -> CommandChild {
-    let mode = cfg.mode.clone().unwrap_or_default();
     let data_dir = app.path().app_data_dir().expect("no app data dir");
     let resources = app.path().resource_dir().expect("no resource dir");
-    let (db_url, provider) = if mode == "offline" {
+    // Offline mode may bring its own postgres (config stores a database_url);
+    // only an empty url falls back to the bundled SQLite file.
+    let configured_url = cfg.database_url.clone().unwrap_or_default();
+    let (db_url, provider) = if configured_url.is_empty() {
         (format!("file:{}", data_dir.join("ngocky.db").display()), "sqlite")
     } else {
-        (cfg.database_url.clone().unwrap_or_default(), "postgres")
+        (configured_url, "postgres")
     };
     let mut envs: Vec<(String, String)> = vec![
         ("NODE_ENV".into(), "production".into()),
