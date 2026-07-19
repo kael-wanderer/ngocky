@@ -102,6 +102,7 @@ export default function DesktopOnboardingPage() {
     const [mode, setMode] = useState<string | null>(null);
     const [serverUrl, setServerUrl] = useState('https://api.ngocky.kael.io.vn/api');
     const [db, setDb] = useState<DbFields>(emptyDb);
+    const [offlineEngine, setOfflineEngine] = useState<'sqlite' | 'postgres'>('sqlite');
     const [advanced, setAdvanced] = useState(false);
     const [rawUrl, setRawUrl] = useState('');
     const [telegramBotToken, setTelegramBotToken] = useState('');
@@ -112,8 +113,9 @@ export default function DesktopOnboardingPage() {
         setSaving(true);
         setError('');
         try {
+            const usesPostgres = mode === 'shared' || (mode === 'offline' && offlineEngine === 'postgres');
             const effectiveDbUrl = advanced ? rawUrl.trim() : buildDbUrl(db);
-            if (mode === 'shared') {
+            if (usesPostgres) {
                 if (advanced && !/^postgres(ql)?:\/\//.test(effectiveDbUrl)) {
                     throw new Error('Connection string must start with postgresql://');
                 }
@@ -125,7 +127,7 @@ export default function DesktopOnboardingPage() {
             await invoke('set_desktop_config', {
                 config: {
                     mode,
-                    databaseUrl: mode === 'shared' ? effectiveDbUrl : null,
+                    databaseUrl: usesPostgres ? effectiveDbUrl : null,
                     telegramBotToken: telegramBotToken.trim() || null,
                     jwtSecret: randomSecret(),
                     jwtRefreshSecret: randomSecret(),
@@ -155,7 +157,10 @@ export default function DesktopOnboardingPage() {
                     {MODES.map((m) => (
                         <button
                             key={m.id}
-                            onClick={() => setMode(m.id)}
+                            onClick={() => {
+                                setMode(m.id);
+                                if (m.id === 'offline' && !db.host) setDb({ ...db, host: '127.0.0.1' });
+                            }}
                             className={`rounded-lg border p-4 text-left ${mode === m.id ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
                         >
                             <div className="font-medium">{m.title}</div>
@@ -168,6 +173,33 @@ export default function DesktopOnboardingPage() {
                         Server API URL
                         <input className="mt-1 w-full rounded border p-2" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} />
                     </label>
+                )}
+                {mode === 'offline' && (
+                    <div className="space-y-3">
+                        <div className="text-sm font-medium">Where should offline data live?</div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <button
+                                onClick={() => setOfflineEngine('sqlite')}
+                                className={`rounded-lg border p-4 text-left ${offlineEngine === 'sqlite' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+                            >
+                                <div className="font-medium">Built-in (SQLite) — recommended</div>
+                                <div className="mt-1 text-sm text-gray-500">A single file on this Mac. Zero setup. Reset anytime from Settings.</div>
+                            </button>
+                            <button
+                                onClick={() => setOfflineEngine('postgres')}
+                                className={`rounded-lg border p-4 text-left ${offlineEngine === 'postgres' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+                            >
+                                <div className="font-medium">PostgreSQL</div>
+                                <div className="mt-1 text-sm text-gray-500">
+                                    Use a Postgres server you run yourself. Don't have one?{' '}
+                                    <a className="text-blue-600 underline" href="https://www.postgresql.org/download/macosx/" target="_blank" rel="noreferrer">Install PostgreSQL for macOS</a>.
+                                </div>
+                            </button>
+                        </div>
+                        {offlineEngine === 'postgres' && (
+                            <DbConnectionForm db={db} setDb={setDb} advanced={advanced} setAdvanced={setAdvanced} rawUrl={rawUrl} setRawUrl={setRawUrl} />
+                        )}
+                    </div>
                 )}
                 {mode === 'shared' && (
                     <div className="space-y-2">
