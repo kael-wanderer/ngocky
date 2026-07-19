@@ -23,7 +23,7 @@ router.post('/', validate(setupSchema), async (req: Request, res: Response, next
             return res.status(403).json({ error: 'Setup already completed' });
         }
 
-        const { appName, enabledGroups, owner } = req.body;
+        const { appName, enabledGroups, owner, hiddenPages } = req.body;
         await prisma.user.create({
             data: {
                 email: owner.email,
@@ -34,6 +34,12 @@ router.post('/', validate(setupSchema), async (req: Request, res: Response, next
             },
         });
         await AppSettingsService.update({ appName, enabledGroups, setupCompleted: true });
+        if (Array.isArray(hiddenPages) && hiddenPages.length > 0) {
+            await prisma.appSetting.update({
+                where: { id: 1 },
+                data: { builtInPages: Object.fromEntries(hiddenPages.map((type: string) => [type, { visible: false }])) },
+            });
+        }
         res.status(201).json({ ok: true });
     } catch (err) {
         next(err);

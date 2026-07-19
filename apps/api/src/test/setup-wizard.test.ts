@@ -35,4 +35,21 @@ describe('setup wizard', () => {
         });
         expect(login.status).toBe(200);
     });
+
+    it('hides deselected page templates via builtInPages overrides', async () => {
+        const res = await request(app).post('/api/setup').send({
+            appName: 'FamilyHub',
+            enabledGroups: ['personal', 'hobby'],
+            hiddenPages: ['FUND', 'KEYBOARD'],
+            owner: { email: 'boss2@example.com', password: 'Secret123!', name: 'Boss' },
+        });
+        expect(res.status).toBe(201);
+
+        const { prisma } = await import('../config/database');
+        const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
+        expect(settings?.builtInPages).toMatchObject({
+            FUND: { visible: false },
+            KEYBOARD: { visible: false },
+        });
+    });
 });
