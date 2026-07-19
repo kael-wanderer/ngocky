@@ -1,0 +1,1225 @@
+// FROZEN baseline snapshot - never regenerate from the live schema.
+// Schema changes ship as numbered diffs in prisma/desktop-diffs/<provider>/.
+
+// AUTO-GENERATED from schema.prisma by scripts/generate-test-schema.mjs - do not edit.
+generator client {
+  provider = "prisma-client-js"
+  output   = "./desktop-client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────
+
+enum Role {
+  OWNER
+  ADMIN
+  USER
+}
+
+enum PeriodType {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+}
+
+enum GoalTrackingType {
+  BY_QUANTITY
+  BY_FREQUENCY
+}
+
+enum ProjectStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+  ARCHIVED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectType {
+  PERSONAL
+  WORK
+  FOR_FUN
+  STUDY
+}
+
+enum ProjectBoardStatus {
+  PLAN
+  WORKING
+  COMPLETED
+}
+
+enum FrequencyType {
+  ONE_TIME
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  HALF_YEARLY
+  YEARLY
+  CUSTOM
+}
+
+enum IdeaStatus {
+  OPEN
+  REVIEWING
+  ARCHIVED
+}
+
+enum ExpenseScope {
+  PERSONAL
+  FAMILY
+  KEO
+  PROJECT
+}
+
+enum ExpenseType {
+  PAY
+  RECEIVE
+}
+
+enum ExpensePayment {
+  CASH
+  BANK_TRANSFER
+  CREDIT_CARD
+}
+
+enum HobbyFundType {
+  BUY
+  SELL
+  TOP_UP
+}
+
+enum HobbyFundScope {
+  MECHANICAL_KEYBOARD
+  PLAY_STATION
+}
+
+enum HobbyFundCategory {
+  KEYCAP
+  KIT
+  SHIPPING
+  ACCESSORIES
+  OTHER
+}
+
+enum NotificationChannel {
+  EMAIL
+  TELEGRAM
+  BOTH
+}
+
+enum AlertFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum ReportFrequency {
+  ONE_TIME
+  DAILY
+  WEEKDAY
+  WEEKEND
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+}
+
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum Theme {
+  BLUE_PURPLE
+  GREY_BLACK
+  RED_ACCENT
+  DARK
+  MODERN_GREEN
+  MULTI_COLOR_BLOCK
+  PAPER_MINT
+  AMBER_LEDGER
+  OCEAN_INK
+  MIDNIGHT_PLUM
+  SAKURA
+  FOREST_NIGHT
+  CANDY_BLOCK
+  EMBER_NIGHT
+  LINEN_DAWN
+}
+
+enum ColorSettingModule {
+  CAKEO
+  CALENDAR
+}
+
+enum ColorSettingScope {
+  ASSIGNEE
+}
+
+enum RepeatFrequency {
+  DAILY
+  WEEKLY
+  BI_WEEKLY
+  MONTHLY
+  QUARTERLY
+}
+
+enum RepeatEndType {
+  NEVER
+  ON_DATE
+}
+
+enum TaskType {
+  TASK
+  PAYMENT
+}
+
+enum ReminderUnit {
+  MINUTES
+  HOURS
+  DAYS
+  ON_DATE
+}
+
+enum ProjectTaskType {
+  TASK
+  BUG
+  FEATURE
+  STORY
+  EPIC
+}
+
+enum HealthLogType {
+  REGULAR_CHECKUP
+  DOCTOR_VISIT
+  EMERGENCY
+  VACCINATION
+  PRESCRIPTION
+  LAB_RESULT
+  OTHER
+}
+
+enum PageModuleType {
+  TASK
+  PROJECT
+  EXPENSE
+  GOAL
+  IDEA
+  CALENDAR
+  CAKEO
+  HOUSEWORK
+  ASSET
+  HEALTHBOOK
+  KEYBOARD
+  FOODPLACE
+  FUND
+  LEARNING
+}
+
+enum AgentProvider {
+  OPENAI
+  ANTHROPIC
+  OPENAI_COMPATIBLE
+}
+
+// ─── User ───────────────────────────────────────────
+
+model User {
+  id                  String              @id @default(cuid())
+  email               String              @unique
+  name                String
+  password            String
+  role                Role                @default(USER)
+  active              Boolean             @default(true)
+  theme               Theme               @default(BLUE_PURPLE)
+  mfaEnabled          Boolean             @default(false)
+  mfaSecret           String?
+  mfaPendingSecret    String?
+  notificationEnabled Boolean             @default(true)
+  notificationChannel NotificationChannel @default(EMAIL)
+  notificationEmail   String?
+  telegramChatId      String?
+  timezone            String              @default("Asia/Ho_Chi_Minh")
+  avatarUrl           String?
+  mobileNavItems      Json?
+  featureGoals        Boolean             @default(true)
+  featureProjects     Boolean             @default(true)
+  featureIdeas        Boolean             @default(true)
+  featureLearning     Boolean             @default(true)
+  featureExpenses     Boolean             @default(true)
+  featureTasks        Boolean             @default(true)
+  featureHousework    Boolean             @default(true)
+  featureAssets       Boolean             @default(true)
+  featureCalendar     Boolean             @default(true)
+  featureKeyboard     Boolean             @default(true)
+  featureFood         Boolean             @default(true)
+  featureFunds        Boolean             @default(true)
+  featureCaKeo        Boolean             @default(true)
+  featureHealthbook   Boolean             @default(true)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  // Relations
+  goals                   Goal[]
+  goalCheckIns            GoalCheckIn[]
+  tasks                   Task[]
+  learningItems           LearningItem[]
+  learningTopics          LearningTopic[]
+  ideas                   Idea[]
+  ideaTopics              IdeaTopic[]
+  houseworkItems          HouseworkItem[]          @relation("HouseworkAssignee")
+  createdHousework        HouseworkItem[]          @relation("HouseworkCreator")
+  projectTasks            ProjectTask[]            @relation("TaskAssignee")
+  createdTasks            ProjectTask[]            @relation("TaskCreator")
+  assets                  Asset[]
+  maintenanceRecords      MaintenanceRecord[]
+  calendarEvents          CalendarEvent[]          @relation("EventCreator")
+  eventParticipants       EventParticipant[]
+  expenses                Expense[]
+  fundTransactions        FundTransaction[]
+  alertRules              AlertRule[]
+  scheduledReports        ScheduledReport[]
+  budgetSettings          BudgetSetting[]
+  refreshTokens           RefreshToken[]
+  ownedProjectBoards      Project[]                @relation("ProjectBoardOwner")
+  telegramLink            TelegramLink?
+  assistantMessages       AssistantMessage[]
+  assistantActionLogs     AssistantActionLog[]
+  assistantPendingActions AssistantPendingAction[]
+  keyboards               Keyboard[]
+  foodPlaces              FoodPlace[]
+  cakeos                  CaKeo[]                  @relation("CaKeoOwner")
+  assignedCaKeos          CaKeo[]                  @relation("CaKeoAssigner")
+  healthPersons           HealthPerson[]
+  healthLogs              HealthLog[]
+  pageInstances           PageInstance[]
+}
+
+model AppSetting {
+  id                  Int      @id @default(1)
+  appName             String   @default("NgốcKý")
+  logoUrl             String?
+  enabledGroups       Json?
+  builtInPages        Json?
+  templateOverrides   Json?
+  foodOptions         Json?
+  setupCompleted      Boolean  @default(false)
+  openaiKeyCiphertext String?
+  openaiKeyLast4      String?
+  updatedAt           DateTime @updatedAt
+}
+
+model AgentSetting {
+  id             Int           @id @default(1)
+  activeProvider AgentProvider @default(OPENAI)
+  updatedAt      DateTime      @updatedAt
+}
+
+model AgentProviderConfig {
+  id            String        @id @default(cuid())
+  provider      AgentProvider @unique
+  baseUrl       String?
+  model         String
+  effort        String        @default("auto")
+  keyCiphertext String?
+  keyLast4      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model ModuleColorSetting {
+  id        String             @id @default(cuid())
+  module    ColorSettingModule
+  scope     ColorSettingScope
+  entityKey String
+  color     String
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([module, scope, entityKey])
+  @@unique([module, scope, color])
+  @@index([module, scope])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PageInstance {
+  id          String         @id @default(cuid())
+  name        String
+  slug        String         @unique
+  moduleType  PageModuleType
+  group       String
+  icon        String?
+  createdById String
+  createdBy   User           @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  tasks            Task[]
+  projects         Project[]
+  expenses         Expense[]
+  goals            Goal[]
+  ideaTopics       IdeaTopic[]
+  calendarEvents   CalendarEvent[]
+  cakeos           CaKeo[]
+  houseworkItems   HouseworkItem[]
+  assets           Asset[]
+  healthPersons    HealthPerson[]
+  keyboards        Keyboard[]
+  foodPlaces       FoodPlace[]
+  fundTransactions FundTransaction[]
+  learningTopics   LearningTopic[]
+  alertRules       AlertRule[]
+  scheduledReports ScheduledReport[]
+
+  @@index([createdById])
+  @@index([group])
+  @@index([moduleType])
+}
+
+// ─── Goals ──────────────────────────────────────────
+
+model Goal {
+  id                        String           @id @default(cuid())
+  title                     String
+  description               String?
+  userId                    String
+  isShared                  Boolean          @default(false)
+  periodType                PeriodType
+  targetCount               Int
+  currentCount              Int              @default(0)
+  unit                      String?          @default("times")
+  trackingType              GoalTrackingType @default(BY_FREQUENCY)
+  currentPeriodStart        DateTime
+  startDate                 DateTime         @default(now())
+  active                    Boolean          @default(true)
+  notificationEnabled       Boolean          @default(false)
+  reminderOffsetValue       Int?
+  reminderOffsetUnit        ReminderUnit?
+  notificationDate          DateTime?
+  notificationTime          String?
+  lastNotificationSentAt    DateTime?
+  notificationCooldownHours Int              @default(24)
+  pinToDashboard            Boolean          @default(false)
+  sortOrder                 Int              @default(0)
+  instanceId                String?
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkIns GoalCheckIn[]
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([instanceId])
+}
+
+model GoalCheckIn {
+  id        String   @id @default(cuid())
+  goalId    String
+  userId    String
+  quantity  Int      @default(1)
+  note      String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+  @@index([userId])
+}
+
+model Task {
+  id                         String           @id @default(cuid())
+  title                      String
+  description                String?
+  taskType                   TaskType         @default(TASK)
+  amount                     Float?
+  expenseCategory            String?
+  scope                      ExpenseScope     @default(PERSONAL)
+  userId                     String
+  isShared                   Boolean          @default(false)
+  dueDate                    DateTime?
+  showOnCalendar             Boolean          @default(false)
+  createExpenseAutomatically Boolean          @default(true)
+  priority                   Priority         @default(MEDIUM)
+  status                     ProjectStatus    @default(PLANNED)
+  notificationEnabled        Boolean          @default(false)
+  reminderOffsetValue        Int?
+  reminderOffsetUnit         ReminderUnit?
+  notificationDate           DateTime?
+  notificationTime           String?
+  lastNotificationSentAt     DateTime?
+  notificationCooldownHours  Int              @default(24)
+  pinToDashboard             Boolean          @default(false)
+  repeatFrequency            RepeatFrequency?
+  repeatEndType              RepeatEndType?
+  repeatUntil                DateTime?
+  completedAt                DateTime?
+  sortOrder                  Int              @default(0)
+  instanceId                 String?
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([instanceId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+// ─── Projects ───────────────────────────────────────
+
+model Project {
+  id             String             @id @default(cuid())
+  name           String
+  description    String?
+  type           ProjectType        @default(PERSONAL)
+  boardStatus    ProjectBoardStatus @default(PLAN)
+  ownerId        String
+  isShared       Boolean            @default(false)
+  pinToDashboard Boolean            @default(false)
+  sortOrder      Int                @default(0)
+  instanceId     String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  owner    User          @relation("ProjectBoardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  tasks    ProjectTask[]
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([instanceId])
+}
+
+model ProjectTask {
+  id                         String          @id @default(cuid())
+  title                      String
+  description                String?
+  type                       ProjectTaskType @default(TASK)
+  projectId                  String
+  category                   String?
+  deadline                   DateTime?
+  priority                   Priority        @default(MEDIUM)
+  status                     ProjectStatus   @default(PLANNED)
+  assigneeId                 String?
+  createdById                String
+  isShared                   Boolean         @default(false)
+  notificationEnabled        Boolean         @default(false)
+  reminderOffsetValue        Int?
+  reminderOffsetUnit         ReminderUnit?
+  notificationDate           DateTime?
+  notificationTime           String?
+  lastNotificationSentAt     DateTime?
+  notificationCooldownHours  Int             @default(24)
+  pinToDashboard             Boolean         @default(false)
+  kanbanOrder                Int             @default(0)
+  cost                       Int?
+  showOnCalendar             Boolean         @default(false)
+  createExpenseAutomatically Boolean         @default(false)
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee  User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy User    @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([createdById])
+  @@index([status])
+}
+
+// ─── Learning ───────────────────────────────────────
+
+model LearningTopic {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String?
+  isShared    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  userId      String
+  instanceId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance  PageInstance?  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  histories LearningItem[]
+
+  @@index([userId])
+  @@index([instanceId])
+}
+
+model LearningItem {
+  id                  String        @id @default(cuid())
+  title               String
+  description         String?
+  subject             String?
+  target              String?
+  progress            Int           @default(0)
+  deadline            DateTime?
+  status              ProjectStatus @default(PLANNED)
+  topicId             String?
+  userId              String
+  notificationEnabled Boolean       @default(false)
+  pinToDashboard      Boolean       @default(false)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic LearningTopic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([topicId])
+}
+
+// ─── Ideas ──────────────────────────────────────────
+
+model IdeaTopic {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  isShared    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  userId      String
+  instanceId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  logs     Idea[]
+
+  @@index([userId])
+  @@index([instanceId])
+}
+
+model Idea {
+  id             String     @id @default(cuid())
+  title          String
+  content        String?
+  category       String?
+  field          String?
+  tags           Json?
+  status         IdeaStatus @default(OPEN)
+  topicId        String?
+  userId         String
+  pinToDashboard Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic IdeaTopic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([topicId])
+}
+
+// ─── Housework ──────────────────────────────────────
+
+model HouseworkItem {
+  id                        String        @id @default(cuid())
+  title                     String
+  description               String?
+  assigneeId                String?
+  createdById               String
+  instanceId                String?
+  isShared                  Boolean       @default(false)
+  status                    ProjectStatus @default(PLANNED)
+  frequencyType             FrequencyType @default(ONE_TIME)
+  dayOfWeek                 Int?
+  dayOfMonth                Int?
+  monthOfPeriod             Int?
+  monthOfYear               Int?
+  customIntervalDays        Int?
+  nextDueDate               DateTime?
+  lastCompletedDate         DateTime?
+  estimatedCost             Float?
+  showOnCalendar            Boolean       @default(false)
+  notificationEnabled       Boolean       @default(false)
+  reminderOffsetValue       Int?
+  reminderOffsetUnit        ReminderUnit?
+  notificationDate          DateTime?
+  notificationTime          String?
+  lastNotificationSentAt    DateTime?
+  notificationCooldownHours Int           @default(24)
+  pinToDashboard            Boolean       @default(false)
+  active                    Boolean       @default(true)
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
+
+  assignee  User?         @relation("HouseworkAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy User          @relation("HouseworkCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  instance  PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([assigneeId])
+  @@index([createdById])
+  @@index([instanceId])
+}
+
+// ─── Assets & Maintenance ───────────────────────────
+
+model Asset {
+  id             String    @id @default(cuid())
+  name           String
+  type           String?
+  brand          String?
+  model          String?
+  serialNumber   String?
+  purchaseDate   DateTime?
+  warrantyMonths Int?
+  isShared       Boolean   @default(false)
+  sortOrder      Int       @default(0)
+  note           String?
+  userId         String
+  instanceId     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance           PageInstance?       @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  maintenanceRecords MaintenanceRecord[]
+
+  @@index([userId])
+  @@index([instanceId])
+}
+
+model MaintenanceRecord {
+  id                        String        @id @default(cuid())
+  assetId                   String
+  serviceDate               DateTime
+  description               String
+  serviceType               String?
+  cost                      Float?
+  vendor                    String?
+  nextRecommendedDate       DateTime?
+  linkedExpenseId           String?
+  kilometers                Int?
+  notificationEnabled       Boolean       @default(false)
+  reminderOffsetValue       Int?
+  reminderOffsetUnit        ReminderUnit?
+  notificationDate          DateTime?
+  notificationTime          String?
+  lastNotificationSentAt    DateTime?
+  notificationCooldownHours Int           @default(24)
+  linkedEventId             String?       @unique
+  userId                    String
+  pinToDashboard            Boolean       @default(false)
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
+
+  asset       Asset          @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  linkedEvent CalendarEvent? @relation(fields: [linkedEventId], references: [id], onDelete: SetNull)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([userId])
+}
+
+// ─── Calendar ───────────────────────────────────────
+
+model CalendarEvent {
+  id                        String           @id @default(cuid())
+  title                     String
+  type                      String           @default("EVENT")
+  description               String?
+  startDate                 DateTime
+  endDate                   DateTime?
+  allDay                    Boolean          @default(false)
+  location                  String?
+  color                     String?
+  category                  String?
+  isShared                  Boolean          @default(true)
+  notificationEnabled       Boolean          @default(false)
+  reminderOffsetValue       Int?
+  reminderOffsetUnit        ReminderUnit?
+  notificationDate          DateTime?
+  notificationTime          String?
+  lastNotificationSentAt    DateTime?
+  notificationCooldownHours Int              @default(24)
+  pinToDashboard            Boolean          @default(false)
+  repeatFrequency           RepeatFrequency?
+  repeatEndType             RepeatEndType?
+  repeatUntil               DateTime?
+  createdById               String
+  instanceId                String?
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+
+  createdBy         User               @relation("EventCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  instance          PageInstance?      @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  maintenanceRecord MaintenanceRecord?
+  participants      EventParticipant[]
+
+  @@index([createdById])
+  @@index([instanceId])
+  @@index([startDate])
+}
+
+model EventParticipant {
+  id      String @id @default(cuid())
+  eventId String
+  userId  String
+
+  event CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+}
+
+// ─── Expenses ───────────────────────────────────────
+
+model Expense {
+  id           String         @id @default(cuid())
+  date         DateTime
+  description  String
+  amount       Float
+  type         ExpenseType    @default(PAY)
+  payment      ExpensePayment @default(CASH)
+  isShared     Boolean        @default(false)
+  category     String?
+  scope        ExpenseScope   @default(PERSONAL)
+  note         String?
+  recurring    Boolean        @default(false)
+  sourceModule String?
+  userId       String
+  instanceId   String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([instanceId])
+  @@index([date])
+  @@index([category])
+}
+
+model FundTransaction {
+  id          String            @id @default(cuid())
+  date        DateTime
+  description String
+  amount      Float
+  type        HobbyFundType
+  scope       HobbyFundScope
+  category    HobbyFundCategory
+  condition   String?
+  userId      String
+  instanceId  String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([instanceId])
+  @@index([date])
+  @@index([type])
+  @@index([scope])
+  @@index([category])
+  @@index([condition])
+}
+
+// ─── Alert Rules ────────────────────────────────────
+
+model AlertRule {
+  id                  String              @id @default(cuid())
+  name                String
+  moduleType          String
+  frequency           AlertFrequency      @default(DAILY)
+  dayOfWeek           Int?
+  dayOfMonth          Int?
+  time                String?
+  conditionType       String
+  conditionValue      String?
+  cooldownHours       Int                 @default(24)
+  lastSentAt          DateTime?
+  notificationChannel NotificationChannel @default(EMAIL)
+  active              Boolean             @default(true)
+  sortOrder           Int                 @default(0)
+  userId              String
+  instanceId          String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([instanceId])
+}
+
+// ─── Scheduled Reports ──────────────────────────────
+
+model ScheduledReport {
+  id                  String              @id @default(cuid())
+  name                String
+  reportType          String
+  dateRangePreset     String?
+  frequency           ReportFrequency     @default(WEEKLY)
+  dayOfWeek           Int?
+  dayOfMonth          Int?
+  time                String?
+  sections            Json?
+  notificationChannel NotificationChannel @default(EMAIL)
+  recipients          Json?
+  active              Boolean             @default(true)
+  sortOrder           Int                 @default(0)
+  userId              String
+  instanceId          String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([instanceId])
+}
+
+// ─── Assistant ──────────────────────────────────────
+
+enum AssistantChannel {
+  TELEGRAM
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum ExecutionStatus {
+  SUCCESS
+  FAILED
+  PENDING_CONFIRMATION
+  CANCELLED
+}
+
+model TelegramLink {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  telegramChatId    String    @unique
+  telegramUserId    String
+  telegramUsername  String?
+  linkCode          String?
+  linkCodeExpiresAt DateTime?
+  verifiedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([telegramChatId])
+}
+
+model AssistantMessage {
+  id                String           @id @default(cuid())
+  userId            String
+  channel           AssistantChannel
+  externalMessageId String?
+  direction         MessageDirection
+  rawText           String
+  normalizedText    String?
+  intent            String?
+  confidence        Float?
+  createdAt         DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AssistantActionLog {
+  id               String           @id @default(cuid())
+  userId           String
+  channel          AssistantChannel
+  intent           String
+  confidence       Float?
+  requestPayload   Json?
+  resolvedEntities Json?
+  executionStatus  ExecutionStatus
+  resultSummary    String?
+  errorMessage     String?
+  createdAt        DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AssistantPendingAction {
+  id        String           @id @default(cuid())
+  userId    String
+  channel   AssistantChannel
+  intent    String
+  payload   Json
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Budget Settings ────────────────────────────────
+
+model BudgetSetting {
+  id        String       @id @default(cuid())
+  category  String
+  period    BudgetPeriod @default(MONTHLY)
+  amount    Float
+  active    Boolean      @default(true)
+  userId    String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Keyboard ────────────────────────────────────────
+
+model Keyboard {
+  id          String   @id @default(cuid())
+  name        String
+  price       Float?
+  category    String?
+  tag         String?
+  color       String?
+  spec        Json?
+  description String?
+  note        String?
+  isShared    Boolean  @default(false)
+  ownerId     String
+  instanceId  String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner    User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([instanceId])
+  @@index([name])
+}
+
+// ─── Food Menu ──────────────────────────────────────
+
+model FoodPlace {
+  id         String   @id @default(cuid())
+  name       String
+  tag        String?
+  type       String?
+  distance   String?
+  address    String?
+  district   String?
+  openHours  String?
+  priceEst   String?
+  rating     Int?
+  mapLink    String?
+  note       String?
+  isShared   Boolean  @default(false)
+  ownerId    String
+  instanceId String?
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  owner    User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([instanceId])
+}
+
+// ─── Ca Keo ──────────────────────────────────────────
+
+model CaKeo {
+  id                        String        @id @default(cuid())
+  title                     String
+  description               String?
+  type                      String        @default("Task")
+  category                  String?
+  status                    String        @default("TODO")
+  assignerId                String?
+  startDate                 DateTime?
+  endDate                   DateTime?
+  allDay                    Boolean       @default(false)
+  color                     String?
+  showOnCalendar            Boolean       @default(true)
+  notificationEnabled       Boolean       @default(false)
+  reminderOffsetValue       Int?
+  reminderOffsetUnit        ReminderUnit?
+  notificationDate          DateTime?
+  notificationTime          String?
+  lastNotificationSentAt    DateTime?
+  notificationCooldownHours Int           @default(24)
+  isShared                  Boolean       @default(true)
+  pinToDashboard            Boolean       @default(false)
+  ownerId                   String
+  instanceId                String?
+  sortOrder                 Int           @default(0)
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
+
+  owner    User          @relation("CaKeoOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  assigner User?         @relation("CaKeoAssigner", fields: [assignerId], references: [id], onDelete: SetNull)
+  instance PageInstance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([instanceId])
+  @@index([assignerId])
+  @@index([startDate])
+  @@index([status])
+}
+
+// ─── Healthbook ──────────────────────────────────────
+
+model HealthPerson {
+  id                            String    @id @default(cuid())
+  name                          String
+  dateOfBirth                   DateTime?
+  gender                        String?
+  mobile                        String?
+  personalId                    String?
+  idIssueDate                   DateTime?
+  passportNumber                String?
+  passportIssueDate             DateTime?
+  bloodType                     String?
+  weight                        Float?
+  height                        Float?
+  allergies                     String?
+  chronicConditions             String?
+  currentMedications            String?
+  info                          String?
+  emergencyContact1Name         String?
+  emergencyContact1Phone        String?
+  emergencyContact1Relationship String?
+  emergencyContact2Name         String?
+  emergencyContact2Phone        String?
+  emergencyContact2Relationship String?
+  insuranceProvider             String?
+  insuranceCardNumber           String?
+  policyNumber                  String?
+  insuranceExpiry               DateTime?
+  coverageType                  String?
+  workInsuranceProvider         String?
+  workInsuranceCardNo           String?
+  workInsurancePolicyHolder     String?
+  workInsuranceId               String?
+  workInsuranceValidFrom        DateTime?
+  notes                         String?
+  isShared                      Boolean   @default(false)
+  sortOrder                     Int       @default(0)
+  userId                        String
+  instanceId                    String?
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance PageInstance?      @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  logs     HealthLog[]
+  files    HealthPersonFile[]
+
+  @@index([userId])
+  @@index([instanceId])
+}
+
+model HealthLog {
+  id                        String        @id @default(cuid())
+  personId                  String
+  date                      DateTime
+  type                      HealthLogType @default(DOCTOR_VISIT)
+  location                  String?
+  doctor                    String?
+  symptoms                  String?
+  description               String?
+  cost                      Float?
+  prescription              String?
+  nextCheckupDate           DateTime?
+  linkedExpenseId           String?
+  linkedCalendarEventId     String?
+  pinToDashboard            Boolean       @default(false)
+  notificationEnabled       Boolean       @default(false)
+  reminderOffsetValue       Int?
+  reminderOffsetUnit        ReminderUnit?
+  notificationDate          DateTime?
+  notificationTime          String?
+  lastNotificationSentAt    DateTime?
+  notificationCooldownHours Int           @default(24)
+  userId                    String
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
+
+  person HealthPerson    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files  HealthLogFile[]
+
+  @@index([personId])
+  @@index([userId])
+  @@index([date])
+}
+
+model HealthPersonFile {
+  id           String   @id @default(cuid())
+  personId     String
+  originalName String
+  storedName   String
+  mimeType     String
+  size         Int
+  path         String
+  label        String?
+  userId       String
+  createdAt    DateTime @default(now())
+
+  person HealthPerson @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([personId])
+}
+
+model HealthLogFile {
+  id           String   @id @default(cuid())
+  logId        String
+  originalName String
+  storedName   String
+  mimeType     String
+  size         Int
+  path         String
+  label        String?
+  userId       String
+  createdAt    DateTime @default(now())
+
+  log HealthLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+
+  @@index([logId])
+}
