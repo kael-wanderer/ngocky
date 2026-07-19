@@ -74,6 +74,16 @@ Use a reachable Postgres (LAN or Supabase). For local testing: `postgresql://ngo
 | N-5 | Telegram delivery (optional) | Set a Telegram bot token in onboarding + a `telegramChatId` on the user | A `🔔 <title>` message arrives in Telegram |
 | N-6 | Notification permission | First notification on a fresh install | macOS prompts for notification permission; granting shows the banner |
 
+## 4b. Scheduled reports (modes 2/3)
+
+| ID | Test Case | Steps | Expected |
+| :--- | :--- | :--- | :--- |
+| SR-1 | Offline SQLite upgrade | Install over an existing offline app, launch, create a daily scheduled report a few minutes in the future | First boot applies `001_scheduled_report_last_sent.sql`; one OS notification with the report name arrives within about 5 minutes of the scheduled time; Telegram sends too when token + chat id are configured |
+| SR-2 | Offline SQLite fresh install | Reset app data and launch fresh | Runtime migrations apply `000_baseline.sql` then `001_scheduled_report_last_sent.sql` without a duplicate-column error |
+| SR-3 | Shared + built-in scheduler, two clients | Run two desktops against the same shared Postgres database with one due report | Exactly one client delivers the report; `ScheduledReport.lastSentAt` is stamped once and the other client suppresses the same report inside the guard window |
+| SR-4 | Shared + self-hosted n8n | Choose **Shared database** and **I run my own n8n** in onboarding | Sidecar starts with `SCHEDULER_ENABLED=false`; the app does not send local reminders or reports |
+| SR-5 | VPS/n8n regression | Deploy the Postgres migration and keep the production n8n polling `/api/service/due-reports` | n8n receives each due report once per schedule because `due-reports` claims on read |
+
 ---
 
 ## 5. Regression / sanity
@@ -90,5 +100,5 @@ Use a reachable Postgres (LAN or Supabase). For local testing: `postgresql://ngo
 ## Notes / known limits
 
 - Local scheduler only runs while the machine is awake; guaranteed delivery still needs mode 1 (always-on server). N-4 covers the catch-up mitigation.
-- Scheduled **reports** (`due-reports`) are still n8n/VPS-only — not covered by the local scheduler.
+- Scheduled reports do not catch up after downtime. They only run inside the server-side due window, so stale digests do not arrive at random boot time.
 - Email channel deferred; only OS notification + Telegram are wired.
