@@ -4,6 +4,24 @@ import { useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAppSettings, type ModuleGroupId } from '../api/appSettings';
 
+// Mirrors apps/api/src/config/pageTemplates.ts PAGE_TEMPLATES (no shared package).
+const PAGE_TEMPLATES: { type: string; label: string; group: ModuleGroupId }[] = [
+    { type: 'TASK', label: 'Tasks', group: 'personal' },
+    { type: 'PROJECT', label: 'Projects', group: 'personal' },
+    { type: 'EXPENSE', label: 'Expenses', group: 'personal' },
+    { type: 'GOAL', label: 'Goals', group: 'personal' },
+    { type: 'IDEA', label: 'Ideas', group: 'personal' },
+    { type: 'CALENDAR', label: 'Calendar', group: 'family' },
+    { type: 'CAKEO', label: 'Ca Keo (Child)', group: 'family' },
+    { type: 'HOUSEWORK', label: 'Housework', group: 'family' },
+    { type: 'ASSET', label: 'Assets', group: 'family' },
+    { type: 'HEALTHBOOK', label: 'Healthbook', group: 'family' },
+    { type: 'FOODPLACE', label: 'Food Menu', group: 'family' },
+    { type: 'KEYBOARD', label: 'Keyboard', group: 'hobby' },
+    { type: 'FUND', label: 'Funds', group: 'hobby' },
+    { type: 'LEARNING', label: 'Learning', group: 'hobby' },
+];
+
 export default function SetupPage() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -11,12 +29,17 @@ export default function SetupPage() {
     const [appName, setAppName] = useState(appSettings?.appName ?? 'NgốcKý');
     const [groups, setGroups] = useState<ModuleGroupId[]>(['personal', 'family', 'hobby']);
     const [owner, setOwner] = useState({ name: '', email: '', password: '', confirm: '' });
+    const [hiddenPages, setHiddenPages] = useState<string[]>([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
     const toggleGroup = (group: ModuleGroupId, checked: boolean) => {
         if (group === 'personal') return;
         setGroups((current) => checked ? [...new Set([...current, group])] : current.filter((item) => item !== group));
+    };
+
+    const togglePage = (type: string, checked: boolean) => {
+        setHiddenPages((current) => checked ? current.filter((t) => t !== type) : [...new Set([...current, type])]);
     };
 
     const handleSubmit = async (event: React.FormEvent) => {
@@ -28,9 +51,11 @@ export default function SetupPage() {
         }
         setLoading(true);
         try {
+            const enabledTypes = PAGE_TEMPLATES.filter((t) => groups.includes(t.group)).map((t) => t.type);
             await api.post('/setup', {
                 appName,
                 enabledGroups: groups,
+                hiddenPages: hiddenPages.filter((t) => enabledTypes.includes(t)),
                 owner: { name: owner.name, email: owner.email, password: owner.password },
             });
             await Promise.all([
@@ -70,15 +95,31 @@ export default function SetupPage() {
                         { id: 'family' as ModuleGroupId, label: 'Family' },
                         { id: 'hobby' as ModuleGroupId, label: 'Hobby' },
                     ].map((group) => (
-                        <label key={group.id} className="flex items-center justify-between rounded-lg border px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
-                            <span className="font-medium" style={{ color: 'var(--color-text)' }}>{group.label}</span>
-                            <input
-                                type="checkbox"
-                                checked={groups.includes(group.id)}
-                                disabled={group.disabled}
-                                onChange={(event) => toggleGroup(group.id, event.target.checked)}
-                            />
-                        </label>
+                        <div key={group.id} className="rounded-lg border px-4 py-3 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
+                            <label className="flex items-center justify-between">
+                                <span className="font-medium" style={{ color: 'var(--color-text)' }}>{group.label}</span>
+                                <input
+                                    type="checkbox"
+                                    checked={groups.includes(group.id)}
+                                    disabled={group.disabled}
+                                    onChange={(event) => toggleGroup(group.id, event.target.checked)}
+                                />
+                            </label>
+                            {groups.includes(group.id) && (
+                                <div className="grid gap-1 md:grid-cols-2 pl-1">
+                                    {PAGE_TEMPLATES.filter((t) => t.group === group.id).map((t) => (
+                                        <label key={t.type} className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={!hiddenPages.includes(t.type)}
+                                                onChange={(event) => togglePage(t.type, event.target.checked)}
+                                            />
+                                            {t.label}
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     ))}
                 </section>
 
