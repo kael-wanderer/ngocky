@@ -17,7 +17,7 @@ type DbFields = { host: string; port: string; database: string; user: string; pa
 const emptyDb: DbFields = { host: '', port: '5432', database: 'ngocky', user: '', password: '' };
 
 function buildDbUrl(db: DbFields) {
-    return `postgresql://${encodeURIComponent(db.user)}:${encodeURIComponent(db.password)}@${db.host.trim()}:${db.port.trim()}/${db.database.trim()}`;
+    return `postgresql://${encodeURIComponent(db.user)}:${encodeURIComponent(db.password)}@${db.host.trim()}:${db.port.trim()}/${encodeURIComponent(db.database.trim())}`;
 }
 
 function DbConnectionForm({ db, setDb, advanced, setAdvanced, rawUrl, setRawUrl }: {

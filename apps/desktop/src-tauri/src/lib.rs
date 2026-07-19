@@ -60,9 +60,10 @@ fn clear_desktop_config(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 fn strip_postgres_credentials(url: &str) -> String {
-    match url.rfind('@') {
-        Some(at) => format!("postgresql://{}", &url[at + 1..]),
-        None => url.to_string(),
+    let without_query = url.split_once('?').map_or(url, |(base, _)| base);
+    match without_query.rfind('@') {
+        Some(at) => format!("postgresql://{}", &without_query[at + 1..]),
+        None => without_query.to_string(),
     }
 }
 
@@ -99,6 +100,11 @@ fn reset_offline_data(
     app: tauri::AppHandle,
     state: tauri::State<SidecarChild>,
 ) -> Result<(), String> {
+    let cfg = load_config(&app);
+    if cfg.mode.as_deref() != Some("offline") || cfg.database_url.as_deref().is_some_and(|url| !url.is_empty()) {
+        return Err("Offline SQLite reset is only available in offline mode".into());
+    }
+
     if let Some(child) = state.0.lock().unwrap().take() {
         child.kill().ok();
     }
@@ -230,6 +236,14 @@ mod tests {
     fn strips_postgres_credentials_from_storage_location() {
         assert_eq!(
             strip_postgres_credentials("postgresql://user:secret@localhost:5432/ngocky"),
+            "postgresql://localhost:5432/ngocky"
+        );
+    }
+
+    #[test]
+    fn strips_query_credentials_from_storage_location() {
+        assert_eq!(
+            strip_postgres_credentials("postgresql://localhost:5432/ngocky?user=alice&password=secret"),
             "postgresql://localhost:5432/ngocky"
         );
     }
