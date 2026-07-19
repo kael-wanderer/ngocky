@@ -888,6 +888,7 @@ model ScheduledReport {
   recipients          String[]
   active              Boolean             @default(true)
   sortOrder           Int                 @default(0)
+  lastSentAt          DateTime?
   userId              String
   instanceId          String?
   createdAt           DateTime            @default(now())
