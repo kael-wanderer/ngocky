@@ -136,7 +136,7 @@ export default function FieldManagementPage() {
     };
 
     return (
-        <div className="p-4 md:p-6 space-y-4" style={{ color: 'var(--color-text)' }}>
+        <div className="space-y-4" style={{ color: 'var(--color-text)' }}>
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h1 className="flex items-center gap-2 text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
@@ -226,8 +226,10 @@ export default function FieldManagementPage() {
                                     event.preventDefault();
                                     const label = addLabels[field].trim();
                                     if (!label || mutation.isPending) return;
-                                    mutation.mutate({ kind: 'add', field, body: { label, ...(isColor ? { color: addColors[field] } : {}) } });
-                                    setAddLabels((current) => ({ ...current, [field]: '' }));
+                                    mutation.mutate(
+                                        { kind: 'add', field, body: { label, ...(isColor ? { color: addColors[field] } : {}) } },
+                                        { onSuccess: () => setAddLabels((current) => ({ ...current, [field]: '' })) },
+                                    );
                                 }}>
                                     {isColor && <fieldset disabled={mutation.isPending} className="contents"><ColorPicker value={addColors[field]} onChange={(color) => setAddColors((current) => ({ ...current, [field]: color }))} storageKey="hobby-field-colors" /></fieldset>}
                                     <input value={addLabels[field]} onChange={(event) => setAddLabels((current) => ({ ...current, [field]: event.target.value }))} disabled={mutation.isPending} placeholder={ADD_PLACEHOLDERS[field]} className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900" />
