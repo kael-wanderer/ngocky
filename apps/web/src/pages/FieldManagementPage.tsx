@@ -148,7 +148,7 @@ export default function FieldManagementPage() {
                 </div>
                 <label className="relative w-full sm:w-56">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--color-text-secondary)' }} />
-                    <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search value…" className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm dark:border-gray-700 dark:bg-gray-900" />
+                    <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search value…" className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pl-9 pr-3 text-sm" />
                 </label>
             </div>
 
@@ -159,13 +159,13 @@ export default function FieldManagementPage() {
                         const shown = expanded[field] ? matched : matched.slice(0, 6);
                         const isColor = COLOR_FIELDS.includes(field);
                         return (
-                            <section key={field} className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
-                                <header className="flex items-start justify-between gap-2 border-b border-gray-200 px-3.5 py-3 dark:border-gray-700">
+                            <section key={field} className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+                                <header className="flex items-start justify-between gap-2 border-b border-[var(--color-border)] px-3.5 py-3">
                                     <div>
                                         <h2 className="font-semibold">{FIELD_LABELS[field]} <span className="font-normal" style={{ color: 'var(--color-text-secondary)' }}>· {options[field].length}</span></h2>
                                         <div className="mt-1 flex flex-wrap gap-1">
                                             {(field === 'category' || field === 'condition' ? ['Keyboard', 'Funds'] : ['Keyboard']).map((usedBy) => (
-                                                <span key={usedBy} className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700 dark:bg-blue-950 dark:text-blue-300">{usedBy}</span>
+                                                <span key={usedBy} className="rounded-full bg-[var(--color-primary-light)] px-2 py-0.5 text-[11px] text-[var(--color-primary)]">{usedBy}</span>
                                             ))}
                                         </div>
                                     </div>
@@ -178,17 +178,17 @@ export default function FieldManagementPage() {
                                         const builtIn = field === 'category' && !!option.builtInKey;
                                         const isEditing = edit?.field === field && edit.option.id === option.id;
                                         return (
-                                            <div key={option.id} className={`grid grid-cols-[16px_minmax(0,1fr)_auto_52px] items-center gap-2 px-3.5 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 ${isEditing ? 'bg-blue-50 dark:bg-blue-950/50' : ''}`} draggable={!mutation.isPending && !isEditing} onDragStart={() => setDragged({ field, id: option.id })} onDragOver={(event) => event.preventDefault()} onDrop={() => handleDrop(field, option.id)}>
+                                            <div key={option.id} className={`grid grid-cols-[16px_minmax(0,1fr)_auto_52px] items-center gap-2 px-3.5 py-1.5 hover:bg-[var(--color-primary-light)] ${isEditing ? 'bg-[var(--color-primary-light)]' : ''}`} draggable={!mutation.isPending && !isEditing} onDragStart={() => setDragged({ field, id: option.id })} onDragOver={(event) => event.preventDefault()} onDrop={() => handleDrop(field, option.id)}>
                                                 <GripVertical className={`h-4 w-4 ${mutation.isPending ? 'cursor-not-allowed opacity-40' : 'cursor-grab'}`} style={{ color: 'var(--color-text-secondary)' }} />
                                                 {isEditing && edit ? (
                                                     <div className="flex min-w-0 items-center gap-1.5">
                                                         {isColor && <fieldset disabled={mutation.isPending} className="contents"><ColorPicker value={edit.color} onChange={(color) => setEdit((current) => current ? { ...current, color } : current)} storageKey="hobby-field-colors" /></fieldset>}
-                                                        <input autoFocus value={edit.label} disabled={mutation.isPending} onChange={(event) => setEdit({ ...edit, label: event.target.value })} onKeyDown={(event) => { if (event.key === 'Enter') saveEdit(edit); if (event.key === 'Escape') setEdit(null); }} className="min-w-0 flex-1 rounded border border-gray-300 bg-white px-2 py-1 text-sm disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800" />
+                                                        <input autoFocus value={edit.label} disabled={mutation.isPending} onChange={(event) => setEdit({ ...edit, label: event.target.value })} onKeyDown={(event) => { if (event.key === 'Enter') saveEdit(edit); if (event.key === 'Escape') setEdit(null); }} className="min-w-0 flex-1 rounded border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-sm disabled:opacity-50" />
                                                     </div>
                                                 ) : (
                                                     <span className={field === 'spec' ? 'min-w-0' : 'min-w-0 truncate'} style={isColor ? { color: option.color || '#6b7280', fontWeight: 600 } : undefined}>
                                                         {isColor && <span className="mr-1.5 inline-block h-3 w-3 rounded-sm align-[-1px]" style={{ backgroundColor: option.color || '#6b7280' }} />}
-                                                        {field === 'spec' ? <span className="inline-block rounded bg-blue-50 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-950 dark:text-blue-300">{option.label}</span> : option.label}
+                                                        {field === 'spec' ? <span className="inline-block rounded bg-[var(--color-primary-light)] px-2 py-0.5 text-xs text-[var(--color-primary)]">{option.label}</span> : option.label}
                                                     </span>
                                                 )}
                                                 <span className="min-w-6 text-right text-xs" style={{ color: 'var(--color-text-secondary)' }}>{count}</span>
@@ -200,13 +200,13 @@ export default function FieldManagementPage() {
                                                         </>
                                                     ) : builtIn ? (
                                                         <>
-                                                            <button type="button" disabled={mutation.isPending} onClick={() => startEdit(field, option)} title="Edit built-in category" className="rounded p-1 hover:bg-gray-100 disabled:opacity-40 dark:hover:bg-gray-800"><Pencil className="h-3.5 w-3.5" /></button>
+                                                            <button type="button" disabled={mutation.isPending} onClick={() => startEdit(field, option)} title="Edit built-in category" className="rounded p-1 hover:bg-[var(--color-primary-light)] disabled:opacity-40"><Pencil className="h-3.5 w-3.5" /></button>
                                                             <span title="Built-in: can rename/recolor, not delete" className="p-1" style={{ color: 'var(--color-text-secondary)' }}><Lock className="h-3.5 w-3.5" /></span>
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <button type="button" disabled={mutation.isPending} onClick={() => startEdit(field, option)} title="Edit" className="rounded p-1 hover:bg-gray-100 disabled:opacity-40 dark:hover:bg-gray-800"><Pencil className="h-3.5 w-3.5" /></button>
-                                                            <button type="button" disabled={mutation.isPending} onClick={() => deleteOption(field, option)} title="Delete" className="rounded p-1 text-red-600 hover:bg-red-50 disabled:opacity-40 dark:hover:bg-red-950"><Trash2 className="h-3.5 w-3.5" /></button>
+                                                            <button type="button" disabled={mutation.isPending} onClick={() => startEdit(field, option)} title="Edit" className="rounded p-1 hover:bg-[var(--color-primary-light)] disabled:opacity-40"><Pencil className="h-3.5 w-3.5" /></button>
+                                                            <button type="button" disabled={mutation.isPending} onClick={() => deleteOption(field, option)} title="Delete" className="rounded p-1 text-red-600 hover:bg-red-500/10 disabled:opacity-40"><Trash2 className="h-3.5 w-3.5" /></button>
                                                         </>
                                                     )}
                                                 </span>
@@ -222,7 +222,7 @@ export default function FieldManagementPage() {
 
                                 {field === 'category' && <p className="px-3.5 pb-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>🔒 Built-in: drives auto-create, summary cards, price colors.</p>}
                                 {errorField === field && mutation.isError && <p role="alert" className="px-3.5 pb-2 text-sm text-red-600">{errorMessage(mutation.error)}</p>}
-                                <form className="flex items-center gap-1.5 border-t border-gray-200 px-3.5 py-2.5 dark:border-gray-700" onSubmit={(event) => {
+                                <form className="flex items-center gap-1.5 border-t border-[var(--color-border)] px-3.5 py-2.5" onSubmit={(event) => {
                                     event.preventDefault();
                                     const label = addLabels[field].trim();
                                     if (!label || mutation.isPending) return;
@@ -232,7 +232,7 @@ export default function FieldManagementPage() {
                                     );
                                 }}>
                                     {isColor && <fieldset disabled={mutation.isPending} className="contents"><ColorPicker value={addColors[field]} onChange={(color) => setAddColors((current) => ({ ...current, [field]: color }))} storageKey="hobby-field-colors" /></fieldset>}
-                                    <input value={addLabels[field]} onChange={(event) => setAddLabels((current) => ({ ...current, [field]: event.target.value }))} disabled={mutation.isPending} placeholder={ADD_PLACEHOLDERS[field]} className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900" />
+                                    <input value={addLabels[field]} onChange={(event) => setAddLabels((current) => ({ ...current, [field]: event.target.value }))} disabled={mutation.isPending} placeholder={ADD_PLACEHOLDERS[field]} className="min-w-0 flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 text-sm disabled:opacity-50" />
                                     <button type="submit" disabled={mutation.isPending || !addLabels[field].trim()} className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white disabled:opacity-50"><Plus className="h-3.5 w-3.5" /> Add</button>
                                 </form>
                             </section>
@@ -243,12 +243,12 @@ export default function FieldManagementPage() {
 
             {confirmation && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl dark:bg-gray-900">
+                    <div className="w-full max-w-md rounded-xl bg-[var(--color-surface)] p-5 shadow-xl">
                         {confirmation.kind === 'rename' ? (
                             <>
                                 <h2 className="text-lg font-bold">Rename value?</h2>
                                 <p className="mt-2">{FIELD_LABELS[confirmation.draft.field]} “{confirmation.draft.option.label}” → <strong>“{confirmation.draft.label.trim()}”</strong></p>
-                                <p className="mt-3 rounded-lg bg-amber-100 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                                <p className="mt-3 rounded-lg bg-amber-500/15 p-3 text-sm text-[var(--color-warning)]">
                                     {confirmation.draft.field === 'category' || confirmation.draft.field === 'condition'
                                         ? `${usageOf(usage, confirmation.draft.field, confirmation.draft.option)} records across keyboards and funds use this ${confirmation.draft.field}. They will be updated too.`
                                         : `${usageOf(usage, confirmation.draft.field, confirmation.draft.option)} keyboards use this ${confirmation.draft.field}. They will be updated too.`}
@@ -257,13 +257,13 @@ export default function FieldManagementPage() {
                         ) : (
                             <>
                                 <h2 className="text-lg font-bold">Delete {FIELD_LABELS[confirmation.field].toLowerCase()} “{confirmation.option.label}”?</h2>
-                                <p className="mt-3 rounded-lg bg-amber-100 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                                <p className="mt-3 rounded-lg bg-amber-500/15 p-3 text-sm text-[var(--color-warning)]">
                                     {confirmation.usage} {confirmation.field === 'category' || confirmation.field === 'condition' ? 'records across keyboards and funds' : 'keyboards'} use this value.
                                 </p>
                                 <label className="mt-3 flex items-center gap-2 text-sm">
                                     <input type="radio" checked={deleteMode === 'move'} onChange={() => setDeleteMode('move')} disabled={mutation.isPending} />
                                     Move them to
-                                    <select value={targetId} onChange={(event) => setTargetId(event.target.value)} disabled={mutation.isPending || deleteMode !== 'move'} className="min-w-0 flex-1 rounded border border-gray-300 bg-white px-2 py-1 dark:border-gray-600 dark:bg-gray-800">
+                                    <select value={targetId} onChange={(event) => setTargetId(event.target.value)} disabled={mutation.isPending || deleteMode !== 'move'} className="min-w-0 flex-1 rounded border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1">
                                         {options[confirmation.field].filter(({ id }) => id !== confirmation.option.id).map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
                                     </select>
                                 </label>
@@ -274,7 +274,7 @@ export default function FieldManagementPage() {
                         )}
                         {mutation.isError && <p role="alert" className="mt-3 text-sm text-red-600">{errorMessage(mutation.error)}</p>}
                         <div className="mt-5 flex justify-end gap-2">
-                            <button type="button" disabled={mutation.isPending} onClick={() => setConfirmation(null)} className="rounded-lg border border-gray-200 px-3 py-2 text-sm disabled:opacity-50 dark:border-gray-700">Cancel</button>
+                            <button type="button" disabled={mutation.isPending} onClick={() => setConfirmation(null)} className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm disabled:opacity-50">Cancel</button>
                             <button type="button" disabled={mutation.isPending || (confirmation.kind === 'delete' && deleteMode === 'move' && !targetId)} onClick={applyConfirmation} className={`rounded-lg px-3 py-2 text-sm font-medium text-white disabled:opacity-50 ${confirmation.kind === 'delete' ? 'bg-red-600' : 'bg-blue-600'}`}>
                                 {confirmation.kind === 'delete' ? 'Delete' : 'Rename'}
                             </button>
