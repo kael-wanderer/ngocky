@@ -7,6 +7,8 @@ import PaginationControls from '../components/PaginationControls';
 import { parseCompactAmountInput } from '../utils/amount';
 import MultiSelectFilter from '../components/MultiSelectFilter';
 import ColumnToggle, { useHiddenColumns } from '../components/ColumnToggle';
+import { useHobbyOptions, labelsOf, colorOf, builtInKeyOf } from '../hooks/useHobbyOptions';
+import type { HobbyOptions } from '../api/hobbyOptions';
 
 const KEYBOARD_COLUMNS = [
     { key: 'name', label: 'Name' },
@@ -20,65 +22,13 @@ const KEYBOARD_COLUMNS = [
 ];
 import {
     DEFAULT_KEYBOARD_FILTERS,
-    KEYBOARD_FILTER_CATEGORIES,
-    KEYBOARD_FILTER_COLORS,
     KEYBOARD_FILTER_PRICE_RANGES,
-    KEYBOARD_FILTER_TAGS,
     matchesKeyboardFilters,
 } from '../config/keyboardFilters';
 
 // ─── Constants ───────────────────────────────────────
 
-const CATEGORIES = [...KEYBOARD_FILTER_CATEGORIES];
-const TAGS = [...KEYBOARD_FILTER_TAGS];
-const COLORS = [...KEYBOARD_FILTER_COLORS];
-const SPECS = ['Base', 'Novel', 'Space', 'Accent', 'Hiragana', 'Icon Mode', 'Alpha', 'Mod', 'Fix Kit', 'Solder', 'Hotswap', 'Plate Alu', 'Plate PC', 'Plate PEI', 'Plate CF', 'Plate PP', 'Deskmat'];
-const CONDITIONS = ['BNIB', 'Used'];
 const PRICE_RANGES = [...KEYBOARD_FILTER_PRICE_RANGES];
-const SPEC_ALIASES: Record<string, string> = {
-    'icon mod': 'Icon Mode',
-    'icon mode': 'Icon Mode',
-    mod: 'Mod',
-    'fix kit': 'Fix Kit',
-    accent: 'Accent',
-    base: 'Base',
-    novel: 'Novel',
-    space: 'Space',
-    hiragana: 'Hiragana',
-    alpha: 'Alpha',
-    solder: 'Solder',
-    hotswap: 'Hotswap',
-    'plate alu': 'Plate Alu',
-    'plate pc': 'Plate PC',
-    'plate pei': 'Plate PEI',
-    'plate cf': 'Plate CF',
-    'plate pp': 'Plate PP',
-    deskmat: 'Deskmat',
-};
-const SPEC_ORDER = new Map(SPECS.map((spec, index) => [spec, index]));
-const COLOR_TEXT_MAP: Record<string, string> = {
-    Blue: '#2563eb',
-    PC: '#6b7280',
-    Purple: '#7c3aed',
-    Red: '#dc2626',
-    Gray: '#6b7280',
-    Green: '#16a34a',
-    Black: '#111827',
-    Silver: '#94a3b8',
-    Copper: '#b45309',
-    Brown: '#92400e',
-    'Rose Gold': '#c2410c',
-    Orange: '#ea580c',
-    Beige: '#a16207',
-    Colorful: '#db2777',
-};
-const CATEGORY_TEXT_MAP: Record<string, string> = {
-    Kit: '#2563eb',
-    Keycap: '#16a34a',
-    Shipping: '#ea580c',
-    Accessories: '#6b7280',
-    Other: '#6b7280',
-};
 
 // ─── Types ───────────────────────────────────────────
 
@@ -123,47 +73,42 @@ function emptyForm(): FormState {
     return { name: '', price: '', category: '', tag: '', color: '', spec: [], description: '', note: '', isShared: false };
 }
 
-function normalizeSpecLabel(value: string) {
-    const trimmed = value.trim();
-    if (!trimmed) return '';
-    return SPEC_ALIASES[trimmed.toLowerCase()] || trimmed;
-}
-
-function sortSpecs(values: string[]) {
+function sortSpecs(values: string[], options: HobbyOptions) {
+    const specOrder = new Map(options.spec.map(({ label }, index) => [label, index]));
     return [...values]
-        .map(normalizeSpecLabel)
+        .map((value) => value.trim())
         .filter(Boolean)
         .filter((value, index, array) => array.indexOf(value) === index)
         .sort((left, right) => {
-            const leftIndex = SPEC_ORDER.get(left) ?? Number.MAX_SAFE_INTEGER;
-            const rightIndex = SPEC_ORDER.get(right) ?? Number.MAX_SAFE_INTEGER;
+            const leftIndex = specOrder.get(left) ?? Number.MAX_SAFE_INTEGER;
+            const rightIndex = specOrder.get(right) ?? Number.MAX_SAFE_INTEGER;
             if (leftIndex !== rightIndex) return leftIndex - rightIndex;
             return left.localeCompare(right, undefined, { sensitivity: 'base' });
         });
 }
 
-function formFromItem(item: KeyboardItem): FormState {
+function formFromItem(item: KeyboardItem, options: HobbyOptions): FormState {
     return {
         name: item.name,
         price: item.price != null ? String(item.price) : '',
         category: item.category ?? '',
         tag: item.tag ?? '',
         color: item.color ?? '',
-        spec: sortSpecs(item.spec ?? []),
+        spec: sortSpecs(item.spec ?? [], options),
         description: item.description ?? '',
         note: item.note ?? '',
         isShared: item.isShared,
     };
 }
 
-function formToBody(f: FormState) {
+function formToBody(f: FormState, options: HobbyOptions) {
     return {
         name: f.name,
         price: f.price !== '' ? parseAmountInput(f.price) : null,
         category: f.category || null,
         tag: f.tag || null,
         color: f.color || null,
-        spec: sortSpecs(f.spec),
+        spec: sortSpecs(f.spec, options),
         description: f.description || null,
         note: f.note || null,
         isShared: f.isShared,
@@ -174,10 +119,11 @@ function toggleArr(arr: string[], val: string): string[] {
     return arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val];
 }
 
-function getKeyboardPriceColor(category: string | null, price: number | null) {
+function getKeyboardPriceColor(category: string | null, price: number | null, options: HobbyOptions) {
     if (price == null) return undefined;
 
-    if (category === 'Kit') {
+    const categoryKey = builtInKeyOf(options, category);
+    if (categoryKey === 'KIT') {
         if (price >= 20_000_000) return '#dc2626';
         if (price >= 15_000_000) return '#ea580c';
         if (price >= 10_000_000) return '#2563eb';
@@ -185,7 +131,7 @@ function getKeyboardPriceColor(category: string | null, price: number | null) {
         return undefined;
     }
 
-    if (category === 'Keycap') {
+    if (categoryKey === 'KEYCAP') {
         if (price >= 10_000_000) return '#dc2626';
         if (price >= 7_500_000) return '#ea580c';
         if (price >= 5_000_000) return '#2563eb';
@@ -205,9 +151,9 @@ function Chip({ label, onRemove }: { label: string; onRemove?: () => void }) {
     );
 }
 
-function KeyboardCategoryBadge({ category }: { category: string }) {
+function KeyboardCategoryBadge({ category, color }: { category: string; color?: string }) {
     return (
-        <span className="px-1.5 py-0.5 rounded text-xs font-semibold" style={{ color: CATEGORY_TEXT_MAP[category] || '#374151', backgroundColor: `${CATEGORY_TEXT_MAP[category] || '#d1d5db'}20` }}>
+        <span className="px-1.5 py-0.5 rounded text-xs font-semibold" style={{ color: color || 'var(--color-text-secondary)', backgroundColor: `${color || '#d1d5db'}20` }}>
             {category}
         </span>
     );
@@ -250,6 +196,12 @@ const CSV_HEADER_MAP: Record<string, string> = {
 
 export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: string; pageTitle?: string }) {
     const qc = useQueryClient();
+    const { options } = useHobbyOptions();
+    const categories = labelsOf(options, 'category');
+    const tags = labelsOf(options, 'tag');
+    const colors = labelsOf(options, 'color');
+    const specs = labelsOf(options, 'spec');
+    const conditions = labelsOf(options, 'condition');
 
     // Filters
     const [filters, setFilters] = useLocalStorage('ngocky:keyboard:filters', { ...DEFAULT_KEYBOARD_FILTERS });
@@ -314,10 +266,10 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
     });
 
     function openNew() { setEditing(null); setForm(emptyForm()); setShowModal(true); }
-    function openEdit(item: KeyboardItem) { setEditing(item); setForm(formFromItem(item)); setShowModal(true); }
+    function openEdit(item: KeyboardItem) { setEditing(item); setForm(formFromItem(item, options)); setShowModal(true); }
     function closeModal() { setShowModal(false); setEditing(null); }
     function duplicateItem(item: KeyboardItem) {
-        createMut.mutate({ ...formToBody(formFromItem(item)), name: `${item.name} (Copy)` });
+        createMut.mutate({ ...formToBody(formFromItem(item, options), options), name: `${item.name} (Copy)` });
     }
     function submitForm() {
         if (!form.name) return;
@@ -325,7 +277,7 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
             alert('Price must be a valid number. Example: 7800000 or 7.8M');
             return;
         }
-        const body = formToBody(form);
+        const body = formToBody(form, options);
         if (editing) updateMut.mutate({ id: editing.id, body });
         else createMut.mutate(body);
     }
@@ -369,13 +321,14 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
         for (const item of sortedItems) {
             const price = item.price ?? 0;
             values.total += price;
-            if (item.category === 'Kit') values.kit += price;
-            if (item.category === 'Keycap') values.keycap += price;
-            if (item.category === 'Accessories') values.accessories += price;
+            const key = builtInKeyOf(options, item.category);
+            if (key === 'KIT') values.kit += price;
+            if (key === 'KEYCAP') values.keycap += price;
+            if (key === 'ACCESSORIES') values.accessories += price;
         }
 
         return values;
-    }, [sortedItems]);
+    }, [sortedItems, options]);
 
     const totalItems = sortedItems.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -445,7 +398,7 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
                         className="min-w-[150px] flex-1"
                         label="Category"
                         allLabel="All categories"
-                        options={CATEGORIES.map((value) => ({ value, label: value }))}
+                        options={categories.map((value) => ({ value, label: value }))}
                         selected={filters.categories}
                         open={openFilter === 'categories'}
                         onOpenChange={(open) => setOpenFilter(open ? 'categories' : null)}
@@ -455,7 +408,7 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
                         className="min-w-[150px] flex-1"
                         label="Tag"
                         allLabel="All tags"
-                        options={TAGS.map((value) => ({ value, label: value }))}
+                        options={tags.map((value) => ({ value, label: value }))}
                         selected={filters.tags}
                         open={openFilter === 'tags'}
                         onOpenChange={(open) => setOpenFilter(open ? 'tags' : null)}
@@ -465,7 +418,7 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
                         className="min-w-[150px] flex-1"
                         label="Color"
                         allLabel="All colors"
-                        options={COLORS.map((value) => ({ value, label: value }))}
+                        options={colors.map((value) => ({ value, label: value }))}
                         selected={filters.colors}
                         open={openFilter === 'colors'}
                         onOpenChange={(open) => setOpenFilter(open ? 'colors' : null)}
@@ -486,15 +439,15 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Kit</div>
+                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{options.category.find(({ builtInKey }) => builtInKey === 'KIT')?.label || 'Kit'}</div>
                     <div className="text-2xl font-bold" style={{ color: '#2563eb' }}>{formatVND(summary.kit)}</div>
                 </div>
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Keycap</div>
+                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{options.category.find(({ builtInKey }) => builtInKey === 'KEYCAP')?.label || 'Keycap'}</div>
                     <div className="text-2xl font-bold" style={{ color: '#ea580c' }}>{formatVND(summary.keycap)}</div>
                 </div>
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Accessories</div>
+                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{options.category.find(({ builtInKey }) => builtInKey === 'ACCESSORIES')?.label || 'Accessories'}</div>
                     <div className="text-2xl font-bold" style={{ color: '#6b7280' }}>{formatVND(summary.accessories)}</div>
                 </div>
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
@@ -574,13 +527,13 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
                                 >
                                     {isVisible('name') && <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{item.name}</td>}
                                     {isVisible('category') && <td className="px-3 py-2">
-                                        {item.category ? <KeyboardCategoryBadge category={item.category} /> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
+                                        {item.category ? <KeyboardCategoryBadge category={item.category} color={colorOf(options, 'category', item.category)} /> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
                                     </td>}
                                     {isVisible('tag') && <td className="px-3 py-2 text-xs">
-                                        {item.tag ? <span style={{ color: item.color ? (COLOR_TEXT_MAP[item.color] || 'var(--color-text-secondary)') : 'var(--color-text-secondary)' }}>{item.tag}</span> : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                                        {item.tag ? <span style={{ color: item.color ? (colorOf(options, 'color', item.color) || 'var(--color-text-secondary)') : 'var(--color-text-secondary)' }}>{item.tag}</span> : <span className="text-gray-300 dark:text-gray-600">—</span>}
                                     </td>}
                                     {isVisible('color') && <td className="px-3 py-2">
-                                        {item.color ? <span className="text-xs font-semibold" style={{ color: COLOR_TEXT_MAP[item.color] || 'var(--color-text)' }}>{item.color}</span> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
+                                        {item.color ? <span className="text-xs font-semibold" style={{ color: colorOf(options, 'color', item.color) || 'var(--color-text)' }}>{item.color}</span> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
                                     </td>}
                                     {isVisible('spec') && <td className="px-3 py-2">
                                         <div className="flex flex-wrap gap-0.5">
@@ -590,7 +543,7 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
                                     {isVisible('condition') && <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.description ?? ''}>{item.description || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>}
                                     {isVisible('price') && <td
                                         className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300 whitespace-nowrap"
-                                        style={item.price != null ? { color: getKeyboardPriceColor(item.category, item.price) } : undefined}
+                                        style={item.price != null ? { color: getKeyboardPriceColor(item.category, item.price, options) } : undefined}
                                     >
                                         {item.price != null ? formatVND(item.price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
                                     </td>}
@@ -628,6 +581,11 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
                 <KeyboardModal
                     form={form}
                     setForm={setForm}
+                    categories={categories}
+                    tags={tags}
+                    colors={colors}
+                    specs={specs}
+                    conditions={conditions}
                     editing={!!editing}
                     onSave={submitForm}
                     onClose={closeModal}
@@ -655,9 +613,14 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
 
 // ─── Add / Edit Modal ────────────────────────────────
 
-function KeyboardModal({ form, setForm, editing, onSave, onClose, onDelete, saving }: {
+function KeyboardModal({ form, setForm, categories, tags, colors, specs, conditions, editing, onSave, onClose, onDelete, saving }: {
     form: FormState;
     setForm: React.Dispatch<React.SetStateAction<FormState>>;
+    categories: string[];
+    tags: string[];
+    colors: string[];
+    specs: string[];
+    conditions: string[];
     editing: boolean;
     onSave: () => void;
     onClose: () => void;
@@ -689,7 +652,7 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, onDelete, savi
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
                             <select value={form.category} onChange={e => set('category', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
                                 <option value="">—</option>
-                                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                {categories.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
 
@@ -698,7 +661,7 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, onDelete, savi
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tag</label>
                             <select value={form.tag} onChange={e => set('tag', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
                                 <option value="">—</option>
-                                {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
+                                {tags.map(t => <option key={t} value={t}>{t}</option>)}
                             </select>
                         </div>
 
@@ -707,7 +670,7 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, onDelete, savi
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
                             <select value={form.color} onChange={e => set('color', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
                                 <option value="">—</option>
-                                {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
+                                {colors.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
 
@@ -715,7 +678,7 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, onDelete, savi
                         <div className="col-span-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Spec</label>
                             <div className="mt-1 flex flex-wrap gap-1.5">
-                                {SPECS.map(s => (
+                                {specs.map(s => (
                                     <button key={s} type="button" onClick={() => set('spec', toggleArr(form.spec, s))}
                                         className={`px-2 py-0.5 rounded text-xs border transition-colors ${form.spec.includes(s) ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
                                         {s}
@@ -729,7 +692,7 @@ function KeyboardModal({ form, setForm, editing, onSave, onClose, onDelete, savi
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Condition</label>
                             <select value={form.description} onChange={e => set('description', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
                                 <option value="">—</option>
-                                {CONDITIONS.map(condition => <option key={condition} value={condition}>{condition}</option>)}
+                                {conditions.map(condition => <option key={condition} value={condition}>{condition}</option>)}
                             </select>
                         </div>
 

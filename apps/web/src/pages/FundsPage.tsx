@@ -8,10 +8,9 @@ import PaginationControls from '../components/PaginationControls';
 import ColumnToggle, { useHiddenColumns } from '../components/ColumnToggle';
 import { parseCompactAmountInput } from '../utils/amount';
 import { useAuthStore } from '../stores/auth';
+import { useHobbyOptions, labelsOf } from '../hooks/useHobbyOptions';
 import {
     DEFAULT_FUNDS_FILTERS,
-    FUNDS_CATEGORY_OPTIONS,
-    FUNDS_CONDITION_OPTIONS,
     FUNDS_SCOPE_OPTIONS,
     FUNDS_TIME_FILTER_OPTIONS,
     FUNDS_TYPE_OPTIONS,
@@ -20,8 +19,6 @@ import {
 
 const typeOptions = [...FUNDS_TYPE_OPTIONS];
 const scopeOptions = [...FUNDS_SCOPE_OPTIONS];
-const categoryOptions = [...FUNDS_CATEGORY_OPTIONS];
-const conditionOptions = [...FUNDS_CONDITION_OPTIONS];
 
 const columns = [
     { key: 'date', label: 'Date' },
@@ -66,7 +63,7 @@ const getTypeBadgeStyle = (type: string) => {
     return undefined;
 };
 
-const normalizeConditionForType = (type: string, condition: string | null | undefined) => {
+const normalizeConditionForType = (type: string, condition: string | null | undefined, defaultCondition: string) => {
     if (type === 'TOP_UP') {
         return '';
     }
@@ -75,7 +72,7 @@ const normalizeConditionForType = (type: string, condition: string | null | unde
         return condition || '';
     }
 
-    return condition || 'USED';
+    return condition || defaultCondition;
 };
 
 const parseCSV = (text: string): { headers: string[]; rows: string[][] } => {
@@ -114,12 +111,12 @@ const parseCSV = (text: string): { headers: string[]; rows: string[][] } => {
     };
 };
 
-const emptyForm = () => ({
+const emptyForm = (defaultCategory: string, defaultCondition: string) => ({
     description: '',
     type: 'BUY',
     scope: 'MECHANICAL_KEYBOARD',
-    category: 'KEYCAP',
-    condition: 'USED',
+    category: defaultCategory,
+    condition: defaultCondition,
     keyboardItemId: '',
     date: format(new Date(), 'yyyy-MM-dd'),
     amount: '',
@@ -130,12 +127,18 @@ const emptyForm = () => ({
 export default function FundsPage({ instanceId, pageTitle }: { instanceId?: string; pageTitle?: string }) {
     const qc = useQueryClient();
     const { user } = useAuthStore();
+    const { options } = useHobbyOptions();
+    const categoryOptions = labelsOf(options, 'category');
+    const conditionOptions = labelsOf(options, 'condition');
+    const defaultCategory = options.category.find(({ builtInKey }) => builtInKey === 'KEYCAP')?.label || '';
+    const otherCategory = options.category.find(({ builtInKey }) => builtInKey === 'OTHER')?.label || '';
+    const defaultCondition = options.condition.find(({ label }) => label.trim().toLowerCase() === 'used')?.label || options.condition[0]?.label || '';
     const [showModal, setShowModal] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [editingFund, setEditingFund] = useState<any>(null);
     const [filters, setFilters] = useLocalStorage('ngocky:funds:filters', { ...DEFAULT_FUNDS_FILTERS });
     const [search, setSearch] = useState('');
-    const [form, setForm] = useState(emptyForm());
+    const [form, setForm] = useState(emptyForm(defaultCategory, defaultCondition));
     const [sortBy, setSortBy] = useLocalStorage<SortKey>('ngocky:funds:sortBy', 'date');
     const [sortOrder, setSortOrder] = useLocalStorage<SortOrder>('ngocky:funds:sortOrder', 'desc');
     const [page, setPage] = useState(1);
@@ -272,7 +275,7 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
 
     function openCreate() {
         setEditingFund(null);
-        setForm(emptyForm());
+        setForm(emptyForm(defaultCategory, defaultCondition));
         setShowModal(true);
     }
 
@@ -282,8 +285,8 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
             description: fund.description || '',
             type: fund.type || 'BUY',
             scope: fund.scope || 'MECHANICAL_KEYBOARD',
-            category: fund.category || 'KEYCAP',
-            condition: normalizeConditionForType(fund.type || 'BUY', fund.condition),
+            category: fund.category || defaultCategory,
+            condition: normalizeConditionForType(fund.type || 'BUY', fund.condition, defaultCondition),
             keyboardItemId: '',
             date: format(new Date(fund.date), 'yyyy-MM-dd'),
             amount: String(Math.round(fund.amount)),
@@ -296,7 +299,7 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
     function closeModal() {
         setShowModal(false);
         setEditingFund(null);
-        setForm(emptyForm());
+        setForm(emptyForm(defaultCategory, defaultCondition));
     }
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -313,7 +316,7 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
 
         const payload = {
             ...form,
-            category: form.type === 'TOP_UP' ? 'OTHER' : form.category,
+            category: form.type === 'TOP_UP' ? otherCategory : form.category,
             condition: form.type === 'TOP_UP' ? null : (form.condition || null),
             keyboardItemName: form.keyboardItemId
                 ? keyboardOptions.find((item: any) => item.id === form.keyboardItemId)?.name || null
@@ -381,11 +384,11 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
                     </select>
                     <select className="input text-sm" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
                         <option value="">All Categories</option>
-                        {categoryOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        {categoryOptions.map((label) => <option key={label} value={label}>{label}</option>)}
                     </select>
                     <select className="input text-sm" value={filters.condition} onChange={(e) => setFilters({ ...filters, condition: e.target.value })}>
                         <option value="">All Conditions</option>
-                        {conditionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        {conditionOptions.map((label) => <option key={label} value={label}>{label}</option>)}
                     </select>
                     <select
                         className="input text-sm"
@@ -436,8 +439,8 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
                                         onChange={(e) => setForm({
                                             ...form,
                                             type: e.target.value,
-                                            category: e.target.value === 'TOP_UP' ? 'OTHER' : form.category,
-                                            condition: normalizeConditionForType(e.target.value, form.condition),
+                                            category: e.target.value === 'TOP_UP' ? otherCategory : form.category,
+                                            condition: normalizeConditionForType(e.target.value, form.condition, defaultCondition),
                                             keyboardItemId: e.target.value === 'SELL' ? form.keyboardItemId : '',
                                             addKeyboardItem: true,
                                             removeKeyboardItem: true,
@@ -456,11 +459,11 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
                                     <label className="label">Category {form.type !== 'TOP_UP' && <span className="text-red-500">*</span>}</label>
                                     <select
                                         className="input disabled:opacity-50 disabled:cursor-not-allowed"
-                                        value={form.type === 'TOP_UP' ? 'OTHER' : form.category}
+                                        value={form.type === 'TOP_UP' ? otherCategory : form.category}
                                         disabled={form.type === 'TOP_UP'}
                                         onChange={(e) => setForm({ ...form, category: e.target.value })}
                                     >
-                                        {categoryOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                        {categoryOptions.map((label) => <option key={label} value={label}>{label}</option>)}
                                     </select>
                                 </div>
                                 <div>
@@ -472,7 +475,7 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
                                         onChange={(e) => setForm({ ...form, condition: e.target.value })}
                                     >
                                         {form.type === 'BUY' && <option value="">Select condition</option>}
-                                        {conditionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                        {conditionOptions.map((label) => <option key={label} value={label}>{label}</option>)}
                                     </select>
                                 </div>
                                 {form.scope === 'MECHANICAL_KEYBOARD' && form.type === 'BUY' && !editingFund && (
@@ -564,6 +567,7 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
             {showImport && (
                 <FundImportModal
                     loading={importMut.isPending}
+                    defaultCondition={defaultCondition}
                     onClose={() => setShowImport(false)}
                     onImport={(items) => importMut.mutate(items)}
                 />
@@ -624,8 +628,8 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
                                                     </span>
                                                 </td>}
                                                 {isVisible('scope') && <td><span className="badge badge-warning">{scopeOptions.find((option) => option.value === fund.scope)?.label || fund.scope}</span></td>}
-                                                {isVisible('category') && <td><span className="badge-success">{categoryOptions.find((option) => option.value === fund.category)?.label || fund.category}</span></td>}
-                                                {isVisible('condition') && <td><span className="badge badge-secondary">{conditionOptions.find((option) => option.value === fund.condition)?.label || fund.condition || '—'}</span></td>}
+                                                {isVisible('category') && <td><span className="badge-success">{fund.category || '—'}</span></td>}
+                                                {isVisible('condition') && <td><span className="badge badge-secondary">{fund.condition || '—'}</span></td>}
                                                 {isVisible('amount') && <td className="text-right font-semibold" style={{ color: tone }}>{formatAmount(fund.amount)}</td>}
                                                 {isVisible('description') && <td>
                                                     <div className="font-medium" style={{ color: 'var(--color-text)' }}>{fund.description}</div>
@@ -668,10 +672,12 @@ function FundImportModal({
     onImport,
     onClose,
     loading,
+    defaultCondition,
 }: {
     onImport: (items: any[]) => void;
     onClose: () => void;
     loading: boolean;
+    defaultCondition: string;
 }) {
     const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
     const [csvRows, setCsvRows] = useState<string[][]>([]);
@@ -735,7 +741,7 @@ function FundImportModal({
             const item = buildItem(row);
             return {
                 ...item,
-                condition: normalizeConditionForType(String(item.type || 'BUY').toUpperCase().replace(/[\s-]+/g, '_'), item.condition),
+                condition: normalizeConditionForType(String(item.type || 'BUY').toUpperCase().replace(/[\s-]+/g, '_'), item.condition, defaultCondition),
             };
         }).filter((item) => item.description);
         onImport(items);

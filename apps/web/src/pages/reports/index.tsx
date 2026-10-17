@@ -53,19 +53,15 @@ import {
 import MultiSelectFilter from '../../components/MultiSelectFilter';
 import {
     DEFAULT_KEYBOARD_FILTERS,
-    KEYBOARD_FILTER_CATEGORIES,
-    KEYBOARD_FILTER_COLORS,
     KEYBOARD_FILTER_PRICE_RANGES,
-    KEYBOARD_FILTER_TAGS,
     matchesKeyboardFilters,
 } from '../../config/keyboardFilters';
 import {
     DEFAULT_FUNDS_FILTERS,
-    FUNDS_CATEGORY_OPTIONS,
-    FUNDS_CONDITION_OPTIONS,
     FUNDS_SCOPE_OPTIONS,
     FUNDS_TYPE_OPTIONS,
 } from '../../config/fundsFilters';
+import { useHobbyOptions, labelsOf, builtInKeyOf } from '../../hooks/useHobbyOptions';
 import { BarChart3, FileSpreadsheet, FileText, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
@@ -379,6 +375,11 @@ function sameTabIds(left: AnalyticsTabId[], right: AnalyticsTabId[]) {
 export default function ReportsPage() {
     const reportContentRef = useRef<HTMLDivElement>(null);
     const { user } = useAuthStore();
+    const { options: hobbyOptions, isLoading: hobbyOptionsLoading } = useHobbyOptions();
+    const hobbyCategories = useMemo(() => labelsOf(hobbyOptions, 'category'), [hobbyOptions]);
+    const hobbyTags = useMemo(() => labelsOf(hobbyOptions, 'tag'), [hobbyOptions]);
+    const hobbyColors = useMemo(() => labelsOf(hobbyOptions, 'color'), [hobbyOptions]);
+    const hobbyConditions = useMemo(() => labelsOf(hobbyOptions, 'condition'), [hobbyOptions]);
     const [selectionMode, setSelectionMode] = useLocalStorage<AnalyticsSelectionMode>('ngocky:reports:selectionMode', 'single');
     const [singleSelectedTab, setSingleSelectedTab] = useLocalStorage<AnalyticsTabId | 'all'>('ngocky:reports:singleTab', 'calendar');
     const [multiSelectedTabs, setMultiSelectedTabs] = useLocalStorage<AnalyticsTabId[]>('ngocky:reports:multiTabs', ['calendar']);
@@ -408,6 +409,24 @@ export default function ReportsPage() {
     }>('ngocky:reports:cakeoFilters', { ...DEFAULT_CAKEO_FILTERS });
     const [keyboardFilters, setKeyboardFilters] = useLocalStorage('ngocky:reports:keyboardFilters', { ...DEFAULT_KEYBOARD_FILTERS });
     const [fundsFilters, setFundsFilters] = useLocalStorage('ngocky:reports:fundsFilters', { ...DEFAULT_FUNDS_FILTERS });
+    useEffect(() => {
+        if (hobbyOptionsLoading) return;
+        const categories = new Set(hobbyCategories);
+        const tags = new Set(hobbyTags);
+        const colors = new Set(hobbyColors);
+        const conditions = new Set(hobbyConditions);
+        setKeyboardFilters((current) => ({
+            ...current,
+            categories: current.categories.filter((value) => categories.has(value)),
+            tags: current.tags.filter((value) => tags.has(value)),
+            colors: current.colors.filter((value) => colors.has(value)),
+        }));
+        setFundsFilters((current) => ({
+            ...current,
+            category: !current.category || categories.has(current.category) ? current.category : '',
+            condition: !current.condition || conditions.has(current.condition) ? current.condition : '',
+        }));
+    }, [hobbyOptionsLoading, hobbyCategories, hobbyTags, hobbyColors, hobbyConditions, setKeyboardFilters, setFundsFilters]);
     const [reportPageId, setReportPageId] = useLocalStorage<string>('ngocky:reports:pageId', '');
     const { data: reportPages = [] } = usePages();
     const selectedReportPage = reportPages.find((page) => page.id === reportPageId) || null;
@@ -801,12 +820,13 @@ export default function ReportsPage() {
         keyboardAnalyticsRows.forEach((item: any) => {
             const price = item.price ?? 0;
             totals.total += price;
-            if (item.category === 'Kit') totals.kit += price;
-            if (item.category === 'Keycap') totals.keycap += price;
-            if (item.category === 'Accessories') totals.accessories += price;
+            const builtInKey = builtInKeyOf(hobbyOptions, item.category);
+            if (builtInKey === 'KIT') totals.kit += price;
+            if (builtInKey === 'KEYCAP') totals.keycap += price;
+            if (builtInKey === 'ACCESSORIES') totals.accessories += price;
         });
         return totals;
-    }, [keyboardAnalyticsRows]);
+    }, [keyboardAnalyticsRows, hobbyOptions]);
     const keyboardCategoryChart = useMemo(() => {
         const map = new Map<string, number>();
         keyboardAnalyticsRows.forEach((item: any) => {
@@ -1115,9 +1135,9 @@ export default function ReportsPage() {
                 title: 'Keyboard Summary',
                 columns: [{ key: 'label', label: 'Metric' }, { key: 'value', label: 'Value' }],
                 rows: [
-                    { label: 'Kit', value: formatVND(keyboardSummary.kit) },
-                    { label: 'Keycap', value: formatVND(keyboardSummary.keycap) },
-                    { label: 'Accessories', value: formatVND(keyboardSummary.accessories) },
+                    { label: hobbyOptions.category.find((option) => option.builtInKey === 'KIT')?.label || 'Kit', value: formatVND(keyboardSummary.kit) },
+                    { label: hobbyOptions.category.find((option) => option.builtInKey === 'KEYCAP')?.label || 'Keycap', value: formatVND(keyboardSummary.keycap) },
+                    { label: hobbyOptions.category.find((option) => option.builtInKey === 'ACCESSORIES')?.label || 'Accessories', value: formatVND(keyboardSummary.accessories) },
                     { label: 'Total', value: formatVND(keyboardSummary.total) },
                 ],
             },
@@ -1497,7 +1517,7 @@ export default function ReportsPage() {
                                 className="min-w-[150px] flex-1"
                                 label="Category"
                                 allLabel="All categories"
-                                options={KEYBOARD_FILTER_CATEGORIES.map((value) => ({ value, label: value }))}
+                                options={hobbyCategories.map((value) => ({ value, label: value }))}
                                 selected={keyboardFilters.categories}
                                 onChange={(values) => setKeyboardFilters((current) => ({ ...current, categories: values }))}
                             />
@@ -1505,7 +1525,7 @@ export default function ReportsPage() {
                                 className="min-w-[150px] flex-1"
                                 label="Tag"
                                 allLabel="All tags"
-                                options={KEYBOARD_FILTER_TAGS.map((value) => ({ value, label: value }))}
+                                options={hobbyTags.map((value) => ({ value, label: value }))}
                                 selected={keyboardFilters.tags}
                                 onChange={(values) => setKeyboardFilters((current) => ({ ...current, tags: values }))}
                             />
@@ -1513,7 +1533,7 @@ export default function ReportsPage() {
                                 className="min-w-[150px] flex-1"
                                 label="Color"
                                 allLabel="All colors"
-                                options={KEYBOARD_FILTER_COLORS.map((value) => ({ value, label: value }))}
+                                options={hobbyColors.map((value) => ({ value, label: value }))}
                                 selected={keyboardFilters.colors}
                                 onChange={(values) => setKeyboardFilters((current) => ({ ...current, colors: values }))}
                             />
@@ -1538,11 +1558,11 @@ export default function ReportsPage() {
                             </select>
                             <select className="input text-sm" value={fundsFilters.category} onChange={(e) => setFundsFilters((current) => ({ ...current, category: e.target.value }))}>
                                 <option value="">All Categories</option>
-                                {FUNDS_CATEGORY_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                {hobbyCategories.map((label) => <option key={label} value={label}>{label}</option>)}
                             </select>
                             <select className="input text-sm" value={fundsFilters.condition} onChange={(e) => setFundsFilters((current) => ({ ...current, condition: e.target.value }))}>
                                 <option value="">All Conditions</option>
-                                {FUNDS_CONDITION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                {hobbyConditions.map((label) => <option key={label} value={label}>{label}</option>)}
                             </select>
                             <input type="date" className="input text-sm" value={fundsFilters.dateFrom} onChange={(e) => setFundsFilters((current) => ({ ...current, dateFrom: e.target.value }))} />
                             <input type="date" className="input text-sm" value={fundsFilters.dateTo} min={fundsFilters.dateFrom || undefined} onChange={(e) => setFundsFilters((current) => ({ ...current, dateTo: e.target.value }))} />
@@ -2316,9 +2336,9 @@ export default function ReportsPage() {
                     {showCharts && (
                         <div className="grid gap-6 md:grid-cols-2">
                             <div className="grid grid-cols-2 gap-4 md:col-span-2">
-                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Kit</div><div className="text-2xl font-bold" style={{ color: '#2563eb' }}>{formatVND(keyboardSummary.kit)}</div></div>
-                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Keycap</div><div className="text-2xl font-bold" style={{ color: '#16a34a' }}>{formatVND(keyboardSummary.keycap)}</div></div>
-                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Accessories</div><div className="text-2xl font-bold" style={{ color: '#6b7280' }}>{formatVND(keyboardSummary.accessories)}</div></div>
+                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{hobbyOptions.category.find((option) => option.builtInKey === 'KIT')?.label || 'Kit'}</div><div className="text-2xl font-bold" style={{ color: '#2563eb' }}>{formatVND(keyboardSummary.kit)}</div></div>
+                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{hobbyOptions.category.find((option) => option.builtInKey === 'KEYCAP')?.label || 'Keycap'}</div><div className="text-2xl font-bold" style={{ color: '#16a34a' }}>{formatVND(keyboardSummary.keycap)}</div></div>
+                                <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{hobbyOptions.category.find((option) => option.builtInKey === 'ACCESSORIES')?.label || 'Accessories'}</div><div className="text-2xl font-bold" style={{ color: '#6b7280' }}>{formatVND(keyboardSummary.accessories)}</div></div>
                                 <div className="card p-4"><div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Total</div><div className="text-2xl font-bold" style={{ color: 'var(--color-success)' }}>{formatVND(keyboardSummary.total)}</div></div>
                             </div>
                             <div className="card p-5 md:col-span-2">

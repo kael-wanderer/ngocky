@@ -1,6 +1,3 @@
-export const KEYBOARD_FILTER_CATEGORIES = ['Keycap', 'Kit', 'Shipping', 'Accessories', 'Other'] as const;
-export const KEYBOARD_FILTER_TAGS = ['Board 1', 'Board 2', 'Board 3', 'Board 4', 'Board 5', 'Board 6', 'Board 7', 'Board 8', 'Board 9', 'Board 10', 'Board 11', 'Board 12', 'Board 13', 'Board 14', 'Board 15', 'Board 16', 'Board 17', 'Stock'] as const;
-export const KEYBOARD_FILTER_COLORS = ['Blue', 'PC', 'Purple', 'Red', 'Gray', 'Green', 'Black', 'Silver', 'Copper', 'Brown', 'Rose Gold', 'Orange', 'Beige', 'Colorful'] as const;
 export const KEYBOARD_FILTER_PRICE_RANGES = [
     { value: 'UNDER_5M', label: '< 5M' },
     { value: 'BETWEEN_5M_10M', label: '5M to 10M' },
