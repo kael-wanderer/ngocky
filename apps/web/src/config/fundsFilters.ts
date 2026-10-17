@@ -11,19 +11,6 @@ export const FUNDS_SCOPE_OPTIONS = [
     { value: 'PLAY_STATION', label: 'Play Station' },
 ] as const;
 
-export const FUNDS_CATEGORY_OPTIONS = [
-    { value: 'KEYCAP', label: 'Keycap' },
-    { value: 'KIT', label: 'Kit' },
-    { value: 'SHIPPING', label: 'Shipping' },
-    { value: 'ACCESSORIES', label: 'Accessories' },
-    { value: 'OTHER', label: 'Other' },
-] as const;
-
-export const FUNDS_CONDITION_OPTIONS = [
-    { value: 'BNIB', label: 'BNIB' },
-    { value: 'USED', label: 'Used' },
-] as const;
-
 export type SharedFundsTimeFilter = 'THIS_MONTH' | 'LAST_MONTH' | 'THIS_QUARTER' | 'LAST_QUARTER' | 'THIS_YEAR' | 'LAST_YEAR' | 'ALL' | 'CUSTOM';
 
 export const FUNDS_TIME_FILTER_OPTIONS: Array<{ value: SharedFundsTimeFilter; label: string }> = [

@@ -1,36 +1,20 @@
 import { prisma } from '../../../config/database';
 import { escapeMd, formatVND } from '../utils';
 import type { ResolverContext, ResolverResult } from './types';
-
-function normalizeKeyboardCategory(value: unknown): string | null {
-    const normalized = String(value ?? '').trim().toLowerCase();
-    if (!normalized) return null;
-    if (normalized === 'kit') return 'Kit';
-    if (normalized === 'keycap') return 'Keycap';
-    if (normalized === 'shipping') return 'Shipping';
-    if (normalized === 'accessories') return 'Accessories';
-    if (normalized === 'other') return 'Other';
-    return null;
-}
-
-function normalizeKeyboardCondition(value: unknown): string | null {
-    const normalized = String(value ?? '').trim().toUpperCase();
-    if (normalized === 'BNIB') return 'BNIB';
-    if (normalized === 'USED') return 'Used';
-    return null;
-}
+import { HobbyOptionsService } from '../../hobbyOptions';
 
 export async function resolveKeyboardCreate(
     entities: Record<string, any>,
     ctx: ResolverContext,
 ): Promise<ResolverResult> {
     const name = (entities.name as string | undefined)?.trim();
-    const category = normalizeKeyboardCategory(entities.category);
+    const options = await HobbyOptionsService.get();
+    const category = HobbyOptionsService.resolveLabel(options, 'category', entities.category);
     const price = entities.price == null ? null : Number.parseFloat(String(entities.price));
     const tag = (entities.tag as string | undefined)?.trim() || null;
     const color = (entities.color as string | undefined)?.trim() || null;
     const note = (entities.note as string | undefined)?.trim() || null;
-    const condition = normalizeKeyboardCondition(entities.condition);
+    const condition = HobbyOptionsService.resolveLabel(options, 'condition', entities.condition);
 
     if (!name) {
         return { reply: 'I need the keyboard item name\\. Example: _add keyboard kohaku r1 kit 30m silver_\\.', requiresConfirmation: false };

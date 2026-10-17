@@ -557,7 +557,7 @@ export default function ExpensesPage({ instanceId, pageTitle }: ExpensesPageProp
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeModal}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={closeModal}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createMut.isPending || updateMut.isPending}>
@@ -571,7 +571,7 @@ export default function ExpensesPage({ instanceId, pageTitle }: ExpensesPageProp
             )}
 
             {isLoading ? (
-                <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="card h-16 animate-pulse bg-gray-100" />)}</div>
+                <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="card h-16 animate-pulse bg-[var(--color-bg)]" />)}</div>
             ) : (
                 <div ref={exportContentRef} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -615,7 +615,7 @@ export default function ExpensesPage({ instanceId, pageTitle }: ExpensesPageProp
                                             <tr
                                                 key={expense.id}
                                                 onClick={() => canEdit && openEdit(expense)}
-                                                className={`${canEdit ? 'cursor-pointer' : ''} ${index % 2 === 0 ? 'bg-[#ecfdf5]' : 'bg-white'} hover:bg-[#d1fae5] transition-colors`}
+                                                className={`${canEdit ? 'cursor-pointer' : ''} ${index % 2 === 0 ? 'bg-[color-mix(in_srgb,var(--color-success)_8%,var(--color-surface))]' : 'bg-[var(--color-surface)]'} hover:bg-[color-mix(in_srgb,var(--color-success)_16%,var(--color-surface))] transition-colors`}
                                             >
                                                 {isVisible('date') && <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(expense.date), 'MMM d, yyyy')}</td>}
                                                 {isVisible('user') && <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{expense.user?.name || '-'}</td>}
@@ -644,7 +644,7 @@ export default function ExpensesPage({ instanceId, pageTitle }: ExpensesPageProp
                                                 <td className="px-3 py-2.5">
                                                     {canEdit && (
                                                         <div className="flex items-center gap-1 justify-end">
-                                                            <button type="button" onClick={(e) => { e.stopPropagation(); openEdit(expense); }} className="p-1 text-gray-400 hover:text-gray-600" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                                            <button type="button" onClick={(e) => { e.stopPropagation(); openEdit(expense); }} className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text)]" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
                                                             <button type="button" onClick={(e) => { e.stopPropagation(); handleDuplicate(expense); }} className="p-1 text-blue-500 hover:text-blue-600" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
                                                             <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(expense.id); }} className="p-1 text-red-500 hover:text-red-600" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
                                                         </div>

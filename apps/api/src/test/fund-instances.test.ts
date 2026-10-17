@@ -11,6 +11,24 @@ async function ownerToken(email: string) {
 }
 
 describe('fund page instances', () => {
+    it('stores legacy KEYCAP category as label Keycap', async () => {
+        const token = await ownerToken('fund-legacy-category@example.com');
+        const response = await request(app).post('/api/funds').set('Authorization', `Bearer ${token}`).send({
+            description: 'Keycaps',
+            type: 'BUY',
+            scope: 'MECHANICAL_KEYBOARD',
+            category: 'KEYCAP',
+            condition: 'USED',
+            date: '2026-07-11T00:00:00.000Z',
+            amount: 100,
+        });
+
+        expect(response.status).toBe(201);
+        const row = await prisma.fundTransaction.findUniqueOrThrow({ where: { id: response.body.data.id } });
+        expect(row.category).toBe('Keycap');
+        expect(row.condition).toBe('Used');
+    });
+
     it('partitions transactions and imports', async () => {
         const token = await ownerToken('fund-instance@example.com');
         const owner = await prisma.user.findUniqueOrThrow({ where: { email: 'fund-instance@example.com' } });

@@ -31,6 +31,7 @@ const SetupPage = lazy(() => import('./pages/SetupPage'));
 const InstancePage = lazy(() => import('./pages/InstancePage'));
 const AgentSettingsPage = lazy(() => import('./pages/admin/AgentSettingsPage'));
 const ApplicationManagementPage = lazy(() => import('./pages/admin/ApplicationManagementPage'));
+const FieldManagementPage = lazy(() => import('./pages/FieldManagementPage'));
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -109,6 +110,7 @@ function AppRoutes() {
                         <Route path="assets" element={<FeatureRoute route="/assets"><AssetsPage /></FeatureRoute>} />
                         <Route path="assets/:assetId" element={<FeatureRoute route="/assets"><AssetsPage /></FeatureRoute>} />
                         <Route path="learning" element={<FeatureRoute route="/learning"><LearningPage /></FeatureRoute>} />
+                        <Route path="field-management" element={<AdminRoute><FeatureRoute route="/field-management"><FieldManagementPage /></FeatureRoute></AdminRoute>} />
                         <Route path="ideas" element={<FeatureRoute route="/ideas"><IdeasPage /></FeatureRoute>} />
                         <Route path="keyboard" element={<FeatureRoute route="/keyboard"><KeyboardPage /></FeatureRoute>} />
                         <Route path="food" element={<FeatureRoute route="/food"><FoodPage /></FeatureRoute>} />

@@ -2,6 +2,7 @@ import { prisma } from '../../../config/database';
 import { escapeMd, formatVND, localDayToUTCRange } from '../utils';
 import { ASSISTANT_POLICIES } from '../policies';
 import type { ResolverContext, ResolverResult } from './types';
+import { HobbyOptionsService } from '../../hobbyOptions';
 
 function normalizeFundEnum(value: unknown) {
     return String(value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
@@ -26,8 +27,9 @@ export async function resolveFundQuery(
     const scope = normalizeFundEnum(entities.scope);
     if (['MECHANICAL_KEYBOARD', 'PLAY_STATION'].includes(scope)) where.scope = scope;
 
-    const category = normalizeFundEnum(entities.category);
-    if (['KEYCAP', 'KIT', 'SHIPPING', 'ACCESSORIES', 'OTHER'].includes(category)) where.category = category;
+    const options = await HobbyOptionsService.get();
+    const category = HobbyOptionsService.resolveLabel(options, 'category', entities.category);
+    if (category) where.category = category;
 
     const funds = await prisma.fundTransaction.findMany({
         where,

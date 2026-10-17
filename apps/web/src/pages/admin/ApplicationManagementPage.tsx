@@ -166,7 +166,7 @@ function TemplateOverrideTable({ templates, onSave, onReset }: {
                                         <option value="personal">Personal</option><option value="family">Family</option><option value="hobby">Hobby</option>
                                     </select>
                                 </td>
-                                <td className="p-3"><button type="button" title="Reset to default" className="p-2 rounded hover:bg-gray-50" onClick={() => onReset(template)}><RotateCcw className="w-4 h-4" /></button></td>
+                                <td className="p-3"><button type="button" title="Reset to default" className="p-2 rounded hover:bg-[var(--color-primary-light)]" onClick={() => onReset(template)}><RotateCcw className="w-4 h-4" /></button></td>
                             </tr>
                         );
                     })}

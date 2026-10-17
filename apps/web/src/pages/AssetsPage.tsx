@@ -150,7 +150,7 @@ function AssetCard({
     if (listMode === 'list') {
         return (
             <div
-                className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer hover:bg-[var(--color-primary-light)] transition-colors"
                 onClick={onOpen}
             >
                 <div className="min-w-0 flex-1">
@@ -163,13 +163,13 @@ function AssetCard({
                     {asset.isShared && <span className="text-[9px] px-1 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
                     {canManage && (
                         <div className="hidden sm:flex items-center gap-1">
-                            <button className="p-1 rounded hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+                            <button className="p-1 rounded hover:bg-[var(--color-primary-light)]" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
                                 <Pencil className="w-3 h-3" style={{ color: 'var(--color-text-secondary)' }} />
                             </button>
-                            <button className="p-1 rounded hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); onDuplicate(); }}>
+                            <button className="p-1 rounded hover:bg-[var(--color-primary-light)]" onClick={(e) => { e.stopPropagation(); onDuplicate(); }}>
                                 <Copy className="w-3 h-3" style={{ color: 'var(--color-text-secondary)' }} />
                             </button>
-                            <button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-red-500" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+                            <button className="p-1 rounded hover:bg-[var(--color-primary-light)] text-[var(--color-text-secondary)] hover:text-red-500" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
                                 <Trash2 className="w-3 h-3" />
                             </button>
                         </div>
@@ -194,13 +194,13 @@ function AssetCard({
                 </div>
                 {canManage && (
                     <div className="hidden sm:flex items-center gap-1 shrink-0">
-                        <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+                        <button className="p-1.5 rounded-md hover:bg-[var(--color-primary-light)]" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
                             <Pencil className="w-3.5 h-3.5" />
                         </button>
-                        <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); onDuplicate(); }}>
+                        <button className="p-1.5 rounded-md hover:bg-[var(--color-primary-light)]" onClick={(e) => { e.stopPropagation(); onDuplicate(); }}>
                             <Copy className="w-3.5 h-3.5" />
                         </button>
-                        <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+                        <button className="p-1.5 rounded-md text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-[var(--color-primary-light)]" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
                             <Trash2 className="w-3.5 h-3.5" />
                         </button>
                     </div>
@@ -562,14 +562,14 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                         <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>My Assets</h3>
                         <div className="flex items-center gap-1">
                             <button
-                                className={`p-1.5 rounded-md transition-colors ${assetListView === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                                className={`p-1.5 rounded-md transition-colors ${assetListView === 'grid' ? 'bg-[var(--color-border)]' : 'hover:bg-[var(--color-primary-light)]'}`}
                                 onClick={() => setAssetListView('grid')}
                                 title="Grid view"
                             >
                                 <LayoutGrid className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
                             </button>
                             <button
-                                className={`p-1.5 rounded-md transition-colors ${assetListView === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                                className={`p-1.5 rounded-md transition-colors ${assetListView === 'list' ? 'bg-[var(--color-border)]' : 'hover:bg-[var(--color-primary-light)]'}`}
                                 onClick={() => setAssetListView('list')}
                                 title="List view"
                             >
@@ -579,7 +579,7 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                     </div>
 
                     {assetsLoading ? (
-                        <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="card p-4 h-16 animate-pulse bg-gray-50" />)}</div>
+                        <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="card p-4 h-16 animate-pulse bg-[var(--color-bg)]" />)}</div>
                     ) : assetListView === 'list' ? (
                         <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
                             {(assets || []).map((asset: Asset) => (
@@ -678,7 +678,7 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                                     </div>
 
                                     {selectedAsset.note && (
-                                        <div className="p-3 rounded-lg bg-gray-50 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                        <div className="p-3 rounded-lg bg-[var(--color-bg)] text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                                             <span className="font-bold block mb-1">NOTES</span>
                                             {selectedAsset.note}
                                         </div>
@@ -704,7 +704,7 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                                                 value={recordSearch}
                                                 onChange={(e) => setRecordSearch(e.target.value)}
                                                 placeholder="Search by name..."
-                                                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                                className="w-full text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 bg-[var(--color-surface)] text-[var(--color-text)]"
                                             />
                                         </div>
                                         <MultiSelectFilter
@@ -741,7 +741,7 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                                     <div className="flex flex-col items-end gap-2 ml-auto shrink-0">
                                         <div className="flex items-center gap-2">
                                             <button
-                                                className={`p-1.5 rounded-md transition-colors ${recordViewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                                                className={`p-1.5 rounded-md transition-colors ${recordViewMode === 'grid' ? 'bg-[var(--color-border)]' : 'hover:bg-[var(--color-primary-light)]'}`}
                                                 onClick={() => setRecordViewMode('grid')}
                                                 title="Grid view"
                                                 type="button"
@@ -749,7 +749,7 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                                                 <LayoutGrid className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
                                             </button>
                                             <button
-                                                className={`p-1.5 rounded-md transition-colors ${recordViewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                                                className={`p-1.5 rounded-md transition-colors ${recordViewMode === 'list' ? 'bg-[var(--color-border)]' : 'hover:bg-[var(--color-primary-light)]'}`}
                                                 onClick={() => setRecordViewMode('list')}
                                                 title="List view"
                                                 type="button"
@@ -770,7 +770,7 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                                         </div>
 
                                         {recordsLoading ? (
-                                            <div className="space-y-3 pt-2">{[...Array(2)].map((_, i) => <div key={i} className="h-12 w-full animate-pulse bg-gray-50 rounded-lg" />)}</div>
+                                            <div className="space-y-3 pt-2">{[...Array(2)].map((_, i) => <div key={i} className="h-12 w-full animate-pulse bg-[var(--color-bg)] rounded-lg" />)}</div>
                                         ) : recordViewMode === 'grid' ? (
                                             <div className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
                                                 {filteredRecords.map((record: MaintenanceRecord) => (
@@ -779,10 +779,10 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                                                             <div>
                                                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                                                                     <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{record.serviceType || 'Maintenance'}</span>
-                                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--color-bg)] font-medium" style={{ color: 'var(--color-text-secondary)' }}>
                                                                         {new Date(record.serviceDate).toLocaleDateString()}
                                                                     </span>
-                                                                    <Bell className={`w-3 h-3 flex-shrink-0 ${record.notificationEnabled ? 'text-red-500' : 'text-gray-300'}`} />
+                                                                    <Bell className={`w-3 h-3 flex-shrink-0 ${record.notificationEnabled ? 'text-red-500' : 'text-[var(--color-border)]'}`} />
                                                                     {formatRecordNotificationBadges(record).map((badge, i) => (
                                                                         <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded bg-purple-50 text-purple-600">{badge}</span>
                                                                     ))}
@@ -795,10 +795,10 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                                                                     <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-text-secondary)' }}>🛞 {record.kilometers.toLocaleString()} km</p>
                                                                 )}
                                                                 <div className="flex items-center gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
-                                                                    <button type="button" className={`p-1 transition-colors ${record.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} onClick={() => updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: record.id, body: { pinToDashboard: !record.pinToDashboard } })} title="Pin">
+                                                                    <button type="button" className={`p-1 transition-colors ${record.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-[var(--color-border)] hover:text-amber-400'}`} onClick={() => updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: record.id, body: { pinToDashboard: !record.pinToDashboard } })} title="Pin">
                                                                         <Pin className="w-3.5 h-3.5" />
                                                                     </button>
-                                                                    <button type="button" className="p-1 text-gray-400 hover:text-gray-600 transition-colors" onClick={() => openEditRecord(record)} title="Edit">
+                                                                    <button type="button" className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors" onClick={() => openEditRecord(record)} title="Edit">
                                                                         <Pencil className="w-3.5 h-3.5" />
                                                                     </button>
                                                                     <button type="button" className="p-1 text-blue-500 hover:text-blue-600 transition-colors" onClick={() => duplicateRecord(record)} title="Duplicate">
@@ -890,7 +890,7 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                                                                         {record.serviceType || 'Maintenance'}
                                                                     </div>
                                                                     <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                                                                        <Bell className={`w-3 h-3 flex-shrink-0 ${record.notificationEnabled ? 'text-red-500' : 'text-gray-300'}`} />
+                                                                        <Bell className={`w-3 h-3 flex-shrink-0 ${record.notificationEnabled ? 'text-red-500' : 'text-[var(--color-border)]'}`} />
                                                                         {formatRecordNotificationBadges(record).map((badge, i) => (
                                                                             <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded bg-purple-50 text-purple-600">{badge}</span>
                                                                         ))}
@@ -932,10 +932,10 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                                                                     <span className="text-sm text-left" style={{ color: 'var(--color-text-secondary)' }}>—</span>
                                                                 )}
                                                                 <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                                                    <button type="button" className={`p-1 transition-colors ${record.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} onClick={() => updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: record.id, body: { pinToDashboard: !record.pinToDashboard } })} title="Pin">
+                                                                    <button type="button" className={`p-1 transition-colors ${record.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-[var(--color-border)] hover:text-amber-400'}`} onClick={() => updateRecordMut.mutate({ assetId: selectedAsset.id, recordId: record.id, body: { pinToDashboard: !record.pinToDashboard } })} title="Pin">
                                                                         <Pin className="w-3.5 h-3.5" />
                                                                     </button>
-                                                                    <button type="button" className="p-1 text-gray-400 hover:text-gray-600 transition-colors" onClick={() => openEditRecord(record)} title="Edit">
+                                                                    <button type="button" className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors" onClick={() => openEditRecord(record)} title="Edit">
                                                                         <Pencil className="w-3.5 h-3.5" />
                                                                     </button>
                                                                     <button type="button" className="p-1 text-blue-500 hover:text-blue-600 transition-colors" onClick={() => duplicateRecord(record)} title="Duplicate">
@@ -963,7 +963,7 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                     })()}
                 </div>
             ) : assetsLoading ? (
-                <div className="card p-6 h-32 animate-pulse bg-gray-50" />
+                <div className="card p-6 h-32 animate-pulse bg-[var(--color-bg)]" />
             ) : (
                 <div className="card p-12 text-center border-dashed border-2">
                     <Microwave className="w-12 h-12 mb-4 opacity-10 mx-auto" />
@@ -1046,7 +1046,7 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeAssetModal}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={closeAssetModal}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createAssetMut.isPending || updateAssetMut.isPending}>
@@ -1071,7 +1071,7 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                                 <div className="flex items-center justify-between mb-1">
                                     <label className="label mb-0">Service Type <span className="text-red-500">*</span></label>
                                     <button type="button" onClick={() => setRecordForm({ ...(recordForm as any), pinToDashboard: !(recordForm as any).pinToDashboard })}
-                                        className={`p-1.5 rounded-lg border transition-colors ${(recordForm as any).pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 text-gray-400 hover:text-gray-600'}`}
+                                        className={`p-1.5 rounded-lg border transition-colors ${(recordForm as any).pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}
                                         title="Pin to dashboard">
                                         <Pin className="w-3.5 h-3.5" />
                                     </button>
@@ -1178,7 +1178,7 @@ export default function AssetsPage({ instanceId, pageTitle }: { instanceId?: str
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeRecordModal}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={closeRecordModal}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createRecordMut.isPending || updateRecordMut.isPending}>

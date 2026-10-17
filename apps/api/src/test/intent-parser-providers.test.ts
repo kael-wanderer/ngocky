@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({ getAdapter: vi.fn() }));
 vi.mock('../services/assistant/providers/factory', () => ({ getActiveProviderAdapter: mocks.getAdapter }));
 
 import { parseIntent } from '../services/assistant/intentParser';
+import { HobbyOptionsService } from '../services/hobbyOptions';
 
 describe('provider-backed intent parser', () => {
     beforeEach(() => mocks.getAdapter.mockReset());
@@ -13,6 +14,19 @@ describe('provider-backed intent parser', () => {
             generateStructuredIntent: vi.fn(async () => '```json\n{"intent":"help","confidence":0.9,"entities":{}}\n```'),
         });
         expect(await parseIntent('hello', 'Asia/Ho_Chi_Minh')).toMatchObject({ intent: 'help', confidence: 0.9 });
+    });
+
+    it('includes current category labels in the provider prompt', async () => {
+        const options = await HobbyOptionsService.get();
+        const kit = options.category.find(({ builtInKey }) => builtInKey === 'KIT')!;
+        await HobbyOptionsService.update('category', kit.id, { label: 'Kits' });
+        const generateStructuredIntent = vi.fn(async (_input: { systemPrompt: string }) => '{"intent":"help","confidence":0.9,"entities":{}}');
+        mocks.getAdapter.mockResolvedValue({ generateStructuredIntent });
+
+        await parseIntent('hello', 'Asia/Ho_Chi_Minh');
+
+        const prompt = generateStructuredIntent.mock.calls[0]?.[0]?.systemPrompt ?? '';
+        expect(prompt).toContain('Keycap|Kits|Shipping|Accessories|Other');
     });
 
     it('falls back when provider initialization or output fails', async () => {

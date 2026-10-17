@@ -1,5 +1,22 @@
 import { z } from 'zod';
 
+const keyboardOptionValue = z.string().trim().max(60).nullable().optional();
+const keyboardSchema = z.object({
+    name: z.string().trim().min(1).max(200),
+    price: z.number().nullable().optional(),
+    category: keyboardOptionValue,
+    tag: keyboardOptionValue,
+    color: keyboardOptionValue,
+    spec: z.array(z.string().trim().max(60)).max(50).optional(),
+    description: keyboardOptionValue,
+    note: z.string().max(2000).nullable().optional(),
+    isShared: z.boolean().optional(),
+    instanceId: z.string().min(1).nullable().optional(),
+});
+
+export const createKeyboardSchema = keyboardSchema;
+export const updateKeyboardSchema = keyboardSchema.partial();
+
 const checkInDateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
 
 function parseCheckInDate(value: string) {
@@ -370,8 +387,8 @@ const fundSchemaBase = z.object({
     description: z.string().min(1).max(200),
     type: z.enum(['BUY', 'SELL', 'TOP_UP']),
     scope: z.enum(['MECHANICAL_KEYBOARD', 'PLAY_STATION']),
-    category: z.enum(['KEYCAP', 'KIT', 'SHIPPING', 'ACCESSORIES', 'OTHER']),
-    condition: z.enum(['BNIB', 'USED']).optional().nullable(),
+    category: z.string().trim().min(1).max(60),
+    condition: z.string().trim().max(60).optional().nullable(),
     keyboardItemId: z.string().optional().nullable(),
     keyboardItemName: z.string().optional().nullable(),
     addKeyboardItem: z.boolean().optional(),

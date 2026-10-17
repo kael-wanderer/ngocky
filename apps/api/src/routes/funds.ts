@@ -5,38 +5,32 @@ import { validate } from '../middleware/validate';
 import { createFundSchema, updateFundSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { ForbiddenError, NotFoundError, ValidationError } from '../utils/errors';
-import type { HobbyFundCategory, HobbyFundScope, HobbyFundType } from '@prisma/client';
+import type { HobbyFundScope, HobbyFundType } from '@prisma/client';
 import { assertPageInstance } from '../services/pageInstances';
+import { HobbyField, HobbyOptions, HobbyOptionsService, shouldCreateKeyboardFromFund } from '../services/hobbyOptions';
 
 const router = Router();
 router.use(authenticate);
 
-function normalizeCondition(type: unknown, condition: unknown): string | null {
+function resolveCondition(options: HobbyOptions, type: unknown, condition: unknown): string | null {
     if (type === 'TOP_UP') {
         return null;
     }
 
-    return condition == null ? null : String(condition);
+    if (condition == null || String(condition).trim() === '') return null;
+    const value = HobbyOptionsService.resolveLabel(options, 'condition', condition);
+    if (value === null) throw new ValidationError('Unknown condition option');
+    return value;
 }
 
 function isMechanicalKeyboardScope(scope: unknown) {
     return scope === 'MECHANICAL_KEYBOARD';
 }
 
-function shouldCreateKeyboardFromFund(type: unknown, scope: unknown, category: unknown) {
-    return type === 'BUY'
-        && isMechanicalKeyboardScope(scope)
-        && ['KEYCAP', 'KIT', 'ACCESSORIES'].includes(String(category ?? ''));
-}
-
-function mapFundCategoryToKeyboardCategory(category: unknown) {
-    const raw = String(category ?? '').toUpperCase();
-    if (raw === 'KEYCAP') return 'Keycap';
-    if (raw === 'KIT') return 'Kit';
-    if (raw === 'ACCESSORIES') return 'Accessories';
-    if (raw === 'SHIPPING') return 'Shipping';
-    if (raw === 'OTHER') return 'Other';
-    return null;
+function resolveOption(options: HobbyOptions, field: HobbyField, raw: unknown): string {
+    const value = HobbyOptionsService.resolveLabel(options, field, raw);
+    if (value === null) throw new ValidationError(`Unknown ${field} option`);
+    return value;
 }
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -51,10 +45,11 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         const dateTo = req.query.dateTo as string;
 
         const where: any = { userId: req.user!.userId, instanceId: typeof req.query.instanceId === 'string' ? req.query.instanceId : null };
+        const options = await HobbyOptionsService.get();
         if (type) where.type = type;
         if (scope) where.scope = scope;
-        if (category) where.category = category;
-        if (condition) where.condition = condition;
+        if (category) where.category = HobbyOptionsService.resolveLabel(options, 'category', category) ?? category;
+        if (condition) where.condition = HobbyOptionsService.resolveLabel(options, 'condition', condition) ?? condition;
         if (dateFrom || dateTo) {
             where.date = {};
             if (dateFrom) where.date.gte = new Date(dateFrom);
@@ -110,11 +105,14 @@ router.post('/', validate(createFundSchema), async (req: Request, res: Response,
     try {
         const userId = req.user!.userId;
         await assertPageInstance(req.body.instanceId ?? null, 'FUND');
+        const options = await HobbyOptionsService.get();
         const fund = await prisma.$transaction(async (tx: any) => {
-            const normalizedCondition = normalizeCondition(req.body.type, req.body.condition);
             const { keyboardItemId, keyboardItemName, addKeyboardItem, removeKeyboardItem, ...fundData } = req.body;
+            const category = resolveOption(options, 'category', fundData.category);
+            const normalizedCondition = resolveCondition(options, fundData.type, fundData.condition);
+            const builtInKey = HobbyOptionsService.builtInKeyOf(options, category);
 
-            if (addKeyboardItem !== false && shouldCreateKeyboardFromFund(fundData.type, fundData.scope, fundData.category)) {
+            if (addKeyboardItem !== false && shouldCreateKeyboardFromFund(fundData.type, fundData.scope, builtInKey)) {
                 const lastKeyboard = await tx.keyboard.aggregate({
                     where: { ownerId: userId },
                     _max: { sortOrder: true },
@@ -124,7 +122,7 @@ router.post('/', validate(createFundSchema), async (req: Request, res: Response,
                     data: {
                         name: fundData.description,
                         price: fundData.amount,
-                        category: mapFundCategoryToKeyboardCategory(fundData.category),
+                        category,
                         description: normalizedCondition,
                         spec: [],
                         note: 'Created from Funds',
@@ -154,6 +152,7 @@ router.post('/', validate(createFundSchema), async (req: Request, res: Response,
             return tx.fundTransaction.create({
                 data: {
                     ...fundData,
+                    category,
                     condition: normalizedCondition,
                     date: new Date(fundData.date),
                     userId,
@@ -172,6 +171,8 @@ router.post('/import', async (req: Request, res: Response, next: NextFunction) =
         if (!rows.length) {
             return sendSuccess(res, { created: 0 });
         }
+
+        let options = await HobbyOptionsService.get();
 
         const parseDate = (value: unknown) => {
             if (!value) return new Date();
@@ -201,17 +202,20 @@ router.post('/import', async (req: Request, res: Response, next: NextFunction) =
             return (['MECHANICAL_KEYBOARD', 'PLAY_STATION'].includes(normalized) ? normalized : 'MECHANICAL_KEYBOARD') as HobbyFundScope;
         };
 
-        const normalizeCategory = (value: unknown): HobbyFundCategory => {
-            const normalized = String(value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
-            return (['KEYCAP', 'KIT', 'SHIPPING', 'ACCESSORIES', 'OTHER'].includes(normalized) ? normalized : 'OTHER') as HobbyFundCategory;
-        };
-
-        const parseConditionValue = (value: unknown) => {
-            const normalized = String(value ?? '').trim().toUpperCase();
-            if (normalized === 'USED') return 'USED';
-            if (normalized === 'BNIB') return 'BNIB';
-            return null;
-        };
+        const unknown: Record<'category' | 'condition', string[]> = { category: [], condition: [] };
+        for (const row of rows) {
+            if (HobbyOptionsService.resolveLabel(options, 'category', row.category) === null && String(row.category ?? '').trim()) {
+                unknown.category.push(String(row.category).trim());
+            }
+            if (String(row.type ?? '').trim().toUpperCase() !== 'TOP_UP'
+                && HobbyOptionsService.resolveLabel(options, 'condition', row.condition) === null
+                && String(row.condition ?? '').trim()) {
+                unknown.condition.push(String(row.condition).trim());
+            }
+        }
+        if (unknown.category.length) await HobbyOptionsService.ensureLabels('category', unknown.category);
+        if (unknown.condition.length) await HobbyOptionsService.ensureLabels('condition', unknown.condition);
+        options = await HobbyOptionsService.get();
 
         const items = rows
             .map((row) => {
@@ -221,8 +225,8 @@ router.post('/import', async (req: Request, res: Response, next: NextFunction) =
                     description: String(row.description ?? '').trim(),
                     type,
                     scope: normalizeScope(row.scope),
-                    category: normalizeCategory(row.category),
-                    condition: normalizeCondition(type, parseConditionValue(row.condition)),
+                    category: HobbyOptionsService.resolveLabel(options, 'category', row.category) ?? HobbyOptionsService.resolveLabel(options, 'category', 'OTHER')!,
+                    condition: resolveCondition(options, type, row.condition),
                     date: parseDate(row.date),
                     amount: parseAmount(row.amount),
                     userId: req.user!.userId,
@@ -256,6 +260,7 @@ router.patch('/:id', validate(updateFundSchema), async (req: Request, res: Respo
     try {
         const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : null;
         await assertPageInstance(instanceId, 'FUND');
+        const options = await HobbyOptionsService.get();
         const existing = await prisma.fundTransaction.findFirst({ where: { id: req.params.id, instanceId } });
         if (!existing) throw new NotFoundError('Fund transaction');
         if (existing.userId !== req.user!.userId) throw new ForbiddenError('Only the owner can update this fund transaction');
@@ -267,8 +272,9 @@ router.patch('/:id', validate(updateFundSchema), async (req: Request, res: Respo
             where: { id: req.params.id },
             data: {
                 ...fundData,
+                category: fundData.category !== undefined ? resolveOption(options, 'category', fundData.category) : undefined,
                 condition: (fundData.type !== undefined || fundData.condition !== undefined)
-                    ? normalizeCondition(fundData.type ?? existing.type, fundData.condition ?? existing.condition)
+                    ? resolveCondition(options, fundData.type ?? existing.type, fundData.condition ?? existing.condition)
                     : undefined,
                 date: fundData.date ? new Date(String(fundData.date)) : undefined,
             },

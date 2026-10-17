@@ -99,14 +99,6 @@ enum HobbyFundScope {
   PLAY_STATION
 }
 
-enum HobbyFundCategory {
-  KEYCAP
-  KIT
-  SHIPPING
-  ACCESSORIES
-  OTHER
-}
-
 enum NotificationChannel {
   EMAIL
   TELEGRAM
@@ -309,6 +301,7 @@ model AppSetting {
   builtInPages        Json     @default("{}")
   templateOverrides   Json     @default("{}")
   foodOptions         Json     @default("{\"tags\":[],\"types\":[],\"distances\":[]}")
+  hobbyOptions        Json     @default("{}")
   setupCompleted      Boolean  @default(false)
   openaiKeyCiphertext String?
   openaiKeyLast4      String?
@@ -824,7 +817,7 @@ model FundTransaction {
   amount      Float
   type        HobbyFundType
   scope       HobbyFundScope
-  category    HobbyFundCategory
+  category    String
   condition   String?
   userId      String
   instanceId  String?

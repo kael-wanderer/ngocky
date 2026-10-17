@@ -138,7 +138,7 @@ export default function UsersPage() {
             )}
 
             {isLoading ? (
-                <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="card h-16 animate-pulse bg-gray-100" />)}</div>
+                <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="card h-16 animate-pulse bg-[var(--color-bg)]" />)}</div>
             ) : (
                 <div className="card overflow-hidden">
                     <div className="table-container">

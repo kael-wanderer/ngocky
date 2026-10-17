@@ -8,7 +8,7 @@ import DesktopNotifier from '../components/DesktopNotifier';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, Menu, X,
-    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, Coins, Keyboard, Baby, HeartPulse, Bot, AppWindow, Utensils
+    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, Coins, Keyboard, Baby, HeartPulse, Bot, AppWindow, Utensils, SlidersHorizontal
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { openExternal } from '../utils/externalLinks';
@@ -32,6 +32,7 @@ const navItems: NavigationItem[] = [
     { to: '/keyboard', icon: Keyboard, label: 'Keyboard' },
     { to: '/funds', icon: Coins, label: 'Funds' },
     { to: '/learning', icon: GraduationCap, label: 'Learning' },
+    { to: '/field-management', icon: SlidersHorizontal, label: 'Field Management' },
     { to: '/scheduled-reports', icon: FileText, label: 'Schedule Report' },
     { to: '/notifications', icon: BellRing, label: 'Notifications' },
     { to: '/settings', icon: Settings, label: 'User Settings' },
@@ -47,7 +48,7 @@ const navGroups = [
     { id: 'dashboard', label: 'Dashboard', items: ['/', '/reports'] },
     { id: 'personal', label: 'Personal', items: ['/tasks', '/projects', '/expenses', '/goals', '/ideas'] },
     { id: 'family', label: 'Family', items: ['/calendar', '/cakeo', '/housework', '/assets', '/healthbook', '/food'] },
-    { id: 'hobby', label: 'Hobby', items: ['/keyboard', '/funds', '/learning'] },
+    { id: 'hobby', label: 'Hobby', items: ['/keyboard', '/funds', '/learning', '/field-management'] },
     { id: 'settings', label: 'Settings', items: ['/scheduled-reports', '/notifications', '/settings'] },
     { id: 'admin', label: 'Admin', items: ['/users', '/admin/application', '/admin/agent'] },
 ] as const;
@@ -73,7 +74,7 @@ function migrateLegacyGroupOrder(order: Record<string, string[]>) {
         next[groupId] = Array.isArray(items) ? [...items] : [];
     }
 
-    const hobbyRoutes = ['/keyboard', '/funds', '/learning'];
+    const hobbyRoutes = ['/keyboard', '/funds', '/learning', '/field-management'];
     for (const groupId of Object.keys(next)) {
         next[groupId] = next[groupId].filter((to) => !hobbyRoutes.includes(to));
     }
@@ -275,7 +276,7 @@ export default function AppLayout() {
                     )}
                     <button
                         onClick={() => setCollapsed(!collapsed)}
-                        className="ml-auto hidden lg:flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100"
+                        className="ml-auto hidden lg:flex items-center justify-center w-6 h-6 rounded hover:bg-[var(--color-primary-light)]"
                     >
                         <ChevronRight className={`w-4 h-4 transition-transform ${collapsed ? '' : 'rotate-180'}`} style={{ color: 'var(--color-text-secondary)' }} />
                     </button>
@@ -308,7 +309,7 @@ export default function AppLayout() {
                                             className={({ isActive }) =>
                                                 `flex items-center justify-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive
                                                     ? 'text-white shadow-sm'
-                                                    : 'hover:bg-gray-50'
+                                                    : 'hover:bg-[var(--color-primary-light)]'
                                                 }`
                                             }
                                             style={({ isActive }) =>
@@ -327,7 +328,7 @@ export default function AppLayout() {
                                             to={`/p/${page.slug}`}
                                             onClick={() => setSidebarOpen(false)}
                                             className={({ isActive }) =>
-                                                `flex items-center justify-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive ? 'text-white shadow-sm' : 'hover:bg-gray-50'}`
+                                                `flex items-center justify-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive ? 'text-white shadow-sm' : 'hover:bg-[var(--color-primary-light)]'}`
                                             }
                                             style={({ isActive }) => isActive ? { backgroundColor: 'var(--color-primary)' } : { color: 'var(--color-text-secondary)' }}
                                             title={page.name}
@@ -344,7 +345,7 @@ export default function AppLayout() {
                                 <button
                                     type="button"
                                     onClick={() => toggleGroup(group.id)}
-                                    className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-gray-50 transition-colors"
+                                    className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[var(--color-primary-light)] transition-colors"
                                     style={{ color: 'var(--color-text)' }}
                                 >
                                     <span className="flex-1 text-left">{group.label}</span>
@@ -366,7 +367,7 @@ export default function AppLayout() {
                                                 className={({ isActive }) =>
                                                     `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive
                                                         ? 'text-white shadow-sm'
-                                                        : 'hover:bg-gray-50'
+                                                        : 'hover:bg-[var(--color-primary-light)]'
                                                     }`
                                                 }
                                                 style={({ isActive }) =>
@@ -385,7 +386,7 @@ export default function AppLayout() {
                                                     to={`/p/${page.slug}`}
                                                     onClick={() => setSidebarOpen(false)}
                                                     className={({ isActive }) =>
-                                                        `min-w-0 flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive ? 'text-white shadow-sm' : 'hover:bg-gray-50'}`
+                                                        `min-w-0 flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive ? 'text-white shadow-sm' : 'hover:bg-[var(--color-primary-light)]'}`
                                                     }
                                                     style={({ isActive }) => isActive ? { backgroundColor: 'var(--color-primary)' } : { color: 'var(--color-text-secondary)' }}
                                                 >
@@ -423,7 +424,7 @@ export default function AppLayout() {
                 >
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+                        className="lg:hidden p-2 rounded-lg hover:bg-[var(--color-primary-light)]"
                     >
                         {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                     </button>
@@ -448,7 +449,7 @@ export default function AppLayout() {
                                 >
                                     <button
                                         type="button"
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-primary-light)] transition-colors"
                                         style={{ color: 'var(--color-text)' }}
                                         onClick={() => {
                                             setShowNotificationMenu(false);
@@ -459,7 +460,7 @@ export default function AppLayout() {
                                     </button>
                                     <button
                                         type="button"
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-primary-light)] transition-colors"
                                         style={{ color: 'var(--color-text)' }}
                                         onClick={() => {
                                             setShowNotificationMenu(false);
@@ -474,7 +475,7 @@ export default function AppLayout() {
                         <div className="relative" ref={accountMenuRef}>
                             <button
                                 type="button"
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--color-primary-light)] transition-colors"
                                 onClick={() => setShowAccountMenu((current) => !current)}
                                 title="Account"
                             >
@@ -497,7 +498,7 @@ export default function AppLayout() {
                                 >
                                     <button
                                         type="button"
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-primary-light)] transition-colors"
                                         style={{ color: 'var(--color-text)' }}
                                         onClick={() => {
                                             setShowAccountMenu(false);
@@ -508,7 +509,7 @@ export default function AppLayout() {
                                     </button>
                                     <button
                                         type="button"
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-primary-light)] transition-colors"
                                         style={{ color: 'var(--color-text)' }}
                                         onClick={() => {
                                             setShowAccountMenu(false);
@@ -519,7 +520,7 @@ export default function AppLayout() {
                                     </button>
                                     <button
                                         type="button"
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-primary-light)] transition-colors"
                                         style={{ color: 'var(--color-text)' }}
                                         onClick={() => {
                                             setShowAccountMenu(false);
@@ -530,7 +531,7 @@ export default function AppLayout() {
                                     </button>
                                     <button
                                         type="button"
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-primary-light)] transition-colors"
                                         style={{ color: 'var(--color-text)' }}
                                         onClick={() => {
                                             setShowAccountMenu(false);
