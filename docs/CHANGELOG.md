@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-10-17] - Hobby Field Management
+
+### Added
+
+- **Field Management**: OWNER and ADMIN can manage shared category, condition, spec, tag, and color options used by Keyboard and Funds.
+
+### Changed
+
+- **Fund categories**: Stored as option labels, with built-in category keys preserving behavior across Funds, Keyboard, Reports, and the assistant.
+
+### Notes
+
+- Test the desktop database migration on a copy first.
+
 ## [2026-07-19] - Desktop DB Connection UX & Scheduled Reports
 
 ### Added
