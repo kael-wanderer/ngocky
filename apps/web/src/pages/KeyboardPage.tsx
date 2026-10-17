@@ -144,7 +144,7 @@ function getKeyboardPriceColor(category: string | null, price: number | null, op
 
 function Chip({ label, onRemove }: { label: string; onRemove?: () => void }) {
     return (
-        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
             {label}
             {onRemove && <button type="button" onClick={onRemove} className="ml-0.5 hover:text-red-500"><X className="w-2.5 h-2.5" /></button>}
         </span>
@@ -355,17 +355,17 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-[var(--color-text)] flex items-center gap-2">
                         <Keyboard className="w-6 h-6" /> Keyboard
                     </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                    <p className="text-sm text-[var(--color-text-secondary)] mt-0.5">
                         {filtered.length} item{filtered.length !== 1 ? 's' : ''}
-                        {totalPrice > 0 && <> · Total: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatVND(totalPrice)}</span></>}
+                        {totalPrice > 0 && <> · Total: <span className="font-semibold text-[var(--color-text)]">{formatVND(totalPrice)}</span></>}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <ColumnToggle columns={KEYBOARD_COLUMNS} hidden={hidden} onToggle={toggle} />
-                    <button onClick={() => setShowImport(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200">
+                    <button onClick={() => setShowImport(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-primary-light)] text-[var(--color-text)]">
                         <Upload className="w-4 h-4" />Import CSV
                     </button>
                     <button onClick={openNew} className="flex items-center gap-1.5 px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
@@ -375,12 +375,12 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
             </div>
 
             {/* Filter bar */}
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
+            <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-3">
                     <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
                     <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>Filters</span>
                     {activeFilterCount > 0 && (
-                        <button onClick={() => setFilters((current) => ({ ...current, categories: [], tags: [], colors: [], priceRanges: [] }))} className="ml-auto text-xs text-gray-400 hover:text-red-500">
+                        <button onClick={() => setFilters((current) => ({ ...current, categories: [], tags: [], colors: [], priceRanges: [] }))} className="ml-auto text-xs text-[var(--color-text-secondary)] hover:text-red-500">
                             Clear
                         </button>
                     )}
@@ -391,7 +391,7 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
                             value={filters.search}
                             onChange={e => setFilters((current) => ({ ...current, search: e.target.value }))}
                             placeholder="Search by name…"
-                            className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className="w-full text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 bg-[var(--color-surface)] text-[var(--color-text)]"
                         />
                     </div>
                     <MultiSelectFilter
@@ -438,122 +438,122 @@ export default function KeyboardPage({ instanceId, pageTitle }: { instanceId?: s
             </div>
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4">
                     <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{options.category.find(({ builtInKey }) => builtInKey === 'KIT')?.label || 'Kit'}</div>
                     <div className="text-2xl font-bold" style={{ color: '#2563eb' }}>{formatVND(summary.kit)}</div>
                 </div>
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4">
                     <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{options.category.find(({ builtInKey }) => builtInKey === 'KEYCAP')?.label || 'Keycap'}</div>
                     <div className="text-2xl font-bold" style={{ color: '#ea580c' }}>{formatVND(summary.keycap)}</div>
                 </div>
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4">
                     <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{options.category.find(({ builtInKey }) => builtInKey === 'ACCESSORIES')?.label || 'Accessories'}</div>
                     <div className="text-2xl font-bold" style={{ color: '#6b7280' }}>{formatVND(summary.accessories)}</div>
                 </div>
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4">
                     <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Total ({sortedItems.length} items)</div>
                     <div className="text-2xl font-bold" style={{ color: '#16a34a' }}>{formatVND(summary.total)}</div>
                 </div>
             </div>
 
             {/* Table */}
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+            <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                        <thead className="bg-[var(--color-bg)] border-b border-[var(--color-border)]">
                             <tr>
-                                {isVisible('name') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[140px]">
+                                {isVisible('name') && <th className="text-left px-3 py-2.5 font-medium text-[var(--color-text-secondary)] whitespace-nowrap min-w-[140px]">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('name')}>
                                         Name
                                         {renderSortIcon('name')}
                                     </button>
                                 </th>}
-                                {isVisible('category') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">
+                                {isVisible('category') && <th className="text-left px-3 py-2.5 font-medium text-[var(--color-text-secondary)] whitespace-nowrap w-24">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('category')}>
                                         Category
                                         {renderSortIcon('category')}
                                     </button>
                                 </th>}
-                                {isVisible('tag') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-24">
+                                {isVisible('tag') && <th className="text-left px-3 py-2.5 font-medium text-[var(--color-text-secondary)] whitespace-nowrap w-24">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('tag')}>
                                         Tag
                                         {renderSortIcon('tag')}
                                     </button>
                                 </th>}
-                                {isVisible('color') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
+                                {isVisible('color') && <th className="text-left px-3 py-2.5 font-medium text-[var(--color-text-secondary)] whitespace-nowrap w-28">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('color')}>
                                         Color
                                         {renderSortIcon('color')}
                                     </button>
                                 </th>}
-                                {isVisible('spec') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[280px]">
+                                {isVisible('spec') && <th className="text-left px-3 py-2.5 font-medium text-[var(--color-text-secondary)] whitespace-nowrap min-w-[280px]">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('spec')}>
                                         Spec
                                         {renderSortIcon('spec')}
                                     </button>
                                 </th>}
-                                {isVisible('condition') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-20">
+                                {isVisible('condition') && <th className="text-left px-3 py-2.5 font-medium text-[var(--color-text-secondary)] whitespace-nowrap w-20">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('condition')}>
                                         Condition
                                         {renderSortIcon('condition')}
                                     </button>
                                 </th>}
-                                {isVisible('price') && <th className="text-right px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-28">
+                                {isVisible('price') && <th className="text-right px-3 py-2.5 font-medium text-[var(--color-text-secondary)] whitespace-nowrap w-28">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('price')}>
                                         Price
                                         {renderSortIcon('price')}
                                     </button>
                                 </th>}
-                                {isVisible('note') && <th className="text-left px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap min-w-[360px]">
+                                {isVisible('note') && <th className="text-left px-3 py-2.5 font-medium text-[var(--color-text-secondary)] whitespace-nowrap min-w-[360px]">
                                     <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" onClick={() => toggleSort('note')}>
                                         Note
                                         {renderSortIcon('note')}
                                     </button>
                                 </th>}
-                                <th className="px-3 py-2.5 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap w-16">Action</th>
+                                <th className="px-3 py-2.5 font-medium text-[var(--color-text-secondary)] whitespace-nowrap w-16">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {paginatedItems.length === 0 && (
                                 <tr>
-                                    <td colSpan={9} className="text-center py-12 text-gray-400">No keyboards found</td>
+                                    <td colSpan={9} className="text-center py-12 text-[var(--color-text-secondary)]">No keyboards found</td>
                                 </tr>
                             )}
                             {paginatedItems.map((item, index) => (
                                 <tr
                                     key={item.id}
                                     onClick={() => openEdit(item)}
-                                    className={`group border-t border-gray-200 dark:border-gray-800 cursor-pointer ${index % 2 === 0 ? 'bg-[#ecfdf5] dark:bg-[#202225]' : 'bg-white dark:bg-gray-900'} hover:bg-[#d1fae5] dark:hover:bg-[#2a2d31]'}`}
+                                    className={`group border-t border-[var(--color-border)] cursor-pointer ${index % 2 === 0 ? 'bg-[color-mix(in_srgb,var(--color-success)_8%,var(--color-surface))]' : 'bg-[var(--color-surface)]'} hover:bg-[color-mix(in_srgb,var(--color-success)_16%,var(--color-surface))]'}`}
                                 >
-                                    {isVisible('name') && <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{item.name}</td>}
+                                    {isVisible('name') && <td className="px-3 py-2 font-medium text-[var(--color-text)]">{item.name}</td>}
                                     {isVisible('category') && <td className="px-3 py-2">
-                                        {item.category ? <KeyboardCategoryBadge category={item.category} color={colorOf(options, 'category', item.category)} /> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
+                                        {item.category ? <KeyboardCategoryBadge category={item.category} color={colorOf(options, 'category', item.category)} /> : <span className="text-[var(--color-border)] text-xs">—</span>}
                                     </td>}
                                     {isVisible('tag') && <td className="px-3 py-2 text-xs">
-                                        {item.tag ? <span style={{ color: item.color ? (colorOf(options, 'color', item.color) || 'var(--color-text-secondary)') : 'var(--color-text-secondary)' }}>{item.tag}</span> : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                                        {item.tag ? <span style={{ color: item.color ? (colorOf(options, 'color', item.color) || 'var(--color-text-secondary)') : 'var(--color-text-secondary)' }}>{item.tag}</span> : <span className="text-[var(--color-border)]">—</span>}
                                     </td>}
                                     {isVisible('color') && <td className="px-3 py-2">
-                                        {item.color ? <span className="text-xs font-semibold" style={{ color: colorOf(options, 'color', item.color) || 'var(--color-text)' }}>{item.color}</span> : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
+                                        {item.color ? <span className="text-xs font-semibold" style={{ color: colorOf(options, 'color', item.color) || 'var(--color-text)' }}>{item.color}</span> : <span className="text-[var(--color-border)] text-xs">—</span>}
                                     </td>}
                                     {isVisible('spec') && <td className="px-3 py-2">
                                         <div className="flex flex-wrap gap-0.5">
-                                            {item.spec?.length ? item.spec.map(s => <Chip key={s} label={s} />) : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
+                                            {item.spec?.length ? item.spec.map(s => <Chip key={s} label={s} />) : <span className="text-[var(--color-border)] text-xs">—</span>}
                                         </div>
                                     </td>}
-                                    {isVisible('condition') && <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.description ?? ''}>{item.description || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>}
+                                    {isVisible('condition') && <td className="px-3 py-2 text-[var(--color-text-secondary)] text-xs max-w-[120px] truncate" title={item.description ?? ''}>{item.description || <span className="text-[var(--color-border)]">—</span>}</td>}
                                     {isVisible('price') && <td
-                                        className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300 whitespace-nowrap"
+                                        className="px-3 py-2 text-right tabular-nums text-[var(--color-text)] whitespace-nowrap"
                                         style={item.price != null ? { color: getKeyboardPriceColor(item.category, item.price, options) } : undefined}
                                     >
-                                        {item.price != null ? formatVND(item.price) : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                                        {item.price != null ? formatVND(item.price) : <span className="text-[var(--color-border)]">—</span>}
                                     </td>}
-                                    {isVisible('note') && <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs max-w-[120px] truncate" title={item.note ?? ''}>{item.note || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>}
+                                    {isVisible('note') && <td className="px-3 py-2 text-[var(--color-text-secondary)] text-xs max-w-[120px] truncate" title={item.note ?? ''}>{item.note || <span className="text-[var(--color-border)]">—</span>}</td>}
                                     <td className="px-3 py-2">
                                         <div className="flex items-center gap-1">
                                             <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit">
                                                 <Pencil className="w-3.5 h-3.5" />
                                             </button>
-                                            <button onClick={(e) => { e.stopPropagation(); duplicateItem(item); }} className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate">
+                                            <button onClick={(e) => { e.stopPropagation(); duplicateItem(item); }} className="p-1 rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-text)] transition-colors" title="Duplicate">
                                                 <Copy className="w-3.5 h-3.5" />
                                             </button>
                                             <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this keyboard?')) deleteMut.mutate(item.id); }} className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete">
@@ -631,26 +631,26 @@ function KeyboardModal({ form, setForm, categories, tags, colors, specs, conditi
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-[var(--color-surface)] rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
-                    <h2 className="text-lg font-bold mb-5 text-gray-900 dark:text-white">{editing ? 'Edit Keyboard' : 'New Keyboard'}</h2>
+                    <h2 className="text-lg font-bold mb-5 text-[var(--color-text)]">{editing ? 'Edit Keyboard' : 'New Keyboard'}</h2>
                     <div className="grid grid-cols-2 gap-4">
                         {/* Name */}
                         <div className="col-span-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name <span className="text-red-500">*</span></label>
-                            <input value={form.name} onChange={e => set('name', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm" placeholder="e.g. Frog TKL" />
+                            <label className="text-sm font-medium text-[var(--color-text)]">Name <span className="text-red-500">*</span></label>
+                            <input value={form.name} onChange={e => set('name', e.target.value)} className="mt-1 w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-surface)] text-sm" placeholder="e.g. Frog TKL" />
                         </div>
 
                         {/* Price */}
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Price (VND)</label>
-                            <input value={form.price} onChange={e => set('price', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm" placeholder="e.g. 7800000, 600k, or 7.8M" />
+                            <label className="text-sm font-medium text-[var(--color-text)]">Price (VND)</label>
+                            <input value={form.price} onChange={e => set('price', e.target.value)} className="mt-1 w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-surface)] text-sm" placeholder="e.g. 7800000, 600k, or 7.8M" />
                         </div>
 
                         {/* Category */}
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-                            <select value={form.category} onChange={e => set('category', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
+                            <label className="text-sm font-medium text-[var(--color-text)]">Category</label>
+                            <select value={form.category} onChange={e => set('category', e.target.value)} className="mt-1 w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-surface)] text-sm">
                                 <option value="">—</option>
                                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
@@ -658,8 +658,8 @@ function KeyboardModal({ form, setForm, categories, tags, colors, specs, conditi
 
                         {/* Tag */}
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tag</label>
-                            <select value={form.tag} onChange={e => set('tag', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
+                            <label className="text-sm font-medium text-[var(--color-text)]">Tag</label>
+                            <select value={form.tag} onChange={e => set('tag', e.target.value)} className="mt-1 w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-surface)] text-sm">
                                 <option value="">—</option>
                                 {tags.map(t => <option key={t} value={t}>{t}</option>)}
                             </select>
@@ -667,8 +667,8 @@ function KeyboardModal({ form, setForm, categories, tags, colors, specs, conditi
 
                         {/* Color */}
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
-                            <select value={form.color} onChange={e => set('color', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
+                            <label className="text-sm font-medium text-[var(--color-text)]">Color</label>
+                            <select value={form.color} onChange={e => set('color', e.target.value)} className="mt-1 w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-surface)] text-sm">
                                 <option value="">—</option>
                                 {colors.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
@@ -676,11 +676,11 @@ function KeyboardModal({ form, setForm, categories, tags, colors, specs, conditi
 
                         {/* Spec */}
                         <div className="col-span-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Spec</label>
+                            <label className="text-sm font-medium text-[var(--color-text)]">Spec</label>
                             <div className="mt-1 flex flex-wrap gap-1.5">
                                 {specs.map(s => (
                                     <button key={s} type="button" onClick={() => set('spec', toggleArr(form.spec, s))}
-                                        className={`px-2 py-0.5 rounded text-xs border transition-colors ${form.spec.includes(s) ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
+                                        className={`px-2 py-0.5 rounded text-xs border transition-colors ${form.spec.includes(s) ? 'bg-blue-600 border-blue-600 text-white' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)]'}`}>
                                         {s}
                                     </button>
                                 ))}
@@ -689,8 +689,8 @@ function KeyboardModal({ form, setForm, categories, tags, colors, specs, conditi
 
                         {/* Condition */}
                         <div className="col-span-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Condition</label>
-                            <select value={form.description} onChange={e => set('description', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm">
+                            <label className="text-sm font-medium text-[var(--color-text)]">Condition</label>
+                            <select value={form.description} onChange={e => set('description', e.target.value)} className="mt-1 w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-surface)] text-sm">
                                 <option value="">—</option>
                                 {conditions.map(condition => <option key={condition} value={condition}>{condition}</option>)}
                             </select>
@@ -698,13 +698,13 @@ function KeyboardModal({ form, setForm, categories, tags, colors, specs, conditi
 
                         {/* Note */}
                         <div className="col-span-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Note</label>
-                            <input value={form.note} onChange={e => set('note', e.target.value)} className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-sm" />
+                            <label className="text-sm font-medium text-[var(--color-text)]">Note</label>
+                            <input value={form.note} onChange={e => set('note', e.target.value)} className="mt-1 w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-surface)] text-sm" />
                         </div>
 
                         {/* Shared */}
                         <div className="col-span-2">
-                            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                            <label className="flex items-center gap-2 text-sm text-[var(--color-text)] cursor-pointer">
                                 <input type="checkbox" checked={form.isShared} onChange={e => set('isShared', e.target.checked)} />
                                 Shared with family
                             </label>
@@ -720,7 +720,7 @@ function KeyboardModal({ form, setForm, categories, tags, colors, specs, conditi
                             )}
                         </div>
                         <div className="flex gap-2 justify-end">
-                            <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
+                            <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]">Cancel</button>
                             <button onClick={onSave} disabled={!form.name || saving} className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
                             {saving ? 'Saving…' : 'Save'}
                             </button>
@@ -798,29 +798,29 @@ function CsvImportModal({ onImport, onClose, loading }: {
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-[var(--color-surface)] rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
-                    <h2 className="text-lg font-bold mb-1 text-gray-900 dark:text-white">Import from CSV</h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Export from Notion → Upload here. Map each column header to a field.</p>
+                    <h2 className="text-lg font-bold mb-1 text-[var(--color-text)]">Import from CSV</h2>
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-4">Export from Notion → Upload here. Map each column header to a field.</p>
 
                     {!csvHeaders.length ? (
-                        <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-10 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                            <span className="text-sm text-gray-500">Click to select CSV file</span>
+                        <label className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--color-border)] rounded-xl p-10 cursor-pointer hover:bg-[var(--color-primary-light)]">
+                            <Upload className="w-8 h-8 text-[var(--color-text-secondary)] mb-2" />
+                            <span className="text-sm text-[var(--color-text-secondary)]">Click to select CSV file</span>
                             <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleFile} />
                         </label>
                     ) : (
                         <>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{csvRows.length} rows · Map columns:</p>
+                            <p className="text-sm font-medium text-[var(--color-text)] mb-2">{csvRows.length} rows · Map columns:</p>
                             <div className="space-y-1.5 mb-4">
                                 {csvHeaders.map(h => (
                                     <div key={h} className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-500 w-36 truncate flex-shrink-0" title={h}>{h}</span>
-                                        <span className="text-gray-300 flex-shrink-0">→</span>
+                                        <span className="text-xs text-[var(--color-text-secondary)] w-36 truncate flex-shrink-0" title={h}>{h}</span>
+                                        <span className="text-[var(--color-border)] flex-shrink-0">→</span>
                                         <select
                                             value={mapping[h] ?? ''}
                                             onChange={e => setMapping(p => ({ ...p, [h]: e.target.value }))}
-                                            className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded px-1.5 py-1 bg-white dark:bg-gray-800"
+                                            className="flex-1 text-xs border border-[var(--color-border)] rounded px-1.5 py-1 bg-[var(--color-surface)]"
                                         >
                                             {fieldTargets.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
                                         </select>
@@ -830,26 +830,26 @@ function CsvImportModal({ onImport, onClose, loading }: {
 
                             {preview.length > 0 && (
                                 <div className="mb-4">
-                                    <p className="text-xs font-medium text-gray-500 mb-1">Preview (first {preview.length} rows):</p>
-                                    <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                                    <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-1">Preview (first {preview.length} rows):</p>
+                                    <div className="overflow-x-auto border border-[var(--color-border)] rounded-lg">
                                         <table className="text-xs w-full">
-                                            <thead className="bg-gray-50 dark:bg-gray-800">
+                                            <thead className="bg-[var(--color-bg)]">
                                                 <tr>
-                                                    <th className="px-2 py-1 text-left font-medium text-gray-500">Name</th>
-                                                    <th className="px-2 py-1 text-left font-medium text-gray-500">Category</th>
-                                                    <th className="px-2 py-1 text-left font-medium text-gray-500">Tag</th>
-                                                    <th className="px-2 py-1 text-left font-medium text-gray-500">Spec</th>
-                                                    <th className="px-2 py-1 text-right font-medium text-gray-500">Price</th>
+                                                    <th className="px-2 py-1 text-left font-medium text-[var(--color-text-secondary)]">Name</th>
+                                                    <th className="px-2 py-1 text-left font-medium text-[var(--color-text-secondary)]">Category</th>
+                                                    <th className="px-2 py-1 text-left font-medium text-[var(--color-text-secondary)]">Tag</th>
+                                                    <th className="px-2 py-1 text-left font-medium text-[var(--color-text-secondary)]">Spec</th>
+                                                    <th className="px-2 py-1 text-right font-medium text-[var(--color-text-secondary)]">Price</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {preview.map((item, i) => (
-                                                    <tr key={i} className="border-t border-gray-100 dark:border-gray-800">
+                                                    <tr key={i} className="border-t border-[var(--color-border)]">
                                                         <td className="px-2 py-1 font-medium">{item.name || <span className="text-red-400">⚠ empty</span>}</td>
-                                                        <td className="px-2 py-1 text-gray-600">{item.category ?? '—'}</td>
-                                                        <td className="px-2 py-1 text-gray-600">{item.tag ?? '—'}</td>
-                                                        <td className="px-2 py-1 text-gray-600">{Array.isArray(item.spec) ? item.spec.join(', ') : '—'}</td>
-                                                        <td className="px-2 py-1 text-right text-gray-600">{item.price ?? '—'}</td>
+                                                        <td className="px-2 py-1 text-[var(--color-text-secondary)]">{item.category ?? '—'}</td>
+                                                        <td className="px-2 py-1 text-[var(--color-text-secondary)]">{item.tag ?? '—'}</td>
+                                                        <td className="px-2 py-1 text-[var(--color-text-secondary)]">{Array.isArray(item.spec) ? item.spec.join(', ') : '—'}</td>
+                                                        <td className="px-2 py-1 text-right text-[var(--color-text-secondary)]">{item.price ?? '—'}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -861,7 +861,7 @@ function CsvImportModal({ onImport, onClose, loading }: {
                     )}
 
                     <div className="flex gap-2 justify-end mt-4">
-                        <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
+                        <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]">Cancel</button>
                         {csvRows.length > 0 && (
                             <button onClick={handleImport} disabled={loading} className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
                                 {loading ? 'Importing…' : `Import ${csvRows.length} rows`}

@@ -39,13 +39,13 @@ export default function PaginationControls({
     const pages = getVisiblePages(page, totalPages);
 
     return (
-        <div className="flex flex-col gap-3 border-t border-gray-200 dark:border-gray-700 px-4 py-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+        <div className="flex flex-col gap-3 border-t border-[var(--color-border)] px-4 py-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
                 <span>Items per page</span>
                 <select
                     value={pageSize}
                     onChange={(event) => onPageSizeChange(Number(event.target.value))}
-                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm text-[var(--color-text)]"
                 >
                     {PAGE_SIZE_OPTIONS.map((option) => (
                         <option key={option} value={option}>{option}</option>
@@ -59,7 +59,7 @@ export default function PaginationControls({
                     type="button"
                     onClick={() => onPageChange(page - 1)}
                     disabled={page <= 1}
-                    className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-primary-light)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <ChevronLeft className="h-4 w-4" />
                     Prev
@@ -72,14 +72,14 @@ export default function PaginationControls({
 
                         return (
                             <React.Fragment key={pageNumber}>
-                                {showGap && <span className="px-2 text-sm text-gray-400">…</span>}
+                                {showGap && <span className="px-2 text-sm text-[var(--color-text-secondary)]">…</span>}
                                 <button
                                     type="button"
                                     onClick={() => onPageChange(pageNumber)}
                                     className={`min-w-9 rounded-lg px-3 py-1.5 text-sm ${
                                         pageNumber === page
                                             ? 'bg-blue-600 text-white'
-                                            : 'border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800'
+                                            : 'border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-primary-light)]'
                                     }`}
                                 >
                                     {pageNumber}
@@ -93,7 +93,7 @@ export default function PaginationControls({
                     type="button"
                     onClick={() => onPageChange(page + 1)}
                     disabled={page >= totalPages}
-                    className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-primary-light)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     Next
                     <ChevronRight className="h-4 w-4" />
