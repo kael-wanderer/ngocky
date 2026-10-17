@@ -143,7 +143,11 @@ export function getMobileNavItems(source?: (Partial<FeatureFlags> & { mobileNavI
     return [...DEFAULT_MOBILE_NAV_ITEMS];
 }
 
-export function isRouteAccessible(route: string, source?: (Partial<FeatureFlags> & { mobileNavItems?: string[] | null }) | null, appGroups?: string[] | null) {
+export function isRouteAccessible(route: string, source?: (Partial<FeatureFlags> & { mobileNavItems?: string[] | null; role?: string | null }) | null, appGroups?: string[] | null): boolean {
+    if (route === '/field-management') {
+        return (source?.role === 'OWNER' || source?.role === 'ADMIN')
+            && (isRouteAccessible('/keyboard', source, appGroups) || isRouteAccessible('/funds', source, appGroups));
+    }
     if (!isRouteGroupEnabled(route, appGroups)) return false;
     if (isFeatureRouteEnabled(route, source)) return true;
     return getMobileNavItems(source).includes(route);

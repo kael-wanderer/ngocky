@@ -8,7 +8,7 @@ import DesktopNotifier from '../components/DesktopNotifier';
 import {
     LayoutDashboard, Trophy, FolderKanban, Home, Calendar,
     Wallet, BarChart3, Settings, Users, Menu, X,
-    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, Coins, Keyboard, Baby, HeartPulse, Bot, AppWindow, Utensils
+    ChevronRight, ChevronDown, Bell, Microwave, GraduationCap, Lightbulb, BellRing, ClipboardList, FileText, Coins, Keyboard, Baby, HeartPulse, Bot, AppWindow, Utensils, SlidersHorizontal
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { openExternal } from '../utils/externalLinks';
@@ -32,6 +32,7 @@ const navItems: NavigationItem[] = [
     { to: '/keyboard', icon: Keyboard, label: 'Keyboard' },
     { to: '/funds', icon: Coins, label: 'Funds' },
     { to: '/learning', icon: GraduationCap, label: 'Learning' },
+    { to: '/field-management', icon: SlidersHorizontal, label: 'Field Management' },
     { to: '/scheduled-reports', icon: FileText, label: 'Schedule Report' },
     { to: '/notifications', icon: BellRing, label: 'Notifications' },
     { to: '/settings', icon: Settings, label: 'User Settings' },
@@ -47,7 +48,7 @@ const navGroups = [
     { id: 'dashboard', label: 'Dashboard', items: ['/', '/reports'] },
     { id: 'personal', label: 'Personal', items: ['/tasks', '/projects', '/expenses', '/goals', '/ideas'] },
     { id: 'family', label: 'Family', items: ['/calendar', '/cakeo', '/housework', '/assets', '/healthbook', '/food'] },
-    { id: 'hobby', label: 'Hobby', items: ['/keyboard', '/funds', '/learning'] },
+    { id: 'hobby', label: 'Hobby', items: ['/keyboard', '/funds', '/learning', '/field-management'] },
     { id: 'settings', label: 'Settings', items: ['/scheduled-reports', '/notifications', '/settings'] },
     { id: 'admin', label: 'Admin', items: ['/users', '/admin/application', '/admin/agent'] },
 ] as const;
@@ -73,7 +74,7 @@ function migrateLegacyGroupOrder(order: Record<string, string[]>) {
         next[groupId] = Array.isArray(items) ? [...items] : [];
     }
 
-    const hobbyRoutes = ['/keyboard', '/funds', '/learning'];
+    const hobbyRoutes = ['/keyboard', '/funds', '/learning', '/field-management'];
     for (const groupId of Object.keys(next)) {
         next[groupId] = next[groupId].filter((to) => !hobbyRoutes.includes(to));
     }
