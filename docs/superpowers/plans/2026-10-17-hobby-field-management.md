@@ -197,6 +197,7 @@ DROP TYPE "HobbyFundCategory";
   - same with user-added category `Switch` → no keyboard created.
   - rename Keycap → `Keycaps`, then POST fund `category:'KEYCAP'` → stored `Keycaps`, keyboard created with `Keycaps` (Review Focus 5).
   - POST `category:'Nope'` → 400. POST `condition:'used'` → stored `Used`.
+  - GET `/api/funds?category=KEYCAP` and `?category=keycap` both return the `Keycap` rows (list filter goes through `resolveLabel`; today it compares raw text at `routes/funds.ts:61`).
   - import `[{ category:'Gift', condition:'Mint', ... }]` → rows stored `Gift`/`Mint`; options contain both (no `Other` fallback).
 - [ ] **Step 2: Run** — FAIL.
 - [ ] **Step 3: Implement.** Resolve category/condition via `resolveLabel`; reject unmatched on create/patch; import uses `ensureLabels`. Auto-create uses `builtInKeyOf` + `shouldCreateKeyboardFromFund`; keyboard category = fund label. Delete `mapFundCategoryToKeyboardCategory`.
