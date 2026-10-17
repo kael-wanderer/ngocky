@@ -2,8 +2,7 @@ import { prisma, iContains } from '../../../config/database';
 import { escapeMd, formatVND } from '../utils';
 import type { ResolverContext, ResolverResult } from './types';
 import { ASSISTANT_POLICIES } from '../policies';
-
-const BUYABLE_CATEGORIES = new Set(['KEYCAP', 'KIT', 'ACCESSORIES']);
+import { HobbyOptionsService, shouldCreateKeyboardFromFund } from '../../hobbyOptions';
 
 function normalizeFundType(value: unknown): 'BUY' | 'SELL' | 'TOP_UP' | null {
     const normalized = String(value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
@@ -15,28 +14,6 @@ function normalizeFundScope(value: unknown): 'MECHANICAL_KEYBOARD' | 'PLAY_STATI
     return ['MECHANICAL_KEYBOARD', 'PLAY_STATION'].includes(normalized) ? (normalized as 'MECHANICAL_KEYBOARD' | 'PLAY_STATION') : null;
 }
 
-function normalizeFundCategory(value: unknown): 'KEYCAP' | 'KIT' | 'SHIPPING' | 'ACCESSORIES' | 'OTHER' | null {
-    const normalized = String(value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
-    return ['KEYCAP', 'KIT', 'SHIPPING', 'ACCESSORIES', 'OTHER'].includes(normalized)
-        ? (normalized as 'KEYCAP' | 'KIT' | 'SHIPPING' | 'ACCESSORIES' | 'OTHER')
-        : null;
-}
-
-function normalizeCondition(type: 'BUY' | 'SELL' | 'TOP_UP', value: unknown): 'BNIB' | 'USED' | null {
-    if (type !== 'BUY') return null;
-    const normalized = String(value ?? '').trim().toUpperCase();
-    if (normalized === 'BNIB' || normalized === 'USED') return normalized;
-    return null;
-}
-
-function mapFundCategoryToKeyboardCategory(category: 'KEYCAP' | 'KIT' | 'SHIPPING' | 'ACCESSORIES' | 'OTHER') {
-    if (category === 'KEYCAP') return 'Keycap';
-    if (category === 'KIT') return 'Kit';
-    if (category === 'ACCESSORIES') return 'Accessories';
-    if (category === 'SHIPPING') return 'Shipping';
-    return 'Other';
-}
-
 export async function resolveFundCreate(
     entities: Record<string, any>,
     ctx: ResolverContext,
@@ -45,7 +22,8 @@ export async function resolveFundCreate(
     const amount = typeof entities.amount === 'number' ? entities.amount : Number.parseFloat(String(entities.amount ?? ''));
     const type = normalizeFundType(entities.type);
     const scope = normalizeFundScope(entities.scope);
-    const category = normalizeFundCategory(entities.category);
+    const options = await HobbyOptionsService.get();
+    const category = HobbyOptionsService.resolveLabel(options, 'category', entities.category);
     const dateStr = (entities.date as string | undefined) ?? ctx.today;
 
     if (!description) {
@@ -58,15 +36,19 @@ export async function resolveFundCreate(
         return { reply: 'I need the scope: _MECHANICAL\\_KEYBOARD_ or _PLAY\\_STATION_\\.', requiresConfirmation: false };
     }
     if (!category) {
-        return { reply: 'I need the category: _KEYCAP_, _KIT_, _SHIPPING_, _ACCESSORIES_, or _OTHER_\\.', requiresConfirmation: false };
+        const labels = options.category.map(({ label }) => `_${escapeMd(label)}_`).join(', ');
+        return { reply: `I need the category: ${labels}\\.`, requiresConfirmation: false };
     }
     if (!amount || Number.isNaN(amount) || amount <= 0) {
         return { reply: 'I need a valid amount\\. Example: `7800000` or `7\\.8m`\\.', requiresConfirmation: false };
     }
 
-    const condition = normalizeCondition(type, entities.condition);
+    const condition = type === 'BUY'
+        ? HobbyOptionsService.resolveLabel(options, 'condition', entities.condition)
+        : null;
     if (type === 'BUY' && !condition) {
-        return { reply: 'For a buy transaction, I need the condition: _BNIB_ or _USED_\\.', requiresConfirmation: false };
+        const labels = options.condition.map(({ label }) => `_${escapeMd(label)}_`).join(', ');
+        return { reply: `For a buy transaction, I need the condition: ${labels}\\.`, requiresConfirmation: false };
     }
 
     const payload: Record<string, any> = {
@@ -133,7 +115,8 @@ export async function resolveFundCreate(
     await prisma.$transaction(async (tx: any) => {
         const { keyboardItemId, keyboardItemName, ...fundData } = payload;
 
-        if (type === 'BUY' && scope === 'MECHANICAL_KEYBOARD' && BUYABLE_CATEGORIES.has(category)) {
+        const builtInKey = HobbyOptionsService.builtInKeyOf(options, category);
+        if (shouldCreateKeyboardFromFund(type, scope, builtInKey)) {
             const lastKeyboard = await tx.keyboard.aggregate({
                 where: { ownerId: ctx.userId },
                 _max: { sortOrder: true },
@@ -143,7 +126,7 @@ export async function resolveFundCreate(
                 data: {
                     name: description,
                     price: amount,
-                    category: mapFundCategoryToKeyboardCategory(category),
+                    category,
                     description: condition,
                     spec: [],
                     note: 'Created from Funds',

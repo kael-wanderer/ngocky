@@ -2,6 +2,7 @@ import { ASSISTANT_INTENTS, type AssistantIntent } from './policies';
 import { todayISO } from './utils';
 import { getActiveProviderAdapter } from './providers/factory';
 import { sanitizedProviderError } from './providers/types';
+import { HobbyOptionsService } from '../hobbyOptions';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -13,7 +14,9 @@ export interface ParsedIntent {
 
 // ─── LLM System Prompt ────────────────────────────────────────────────────────
 
-function buildSystemPrompt(today: string, timezone: string): string {
+async function buildSystemPrompt(today: string, timezone: string): Promise<string> {
+    const options = await HobbyOptionsService.get();
+    const categoryLabels = options.category.map(({ label }) => label).join('|');
     return `You are an intent parser for NgocKy, a Vietnamese family productivity assistant.
 Today is ${today} (timezone: ${timezone}).
 
@@ -67,19 +70,19 @@ query_expenses:
   note: "of March" / "tháng 3" = from 2026-03-01 to 2026-03-31; resolve month names to full date ranges
 
 create_fund:
-  entities: { "description": "string (required)", "amount": <number in VND, required>, "type": "BUY|SELL|TOP_UP (required)", "scope": "MECHANICAL_KEYBOARD|PLAY_STATION (required)", "category": "KEYCAP|KIT|SHIPPING|ACCESSORIES|OTHER (required)", "condition": "BNIB|USED (required only for BUY)", "date": "YYYY-MM-DD (optional, default today)", "keyboardName": "string (optional, used for keyboard sell matching)" }
+  entities: { "description": "string (required)", "amount": <number in VND, required>, "type": "BUY|SELL|TOP_UP (required)", "scope": "MECHANICAL_KEYBOARD|PLAY_STATION (required)", "category": "${categoryLabels} (required)", "condition": "BNIB|USED (required only for BUY)", "date": "YYYY-MM-DD (optional, default today)", "keyboardName": "string (optional, used for keyboard sell matching)" }
   examples: "log buy keycap gmk cafe 7.8m mechanical keyboard used", "add sell fund kohaku r1 36m kit mechanical keyboard", "top up ps5 2m play station other"
 
 query_funds:
-  entities: { "dateRange": { "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" } (optional), "type": "BUY|SELL|TOP_UP (optional)", "scope": "MECHANICAL_KEYBOARD|PLAY_STATION (optional)", "category": "KEYCAP|KIT|SHIPPING|ACCESSORIES|OTHER (optional)" }
+  entities: { "dateRange": { "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" } (optional), "type": "BUY|SELL|TOP_UP (optional)", "scope": "MECHANICAL_KEYBOARD|PLAY_STATION (optional)", "category": "${categoryLabels} (optional)" }
   examples: "show my funds this month", "show keyboard sell funds", "funds for play station", "buy funds in March"
 
 create_keyboard:
-  entities: { "name": "string (required)", "price": <number in VND (optional)>, "category": "Kit|Keycap|Shipping|Accessories|Other (optional)", "tag": "string (optional)", "color": "string (optional)", "condition": "BNIB|Used (optional)", "note": "string (optional)" }
+  entities: { "name": "string (required)", "price": <number in VND (optional)>, "category": "${categoryLabels} (optional)", "tag": "string (optional)", "color": "string (optional)", "condition": "BNIB|Used (optional)", "note": "string (optional)" }
   examples: "add keyboard kohaku r1 kit 30m silver", "create keycap gmk cafe 7.8m used", "new keyboard cycle 7 purple"
 
 query_keyboards:
-  entities: { "category": "Kit|Keycap|Shipping|Accessories|Other (optional)", "tag": "string (optional)", "color": "string (optional)", "keyword": "string (optional)" }
+  entities: { "category": "${categoryLabels} (optional)", "tag": "string (optional)", "color": "string (optional)", "keyword": "string (optional)" }
   examples: "show my keyboards", "show red keycaps", "find board 3 keyboards", "list silver kits"
 
 goal_checkin:
@@ -275,7 +278,7 @@ export async function parseIntent(text: string, timezone: string): Promise<Parse
 
     try {
         const content = await client.generateStructuredIntent({
-            systemPrompt: buildSystemPrompt(today, timezone),
+            systemPrompt: await buildSystemPrompt(today, timezone),
             userText: text,
             maxTokens: 512,
         });

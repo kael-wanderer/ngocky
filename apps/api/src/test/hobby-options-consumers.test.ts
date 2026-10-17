@@ -4,6 +4,9 @@ import bcrypt from 'bcryptjs';
 import app from '../app';
 import { prisma } from '../config/database';
 import { HobbyOptionsService } from '../services/hobbyOptions';
+import { resolveFundCreate } from '../services/assistant/resolvers/fundCreate';
+import { resolveFundQuery } from '../services/assistant/resolvers/fundQuery';
+import { resolveKeyboardCreate } from '../services/assistant/resolvers/keyboardCreate';
 
 async function ownerToken() {
     const email = `hobby-keyboard-${crypto.randomUUID()}@example.com`;
@@ -193,5 +196,78 @@ describe('funds use hobby options', () => {
         const row = await prisma.fundTransaction.findFirstOrThrow({ where: { description: 'Blank row' } });
         expect(row.category).toBe('Misc');
         expect(row.condition).toBeNull();
+    });
+});
+
+describe('assistant uses hobby options', () => {
+    async function assistantOwner() {
+        return prisma.user.create({
+            data: {
+                email: `assistant-hobby-${crypto.randomUUID()}@example.com`,
+                name: 'Assistant Owner',
+                password: 'unused-test-password',
+                active: true,
+            },
+        });
+    }
+
+    const context = (userId: string) => ({ userId, timezone: 'Asia/Ho_Chi_Minh', today: '2026-10-17' });
+    const fundEntities = (category: string, description = 'Assistant fund') => ({
+        description,
+        amount: 100,
+        type: 'BUY',
+        scope: 'MECHANICAL_KEYBOARD',
+        category,
+        condition: 'used',
+        date: '2026-10-17',
+    });
+
+    it('resolves labels and creates keyboard items only for built-in categories', async () => {
+        const owner = await assistantOwner();
+        const result = await resolveFundCreate(fundEntities('kit'), context(owner.id));
+
+        expect(result.reply).toContain('Logged fund');
+        const fund = await prisma.fundTransaction.findFirstOrThrow({ where: { userId: owner.id } });
+        expect(fund.category).toBe('Kit');
+        expect(fund.condition).toBe('Used');
+        const keyboard = await prisma.keyboard.findFirstOrThrow({ where: { ownerId: owner.id } });
+        expect(keyboard.category).toBe('Kit');
+
+        await HobbyOptionsService.add('category', { label: 'Switch' });
+        await resolveFundCreate(fundEntities('Switch', 'Switch fund'), context(owner.id));
+        expect(await prisma.keyboard.count({ where: { ownerId: owner.id } })).toBe(1);
+        expect(await prisma.fundTransaction.count({ where: { userId: owner.id } })).toBe(2);
+    });
+
+    it('lists current category labels when a fund category is invalid', async () => {
+        const owner = await assistantOwner();
+        await HobbyOptionsService.add('category', { label: 'Switch' });
+
+        const result = await resolveFundCreate(fundEntities('nope'), context(owner.id));
+
+        expect(result.reply).toContain('_Keycap_');
+        expect(result.reply).toContain('_Switch_');
+    });
+
+    it('filters fund queries by resolved category label', async () => {
+        const owner = await assistantOwner();
+        const base = { date: new Date('2026-10-17T00:00:00.000Z'), amount: 100, type: 'BUY' as const, scope: 'MECHANICAL_KEYBOARD' as const, condition: 'Used', userId: owner.id };
+        await prisma.fundTransaction.createMany({ data: [
+            { ...base, description: 'Keycap row', category: 'Keycap' },
+            { ...base, description: 'Kit row', category: 'Kit' },
+        ] });
+
+        const result = await resolveFundQuery({ category: 'keycap' }, context(owner.id));
+
+        expect(result.reply).toContain('Keycap row');
+        expect(result.reply).not.toContain('Kit row');
+    });
+
+    it('creates a keyboard with the resolved current category label', async () => {
+        const owner = await assistantOwner();
+        await resolveKeyboardCreate({ name: 'Assistant keyboard', category: 'keycap' }, context(owner.id));
+
+        const keyboard = await prisma.keyboard.findFirstOrThrow({ where: { ownerId: owner.id } });
+        expect(keyboard.category).toBe('Keycap');
     });
 });
