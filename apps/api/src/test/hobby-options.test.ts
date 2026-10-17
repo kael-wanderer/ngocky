@@ -78,6 +78,12 @@ describe('hobby options fill', () => {
         expect(savedAgain.updatedAt).toEqual(saved.updatedAt);
     });
 
+    it('concurrent first get() calls return the same ids', async () => {
+        const [a, b] = await Promise.all([HobbyOptionsService.get(), HobbyOptionsService.get()]);
+        expect(b.category.map((o) => o.id)).toEqual(a.category.map((o) => o.id));
+        expect(b.tag.map((o) => o.id)).toEqual(a.tag.map((o) => o.id));
+    });
+
     it('resolves labels and legacy category keys', async () => {
         const options = await HobbyOptionsService.get();
 

@@ -94,6 +94,10 @@ export class HobbyOptionsService {
         if (parsed) return parsed;
 
         return prisma.$transaction(async (tx) => {
+            const fresh = await tx.appSetting.findUnique({ where: { id: 1 } });
+            const already = parseStoredOptions(fresh?.hobbyOptions);
+            if (already) return already;
+
             const options = buildDefaults();
             const keyboards = await tx.keyboard.findMany({
                 select: { id: true, category: true, tag: true, color: true, description: true, spec: true },
@@ -158,7 +162,7 @@ export class HobbyOptionsService {
 
             await tx.appSetting.update({ where: { id: 1 }, data: { hobbyOptions: options } });
             return options;
-        });
+        }, { timeout: 30_000, maxWait: 10_000 });
     }
 
     static async ensureLabels(field: HobbyField, labels: string[]): Promise<HobbyOptions> {
