@@ -103,6 +103,7 @@ describe('funds use hobby options', () => {
         scope: 'MECHANICAL_KEYBOARD',
         category,
         condition: 'BNIB',
+        removeKeyboardItem: false,
         date: '2026-07-11T00:00:00.000Z',
         amount: 100,
     });
@@ -154,5 +155,43 @@ describe('funds use hobby options', () => {
         expect(response.body.data.category).toBe('Keycaps');
         const renamedKeyboard = await prisma.keyboard.findFirstOrThrow({ where: { ownerId: owner.id, name: body.description } });
         expect(renamedKeyboard.category).toBe('Keycaps');
+    });
+
+    it('blank condition on SELL is stored as null', async () => {
+        const { token } = await fundOwner();
+        const response = await request(app).post('/api/funds').set('Authorization', `Bearer ${token}`).send({
+            ...fundBody('Kit'),
+            type: 'SELL',
+            condition: '',
+        });
+
+        expect(response.status).toBe(201);
+        expect(response.body.data.condition).toBeNull();
+    });
+
+    it('blank condition on BUY is rejected', async () => {
+        const { token } = await fundOwner();
+        const response = await request(app).post('/api/funds').set('Authorization', `Bearer ${token}`).send({
+            ...fundBody('Kit'),
+            condition: '',
+        });
+
+        expect(response.status).toBe(400);
+    });
+
+    it('import blanks fall back to the Other built-in after rename', async () => {
+        const { token } = await fundOwner();
+        const options = await HobbyOptionsService.get();
+        const other = options.category.find(({ builtInKey }) => builtInKey === 'OTHER')!;
+        await HobbyOptionsService.update('category', other.id, { label: 'Misc' });
+
+        const response = await request(app).post('/api/funds/import').set('Authorization', `Bearer ${token}`).send({
+            items: [{ description: 'Blank row', type: 'BUY', scope: 'MECHANICAL_KEYBOARD', category: '', condition: '', date: '2026-07-11T00:00:00.000Z', amount: 50 }],
+        });
+
+        expect(response.status).toBe(201);
+        const row = await prisma.fundTransaction.findFirstOrThrow({ where: { description: 'Blank row' } });
+        expect(row.category).toBe('Misc');
+        expect(row.condition).toBeNull();
     });
 });

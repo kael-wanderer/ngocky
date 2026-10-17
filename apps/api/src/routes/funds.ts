@@ -17,7 +17,7 @@ function resolveCondition(options: HobbyOptions, type: unknown, condition: unkno
         return null;
     }
 
-    if (condition == null) return null;
+    if (condition == null || String(condition).trim() === '') return null;
     const value = HobbyOptionsService.resolveLabel(options, 'condition', condition);
     if (value === null) throw new ValidationError('Unknown condition option');
     return value;
@@ -225,7 +225,7 @@ router.post('/import', async (req: Request, res: Response, next: NextFunction) =
                     description: String(row.description ?? '').trim(),
                     type,
                     scope: normalizeScope(row.scope),
-                    category: HobbyOptionsService.resolveLabel(options, 'category', row.category ?? 'Other') ?? 'Other',
+                    category: HobbyOptionsService.resolveLabel(options, 'category', row.category) ?? HobbyOptionsService.resolveLabel(options, 'category', 'OTHER')!,
                     condition: resolveCondition(options, type, row.condition),
                     date: parseDate(row.date),
                     amount: parseAmount(row.amount),
