@@ -5,9 +5,9 @@ WORKDIR /app
 ARG VITE_API_URL=/api
 ARG APP_REVISION=dev
 
-COPY package.json ./
+COPY package.json package-lock.json ./
 COPY apps/web/package.json ./apps/web/
-RUN npm install --workspace=apps/web
+RUN npm ci --workspace=apps/web
 
 COPY apps/web/ ./apps/web/
 RUN cd apps/web && VITE_API_URL=$VITE_API_URL npm run build
