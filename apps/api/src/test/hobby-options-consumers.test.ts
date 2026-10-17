@@ -70,4 +70,18 @@ describe('keyboard uses hobby options', () => {
         expect(response.status).toBe(200);
         expect(response.body.data.find((item: { name: string }) => item.name === 'Sorted').spec).toEqual(['Novel', 'Base']);
     });
+
+    it('list never fails on a stored spec missing from options', async () => {
+        const token = await ownerToken();
+        const owner = await prisma.user.findFirstOrThrow({ where: { role: 'OWNER' } });
+        await HobbyOptionsService.get();
+        await prisma.keyboard.create({
+            data: { name: 'Legacy', spec: ['Base', 'Ghost Spec'], ownerId: owner.id },
+        });
+
+        const response = await request(app).get('/api/keyboards').set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.find((item: { name: string }) => item.name === 'Legacy').spec).toEqual(['Base', 'Ghost Spec']);
+    });
 });

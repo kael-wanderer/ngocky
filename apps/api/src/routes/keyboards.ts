@@ -39,10 +39,24 @@ function normalizeSpecList(options: HobbyOptions, payload: unknown): string[] {
         });
 }
 
+function sortStoredSpec(options: HobbyOptions, payload: unknown): string[] {
+    const rank = HobbyOptionsService.specRank(options);
+    return rawSpecValues(payload)
+        .map((value) => HobbyOptionsService.resolveLabel(options, 'spec', value) ?? String(value).trim())
+        .filter(Boolean)
+        .filter((value, index, values) => values.indexOf(value) === index)
+        .sort((left, right) => {
+            const leftRank = rank.get(left) ?? Number.MAX_SAFE_INTEGER;
+            const rightRank = rank.get(right) ?? Number.MAX_SAFE_INTEGER;
+            if (leftRank !== rightRank) return leftRank - rightRank;
+            return left.localeCompare(right, undefined, { sensitivity: 'base' });
+        });
+}
+
 function serializeKeyboard(keyboard: any, options: HobbyOptions) {
     return {
         ...keyboard,
-        spec: normalizeSpecList(options, keyboard.spec),
+        spec: sortStoredSpec(options, keyboard.spec),
     };
 }
 
