@@ -5,7 +5,7 @@ import { validate } from '../middleware/validate';
 import { createFundSchema, updateFundSchema } from '../validators/modules';
 import { sendSuccess, sendCreated, sendPaginated, sendMessage } from '../utils/response';
 import { ForbiddenError, NotFoundError, ValidationError } from '../utils/errors';
-import type { HobbyFundCategory, HobbyFundScope, HobbyFundType } from '@prisma/client';
+import type { HobbyFundScope, HobbyFundType } from '@prisma/client';
 import { assertPageInstance } from '../services/pageInstances';
 
 const router = Router();
@@ -16,7 +16,9 @@ function normalizeCondition(type: unknown, condition: unknown): string | null {
         return null;
     }
 
-    return condition == null ? null : String(condition);
+    if (condition == null) return null;
+    const value = String(condition).trim();
+    return value.toUpperCase() === 'USED' ? 'Used' : value;
 }
 
 function isMechanicalKeyboardScope(scope: unknown) {
@@ -26,17 +28,20 @@ function isMechanicalKeyboardScope(scope: unknown) {
 function shouldCreateKeyboardFromFund(type: unknown, scope: unknown, category: unknown) {
     return type === 'BUY'
         && isMechanicalKeyboardScope(scope)
-        && ['KEYCAP', 'KIT', 'ACCESSORIES'].includes(String(category ?? ''));
+        && ['Keycap', 'Kit', 'Accessories'].includes(String(category ?? ''));
 }
 
-function mapFundCategoryToKeyboardCategory(category: unknown) {
-    const raw = String(category ?? '').toUpperCase();
-    if (raw === 'KEYCAP') return 'Keycap';
-    if (raw === 'KIT') return 'Kit';
-    if (raw === 'ACCESSORIES') return 'Accessories';
-    if (raw === 'SHIPPING') return 'Shipping';
-    if (raw === 'OTHER') return 'Other';
-    return null;
+const LEGACY_CATEGORY_LABELS: Record<string, string> = {
+    KEYCAP: 'Keycap',
+    KIT: 'Kit',
+    SHIPPING: 'Shipping',
+    ACCESSORIES: 'Accessories',
+    OTHER: 'Other',
+};
+
+function normalizeCategory(value: unknown): string {
+    const raw = String(value ?? '').trim();
+    return LEGACY_CATEGORY_LABELS[raw.toUpperCase()] ?? raw;
 }
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -113,8 +118,9 @@ router.post('/', validate(createFundSchema), async (req: Request, res: Response,
         const fund = await prisma.$transaction(async (tx: any) => {
             const normalizedCondition = normalizeCondition(req.body.type, req.body.condition);
             const { keyboardItemId, keyboardItemName, addKeyboardItem, removeKeyboardItem, ...fundData } = req.body;
+            const category = normalizeCategory(fundData.category);
 
-            if (addKeyboardItem !== false && shouldCreateKeyboardFromFund(fundData.type, fundData.scope, fundData.category)) {
+            if (addKeyboardItem !== false && shouldCreateKeyboardFromFund(fundData.type, fundData.scope, category)) {
                 const lastKeyboard = await tx.keyboard.aggregate({
                     where: { ownerId: userId },
                     _max: { sortOrder: true },
@@ -124,7 +130,7 @@ router.post('/', validate(createFundSchema), async (req: Request, res: Response,
                     data: {
                         name: fundData.description,
                         price: fundData.amount,
-                        category: mapFundCategoryToKeyboardCategory(fundData.category),
+                        category,
                         description: normalizedCondition,
                         spec: [],
                         note: 'Created from Funds',
@@ -154,6 +160,7 @@ router.post('/', validate(createFundSchema), async (req: Request, res: Response,
             return tx.fundTransaction.create({
                 data: {
                     ...fundData,
+                    category,
                     condition: normalizedCondition,
                     date: new Date(fundData.date),
                     userId,
@@ -201,11 +208,6 @@ router.post('/import', async (req: Request, res: Response, next: NextFunction) =
             return (['MECHANICAL_KEYBOARD', 'PLAY_STATION'].includes(normalized) ? normalized : 'MECHANICAL_KEYBOARD') as HobbyFundScope;
         };
 
-        const normalizeCategory = (value: unknown): HobbyFundCategory => {
-            const normalized = String(value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
-            return (['KEYCAP', 'KIT', 'SHIPPING', 'ACCESSORIES', 'OTHER'].includes(normalized) ? normalized : 'OTHER') as HobbyFundCategory;
-        };
-
         const parseConditionValue = (value: unknown) => {
             const normalized = String(value ?? '').trim().toUpperCase();
             if (normalized === 'USED') return 'USED';
@@ -221,7 +223,7 @@ router.post('/import', async (req: Request, res: Response, next: NextFunction) =
                     description: String(row.description ?? '').trim(),
                     type,
                     scope: normalizeScope(row.scope),
-                    category: normalizeCategory(row.category),
+                    category: LEGACY_CATEGORY_LABELS[String(row.category ?? '').trim().toUpperCase()] ?? 'Other',
                     condition: normalizeCondition(type, parseConditionValue(row.condition)),
                     date: parseDate(row.date),
                     amount: parseAmount(row.amount),
@@ -267,6 +269,7 @@ router.patch('/:id', validate(updateFundSchema), async (req: Request, res: Respo
             where: { id: req.params.id },
             data: {
                 ...fundData,
+                category: fundData.category !== undefined ? normalizeCategory(fundData.category) : undefined,
                 condition: (fundData.type !== undefined || fundData.condition !== undefined)
                     ? normalizeCondition(fundData.type ?? existing.type, fundData.condition ?? existing.condition)
                     : undefined,
