@@ -168,7 +168,7 @@ function GoalForm({
                         type="button"
                         title={form.pinToDashboard ? 'Unpin from dashboard' : 'Pin to dashboard'}
                         onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}
-                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 hover:border-amber-300 hover:text-amber-400'}`}
+                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-[var(--color-border)] hover:border-amber-300 hover:text-amber-400'}`}
                         style={form.pinToDashboard ? {} : { color: 'var(--color-text-secondary)' }}
                     >
                         <Pin className="w-3.5 h-3.5" />
@@ -238,7 +238,7 @@ function GoalForm({
                     )}
                 </div>
                 <div className="flex gap-2 ml-auto">
-                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={onCancel}>
+                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={onCancel}>
                         Cancel
                     </button>
                     <button type="submit" className="btn-primary" disabled={loading}>
@@ -314,7 +314,7 @@ function TaskForm({
                         type="button"
                         title={form.pinToDashboard ? 'Unpin from dashboard' : 'Pin to dashboard'}
                         onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}
-                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 hover:border-amber-300 hover:text-amber-400'}`}
+                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-[var(--color-border)] hover:border-amber-300 hover:text-amber-400'}`}
                         style={form.pinToDashboard ? {} : { color: 'var(--color-text-secondary)' }}
                     >
                         <Pin className="w-3.5 h-3.5" />
@@ -474,7 +474,7 @@ function TaskForm({
                     )}
                 </div>
                 <div className="flex gap-2 ml-auto">
-                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={onCancel}>
+                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={onCancel}>
                         Cancel
                     </button>
                     <button type="submit" className="btn-primary" disabled={loading}>
@@ -1051,13 +1051,13 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                         <>
                             <button
                                 onClick={() => setShowCompletedTasks(!showCompletedTasks)}
-                                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${showCompletedTasks ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'border-gray-200 text-gray-500 hover:text-gray-700'}`}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${showCompletedTasks ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}
                             >
                                 {showCompletedTasks ? 'Hide Completed' : 'Show Completed'}
                             </button>
                             <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
-                                <button onClick={() => setTaskViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
-                                <button onClick={() => setTaskViewMode('list')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
+                                <button onClick={() => setTaskViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'grid' ? 'bg-[var(--color-border)] text-[var(--color-text)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
+                                <button onClick={() => setTaskViewMode('list')} className={`p-1.5 rounded-md transition-colors ${taskViewMode === 'list' ? 'bg-[var(--color-border)] text-[var(--color-text)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} title="List view"><List className="w-4 h-4" /></button>
                             </div>
                             <button className="btn-primary whitespace-nowrap" onClick={openCreateTask}>
                                 <Plus className="w-4 h-4" /> Add Task
@@ -1065,9 +1065,9 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                         </>
                     )}
                     {showTabSwitcher && (
-                        <div className="flex bg-gray-100 p-1 rounded-lg">
-                            <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'GOALS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('GOALS')} style={activeTab === 'GOALS' ? { color: 'var(--color-primary)' } : {}}>Goals</button>
-                            <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'TASKS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('TASKS')} style={activeTab === 'TASKS' ? { color: 'var(--color-primary)' } : {}}>Tasks</button>
+                        <div className="flex bg-[var(--color-bg)] p-1 rounded-lg">
+                            <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'GOALS' ? 'bg-[var(--color-surface)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} onClick={() => setActiveTab('GOALS')} style={activeTab === 'GOALS' ? { color: 'var(--color-primary)' } : {}}>Goals</button>
+                            <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'TASKS' ? 'bg-[var(--color-surface)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} onClick={() => setActiveTab('TASKS')} style={activeTab === 'TASKS' ? { color: 'var(--color-primary)' } : {}}>Tasks</button>
                         </div>
                     )}
                 </div>
@@ -1083,8 +1083,8 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
-                                    <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
-                                    <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
+                                    <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-[var(--color-border)] text-[var(--color-text)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
+                                    <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-[var(--color-border)] text-[var(--color-text)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} title="List view"><List className="w-4 h-4" /></button>
                                 </div>
                                 <button className="btn-primary whitespace-nowrap" onClick={() => { setGoalForm({ ...goalEmptyForm }); setShowCreate(true); }}>
                                     <Plus className="w-4 h-4" /> New Goal
@@ -1107,7 +1107,7 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                     </div>
 
                     {goalsLoading ? (
-                        <div className="space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="card p-5 h-32 animate-pulse bg-gray-100" />)}</div>
+                        <div className="space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="card p-5 h-32 animate-pulse bg-[var(--color-bg)]" />)}</div>
                     ) : filteredGoals.length === 0 ? (
                         <div className="card p-12 flex flex-col items-center border-dashed border-2">
                             <Trophy className="w-12 h-12 mb-4 opacity-10" />
@@ -1139,12 +1139,12 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                                                     <button
                                                         type="button"
-                                                        className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
+                                                        className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-[var(--color-border)] text-[var(--color-text-secondary)]'}`}
                                                         onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { active: !goal.active } }); }}
                                                     >
                                                         {goal.active ? 'ENABLED' : 'DISABLED'}
                                                     </button>
-                                                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-100" style={{ color: 'var(--color-text-secondary)' }}>{goal.trackingType === 'BY_FREQUENCY' ? 'Count-based' : 'Amount-based'}</span>
+                                                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[var(--color-bg)]" style={{ color: 'var(--color-text-secondary)' }}>{goal.trackingType === 'BY_FREQUENCY' ? 'Count-based' : 'Amount-based'}</span>
                                                     <span className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{goal.periodType}</span>
                                                 </div>
                                                 {sharedOwnerName && (
@@ -1152,15 +1152,15 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-1 flex-shrink-0">
-                                                <button onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } }); }} className={`p-1 transition-colors ${goal.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); openEditGoal(goal); }} className="p-1 text-gray-400 hover:text-gray-600 transition-colors" title="Edit goal"><Pencil className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } }); }} className={`p-1 transition-colors ${goal.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-[var(--color-border)] hover:text-amber-400'}`} title="Pin goal"><Pin className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); openEditGoal(goal); }} className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors" title="Edit goal"><Pencil className="w-3.5 h-3.5" /></button>
                                                 <button onClick={(e) => { e.stopPropagation(); openDuplicateGoal(goal); }} className="p-1 text-blue-500 hover:text-blue-600 transition-colors" title="Duplicate goal"><Copy className="w-3.5 h-3.5" /></button>
                                                 <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Recalculate count from actual check-in history?')) resetMut.mutate(goal.id); }} className="p-1 hover:text-blue-500 transition-colors" title="Fix/recalculate count" disabled={resetMut.isPending}><span className="text-xs leading-none">🔄</span></button>
                                                 <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this goal and ALL its check-ins? This cannot be undone.')) deleteGoalMut.mutate(goal.id); }} className="p-1 text-red-500 hover:text-red-600 transition-colors" title="Delete goal"><Trash2 className="w-3.5 h-3.5" /></button>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="flex-1 h-2.5 rounded-full bg-gray-100 overflow-hidden">
+                                            <div className="flex-1 h-2.5 rounded-full bg-[var(--color-bg)] overflow-hidden">
                                                 <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${barPct}%`, background: overachieved ? 'linear-gradient(90deg, #059669, #34d399)' : completed ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #4f46e5, #7c3aed)' }} />
                                             </div>
                                             <span className="text-sm font-bold whitespace-nowrap" style={{ color: completed ? '#059669' : 'var(--color-primary)' }}>{Math.round(progressPct)}%</span>
@@ -1217,13 +1217,13 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                             const overachieved = progressPct > 100;
                                             const notifText = formatNotification(goal);
                                             return (
-                                                <tr key={goal.id} className="cursor-pointer hover:bg-gray-50" onClick={() => openEditGoal(goal)}>
+                                                <tr key={goal.id} className="cursor-pointer hover:bg-[var(--color-primary-light)]" onClick={() => openEditGoal(goal)}>
                                                     <td className="px-3 py-2.5">
                                                         <div className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{goal.title}</div>
                                                         <div className="flex items-center gap-1 mt-1 flex-wrap">
                                                             <button
                                                                 type="button"
-                                                                className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
+                                                                className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${goal.active ? 'bg-emerald-50 text-emerald-600' : 'bg-[var(--color-border)] text-[var(--color-text-secondary)]'}`}
                                                                 onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { active: !goal.active } }); }}
                                                             >
                                                                 {goal.active ? 'ENABLED' : 'DISABLED'}
@@ -1234,7 +1234,7 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                                         {goal.description && <p className="text-xs mt-0.5 truncate max-w-xs" style={{ color: 'var(--color-text-secondary)' }}>{goal.description}</p>}
                                                     </td>
                                                     <td className="px-3 py-2.5">
-                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 font-medium capitalize" style={{ color: 'var(--color-text-secondary)' }}>
+                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-bg)] font-medium capitalize" style={{ color: 'var(--color-text-secondary)' }}>
                                                             {goal.periodType.charAt(0) + goal.periodType.slice(1).toLowerCase()}
                                                         </span>
                                                     </td>
@@ -1245,7 +1245,7 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                                     </td>
                                                     <td className="px-3 py-2.5">
                                                         <div className="flex items-center gap-2 min-w-[160px]">
-                                                            <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                                                            <div className="flex-1 h-1.5 rounded-full bg-[var(--color-bg)] overflow-hidden">
                                                                 <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${barPct}%`, background: overachieved ? 'linear-gradient(90deg, #059669, #34d399)' : completed ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #4f46e5, #7c3aed)' }} />
                                                             </div>
                                                             <span className="text-xs whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }}>{goal.currentCount}/{goal.targetCount} {goal.unit}</span>
@@ -1258,14 +1258,14 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                                                 <Bell className="w-3 h-3 text-red-500 flex-shrink-0" />{notifText}
                                                             </span>
                                                         ) : (
-                                                            <Bell className="w-3 h-3 text-gray-300" />
+                                                            <Bell className="w-3 h-3 text-[var(--color-border)]" />
                                                         )}
                                                     </td>
                                                     <td className="px-3 py-2.5">
                                                         <div className="flex items-center gap-1 justify-end">
                                                             <button onClick={(e) => { e.stopPropagation(); openCheckIn(goal.id); }} disabled={!goal.active} className="p-1 text-green-600 hover:text-green-700 disabled:opacity-30" title="Check-in"><Check className="w-3.5 h-3.5" /></button>
-                                                            <button onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } }); }} className={`p-1 ${goal.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} title="Pin"><Pin className="w-3.5 h-3.5" /></button>
-                                                            <button onClick={(e) => { e.stopPropagation(); openEditGoal(goal); }} className="p-1 text-gray-400 hover:text-gray-600" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); updateGoalMut.mutate({ id: goal.id, body: { pinToDashboard: !goal.pinToDashboard } }); }} className={`p-1 ${goal.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-[var(--color-border)] hover:text-amber-400'}`} title="Pin"><Pin className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); openEditGoal(goal); }} className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text)]" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
                                                             <button onClick={(e) => { e.stopPropagation(); openDuplicateGoal(goal); }} className="p-1 text-blue-500 hover:text-blue-600" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
                                                             <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this goal and ALL its check-ins? This cannot be undone.')) deleteGoalMut.mutate(goal.id); }} className="p-1 text-red-500 hover:text-red-600" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
                                                         </div>
@@ -1312,7 +1312,7 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                     </div>
 
                     {tasksLoading ? (
-                        <div className="space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="card p-5 h-28 animate-pulse bg-gray-100" />)}</div>
+                        <div className="space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="card p-5 h-28 animate-pulse bg-[var(--color-bg)]" />)}</div>
                     ) : sortedTasks.length === 0 ? (
                         <div className="card p-12 flex flex-col items-center border-dashed border-2">
                             <ClipboardList className="w-12 h-12 mb-4 opacity-10" />
@@ -1371,14 +1371,14 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                         const dueBadge = getTaskDueBadge(task);
                                         const hasAutoExpense = task.taskType === 'PAYMENT' && task.createExpenseAutomatically;
                                         return (
-                                            <tr key={task.id} className={`border-b last:border-0 hover:bg-gray-50 transition-colors group ${canManage ? 'cursor-pointer' : ''}`} style={{ borderColor: 'var(--color-border)' }} onClick={() => canManage && openEditTask(task)}>
+                                            <tr key={task.id} className={`border-b last:border-0 hover:bg-[var(--color-primary-light)] transition-colors group ${canManage ? 'cursor-pointer' : ''}`} style={{ borderColor: 'var(--color-border)' }} onClick={() => canManage && openEditTask(task)}>
                                                 <td className="px-4 py-2.5">
                                                     <div className="flex items-center gap-2">
                                                         <span className={`font-medium ${isDone || isArchived ? 'line-through opacity-50' : ''}`} style={{ color: 'var(--color-text)' }}>{task.title}</span>
                                                     </div>
                                                     {sharedOwnerName && <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
                                                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${dueBadge.tone === 'danger' ? 'bg-red-50 text-red-600' : dueBadge.tone === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
+                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${dueBadge.tone === 'danger' ? 'bg-red-50 text-red-600' : dueBadge.tone === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]'}`}>
                                                             {dueBadge.label}
                                                         </span>
                                                         {task.notificationEnabled && (
@@ -1412,7 +1412,7 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2.5 hidden sm:table-cell">
-                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${isDone ? 'bg-emerald-50 text-emerald-700' : isArchived ? 'bg-gray-100 text-gray-600' : task.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}`}>
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${isDone ? 'bg-emerald-50 text-emerald-700' : isArchived ? 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]' : task.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}`}>
                                                         {task.status === 'PLANNED' ? 'Plan' : task.status.replace('_', ' ')}
                                                     </span>
                                                 </td>
@@ -1425,7 +1425,7 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2.5 hidden xl:table-cell">
-                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.showOnCalendar ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.showOnCalendar ? 'bg-indigo-50 text-indigo-700' : 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]'}`}>
                                                         {task.showOnCalendar ? 'Shown' : 'Hidden'}
                                                     </span>
                                                 </td>
@@ -1437,8 +1437,8 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                                             ) : (
                                                                 <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: task.id, body: { status: 'PLANNED' } }); }} className="p-1 text-xs font-medium px-2 rounded text-orange-600 bg-orange-50 hover:bg-orange-100" title="Reopen">Reopen</button>
                                                             )}
-                                                            <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: task.id, body: { pinToDashboard: !task.pinToDashboard } }); }} className={`p-1 ${task.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`} title="Pin"><Pin className="w-3.5 h-3.5" /></button>
-                                                            <button onClick={(e) => { e.stopPropagation(); openEditTask(task); }} className="p-1 text-gray-400 hover:text-gray-600" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); updateTaskMut.mutate({ id: task.id, body: { pinToDashboard: !task.pinToDashboard } }); }} className={`p-1 ${task.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-[var(--color-border)] hover:text-amber-400'}`} title="Pin"><Pin className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); openEditTask(task); }} className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text)]" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
                                                             <button onClick={(e) => { e.stopPropagation(); openDuplicateTask(task); }} className="p-1 text-blue-500 hover:text-blue-600" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
                                                             <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this task?')) deleteTaskMut.mutate(task.id); }} className="p-1 text-red-500 hover:text-red-600" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
                                                         </div>
@@ -1476,7 +1476,7 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.taskType === 'PAYMENT' ? 'bg-orange-50 text-orange-700' : 'bg-slate-100 text-slate-700'}`}>
                                                         {task.taskType === 'PAYMENT' ? 'Payment' : 'Task'}
                                                     </span>
-                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.status === 'DONE' ? 'bg-emerald-50 text-emerald-700' : task.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700' : task.status === 'ARCHIVED' ? 'bg-gray-100 text-gray-600' : 'bg-blue-50 text-blue-700'}`}>
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${task.status === 'DONE' ? 'bg-emerald-50 text-emerald-700' : task.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700' : task.status === 'ARCHIVED' ? 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]' : 'bg-blue-50 text-blue-700'}`}>
                                                         {task.status === 'PLANNED' ? 'Plan' : task.status.replace('_', ' ')}
                                                     </span>
                                                     {task.isShared && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Shared</span>}
@@ -1485,7 +1485,7 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                                 {task.description && <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>{task.description}</p>}
                                                 {sharedOwnerName && <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>Owner: {sharedOwnerName}</p>}
                                                 <div className="flex items-center gap-2 mt-3 flex-wrap">
-                                                    <span className={`text-[10px] font-bold px-2 py-1 rounded ${dueBadge.tone === 'danger' ? 'bg-red-50 text-red-600' : dueBadge.tone === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
+                                                    <span className={`text-[10px] font-bold px-2 py-1 rounded ${dueBadge.tone === 'danger' ? 'bg-red-50 text-red-600' : dueBadge.tone === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]'}`}>
                                                         {dueBadge.label}
                                                     </span>
                                                     {task.notificationEnabled && (

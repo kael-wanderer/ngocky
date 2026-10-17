@@ -43,8 +43,8 @@ const getStatusColor = (status: string) => {
         case 'PLANNED': return 'bg-blue-100 text-blue-700';
         case 'IN_PROGRESS': return 'bg-yellow-100 text-yellow-700';
         case 'DONE': return 'bg-emerald-100 text-emerald-700';
-        case 'ARCHIVED': return 'bg-gray-100 text-gray-500';
-        default: return 'bg-gray-100 text-gray-700';
+        case 'ARCHIVED': return 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]';
+        default: return 'bg-[var(--color-bg)] text-[var(--color-text)]';
     }
 };
 
@@ -235,7 +235,7 @@ export default function LearningPage({ instanceId, pageTitle }: { instanceId?: s
                         <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Learning Topics</h3>
                     </div>
                     {isLoading ? (
-                        <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="card p-4 h-16 animate-pulse bg-gray-50" />)}</div>
+                        <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="card p-4 h-16 animate-pulse bg-[var(--color-bg)]" />)}</div>
                     ) : (
                         <div className="space-y-3">
                             {topicList.map((topic: any) => (
@@ -263,9 +263,9 @@ export default function LearningPage({ instanceId, pageTitle }: { instanceId?: s
                                                 </div>
                                                 {canManage && (
                                                     <div className="flex items-center gap-1">
-                                                        <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}><Pencil className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this topic and all histories?')) deleteTopicMut.mutate(topic.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1.5 rounded-md hover:bg-[var(--color-primary-light)]" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1.5 rounded-md hover:bg-[var(--color-primary-light)]" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}><Pencil className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1.5 rounded-md text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-[var(--color-primary-light)]" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this topic and all histories?')) deleteTopicMut.mutate(topic.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                                     </div>
                                                 )}
                                             </div>
@@ -306,9 +306,9 @@ export default function LearningPage({ instanceId, pageTitle }: { instanceId?: s
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--color-text)' }}><BookOpen className="w-4 h-4" /> Topic Histories</h4>
-                                    <div className="flex items-center gap-1 p-0.5 bg-gray-100 rounded-lg">
-                                        <button className={`p-1 rounded-md transition-all ${!listView ? 'bg-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} onClick={() => setListView(false)} title="Grid view"><LayoutGrid className="w-3.5 h-3.5" /></button>
-                                        <button className={`p-1 rounded-md transition-all ${listView ? 'bg-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} onClick={() => setListView(true)} title="List view"><List className="w-3.5 h-3.5" /></button>
+                                    <div className="flex items-center gap-1 p-0.5 bg-[var(--color-bg)] rounded-lg">
+                                        <button className={`p-1 rounded-md transition-all ${!listView ? 'bg-[var(--color-surface)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} onClick={() => setListView(false)} title="Grid view"><LayoutGrid className="w-3.5 h-3.5" /></button>
+                                        <button className={`p-1 rounded-md transition-all ${listView ? 'bg-[var(--color-surface)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} onClick={() => setListView(true)} title="List view"><List className="w-3.5 h-3.5" /></button>
                                     </div>
                                 </div>
                                 {histories.length === 0 ? (
@@ -335,7 +335,7 @@ export default function LearningPage({ instanceId, pageTitle }: { instanceId?: s
                                             const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
                                             const canManage = !sharedOwnerName;
                                             return (
-                                            <div key={history.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => canManage && openEditHistory(history)}>
+                                            <div key={history.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--color-primary-light)] transition-colors cursor-pointer" onClick={() => canManage && openEditHistory(history)}>
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-20 shrink-0 ${getStatusColor(history.status)}`}>{history.status.replace('_', ' ')}</span>
                                                 <span className="font-medium text-sm flex-1 line-clamp-1" style={{ color: 'var(--color-text)' }}>{history.title}</span>
                                                 <div className="flex items-center gap-1.5 text-[11px] w-28 shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
@@ -345,8 +345,8 @@ export default function LearningPage({ instanceId, pageTitle }: { instanceId?: s
                                                 <span className="text-[11px] w-12 shrink-0 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{history.progress}%</span>
                                                 {canManage && (
                                                     <div className="flex items-center gap-1 w-24 shrink-0" onClick={(e) => e.stopPropagation()}>
-                                                        <button className={`p-1 rounded transition-colors ${history.pinToDashboard ? 'text-amber-500 bg-amber-50' : 'text-gray-400 hover:bg-amber-50 hover:text-amber-500'}`} title="Pin" onClick={() => togglePinHistoryMut.mutate({ id: history.id, pinToDashboard: !history.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
+                                                        <button className={`p-1 rounded transition-colors ${history.pinToDashboard ? 'text-amber-500 bg-amber-50' : 'text-[var(--color-text-secondary)] hover:bg-amber-50 hover:text-amber-500'}`} title="Pin" onClick={() => togglePinHistoryMut.mutate({ id: history.id, pinToDashboard: !history.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1 rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-text)] transition-colors" title="Duplicate" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
                                                         <button className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={() => openEditHistory(history)}><Pencil className="w-3.5 h-3.5" /></button>
                                                         <button className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete" onClick={() => { if (window.confirm('Delete this history?')) deleteHistoryMut.mutate(history.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                                     </div>
@@ -366,10 +366,10 @@ export default function LearningPage({ instanceId, pageTitle }: { instanceId?: s
                                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getStatusColor(history.status)}`}>{history.status.replace('_', ' ')}</span>
                                                     {canManage && (
                                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                                                            <button className={`p-1.5 rounded ${history.pinToDashboard ? 'text-amber-500' : 'hover:bg-amber-50 hover:text-amber-500 text-gray-400'}`} onClick={() => togglePinHistoryMut.mutate({ id: history.id, pinToDashboard: !history.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
-                                                            <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
-                                                            <button className="p-1.5 hover:bg-gray-100 rounded text-gray-400" onClick={() => openEditHistory(history)}><Pencil className="w-3.5 h-3.5" /></button>
-                                                            <button className="p-1.5 hover:bg-red-50 hover:text-red-500 rounded text-gray-400" onClick={() => { if (window.confirm('Delete this history?')) deleteHistoryMut.mutate(history.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                            <button className={`p-1.5 rounded ${history.pinToDashboard ? 'text-amber-500' : 'hover:bg-amber-50 hover:text-amber-500 text-[var(--color-text-secondary)]'}`} onClick={() => togglePinHistoryMut.mutate({ id: history.id, pinToDashboard: !history.pinToDashboard })}><Pin className="w-3.5 h-3.5" /></button>
+                                                            <button className="p-1.5 hover:bg-[var(--color-primary-light)] rounded text-[var(--color-text-secondary)]" onClick={() => duplicateHistory(history)}><Copy className="w-3.5 h-3.5" /></button>
+                                                            <button className="p-1.5 hover:bg-[var(--color-primary-light)] rounded text-[var(--color-text-secondary)]" onClick={() => openEditHistory(history)}><Pencil className="w-3.5 h-3.5" /></button>
+                                                            <button className="p-1.5 hover:bg-red-50 hover:text-red-500 rounded text-[var(--color-text-secondary)]" onClick={() => { if (window.confirm('Delete this history?')) deleteHistoryMut.mutate(history.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                                         </div>
                                                     )}
                                                 </div>
@@ -387,7 +387,7 @@ export default function LearningPage({ instanceId, pageTitle }: { instanceId?: s
                                                         <span style={{ color: 'var(--color-text-secondary)' }}>Progress</span>
                                                         <span style={{ color: 'var(--color-text)' }}>{history.progress}%</span>
                                                     </div>
-                                                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden mb-4">
+                                                    <div className="h-2 rounded-full bg-[var(--color-bg)] overflow-hidden mb-4">
                                                         <div className="h-full rounded-full transition-all duration-500 bg-primary" style={{ width: `${history.progress}%`, backgroundColor: 'var(--color-primary)' }} />
                                                     </div>
 
@@ -463,7 +463,7 @@ export default function LearningPage({ instanceId, pageTitle }: { instanceId?: s
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeTopicModal}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={closeTopicModal}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createTopicMut.isPending || updateTopicMut.isPending}>{editingTopic ? 'Save' : 'Create Topic'}</button>
@@ -529,7 +529,7 @@ export default function LearningPage({ instanceId, pageTitle }: { instanceId?: s
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeHistoryModal}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={closeHistoryModal}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createHistoryMut.isPending || updateHistoryMut.isPending}>{editingHistory ? 'Save' : 'Add History'}</button>

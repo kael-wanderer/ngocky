@@ -551,7 +551,7 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeModal}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={closeModal}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createMut.isPending || updateMut.isPending}>
@@ -574,7 +574,7 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
             )}
 
             {isLoading ? (
-                <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="card h-16 animate-pulse bg-gray-100" />)}</div>
+                <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="card h-16 animate-pulse bg-[var(--color-bg)]" />)}</div>
             ) : (
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -619,7 +619,7 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
                                             <tr
                                                 key={fund.id}
                                                 onClick={() => openEdit(fund)}
-                                                className={`cursor-pointer ${index % 2 === 0 ? 'bg-[#ecfdf5]' : 'bg-white'} hover:bg-[#d1fae5] transition-colors`}
+                                                className={`cursor-pointer ${index % 2 === 0 ? 'bg-[color-mix(in_srgb,var(--color-success)_8%,var(--color-surface))]' : 'bg-[var(--color-surface)]'} hover:bg-[color-mix(in_srgb,var(--color-success)_16%,var(--color-surface))] transition-colors`}
                                             >
                                                 {isVisible('date') && <td className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{format(new Date(fund.date), 'MMM d, yyyy')}</td>}
                                                 {isVisible('type') && <td>
@@ -639,7 +639,7 @@ export default function FundsPage({ instanceId, pageTitle }: { instanceId?: stri
                                                         <button type="button" className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={(e) => { e.stopPropagation(); openEdit(fund); }}>
                                                             <Pencil className="w-3.5 h-3.5" />
                                                         </button>
-                                                        <button type="button" className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate" onClick={(e) => { e.stopPropagation(); duplicateFund(fund); }}>
+                                                        <button type="button" className="p-1 rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-text)] transition-colors" title="Duplicate" onClick={(e) => { e.stopPropagation(); duplicateFund(fund); }}>
                                                             <Copy className="w-3.5 h-3.5" />
                                                         </button>
                                                         <button type="button" className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete" onClick={(e) => { e.stopPropagation(); handleDelete(fund.id); }}>
@@ -749,29 +749,29 @@ function FundImportModal({
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-[var(--color-surface)] rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
-                    <h2 className="text-lg font-bold mb-1 text-gray-900 dark:text-white">Import Funds from CSV</h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Upload a CSV file, map each column, then import your fund transactions.</p>
+                    <h2 className="text-lg font-bold mb-1 text-[var(--color-text)]">Import Funds from CSV</h2>
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-4">Upload a CSV file, map each column, then import your fund transactions.</p>
 
                     {!csvHeaders.length ? (
-                        <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-10 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                            <span className="text-sm text-gray-500">Click to select CSV file</span>
+                        <label className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--color-border)] rounded-xl p-10 cursor-pointer hover:bg-[var(--color-primary-light)]">
+                            <Upload className="w-8 h-8 text-[var(--color-text-secondary)] mb-2" />
+                            <span className="text-sm text-[var(--color-text-secondary)]">Click to select CSV file</span>
                             <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleFile} />
                         </label>
                     ) : (
                         <>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{csvRows.length} rows · Map columns:</p>
+                            <p className="text-sm font-medium text-[var(--color-text)] mb-2">{csvRows.length} rows · Map columns:</p>
                             <div className="space-y-1.5 mb-4">
                                 {csvHeaders.map((header) => (
                                     <div key={header} className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-500 w-36 truncate flex-shrink-0" title={header}>{header}</span>
-                                        <span className="text-gray-300 flex-shrink-0">→</span>
+                                        <span className="text-xs text-[var(--color-text-secondary)] w-36 truncate flex-shrink-0" title={header}>{header}</span>
+                                        <span className="text-[var(--color-border)] flex-shrink-0">→</span>
                                         <select
                                             value={mapping[header] ?? ''}
                                             onChange={(event) => setMapping((current) => ({ ...current, [header]: event.target.value }))}
-                                            className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded px-1.5 py-1 bg-white dark:bg-gray-800"
+                                            className="flex-1 text-xs border border-[var(--color-border)] rounded px-1.5 py-1 bg-[var(--color-surface)]"
                                         >
                                             {fieldTargets.map((target) => <option key={target.key} value={target.key}>{target.label}</option>)}
                                         </select>
@@ -781,30 +781,30 @@ function FundImportModal({
 
                             {preview.length > 0 && (
                                 <div className="mb-4">
-                                    <p className="text-xs font-medium text-gray-500 mb-1">Preview (first {preview.length} rows):</p>
-                                    <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                                    <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-1">Preview (first {preview.length} rows):</p>
+                                    <div className="overflow-x-auto border border-[var(--color-border)] rounded-lg">
                                         <table className="text-xs w-full">
-                                            <thead className="bg-gray-50 dark:bg-gray-800">
+                                            <thead className="bg-[var(--color-bg)]">
                                                 <tr>
-                                                    <th className="px-2 py-1 text-left font-medium text-gray-500">Date</th>
-                                                    <th className="px-2 py-1 text-left font-medium text-gray-500">Type</th>
-                                                    <th className="px-2 py-1 text-left font-medium text-gray-500">Scope</th>
-                                                    <th className="px-2 py-1 text-left font-medium text-gray-500">Category</th>
-                                                    <th className="px-2 py-1 text-left font-medium text-gray-500">Condition</th>
-                                                    <th className="px-2 py-1 text-left font-medium text-gray-500">Description</th>
-                                                    <th className="px-2 py-1 text-right font-medium text-gray-500">Amount</th>
+                                                    <th className="px-2 py-1 text-left font-medium text-[var(--color-text-secondary)]">Date</th>
+                                                    <th className="px-2 py-1 text-left font-medium text-[var(--color-text-secondary)]">Type</th>
+                                                    <th className="px-2 py-1 text-left font-medium text-[var(--color-text-secondary)]">Scope</th>
+                                                    <th className="px-2 py-1 text-left font-medium text-[var(--color-text-secondary)]">Category</th>
+                                                    <th className="px-2 py-1 text-left font-medium text-[var(--color-text-secondary)]">Condition</th>
+                                                    <th className="px-2 py-1 text-left font-medium text-[var(--color-text-secondary)]">Description</th>
+                                                    <th className="px-2 py-1 text-right font-medium text-[var(--color-text-secondary)]">Amount</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {preview.map((item, index) => (
-                                                    <tr key={index} className="border-t border-gray-100 dark:border-gray-800">
-                                                        <td className="px-2 py-1 text-gray-600">{item.date || '—'}</td>
-                                                        <td className="px-2 py-1 text-gray-600">{item.type || '—'}</td>
-                                                        <td className="px-2 py-1 text-gray-600">{item.scope || '—'}</td>
-                                                        <td className="px-2 py-1 text-gray-600">{item.category || '—'}</td>
-                                                        <td className="px-2 py-1 text-gray-600">{item.condition || '—'}</td>
+                                                    <tr key={index} className="border-t border-[var(--color-border)]">
+                                                        <td className="px-2 py-1 text-[var(--color-text-secondary)]">{item.date || '—'}</td>
+                                                        <td className="px-2 py-1 text-[var(--color-text-secondary)]">{item.type || '—'}</td>
+                                                        <td className="px-2 py-1 text-[var(--color-text-secondary)]">{item.scope || '—'}</td>
+                                                        <td className="px-2 py-1 text-[var(--color-text-secondary)]">{item.category || '—'}</td>
+                                                        <td className="px-2 py-1 text-[var(--color-text-secondary)]">{item.condition || '—'}</td>
                                                         <td className="px-2 py-1 font-medium">{item.description || <span className="text-red-400">⚠ empty</span>}</td>
-                                                        <td className="px-2 py-1 text-right text-gray-600">{item.amount || '—'}</td>
+                                                        <td className="px-2 py-1 text-right text-[var(--color-text-secondary)]">{item.amount || '—'}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -816,7 +816,7 @@ function FundImportModal({
                     )}
 
                     <div className="flex gap-2 justify-end mt-4">
-                        <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
+                        <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]">Cancel</button>
                         {csvRows.length > 0 && (
                             <button onClick={handleImport} disabled={loading} className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
                                 {loading ? 'Importing…' : `Import ${csvRows.length} rows`}

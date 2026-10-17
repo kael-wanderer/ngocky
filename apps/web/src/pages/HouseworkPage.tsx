@@ -267,7 +267,7 @@ function HouseworkForm({
                 <div className="flex items-center justify-between mb-1">
                     <label className="label mb-0">Title <span className="text-red-500">*</span></label>
                     <button type="button" onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}
-                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 text-gray-400 hover:text-gray-600'}`}
+                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}
                         title="Pin to dashboard">
                         <Pin className="w-3.5 h-3.5" />
                     </button>
@@ -342,7 +342,7 @@ function HouseworkForm({
                     )}
                 </div>
                 <div className="flex gap-2 ml-auto">
-                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={onCancel}>
+                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={onCancel}>
                         Cancel
                     </button>
                     <button type="submit" className="btn-primary" disabled={loading}>{submitLabel}</button>
@@ -673,7 +673,7 @@ export default function HouseworkPage({ instanceId, pageTitle }: { instanceId?: 
                 <>
                     <button
                         onClick={(e) => { e.stopPropagation(); updateMut.mutate({ id: item.id, body: { pinToDashboard: !item.pinToDashboard } }); }}
-                        className={`p-1 transition-colors ${item.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'}`}
+                        className={`p-1 transition-colors ${item.pinToDashboard ? 'text-amber-500 hover:text-amber-600' : 'text-[var(--color-border)] hover:text-amber-400'}`}
                         title="Pin item"
                     >
                         <Pin className="w-4 h-4" />
@@ -681,7 +681,7 @@ export default function HouseworkPage({ instanceId, pageTitle }: { instanceId?: 
                     <button onClick={(e) => { e.stopPropagation(); duplicateItem(item); }} className="p-1 text-blue-500 hover:text-blue-600 transition-colors" title="Duplicate">
                         <Copy className="w-4 h-4" />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 text-gray-400 hover:text-gray-600 transition-colors" title="Edit item">
+                    <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors" title="Edit item">
                         <Pencil className="w-4 h-4" />
                     </button>
                     <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-1 text-red-500 hover:text-red-600 transition-colors" title="Delete item">
@@ -714,7 +714,7 @@ export default function HouseworkPage({ instanceId, pageTitle }: { instanceId?: 
                         </div>
                         {notifBadges.length > 0 && (
                             <div className="flex items-center gap-1 flex-wrap mt-1">
-                                <Bell className={`w-3 h-3 flex-shrink-0 ${item.notificationEnabled ? 'text-red-500' : 'text-gray-300'}`} />
+                                <Bell className={`w-3 h-3 flex-shrink-0 ${item.notificationEnabled ? 'text-red-500' : 'text-[var(--color-border)]'}`} />
                                 {notifBadges.map((b, i) => (
                                     <span key={i} className="text-xs px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium whitespace-nowrap">{b}</span>
                                 ))}
@@ -786,7 +786,7 @@ export default function HouseworkPage({ instanceId, pageTitle }: { instanceId?: 
                         <p className="font-semibold" style={{ color: 'var(--color-text)' }}>{item.title}</p>
                         {notifBadges.length > 0 && (
                             <div className="flex items-center gap-1 flex-wrap mt-1">
-                                <Bell className={`w-3 h-3 flex-shrink-0 ${item.notificationEnabled ? 'text-red-500' : 'text-gray-300'}`} />
+                                <Bell className={`w-3 h-3 flex-shrink-0 ${item.notificationEnabled ? 'text-red-500' : 'text-[var(--color-border)]'}`} />
                                 {notifBadges.map((b, i) => (
                                     <span key={i} className="text-xs px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium whitespace-nowrap">{b}</span>
                                 ))}
@@ -849,8 +849,8 @@ export default function HouseworkPage({ instanceId, pageTitle }: { instanceId?: 
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center rounded-lg border p-1 gap-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
-                        <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
-                        <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="List view"><List className="w-4 h-4" /></button>
+                        <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-[var(--color-border)] text-[var(--color-text)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} title="Grid view"><LayoutGrid className="w-4 h-4" /></button>
+                        <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-[var(--color-border)] text-[var(--color-text)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} title="List view"><List className="w-4 h-4" /></button>
                     </div>
                     {viewMode === 'list' && <ColumnToggle columns={HOUSEWORK_COLUMNS} hidden={hidden} onToggle={toggle} />}
                     <button className="btn-primary whitespace-nowrap" onClick={openCreate}>
@@ -918,7 +918,7 @@ export default function HouseworkPage({ instanceId, pageTitle }: { instanceId?: 
             )}
 
             {isLoading ? (
-                <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="card p-5 h-20 animate-pulse bg-gray-100" />)}</div>
+                <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="card p-5 h-20 animate-pulse bg-[var(--color-bg)]" />)}</div>
             ) : sortedItems.length === 0 ? (
                 <div className="card p-8 text-center">
                     <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No housework items match the current filters.</p>

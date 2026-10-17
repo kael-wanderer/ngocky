@@ -471,7 +471,7 @@ export default function CalendarPage({ instanceId, pageTitle }: { instanceId?: s
                 <div className="flex items-center gap-2">
                     <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
                         {(['today', 'week', 'month'] as CalendarView[]).map((mode) => (
-                            <button key={mode} onClick={() => setView(mode)} className={`px-3 py-2 text-sm ${view === mode ? 'bg-gray-100' : ''}`}>{mode[0].toUpperCase() + mode.slice(1)}</button>
+                            <button key={mode} onClick={() => setView(mode)} className={`px-3 py-2 text-sm ${view === mode ? 'bg-[var(--color-bg)]' : ''}`}>{mode[0].toUpperCase() + mode.slice(1)}</button>
                         ))}
                     </div>
                     <button className="btn-primary" onClick={openCreate}><Plus className="w-4 h-4" /> New Item</button>
@@ -518,7 +518,7 @@ export default function CalendarPage({ instanceId, pageTitle }: { instanceId?: s
                                         type="button"
                                         title={form.pinToDashboard ? 'Unpin from dashboard' : 'Pin to dashboard'}
                                         onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}
-                                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 hover:border-amber-300 hover:text-amber-400'}`}
+                                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-[var(--color-border)] hover:border-amber-300 hover:text-amber-400'}`}
                                         style={form.pinToDashboard ? {} : { color: 'var(--color-text-secondary)' }}
                                     >
                                         <Pin className="w-3.5 h-3.5" />
@@ -608,7 +608,7 @@ export default function CalendarPage({ instanceId, pageTitle }: { instanceId?: s
                                     <button
                                         type="button"
                                         onClick={() => applyTimePreset('morning')}
-                                        className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${isPresetActive('morning') ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 hover:bg-gray-50'}`}
+                                        className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${isPresetActive('morning') ? 'border-blue-600 bg-blue-600 text-white' : 'border-[var(--color-border)] hover:bg-[var(--color-primary-light)]'}`}
                                         style={isPresetActive('morning') ? {} : { color: 'var(--color-text)' }}
                                     >
                                         Morning
@@ -616,7 +616,7 @@ export default function CalendarPage({ instanceId, pageTitle }: { instanceId?: s
                                     <button
                                         type="button"
                                         onClick={() => applyTimePreset('afternoon')}
-                                        className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${isPresetActive('afternoon') ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 hover:bg-gray-50'}`}
+                                        className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${isPresetActive('afternoon') ? 'border-blue-600 bg-blue-600 text-white' : 'border-[var(--color-border)] hover:bg-[var(--color-primary-light)]'}`}
                                         style={isPresetActive('afternoon') ? {} : { color: 'var(--color-text)' }}
                                     >
                                         Afternoon
@@ -663,7 +663,7 @@ export default function CalendarPage({ instanceId, pageTitle }: { instanceId?: s
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeEditor}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={closeEditor}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createMut.isPending || updateMut.isPending}>{editingEvent ? 'Save' : 'Create Item'}</button>
@@ -699,7 +699,7 @@ export default function CalendarPage({ instanceId, pageTitle }: { instanceId?: s
                                     <button
                                         key={day.toISOString()}
                                         onClick={() => handleMonthDaySelect(day)}
-                                        className={`aspect-square p-1 rounded-lg text-sm transition-all relative ${isSelected ? 'ring-2 ring-offset-1' : 'hover:bg-gray-50'}`}
+                                        className={`aspect-square p-1 rounded-lg text-sm transition-all relative ${isSelected ? 'ring-2 ring-offset-1' : 'hover:bg-[var(--color-primary-light)]'}`}
                                         style={{
                                             color: inMonth ? 'var(--color-text)' : 'var(--color-text-secondary)',
                                             opacity: inMonth ? 1 : 0.4,

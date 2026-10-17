@@ -86,7 +86,7 @@ export default function ColorPicker({
                 {label && <label className="label mb-0">{label}</label>}
                 <button
                     type="button"
-                    className="h-9 w-9 rounded border border-gray-300 shadow-sm"
+                    className="h-9 w-9 rounded border border-[var(--color-border)] shadow-sm"
                     style={{ backgroundColor: current }}
                     onClick={() => setOpen((currentValue) => !currentValue)}
                     title={`Change color ${current}`}
@@ -98,7 +98,7 @@ export default function ColorPicker({
                         <button
                             key={color}
                             type="button"
-                            className={`h-6 w-6 rounded-full border ${current === color ? 'border-slate-900' : 'border-gray-300'}`}
+                            className={`h-6 w-6 rounded-full border ${current === color ? 'border-slate-900' : 'border-[var(--color-border)]'}`}
                             style={{ backgroundColor: color }}
                             onClick={() => handleChange(color)}
                             title={color}
@@ -107,14 +107,14 @@ export default function ColorPicker({
                 </div>
             )}
             {open && (
-                <div className="absolute left-0 top-full z-30 mt-3 w-[260px] rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Basic Colors</p>
+                <div className="absolute left-0 top-full z-30 mt-3 w-[260px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xl">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Basic Colors</p>
                     <div className="mt-3 grid grid-cols-4 gap-3">
                         {PRESET_COLORS.map((color) => (
                             <button
                                 key={color}
                                 type="button"
-                                className={`h-9 w-9 rounded-lg border-2 transition-transform hover:scale-[1.03] ${current === color ? 'border-slate-900' : 'border-gray-200'}`}
+                                className={`h-9 w-9 rounded-lg border-2 transition-transform hover:scale-[1.03] ${current === color ? 'border-slate-900' : 'border-[var(--color-border)]'}`}
                                 style={{ backgroundColor: color }}
                                 onClick={() => handleChange(color, true)}
                                 title={color}
@@ -122,11 +122,11 @@ export default function ColorPicker({
                         ))}
                     </div>
                     <div className="mt-4 flex items-center justify-between">
-                        <label className="flex items-center gap-2 text-xs text-gray-500">
+                        <label className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                             <span>#</span>
                             <input
                                 type="text"
-                                className="w-24 rounded border border-gray-200 px-2 py-1 text-xs text-gray-700"
+                                className="w-24 rounded border border-[var(--color-border)] px-2 py-1 text-xs text-[var(--color-text)]"
                                 value={current.slice(1)}
                                 onChange={(e) => handleChange(e.target.value)}
                                 placeholder="ec4899"
@@ -136,7 +136,7 @@ export default function ColorPicker({
                             {onClear && (
                                 <button
                                     type="button"
-                                    className="text-xs font-medium text-gray-500 hover:text-gray-800"
+                                    className="text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
                                     onClick={() => {
                                         onClear();
                                         setOpen(false);
@@ -147,7 +147,7 @@ export default function ColorPicker({
                             )}
                             <button
                                 type="button"
-                                className="text-xs font-medium text-gray-500 hover:text-gray-800"
+                                className="text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
                                 onClick={() => setOpen(false)}
                             >
                                 Close

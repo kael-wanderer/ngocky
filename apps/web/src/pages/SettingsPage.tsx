@@ -903,7 +903,7 @@ export default function SettingsPage() {
                                             Google Authenticator, 1Password, Microsoft Authenticator, or similar apps will work.
                                         </p>
                                     </div>
-                                    <img src={mfaState.qrCodeUrl} alt="MFA QR code" className="w-48 h-48 rounded-lg border bg-white p-2" style={{ borderColor: 'var(--color-border)' }} />
+                                    <img src={mfaState.qrCodeUrl} alt="MFA QR code" className="w-48 h-48 rounded-lg border bg-[var(--color-surface)] p-2" style={{ borderColor: 'var(--color-border)' }} />
                                     <div>
                                         <label className="label">Manual setup key</label>
                                         <div className="input font-mono text-sm break-all">{mfaState.manualKey}</div>

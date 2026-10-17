@@ -75,8 +75,8 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Add a d
         : 'Normal';
 
     const btnBase = 'p-1.5 rounded transition-colors';
-    const btnActive = 'bg-gray-200 text-gray-800';
-    const btnInactive = 'hover:bg-gray-100';
+    const btnActive = 'bg-[var(--color-border)] text-[var(--color-text)]';
+    const btnInactive = 'hover:bg-[var(--color-primary-light)]';
 
     return (
         <div className="rounded-lg border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
@@ -90,7 +90,7 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Add a d
                     <button
                         type="button"
                         onClick={() => { setSizeOpen(o => !o); setColorOpen(false); }}
-                        className={`flex items-center gap-1 text-xs font-medium px-2 py-1.5 rounded transition-colors hover:bg-gray-100`}
+                        className={`flex items-center gap-1 text-xs font-medium px-2 py-1.5 rounded transition-colors hover:bg-[var(--color-primary-light)]`}
                         style={{ color: 'var(--color-text)', minWidth: '84px' }}
                     >
                         {activeSizeLabel} <ChevronDown className="w-3 h-3 ml-auto" />
@@ -110,7 +110,7 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Add a d
                                         else editor.chain().focus().toggleHeading({ level: parseInt(s.value[1]) as 1|2|3 }).run();
                                         setSizeOpen(false);
                                     }}
-                                    className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 transition-colors"
+                                    className="w-full text-left px-3 py-1.5 text-sm hover:bg-[var(--color-primary-light)] transition-colors"
                                     style={{ color: 'var(--color-text)', fontWeight: s.value !== 'paragraph' ? 600 : 400 }}
                                 >
                                     {s.label}

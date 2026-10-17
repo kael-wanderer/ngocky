@@ -231,11 +231,11 @@ export default function DashboardPage() {
                             {applySearch(data?.goals || [], 'title', 'description').map((g: any) => {
                                 const progressPct = g.targetCount > 0 ? (g.currentCount / g.targetCount) * 100 : 0;
                                 return (
-                                    <button key={g.id} className="w-full flex items-center gap-3 text-left hover:bg-gray-50 rounded p-1" onClick={() => navigate(`/goals?editId=${g.id}`)}>
+                                    <button key={g.id} className="w-full flex items-center gap-3 text-left hover:bg-[var(--color-primary-light)] rounded p-1" onClick={() => navigate(`/goals?editId=${g.id}`)}>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{g.title}</p>
                                             <div className="flex items-center gap-2 mt-1.5">
-                                                <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                                                <div className="flex-1 h-2 rounded-full bg-[var(--color-bg)] overflow-hidden">
                                                     <div className="h-full rounded-full transition-all duration-500" style={{
                                                         width: `${Math.min(100, progressPct)}%`,
                                                         background: g.currentCount >= g.targetCount
@@ -269,7 +269,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No events in selected time</p>
                             )}
                             {applySearch(data?.upcomingEvents || [], 'title').map((e: any) => (
-                                <button key={e.id} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors text-left" onClick={() => navigate(`/calendar?eventId=${e.id}`)}>
+                                <button key={e.id} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--color-primary-light)] transition-colors text-left" onClick={() => navigate(`/calendar?eventId=${e.id}`)}>
                                     <div className="w-1 h-10 rounded-full" style={{ backgroundColor: e.color || 'var(--color-primary)' }} />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{e.title}</p>
@@ -296,7 +296,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No project deadlines in selected time</p>
                             )}
                             {applySearch(data?.dueProjects || [], 'name').map((p: any) => (
-                                <button key={p.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => openProjectTask(p.id, p.sampleTaskId)}>
+                                <button key={p.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-[var(--color-primary-light)] rounded px-1" onClick={() => openProjectTask(p.id, p.sampleTaskId)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{p.name}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -330,7 +330,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No tasks with deadline in selected time</p>
                             )}
                             {applySearch(data?.dueTasks || [], 'title').map((t: any) => (
-                                <button key={t.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => openTaskTarget(t.id, t.projectId)}>
+                                <button key={t.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-[var(--color-primary-light)] rounded px-1" onClick={() => openTaskTarget(t.id, t.projectId)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{t.title}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -366,7 +366,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No housework due in selected time</p>
                             )}
                             {applySearch(data?.dueHousework || [], 'title').map((h: any) => (
-                                <button key={h.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(`/housework?editId=${h.id}`)}>
+                                <button key={h.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-[var(--color-primary-light)] rounded px-1" onClick={() => navigate(`/housework?editId=${h.id}`)}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{h.title}</p>
                                         <div className="flex items-center gap-2 mt-0.5">
@@ -401,7 +401,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No expenses in selected time</p>
                             )}
                             {applySearch(data?.expenses || [], 'description').map((e: any) => (
-                                <button key={e.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate('/expenses')}>
+                                <button key={e.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-[var(--color-primary-light)] rounded px-1" onClick={() => navigate('/expenses')}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{e.description}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{e.user?.name || 'User'} · {format(new Date(e.date), 'MMM d')}</p>
@@ -426,7 +426,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No asset records in selected time</p>
                             )}
                             {applySearch(data?.dueAssets || [], 'description').map((a: any) => (
-                                <button key={a.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate(a.assetId ? `/assets/${a.assetId}` : '/assets')}>
+                                <button key={a.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-[var(--color-primary-light)] rounded px-1" onClick={() => navigate(a.assetId ? `/assets/${a.assetId}` : '/assets')}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{a.asset?.name || 'Asset'}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{a.description || 'Maintenance'}{a.user?.name ? ` · ${a.user.name}` : ''}</p>
@@ -451,7 +451,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No learning records in selected time</p>
                             )}
                             {applySearch(data?.dueLearning || [], 'title').map((l: any) => (
-                                <button key={l.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate('/learning')}>
+                                <button key={l.id} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-[var(--color-primary-light)] rounded px-1" onClick={() => navigate('/learning')}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{l.title}</p>
                                         <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{l.topic?.title || 'Learning topic'}{l.user?.name ? ` · ${l.user.name}` : ''}</p>
@@ -476,7 +476,7 @@ export default function DashboardPage() {
                                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No ideas yet</p>
                             )}
                             {applySearch(data?.recentIdeas || [], 'title').map((idea: any) => (
-                                <button key={idea.id} className="w-full flex items-start justify-between py-1.5 gap-3 text-left hover:bg-gray-50 rounded px-1" onClick={() => navigate('/ideas')}>
+                                <button key={idea.id} className="w-full flex items-start justify-between py-1.5 gap-3 text-left hover:bg-[var(--color-primary-light)] rounded px-1" onClick={() => navigate('/ideas')}>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{idea.title}</p>
                                         {idea.topic && <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{idea.topic.title}</p>}
@@ -496,7 +496,7 @@ export default function DashboardPage() {
                             <Keyboard className="w-5 h-5" style={{ color: '#6366f1' }} />
                             <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Keyboard</h3>
                         </div>
-                        <button onClick={() => navigate('/keyboard')} className="w-full flex items-center justify-between py-2 px-1 text-sm text-left rounded hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-text-secondary)' }}>
+                        <button onClick={() => navigate('/keyboard')} className="w-full flex items-center justify-between py-2 px-1 text-sm text-left rounded hover:bg-[var(--color-primary-light)] transition-colors" style={{ color: 'var(--color-text-secondary)' }}>
                             <span>View keyboard collection</span>
                             <span style={{ color: 'var(--color-primary)' }}>→</span>
                         </button>
@@ -511,7 +511,7 @@ export default function DashboardPage() {
                             <TrendingUp className="w-5 h-5" style={{ color: '#10b981' }} />
                             <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Funds</h3>
                         </div>
-                        <button onClick={() => navigate('/funds')} className="w-full flex items-center justify-between py-2 px-1 text-sm text-left rounded hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-text-secondary)' }}>
+                        <button onClick={() => navigate('/funds')} className="w-full flex items-center justify-between py-2 px-1 text-sm text-left rounded hover:bg-[var(--color-primary-light)] transition-colors" style={{ color: 'var(--color-text-secondary)' }}>
                             <span>View fund transactions</span>
                             <span style={{ color: 'var(--color-primary)' }}>→</span>
                         </button>
@@ -526,7 +526,7 @@ export default function DashboardPage() {
                             <HeartPulse className="w-5 h-5" style={{ color: '#ec4899' }} />
                             <h3 className="font-semibold" style={{ color: 'var(--color-text)' }}>Healthbook</h3>
                         </div>
-                        <button onClick={() => navigate('/healthbook')} className="w-full flex items-center justify-between py-2 px-1 text-sm text-left rounded hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-text-secondary)' }}>
+                        <button onClick={() => navigate('/healthbook')} className="w-full flex items-center justify-between py-2 px-1 text-sm text-left rounded hover:bg-[var(--color-primary-light)] transition-colors" style={{ color: 'var(--color-text-secondary)' }}>
                             <span>View health records</span>
                             <span style={{ color: 'var(--color-primary)' }}>→</span>
                         </button>
@@ -545,7 +545,7 @@ export default function DashboardPage() {
         return (
             <div className="space-y-6 animate-pulse">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[...Array(4)].map((_, i) => <div key={i} className="card p-5 h-24 bg-gray-100" />)}
+                    {[...Array(4)].map((_, i) => <div key={i} className="card p-5 h-24 bg-[var(--color-bg)]" />)}
                 </div>
             </div>
         );
@@ -617,15 +617,15 @@ export default function DashboardPage() {
                                     {CATEGORY_GROUPS.map(group => (
                                         <div key={group.label}>
                                             <div className="flex items-center justify-between px-2 pt-2 pb-1">
-                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{group.label}</p>
-                                                <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">{group.label}</p>
+                                                <div className="flex items-center gap-1 text-[10px] text-[var(--color-text-secondary)]">
                                                     <button type="button" onClick={() => checkAllGroup(group.items)} className="hover:text-blue-500 transition-colors">All</button>
                                                     <span>·</span>
                                                     <button type="button" onClick={() => uncheckAllGroup(group.items)} className="hover:text-red-500 transition-colors">None</button>
                                                 </div>
                                             </div>
                                             {group.items.map(c => (
-                                                <div key={c} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 text-sm">
+                                                <div key={c} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[var(--color-primary-light)] text-sm">
                                                     <label className="flex items-center gap-2 cursor-pointer min-w-0 flex-1">
                                                         <input type="checkbox" checked={categories.includes(c)} onChange={() => toggleCategory(c)} />
                                                         <span className="truncate" style={{ color: 'var(--color-text)' }}>{categoryLabels[c]}</span>
@@ -708,7 +708,7 @@ export default function DashboardPage() {
                             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>No pinned items</p>
                         )}
                         {(data?.pinnedItems || []).map((p: any) => (
-                            <button key={`${p.type}-${p.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-gray-50 rounded px-1"
+                            <button key={`${p.type}-${p.id}`} className="w-full flex items-center justify-between py-1 gap-3 text-left hover:bg-[var(--color-primary-light)] rounded px-1"
                                 onClick={() => {
                                     if (p.type === 'GOAL') navigate(pageTarget(p, `/goals?editId=${p.id}`, `?editId=${p.id}`));
                                     else if (p.type === 'TASK') {

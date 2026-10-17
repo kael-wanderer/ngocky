@@ -151,10 +151,10 @@ export default function DesktopOnboardingPage() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 p-8">
+        <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] p-8">
             <div className="w-full max-w-2xl space-y-6">
                 <h1 className="text-2xl font-semibold">Welcome to NgocKy</h1>
-                <p className="text-gray-500">How do you want to store your data?</p>
+                <p className="text-[var(--color-text-secondary)]">How do you want to store your data?</p>
                 <div className="grid gap-4 md:grid-cols-3">
                     {MODES.map((m) => (
                         <button
@@ -163,10 +163,10 @@ export default function DesktopOnboardingPage() {
                                 setMode(m.id);
                                 if (m.id === 'offline' && !db.host) setDb({ ...db, host: '127.0.0.1' });
                             }}
-                            className={`rounded-lg border p-4 text-left ${mode === m.id ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+                            className={`rounded-lg border p-4 text-left ${mode === m.id ? 'border-blue-500 ring-2 ring-blue-200' : 'border-[var(--color-border)]'}`}
                         >
                             <div className="font-medium">{m.title}</div>
-                            <div className="mt-1 text-sm text-gray-500">{m.desc}</div>
+                            <div className="mt-1 text-sm text-[var(--color-text-secondary)]">{m.desc}</div>
                         </button>
                     ))}
                 </div>
@@ -182,17 +182,17 @@ export default function DesktopOnboardingPage() {
                         <div className="grid gap-4 md:grid-cols-2">
                             <button
                                 onClick={() => setOfflineEngine('sqlite')}
-                                className={`rounded-lg border p-4 text-left ${offlineEngine === 'sqlite' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+                                className={`rounded-lg border p-4 text-left ${offlineEngine === 'sqlite' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-[var(--color-border)]'}`}
                             >
                                 <div className="font-medium">Built-in (SQLite) — recommended</div>
-                                <div className="mt-1 text-sm text-gray-500">A single file on this Mac. Zero setup. Reset anytime from Settings.</div>
+                                <div className="mt-1 text-sm text-[var(--color-text-secondary)]">A single file on this Mac. Zero setup. Reset anytime from Settings.</div>
                             </button>
                             <button
                                 onClick={() => setOfflineEngine('postgres')}
-                                className={`rounded-lg border p-4 text-left ${offlineEngine === 'postgres' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+                                className={`rounded-lg border p-4 text-left ${offlineEngine === 'postgres' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-[var(--color-border)]'}`}
                             >
                                 <div className="font-medium">PostgreSQL</div>
-                                <div className="mt-1 text-sm text-gray-500">
+                                <div className="mt-1 text-sm text-[var(--color-text-secondary)]">
                                     Use a Postgres server you run yourself. Don't have one?{' '}
                                     <a className="text-blue-600 underline" href="https://www.postgresql.org/download/macosx/" target="_blank" rel="noreferrer">Install PostgreSQL for macOS</a>.
                                 </div>
@@ -206,7 +206,7 @@ export default function DesktopOnboardingPage() {
                 {mode === 'shared' && (
                     <div className="space-y-2">
                         <div className="text-sm font-medium">Family Postgres database</div>
-                        <p className="text-xs text-gray-500">Any database name works — it just has to exist on the server. Tables are created automatically on first start.</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">Any database name works — it just has to exist on the server. Tables are created automatically on first start.</p>
                         <DbConnectionForm db={db} setDb={setDb} advanced={advanced} setAdvanced={setAdvanced} rawUrl={rawUrl} setRawUrl={setRawUrl} />
                         <div className="space-y-2">
                             <div className="text-sm font-medium">Reminders &amp; reports</div>
@@ -214,14 +214,14 @@ export default function DesktopOnboardingPage() {
                                 <input type="radio" className="mt-1" checked={schedulerMode === 'builtin'} onChange={() => setSchedulerMode('builtin')} />
                                 <span>
                                     <span className="font-medium">Built-in scheduler (recommended)</span>
-                                    <span className="block text-gray-500">This app checks and delivers reminders and reports while it is open. If several family computers use the same database, only one sends each alert.</span>
+                                    <span className="block text-[var(--color-text-secondary)]">This app checks and delivers reminders and reports while it is open. If several family computers use the same database, only one sends each alert.</span>
                                 </span>
                             </label>
                             <label className="flex items-start gap-2 text-sm">
                                 <input type="radio" className="mt-1" checked={schedulerMode === 'n8n'} onChange={() => setSchedulerMode('n8n')} />
                                 <span>
                                     <span className="font-medium">I run my own n8n</span>
-                                    <span className="block text-gray-500">The app sends nothing. Your n8n workflows must reach a running desktop API on port 21473 to poll <code>/api/service/due-notifications</code> and <code>/api/service/due-reports</code>.</span>
+                                    <span className="block text-[var(--color-text-secondary)]">The app sends nothing. Your n8n workflows must reach a running desktop API on port 21473 to poll <code>/api/service/due-notifications</code> and <code>/api/service/due-reports</code>.</span>
                                 </span>
                             </label>
                         </div>

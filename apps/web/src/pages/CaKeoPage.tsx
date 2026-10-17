@@ -311,9 +311,9 @@ export default function CaKeoPage({ instanceId, pageTitle }: { instanceId?: stri
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
-                        <button onClick={() => setView('calendar')} className={`px-3 py-2 text-sm flex items-center gap-1.5 ${view === 'calendar' ? 'bg-gray-100' : ''}`} title="Calendar"><CalIcon className="w-4 h-4" /></button>
-                        <button onClick={() => setView('list')} className={`px-3 py-2 text-sm flex items-center gap-1.5 ${view === 'list' ? 'bg-gray-100' : ''}`} title="List"><List className="w-4 h-4" /></button>
-                        <button onClick={() => setView('kanban')} className={`px-3 py-2 text-sm flex items-center gap-1.5 ${view === 'kanban' ? 'bg-gray-100' : ''}`} title="Kanban"><LayoutGrid className="w-4 h-4" /></button>
+                        <button onClick={() => setView('calendar')} className={`px-3 py-2 text-sm flex items-center gap-1.5 ${view === 'calendar' ? 'bg-[var(--color-bg)]' : ''}`} title="Calendar"><CalIcon className="w-4 h-4" /></button>
+                        <button onClick={() => setView('list')} className={`px-3 py-2 text-sm flex items-center gap-1.5 ${view === 'list' ? 'bg-[var(--color-bg)]' : ''}`} title="List"><List className="w-4 h-4" /></button>
+                        <button onClick={() => setView('kanban')} className={`px-3 py-2 text-sm flex items-center gap-1.5 ${view === 'kanban' ? 'bg-[var(--color-bg)]' : ''}`} title="Kanban"><LayoutGrid className="w-4 h-4" /></button>
                     </div>
                     {view === 'list' && <ColumnToggle columns={CAKEO_COLUMNS} hidden={hidden} onToggle={toggle} />}
                     <button className="btn-primary" onClick={() => openCreate()}>
@@ -371,7 +371,7 @@ export default function CaKeoPage({ instanceId, pageTitle }: { instanceId?: stri
                                 <div className="flex items-center justify-between mb-1">
                                     <label className="label mb-0">Title <span className="text-red-500">*</span></label>
                                     <button type="button" onClick={() => setForm({ ...form, pinToDashboard: !form.pinToDashboard })}
-                                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 text-gray-400 hover:text-gray-600'}`}
+                                        className={`p-1.5 rounded-lg border transition-colors ${form.pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}
                                         title="Pin to dashboard">
                                         <Pin className="w-3.5 h-3.5" />
                                     </button>
@@ -483,7 +483,7 @@ export default function CaKeoPage({ instanceId, pageTitle }: { instanceId?: stri
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeModal}>Cancel</button>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={closeModal}>Cancel</button>
                                     <button type="submit" className="btn-primary" disabled={createMut.isPending || updateMut.isPending}>
                                         {editingItem ? 'Save' : 'Create'}
                                     </button>
@@ -528,7 +528,7 @@ export default function CaKeoPage({ instanceId, pageTitle }: { instanceId?: stri
                                                     return normalizeRange(current.start, day);
                                                 });
                                             }}
-                                            className={`aspect-square p-1 rounded-lg text-sm transition-all relative ${isSelected ? 'ring-2 ring-offset-1' : 'hover:bg-gray-50'}`}
+                                            className={`aspect-square p-1 rounded-lg text-sm transition-all relative ${isSelected ? 'ring-2 ring-offset-1' : 'hover:bg-[var(--color-primary-light)]'}`}
                                             style={{
                                                 color: inMonth ? 'var(--color-text)' : 'var(--color-text-secondary)',
                                                 opacity: inMonth ? 1 : 0.4,
@@ -604,7 +604,7 @@ export default function CaKeoPage({ instanceId, pageTitle }: { instanceId?: stri
                         </div>
                     )}
                     {isLoading ? (
-                        <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="card h-14 animate-pulse bg-gray-100" />)}</div>
+                        <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="card h-14 animate-pulse bg-[var(--color-bg)]" />)}</div>
                     ) : (
                         <div className="card overflow-hidden">
                             <div className="table-container">
@@ -620,7 +620,7 @@ export default function CaKeoPage({ instanceId, pageTitle }: { instanceId?: stri
                                             <tr><td colSpan={7} className="text-center py-8 text-sm" style={{ color: 'var(--color-text-secondary)' }}>No items found</td></tr>
                                         )}
                                         {filteredItems.map((item: any) => (
-                                            <tr key={item.id} className="group hover:bg-gray-50 cursor-pointer" onClick={() => openEdit(item)}>
+                                            <tr key={item.id} className="group hover:bg-[var(--color-primary-light)] cursor-pointer" onClick={() => openEdit(item)}>
                                                 {isVisible('title') && <td>
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-1.5 h-5 rounded-sm flex-shrink-0" style={{ backgroundColor: getAssigneeColor(item.assignerId) }} />
@@ -723,7 +723,7 @@ function CaKeoCard({ item, assigneeColor, displayColor, onEdit, onDelete, compac
                             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-pink-50 font-medium text-pink-600">{item.type}</span>
                         )}
                         {item.category && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 font-medium" style={{ color: 'var(--color-text-secondary)' }}>{item.category}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-bg)] font-medium" style={{ color: 'var(--color-text-secondary)' }}>{item.category}</span>
                         )}
                         {item.assigner?.name ? (
                             <span className="text-[10px] font-medium" style={{ color: assigneeColor }}>{item.assigner.name}</span>

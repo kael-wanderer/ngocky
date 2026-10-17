@@ -35,7 +35,7 @@ export default function DesktopGate({ children }: { children: React.ReactNode })
     if (state === 'checking') return null;
     if (state === 'onboarding') return <DesktopOnboardingPage />;
     if (state === 'waiting-api') return (
-        <div className="flex h-screen items-center justify-center text-gray-500">Starting local server…</div>
+        <div className="flex h-screen items-center justify-center text-[var(--color-text-secondary)]">Starting local server…</div>
     );
     return <>{children}</>;
 }

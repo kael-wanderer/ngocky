@@ -205,7 +205,7 @@ export default function IdeasPage({ instanceId, pageTitle }: { instanceId?: stri
                         <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Idea Topics</h3>
                     </div>
                     {isLoading ? (
-                        <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="card p-4 h-16 animate-pulse bg-gray-50" />)}</div>
+                        <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="card p-4 h-16 animate-pulse bg-[var(--color-bg)]" />)}</div>
                     ) : (
                         <div className="space-y-3">
                             {topicList.map((topic: any) => (
@@ -232,9 +232,9 @@ export default function IdeasPage({ instanceId, pageTitle }: { instanceId?: stri
                                                 </div>
                                                 {canManage && (
                                                     <div className="flex items-center gap-1">
-                                                        <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1.5 rounded-md hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}><Pencil className="w-3.5 h-3.5" /></button>
-                                                        <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this idea topic and all logs?')) deleteTopicMut.mutate(topic.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1.5 rounded-md hover:bg-[var(--color-primary-light)]" onClick={(e) => { e.stopPropagation(); duplicateTopic(topic); }}><Copy className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1.5 rounded-md hover:bg-[var(--color-primary-light)]" onClick={(e) => { e.stopPropagation(); openEditTopic(topic); }}><Pencil className="w-3.5 h-3.5" /></button>
+                                                        <button className="p-1.5 rounded-md text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-[var(--color-primary-light)]" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this idea topic and all logs?')) deleteTopicMut.mutate(topic.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                                     </div>
                                                 )}
                                             </div>
@@ -275,14 +275,14 @@ export default function IdeasPage({ instanceId, pageTitle }: { instanceId?: stri
                                 <div className="flex items-center gap-2 shrink-0">
                                     <div className="flex items-center gap-1">
                                         <button
-                                            className={`p-1.5 rounded-md transition-colors ${logListView === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                                            className={`p-1.5 rounded-md transition-colors ${logListView === 'grid' ? 'bg-[var(--color-border)]' : 'hover:bg-[var(--color-primary-light)]'}`}
                                             onClick={() => setLogListView('grid')}
                                             title="Grid view"
                                         >
                                             <LayoutGrid className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
                                         </button>
                                         <button
-                                            className={`p-1.5 rounded-md transition-colors ${logListView === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                                            className={`p-1.5 rounded-md transition-colors ${logListView === 'list' ? 'bg-[var(--color-border)]' : 'hover:bg-[var(--color-primary-light)]'}`}
                                             onClick={() => setLogListView('list')}
                                             title="List view"
                                         >
@@ -317,7 +317,7 @@ export default function IdeasPage({ instanceId, pageTitle }: { instanceId?: stri
                                         const sharedOwnerName = getSharedOwnerName(activeTopic, user?.id);
                                         const canManage = !sharedOwnerName;
                                         return (
-                                            <div key={log.id} className={`flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors ${canManage ? 'cursor-pointer' : ''}`} onClick={() => canManage && openEditLog(log)}>
+                                            <div key={log.id} className={`flex items-center gap-3 px-3 py-2.5 hover:bg-[var(--color-primary-light)] transition-colors ${canManage ? 'cursor-pointer' : ''}`} onClick={() => canManage && openEditLog(log)}>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-1.5 flex-wrap">
                                                         <span className="text-sm font-medium truncate" style={{ color: 'var(--color-text)' }}>{log.title}</span>
@@ -337,7 +337,7 @@ export default function IdeasPage({ instanceId, pageTitle }: { instanceId?: stri
                                                 <span className="text-[9px] w-20 shrink-0" style={{ color: 'var(--color-text-secondary)' }}>{new Date(log.createdAt).toLocaleDateString()}</span>
                                                 {canManage && (
                                                     <div className="flex items-center gap-1 w-20 shrink-0">
-                                                        <button className={`p-1 rounded transition-colors ${log.pinToDashboard ? 'text-amber-500 bg-amber-50' : 'text-gray-400 hover:bg-amber-50 hover:text-amber-500'}`} title="Pin" onClick={(e) => { e.stopPropagation(); togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard }); }}><Pin className="w-3.5 h-3.5" /></button>
+                                                        <button className={`p-1 rounded transition-colors ${log.pinToDashboard ? 'text-amber-500 bg-amber-50' : 'text-[var(--color-text-secondary)] hover:bg-amber-50 hover:text-amber-500'}`} title="Pin" onClick={(e) => { e.stopPropagation(); togglePinLogMut.mutate({ id: log.id, pinToDashboard: !log.pinToDashboard }); }}><Pin className="w-3.5 h-3.5" /></button>
                                                         <button className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={(e) => { e.stopPropagation(); openEditLog(log); }}><Pencil className="w-3.5 h-3.5" /></button>
                                                         <button className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete idea log?')) deleteLogMut.mutate(log.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                                     </div>
@@ -389,7 +389,7 @@ export default function IdeasPage({ instanceId, pageTitle }: { instanceId?: stri
 
                                         <div className="mt-4 flex flex-wrap gap-1.5">
                                             {(log.tags || []).map((tag: string) => (
-                                                <span key={tag} className="text-[9px] font-medium px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 flex items-center gap-1"><Tag className="w-2 h-2" /> {tag}</span>
+                                                <span key={tag} className="text-[9px] font-medium px-1.5 py-0.5 rounded-md bg-[var(--color-bg)] text-[var(--color-text-secondary)] flex items-center gap-1"><Tag className="w-2 h-2" /> {tag}</span>
                                             ))}
                                         </div>
 
@@ -464,7 +464,7 @@ export default function IdeasPage({ instanceId, pageTitle }: { instanceId?: stri
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeTopicModal}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={closeTopicModal}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createTopicMut.isPending || updateTopicMut.isPending}>{editingTopic ? 'Save' : 'Create Topic'}</button>
@@ -528,7 +528,7 @@ export default function IdeasPage({ instanceId, pageTitle }: { instanceId?: stri
                                 </div>
                                 <div className="flex flex-wrap gap-2 mt-3">
                                     {logForm.tags.map((tag) => (
-                                        <span key={tag} className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-red-50 hover:text-red-500 cursor-pointer transition-colors flex items-center gap-1" onClick={() => removeTag(tag)}>{tag} <X className="w-3 h-3" /></span>
+                                        <span key={tag} className="text-xs px-2 py-1 rounded bg-[var(--color-bg)] hover:bg-red-50 hover:text-red-500 cursor-pointer transition-colors flex items-center gap-1" onClick={() => removeTag(tag)}>{tag} <X className="w-3 h-3" /></span>
                                     ))}
                                 </div>
                             </div>
@@ -550,7 +550,7 @@ export default function IdeasPage({ instanceId, pageTitle }: { instanceId?: stri
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeLogModal}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={closeLogModal}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createLogMut.isPending || updateLogMut.isPending}>{editingLog ? 'Save' : 'Add Log'}</button>

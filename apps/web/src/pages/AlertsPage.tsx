@@ -328,9 +328,9 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                     <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{activeTab === 'RULES' ? 'Notifications' : 'Schedule Report'}</h2>
                 </div>
                 {showTabSwitcher && (
-                    <div className="flex bg-gray-100 p-1 rounded-lg self-start sm:self-auto">
-                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'RULES' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('RULES')} style={activeTab === 'RULES' ? { color: 'var(--color-primary)' } : {}}>Notification Settings</button>
-                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'REPORTS' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('REPORTS')} style={activeTab === 'REPORTS' ? { color: 'var(--color-primary)' } : {}}>Schedule Report</button>
+                    <div className="flex bg-[var(--color-bg)] p-1 rounded-lg self-start sm:self-auto">
+                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'RULES' ? 'bg-[var(--color-surface)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} onClick={() => setActiveTab('RULES')} style={activeTab === 'RULES' ? { color: 'var(--color-primary)' } : {}}>Notification Settings</button>
+                        <button className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'REPORTS' ? 'bg-[var(--color-surface)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} onClick={() => setActiveTab('REPORTS')} style={activeTab === 'REPORTS' ? { color: 'var(--color-primary)' } : {}}>Schedule Report</button>
                     </div>
                 )}
             </div>
@@ -347,16 +347,16 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Notification Rules</h3>
                         <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1 p-0.5 bg-gray-100 rounded-lg">
-                                <button className={`p-1 rounded-md transition-all ${!rulesListView ? 'bg-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} onClick={() => setRulesListView(false)} title="Grid view"><LayoutGrid className="w-3.5 h-3.5" /></button>
-                                <button className={`p-1 rounded-md transition-all ${rulesListView ? 'bg-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} onClick={() => setRulesListView(true)} title="List view"><List className="w-3.5 h-3.5" /></button>
+                            <div className="flex items-center gap-1 p-0.5 bg-[var(--color-bg)] rounded-lg">
+                                <button className={`p-1 rounded-md transition-all ${!rulesListView ? 'bg-[var(--color-surface)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} onClick={() => setRulesListView(false)} title="Grid view"><LayoutGrid className="w-3.5 h-3.5" /></button>
+                                <button className={`p-1 rounded-md transition-all ${rulesListView ? 'bg-[var(--color-surface)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} onClick={() => setRulesListView(true)} title="List view"><List className="w-3.5 h-3.5" /></button>
                             </div>
                             <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateRule}><Plus className="w-3.5 h-3.5" /> New Notification</button>
                         </div>
                     </div>
 
                     {rulesLoading ? (
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[...Array(3)].map((_, i) => <div key={i} className="card h-40 animate-pulse bg-gray-50" />)}</div>
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[...Array(3)].map((_, i) => <div key={i} className="card h-40 animate-pulse bg-[var(--color-bg)]" />)}</div>
                     ) : rulesListView ? (
                         <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
                             <div className="flex items-center gap-3 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
@@ -368,12 +368,12 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 <span className="w-20 shrink-0">Actions</span>
                             </div>
                             {applySortStr(rules || [], rulesSort, (r, col) => col === 'name' ? r.name : col === 'module' ? r.moduleType : col === 'status' ? String(r.active) : '').map((rule: any) => (
-                                <div key={rule.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${!rule.active ? 'opacity-60' : ''}`} onClick={() => openEditRule(rule)}>
+                                <div key={rule.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-[var(--color-primary-light)] transition-colors ${!rule.active ? 'opacity-60' : ''}`} onClick={() => openEditRule(rule)}>
                                     <Bell className="w-3.5 h-3.5 shrink-0" style={{ color: rule.active ? 'var(--color-primary)' : undefined }} />
                                     <span className="font-medium text-sm flex-1 line-clamp-1" style={{ color: 'var(--color-text)' }}>{rule.name}</span>
                                     <span className="text-[10px] font-medium uppercase w-20 shrink-0" style={{ color: 'var(--color-primary)' }}>{rule.moduleType}</span>
                                     <div className="w-16 shrink-0">
-                                        <button className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${rule.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`} onClick={() => toggleRuleMut.mutate({ id: rule.id, active: !rule.active })}>
+                                        <button className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${rule.active ? 'bg-emerald-50 text-emerald-600' : 'bg-[var(--color-border)] text-[var(--color-text-secondary)]'}`} onClick={() => toggleRuleMut.mutate({ id: rule.id, active: !rule.active })}>
                                             {rule.active ? 'ON' : 'OFF'}
                                         </button>
                                     </div>
@@ -386,7 +386,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                     </span>
                                     <div className="flex items-center gap-1 w-20 shrink-0" onClick={(e) => e.stopPropagation()}>
                                         <button className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={() => openEditRule(rule)}><Pencil className="w-3.5 h-3.5" /></button>
-                                        <button className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate" onClick={() => duplicateRule(rule)}><Copy className="w-3.5 h-3.5" /></button>
+                                        <button className="p-1 rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-text)] transition-colors" title="Duplicate" onClick={() => duplicateRule(rule)}><Copy className="w-3.5 h-3.5" /></button>
                                         <button className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete" onClick={() => { if (confirm('Delete rule?')) deleteRuleMut.mutate(rule.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                     </div>
                                 </div>
@@ -397,15 +397,15 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                             {(rules || []).map((rule: any) => (
                                 <div
                                     key={rule.id}
-                                    className={`card p-5 group transition-all ${!rule.active ? 'opacity-60 bg-gray-50' : ''}`}
+                                    className={`card p-5 group transition-all ${!rule.active ? 'opacity-60 bg-[var(--color-bg)]' : ''}`}
                                     onClick={() => openEditRule(rule)}
                                 >
                                     <div className="flex items-start justify-between mb-4">
-                                        <div className={`p-2 rounded-lg ${!rule.active ? 'bg-gray-200' : 'bg-primary/10'}`}>
-                                            <Bell className={`w-4 h-4 ${!rule.active ? 'text-gray-400' : 'text-primary'}`} style={rule.active ? { color: 'var(--color-primary)' } : {}} />
+                                        <div className={`p-2 rounded-lg ${!rule.active ? 'bg-[var(--color-border)]' : 'bg-primary/10'}`}>
+                                            <Bell className={`w-4 h-4 ${!rule.active ? 'text-[var(--color-text-secondary)]' : 'text-primary'}`} style={rule.active ? { color: 'var(--color-primary)' } : {}} />
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <button className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${rule.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`} onClick={() => toggleRuleMut.mutate({ id: rule.id, active: !rule.active })}>
+                                            <button className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${rule.active ? 'bg-emerald-50 text-emerald-600' : 'bg-[var(--color-border)] text-[var(--color-text-secondary)]'}`} onClick={() => toggleRuleMut.mutate({ id: rule.id, active: !rule.active })}>
                                                 {rule.active ? 'ENABLED' : 'DISABLED'}
                                             </button>
                                         </div>
@@ -445,16 +445,16 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Actions</h3>
                         <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1 p-0.5 bg-gray-100 rounded-lg">
-                                <button className={`p-1 rounded-md transition-all ${!reportsListView ? 'bg-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} onClick={() => setReportsListView(false)} title="Grid view"><LayoutGrid className="w-3.5 h-3.5" /></button>
-                                <button className={`p-1 rounded-md transition-all ${reportsListView ? 'bg-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} onClick={() => setReportsListView(true)} title="List view"><List className="w-3.5 h-3.5" /></button>
+                            <div className="flex items-center gap-1 p-0.5 bg-[var(--color-bg)] rounded-lg">
+                                <button className={`p-1 rounded-md transition-all ${!reportsListView ? 'bg-[var(--color-surface)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} onClick={() => setReportsListView(false)} title="Grid view"><LayoutGrid className="w-3.5 h-3.5" /></button>
+                                <button className={`p-1 rounded-md transition-all ${reportsListView ? 'bg-[var(--color-surface)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`} onClick={() => setReportsListView(true)} title="List view"><List className="w-3.5 h-3.5" /></button>
                             </div>
                             <button className="btn-primary py-1.5 px-3 text-xs" onClick={openCreateReport}><Plus className="w-3.5 h-3.5" /> New Action</button>
                         </div>
                     </div>
 
                     {reportsLoading ? (
-                        <div className="space-y-3">{[...Array(2)].map((_, i) => <div key={i} className="card h-24 animate-pulse bg-gray-50" />)}</div>
+                        <div className="space-y-3">{[...Array(2)].map((_, i) => <div key={i} className="card h-24 animate-pulse bg-[var(--color-bg)]" />)}</div>
                     ) : reportsListView ? (
                         <div className="card divide-y" style={{ borderColor: 'var(--color-border)' }}>
                             <div className="flex items-center gap-3 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
@@ -466,12 +466,12 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                 <span className="w-20 shrink-0">Actions</span>
                             </div>
                             {applySortStr(reports || [], reportsSort, (r, col) => col === 'name' ? r.name : col === 'type' ? (REPORT_TYPE_LABELS[r.reportType] || r.reportType) : col === 'status' ? String(r.active) : '').map((report: any) => (
-                                <div key={report.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${!report.active ? 'opacity-60' : ''}`} onClick={() => openEditReport(report)}>
-                                    <FileText className={`w-3.5 h-3.5 shrink-0 ${!report.active ? 'text-gray-400' : 'text-purple-600'}`} />
+                                <div key={report.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-[var(--color-primary-light)] transition-colors ${!report.active ? 'opacity-60' : ''}`} onClick={() => openEditReport(report)}>
+                                    <FileText className={`w-3.5 h-3.5 shrink-0 ${!report.active ? 'text-[var(--color-text-secondary)]' : 'text-purple-600'}`} />
                                     <span className="font-medium text-sm flex-1 line-clamp-1" style={{ color: 'var(--color-text)' }}>{report.name}</span>
                                     <span className="text-[10px] font-medium uppercase w-28 shrink-0" style={{ color: 'var(--color-primary)' }}>{REPORT_TYPE_LABELS[report.reportType] || report.reportType}</span>
                                     <div className="w-16 shrink-0">
-                                        <button className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${report.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`} onClick={() => toggleReportMut.mutate({ id: report.id, active: !report.active })}>
+                                        <button className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${report.active ? 'bg-emerald-50 text-emerald-600' : 'bg-[var(--color-border)] text-[var(--color-text-secondary)]'}`} onClick={() => toggleReportMut.mutate({ id: report.id, active: !report.active })}>
                                             {report.active ? 'ON' : 'OFF'}
                                         </button>
                                     </div>
@@ -492,7 +492,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                     </span>
                                     <div className="flex items-center gap-1 w-20 shrink-0" onClick={(e) => e.stopPropagation()}>
                                         <button className="p-1 rounded text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Edit" onClick={() => openEditReport(report)}><Pencil className="w-3.5 h-3.5" /></button>
-                                        <button className="p-1 rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" title="Duplicate" onClick={() => duplicateReport(report)}><Copy className="w-3.5 h-3.5" /></button>
+                                        <button className="p-1 rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-text)] transition-colors" title="Duplicate" onClick={() => duplicateReport(report)}><Copy className="w-3.5 h-3.5" /></button>
                                         <button className="p-1 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete" onClick={() => { if (confirm('Delete schedule?')) deleteReportMut.mutate(report.id); }}><Trash2 className="w-3.5 h-3.5" /></button>
                                     </div>
                                 </div>
@@ -503,12 +503,12 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                             {(reports || []).map((report: any) => (
                                 <div
                                     key={report.id}
-                                    className={`card p-5 group flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${!report.active ? 'opacity-60 bg-gray-50' : ''}`}
+                                    className={`card p-5 group flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${!report.active ? 'opacity-60 bg-[var(--color-bg)]' : ''}`}
                                     onClick={() => openEditReport(report)}
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-xl ${!report.active ? 'bg-gray-200' : 'bg-purple-50'}`}>
-                                            <FileText className={`w-5 h-5 ${!report.active ? 'text-gray-400' : 'text-purple-600'}`} />
+                                        <div className={`p-3 rounded-xl ${!report.active ? 'bg-[var(--color-border)]' : 'bg-purple-50'}`}>
+                                            <FileText className={`w-5 h-5 ${!report.active ? 'text-[var(--color-text-secondary)]' : 'text-purple-600'}`} />
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
@@ -521,7 +521,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                                     {report.name}
                                                 </button>
                                                 <button
-                                                    className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${report.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}
+                                                    className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${report.active ? 'bg-emerald-50 text-emerald-600' : 'bg-[var(--color-border)] text-[var(--color-text-secondary)]'}`}
                                                     onClick={() => toggleReportMut.mutate({ id: report.id, active: !report.active })}
                                                 >
                                                     {report.active ? 'ENABLED' : 'DISABLED'}
@@ -722,7 +722,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeRuleModal}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={closeRuleModal}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createRuleMut.isPending || updateRuleMut.isPending}>
@@ -913,7 +913,7 @@ export default function AlertsPage({ forcedTab }: AlertsPageProps) {
                                     )}
                                 </div>
                                 <div className="flex gap-2 ml-auto">
-                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50" onClick={closeReportModal}>
+                                    <button type="button" className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-primary-light)]" onClick={closeReportModal}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={createReportMut.isPending || updateReportMut.isPending}>

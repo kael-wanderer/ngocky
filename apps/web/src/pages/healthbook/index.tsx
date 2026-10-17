@@ -169,9 +169,9 @@ function logTypeBadgeClass(type: string) {
         VACCINATION: 'bg-purple-100 text-purple-700',
         PRESCRIPTION: 'bg-yellow-100 text-yellow-700',
         LAB_RESULT: 'bg-cyan-100 text-cyan-700',
-        OTHER: 'bg-gray-100 text-gray-700',
+        OTHER: 'bg-[var(--color-bg)] text-[var(--color-text)]',
     };
-    return map[type] ?? 'bg-gray-100 text-gray-700';
+    return map[type] ?? 'bg-[var(--color-bg)] text-[var(--color-text)]';
 }
 
 function formatFileSize(bytes: number) {
@@ -212,7 +212,7 @@ function InfoRow({ label, value }: { label: string; value?: string | boolean | n
     if (!value && value !== false) return null;
     return (
         <div className="flex gap-2 text-sm">
-            <span className="text-gray-500 min-w-[140px]">{label}:</span>
+            <span className="text-[var(--color-text-secondary)] min-w-[140px]">{label}:</span>
             <span style={{ color: 'var(--color-text)' }}>{typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}</span>
         </div>
     );
@@ -242,13 +242,13 @@ function FileItem({ file, kind, onDelete }: { file: HealthFile; kind: 'person' |
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
                 {isImage ? <Image className="w-4 h-4 text-blue-500 flex-shrink-0" /> : <FileText className="w-4 h-4 text-red-500 flex-shrink-0" />}
                 <span className="flex-1 truncate" style={{ color: 'var(--color-text)' }} title={file.originalName}>{file.originalName}</span>
-                <span className="text-gray-400 text-xs">{formatFileSize(file.size)}</span>
-                <button onClick={handleView} className="p-1 rounded hover:bg-gray-100" title="View"><Eye className="w-3.5 h-3.5 text-gray-500" /></button>
+                <span className="text-[var(--color-text-secondary)] text-xs">{formatFileSize(file.size)}</span>
+                <button onClick={handleView} className="p-1 rounded hover:bg-[var(--color-primary-light)]" title="View"><Eye className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" /></button>
                 <button onClick={onDelete} className="p-1 rounded hover:bg-red-50" title="Delete"><X className="w-3.5 h-3.5 text-red-400" /></button>
             </div>
             {viewing && blobUrl && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onMouseDown={() => { setViewing(false); URL.revokeObjectURL(blobUrl); setBlobUrl(null); }}>
-                    <div onMouseDown={(e) => e.stopPropagation()} className="max-w-3xl max-h-[90vh] p-2 rounded-xl bg-white">
+                    <div onMouseDown={(e) => e.stopPropagation()} className="max-w-3xl max-h-[90vh] p-2 rounded-xl bg-[var(--color-surface)]">
                         <img src={blobUrl} alt={file.originalName} className="max-w-full max-h-[85vh] object-contain rounded-lg" />
                     </div>
                 </div>
@@ -287,9 +287,9 @@ function FileUploader({ url, onUploaded }: { url: string; onUploaded: () => void
         <div>
             <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="hidden" onChange={handleFile} />
             <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">JPEG, PNG, WebP, PDF · max 4 MB</span>
+                <span className="text-xs text-[var(--color-text-secondary)]">JPEG, PNG, WebP, PDF · max 4 MB</span>
                 <button onClick={() => inputRef.current?.click()} disabled={uploading}
-                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors hover:bg-[var(--color-primary-light)] disabled:opacity-50"
                     style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
                     <Upload className="w-3.5 h-3.5" />
                     {uploading ? 'Uploading…' : 'Upload file'}
@@ -359,12 +359,12 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
                 <div className="flex items-center gap-3 px-6 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
                     <HeartPulse className="w-5 h-5 text-pink-500" />
                     <h2 className="font-semibold text-base" style={{ color: 'var(--color-text)' }}>{editing ? 'Edit Person' : 'Add Person'}</h2>
-                    <button onClick={onClose} className="ml-auto p-1 rounded hover:bg-gray-100"><X className="w-4 h-4" /></button>
+                    <button onClick={onClose} className="ml-auto p-1 rounded hover:bg-[var(--color-primary-light)]"><X className="w-4 h-4" /></button>
                 </div>
                 <div className="px-6 py-4 space-y-5">
                     {/* Identity */}
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Identity</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-3">Identity</p>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="col-span-2">
                                 <label className={labelCls} style={{ color: 'var(--color-text)' }}>Full Name *</label>
@@ -422,7 +422,7 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
 
                     {/* Medical */}
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Medical Info</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-3">Medical Info</p>
                         <div className="space-y-3">
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
@@ -453,7 +453,7 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
 
                     {/* Emergency Contacts */}
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Emergency Contacts</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-3">Emergency Contacts</p>
                         {[1, 2].map((n) => (
                             <div key={n} className="grid grid-cols-3 gap-2 mb-2">
                                 <div>
@@ -477,7 +477,7 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
 
                     {/* Social Insurance */}
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Social Insurance</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-3">Social Insurance</p>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className={labelCls} style={{ color: 'var(--color-text)' }}>Insurance ID</label>
@@ -509,7 +509,7 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
 
                     {/* Work Insurance */}
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Work Insurance</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-3">Work Insurance</p>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className={labelCls} style={{ color: 'var(--color-text)' }}>Provider</label>
@@ -555,7 +555,7 @@ function PersonModal({ editing, onClose, onSaved }: { editing?: HealthPerson; on
                     {error && <p className="text-sm text-red-500">{error}</p>}
                 </div>
                 <div className="flex justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
-                    <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>Cancel</button>
+                    <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border hover:bg-[var(--color-primary-light)] transition-colors" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>Cancel</button>
                     <button onClick={handleSubmit} disabled={saving}
                         className="px-4 py-2 text-sm rounded-lg text-white font-medium disabled:opacity-50 transition-colors"
                         style={{ backgroundColor: 'var(--color-primary)' }}>
@@ -629,11 +629,11 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                     <h2 className="font-semibold text-base" style={{ color: 'var(--color-text)' }}>{editing ? 'Edit Log' : 'Add Medical Log'}</h2>
                     <div className="ml-auto flex items-center gap-2">
                         <button type="button" onClick={() => set('pinToDashboard', !(form as any).pinToDashboard)}
-                            className={`p-1.5 rounded-lg border transition-colors ${(form as any).pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-gray-200 text-gray-400 hover:text-gray-600'}`}
+                            className={`p-1.5 rounded-lg border transition-colors ${(form as any).pinToDashboard ? 'text-amber-500 border-amber-300 bg-amber-50' : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}
                             title="Pin to dashboard">
                             <Pin className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={onClose} className="p-1 rounded hover:bg-gray-100"><X className="w-4 h-4" /></button>
+                        <button onClick={onClose} className="p-1 rounded hover:bg-[var(--color-primary-light)]"><X className="w-4 h-4" /></button>
                     </div>
                 </div>
                 <div className="px-6 py-4 space-y-4">
@@ -692,8 +692,8 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                     {/* Prescription / Files */}
                     <div className="border rounded-lg p-3" style={{ borderColor: 'var(--color-border)' }}>
                         <div className="flex items-center gap-2 mb-2">
-                            <Paperclip className="w-3.5 h-3.5 text-gray-400" />
-                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Prescription / Files</span>
+                            <Paperclip className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
+                            <span className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">Prescription / Files</span>
                             {editing && (
                                 <div className="ml-auto">
                                     <FileUploader
@@ -710,7 +710,7 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                         </div>
                         {editing ? (
                             <>
-                                {files.length === 0 && <p className="text-xs text-gray-400 italic">No files attached.</p>}
+                                {files.length === 0 && <p className="text-xs text-[var(--color-text-secondary)] italic">No files attached.</p>}
                                 <div className="space-y-1.5">
                                     {files.map((f) => (
                                         <FileItem key={f.id} file={f} kind="log" onDelete={() => deleteLogFile.mutate(f.id)} />
@@ -718,7 +718,7 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                                 </div>
                             </>
                         ) : (
-                            <p className="text-xs text-gray-400 italic">Save this log first, then re-open it to upload files.</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] italic">Save this log first, then re-open it to upload files.</p>
                         )}
                     </div>
 
@@ -774,7 +774,7 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
                     {error && <p className="text-sm text-red-500">{error}</p>}
                 </div>
                 <div className="flex justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
-                    <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>Cancel</button>
+                    <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border hover:bg-[var(--color-primary-light)] transition-colors" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>Cancel</button>
                     <button onClick={handleSubmit} disabled={saving}
                         className="px-4 py-2 text-sm rounded-lg text-white font-medium disabled:opacity-50 transition-colors"
                         style={{ backgroundColor: 'var(--color-primary)' }}>
@@ -924,12 +924,12 @@ export default function HealthbookPage() {
                     </button>
                 </div>
 
-                {personsQuery.isLoading && <p className="text-sm text-gray-500">Loading…</p>}
+                {personsQuery.isLoading && <p className="text-sm text-[var(--color-text-secondary)]">Loading…</p>}
 
                 {!personsQuery.isLoading && persons.length === 0 && (
                     <div className="text-center py-16">
-                        <HeartPulse className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                        <p className="text-gray-500 text-sm">No health records yet. Add a family member to start.</p>
+                        <HeartPulse className="w-12 h-12 mx-auto mb-3 text-[var(--color-border)]" />
+                        <p className="text-[var(--color-text-secondary)] text-sm">No health records yet. Add a family member to start.</p>
                     </div>
                 )}
 
@@ -970,7 +970,7 @@ export default function HealthbookPage() {
                                 <div className="ml-auto flex gap-1" onClick={(e) => e.stopPropagation()}>
                                     {isOwner(p) && (
                                         <>
-                                            <button onClick={() => setPersonModal({ open: true, editing: p })} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Edit">
+                                            <button onClick={() => setPersonModal({ open: true, editing: p })} className="p-1.5 rounded-lg hover:bg-[var(--color-primary-light)] transition-colors" title="Edit">
                                                 <Edit2 className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
                                             </button>
                                             <button onClick={() => setDeleteConfirm({ id: p.id, kind: 'person' })} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors" title="Delete">
@@ -1002,7 +1002,7 @@ export default function HealthbookPage() {
 
     const person = personQuery.data;
 
-    if (personQuery.isLoading) return <p className="text-sm text-gray-500 p-4">Loading…</p>;
+    if (personQuery.isLoading) return <p className="text-sm text-[var(--color-text-secondary)] p-4">Loading…</p>;
     if (!person) return <p className="text-sm text-red-500 p-4">Person not found.</p>;
 
     return (
@@ -1016,7 +1016,7 @@ export default function HealthbookPage() {
                 <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{person.name}</span>
                 {isOwner(person) && (
                     <button onClick={() => setPersonModal({ open: true, editing: person })}
-                        className="ml-auto flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border hover:bg-gray-50 transition-colors"
+                        className="ml-auto flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border hover:bg-[var(--color-primary-light)] transition-colors"
                         style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
                         <Edit2 className="w-3.5 h-3.5" /> Edit Person
                     </button>
@@ -1074,8 +1074,8 @@ export default function HealthbookPage() {
                 {/* Person files */}
                 <div className="px-6 pb-4 border-t pt-4" style={{ borderColor: 'var(--color-border)' }}>
                     <div className="flex items-center gap-2">
-                        <Paperclip className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documents</span>
+                        <Paperclip className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
+                        <span className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">Documents</span>
                         {personFilesOpen && isOwner(person) && (
                             <div className="ml-auto flex items-center gap-2">
                                 <FileUploader url={`/healthbook/${person.id}/files`} onUploaded={() => qc.invalidateQueries({ queryKey: ['healthbook-person', personId] })} />
@@ -1083,15 +1083,15 @@ export default function HealthbookPage() {
                         )}
                         <button
                             onClick={() => setPersonFilesOpen(o => !o)}
-                            className="p-1 rounded hover:bg-gray-100 cursor-pointer ml-auto"
+                            className="p-1 rounded hover:bg-[var(--color-primary-light)] cursor-pointer ml-auto"
                             title={personFilesOpen ? 'Collapse' : 'Expand'}
                         >
-                            {personFilesOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                            {personFilesOpen ? <ChevronUp className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)]" />}
                         </button>
                     </div>
                     {personFilesOpen && (
                         <div className="mt-2">
-                            {(person.files ?? []).length === 0 && <p className="text-xs text-gray-400">No documents attached.</p>}
+                            {(person.files ?? []).length === 0 && <p className="text-xs text-[var(--color-text-secondary)]">No documents attached.</p>}
                             <div className="space-y-1.5">
                                 {(person.files ?? []).map((f) => (
                                     <FileItem key={f.id} file={f} kind="person" onDelete={() => deletePersonFile.mutate(f.id)} />
@@ -1121,13 +1121,13 @@ export default function HealthbookPage() {
                                 value={logSearch}
                                 onChange={(e) => setLogSearch(e.target.value)}
                                 placeholder="Search by doctor, location..."
-                                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                className="w-full text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 bg-[var(--color-surface)] text-[var(--color-text)]"
                             />
                         </div>
                         <select
                             value={logTypeFilter}
                             onChange={(e) => setLogTypeFilter(e.target.value)}
-                            className="min-w-[150px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                            className="min-w-[150px] flex-1 text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 bg-[var(--color-surface)] text-[var(--color-text)]"
                         >
                             <option value="ALL">All types</option>
                             {LOG_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -1135,28 +1135,28 @@ export default function HealthbookPage() {
                         <select
                             value={logDateFilter}
                             onChange={(e) => setLogDateFilter(e.target.value as LogDateFilter)}
-                            className="min-w-[150px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                            className="min-w-[150px] flex-1 text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 bg-[var(--color-surface)] text-[var(--color-text)]"
                         >
                             {LOG_DATE_FILTER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.value === 'ALL' ? 'All dates' : o.label}</option>)}
                         </select>
                         <select
                             value={logCostFilter}
                             onChange={(e) => setLogCostFilter(e.target.value as LogCostFilter)}
-                            className="min-w-[150px] flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                            className="min-w-[150px] flex-1 text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 bg-[var(--color-surface)] text-[var(--color-text)]"
                         >
                             {LOG_COST_FILTER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.value === 'ALL' ? 'All costs' : o.label}</option>)}
                         </select>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                         <button
-                            className={`p-1.5 rounded-md transition-colors ${logView === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                            className={`p-1.5 rounded-md transition-colors ${logView === 'grid' ? 'bg-[var(--color-border)]' : 'hover:bg-[var(--color-primary-light)]'}`}
                             onClick={() => setLogView('grid')}
                             title="Grid view"
                         >
                             <LayoutGrid className="w-3.5 h-3.5" style={{ color: 'var(--color-text-secondary)' }} />
                         </button>
                         <button
-                            className={`p-1.5 rounded-md transition-colors ${logView === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                            className={`p-1.5 rounded-md transition-colors ${logView === 'list' ? 'bg-[var(--color-border)]' : 'hover:bg-[var(--color-primary-light)]'}`}
                             onClick={() => setLogView('list')}
                             title="List view"
                         >
@@ -1166,17 +1166,17 @@ export default function HealthbookPage() {
                 </div>
             </div>
 
-            {logsQuery.isLoading && <p className="text-sm text-gray-500">Loading…</p>}
+            {logsQuery.isLoading && <p className="text-sm text-[var(--color-text-secondary)]">Loading…</p>}
 
             {!logsQuery.isLoading && allLogs.length === 0 && (
                 <div className="text-center py-10 rounded-2xl border" style={{ borderColor: 'var(--color-border)' }}>
-                    <p className="text-sm text-gray-400">No medical history yet.</p>
+                    <p className="text-sm text-[var(--color-text-secondary)]">No medical history yet.</p>
                 </div>
             )}
 
             {!logsQuery.isLoading && allLogs.length > 0 && logs.length === 0 && (
                 <div className="text-center py-10 rounded-2xl border" style={{ borderColor: 'var(--color-border)' }}>
-                    <p className="text-sm text-gray-400">No logs match the selected filter.</p>
+                    <p className="text-sm text-[var(--color-text-secondary)]">No logs match the selected filter.</p>
                 </div>
             )}
 
@@ -1185,13 +1185,13 @@ export default function HealthbookPage() {
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Location</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Doctor</th>
-                                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Cost</th>
-                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Alert</th>
-                                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">Type</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">Date</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">Location</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">Doctor</th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">Cost</th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">Alert</th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1200,7 +1200,7 @@ export default function HealthbookPage() {
                                 const notifBadges = formatLogNotificationBadges(log);
                                 return (
                                     <React.Fragment key={log.id}>
-                                        <tr className="border-b transition-colors hover:bg-gray-50/50 cursor-pointer"
+                                        <tr className="border-b transition-colors hover:bg-[var(--color-primary-light)] cursor-pointer"
                                             style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
                                             onClick={() => setLogModal({ open: true, editing: log })}>
                                             <td className="px-4 py-3">
@@ -1212,11 +1212,11 @@ export default function HealthbookPage() {
                                             <td className="px-4 py-3 text-sm text-right whitespace-nowrap">
                                                 {log.cost != null
                                                     ? <span className="font-medium text-red-500">{log.cost.toLocaleString('vi-VN')} ₫</span>
-                                                    : <span className="text-gray-400">—</span>}
+                                                    : <span className="text-[var(--color-text-secondary)]">—</span>}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center justify-center gap-1 flex-wrap">
-                                                    <Bell className={`w-3.5 h-3.5 flex-shrink-0 ${log.notificationEnabled ? 'text-red-500' : 'text-gray-300'}`} />
+                                                    <Bell className={`w-3.5 h-3.5 flex-shrink-0 ${log.notificationEnabled ? 'text-red-500' : 'text-[var(--color-border)]'}`} />
                                                     {notifBadges.map((b, i) => (
                                                         <span key={i} className="text-xs px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium whitespace-nowrap">{b}</span>
                                                     ))}
@@ -1227,8 +1227,8 @@ export default function HealthbookPage() {
                                                     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                                         {isOwner(log) && (
                                                             <>
-                                                                <button onClick={() => setLogModal({ open: true, editing: log })} className="p-1 rounded hover:bg-gray-100" title="Edit">
-                                                                    <Edit2 className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+                                                                <button onClick={() => setLogModal({ open: true, editing: log })} className="p-1 rounded hover:bg-[var(--color-primary-light)]" title="Edit">
+                                                                    <Edit2 className="w-3.5 h-3.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text)]" />
                                                                 </button>
                                                                 <button onClick={() => handleDuplicateLog(log)} className="p-1 rounded hover:bg-blue-50" title="Duplicate">
                                                                     <Copy className="w-3.5 h-3.5 text-blue-500 hover:text-blue-600" />
@@ -1239,8 +1239,8 @@ export default function HealthbookPage() {
                                                             </>
                                                         )}
                                                     </div>
-                                                    <button onClick={(e) => { e.stopPropagation(); toggleLog(log.id); }} className="p-1 rounded hover:bg-gray-100 cursor-pointer" title={expanded ? 'Collapse' : 'Expand'}>
-                                                        {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                                    <button onClick={(e) => { e.stopPropagation(); toggleLog(log.id); }} className="p-1 rounded hover:bg-[var(--color-primary-light)] cursor-pointer" title={expanded ? 'Collapse' : 'Expand'}>
+                                                        {expanded ? <ChevronUp className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)]" />}
                                                     </button>
                                                 </div>
                                             </td>
@@ -1251,34 +1251,34 @@ export default function HealthbookPage() {
                                                     <div className="space-y-2">
                                                         {log.symptoms && (
                                                             <div className="space-y-1">
-                                                                <p className="text-sm text-gray-500">Symptoms:</p>
+                                                                <p className="text-sm text-[var(--color-text-secondary)]">Symptoms:</p>
                                                                 <div className="rich-text text-sm" style={{ color: 'var(--color-text)' }} dangerouslySetInnerHTML={{ __html: toRichTextHtml(log.symptoms) }} />
                                                             </div>
                                                         )}
                                                         {log.description && (
                                                             <div className="space-y-1">
-                                                                <p className="text-sm text-gray-500">Diagnosis / Notes:</p>
+                                                                <p className="text-sm text-[var(--color-text-secondary)]">Diagnosis / Notes:</p>
                                                                 <div className="rich-text text-sm" style={{ color: 'var(--color-text)' }} dangerouslySetInnerHTML={{ __html: toRichTextHtml(log.description) }} />
                                                             </div>
                                                         )}
                                                         {log.prescription && (
                                                             <div className="space-y-1">
-                                                                <p className="text-sm text-gray-500">Prescription:</p>
+                                                                <p className="text-sm text-[var(--color-text-secondary)]">Prescription:</p>
                                                                 <div className="rich-text text-sm" style={{ color: 'var(--color-text)' }} dangerouslySetInnerHTML={{ __html: toRichTextHtml(log.prescription) }} />
                                                             </div>
                                                         )}
                                                         {log.nextCheckupDate && <InfoRow label="Next Checkup" value={format(new Date(log.nextCheckupDate), 'MMM d, yyyy')} />}
                                                         <div className="pt-3 border-t mt-2" style={{ borderColor: 'var(--color-border)' }}>
                                                             <div className="flex items-center gap-2 mb-3">
-                                                                <Paperclip className="w-3.5 h-3.5 text-gray-400" />
-                                                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Prescription / Files</span>
+                                                                <Paperclip className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
+                                                                <span className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">Prescription / Files</span>
                                                                 {isOwner(log) && (
                                                                     <div className="ml-auto">
                                                                         <FileUploader url={`/healthbook/${personId}/logs/${log.id}/files`} onUploaded={() => qc.invalidateQueries({ queryKey: ['healthbook-logs', personId] })} />
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            {log.files.length === 0 && <p className="text-xs text-gray-400 italic">No files attached — upload prescriptions or lab results here.</p>}
+                                                            {log.files.length === 0 && <p className="text-xs text-[var(--color-text-secondary)] italic">No files attached — upload prescriptions or lab results here.</p>}
                                                             <div className="space-y-1.5">
                                                                 {log.files.map((f) => (
                                                                     <FileItem key={f.id} file={f} kind="log" onDelete={() => deleteLogFile.mutate(f.id)} />
@@ -1333,7 +1333,7 @@ export default function HealthbookPage() {
                                     <div className="flex items-center gap-2">
                                         {log.cost != null && <span className="text-xs font-semibold text-red-500">{log.cost.toLocaleString('vi-VN')} ₫</span>}
                                         {log.files.length > 0 && (
-                                            <span className="flex items-center gap-0.5 text-xs text-gray-400">
+                                            <span className="flex items-center gap-0.5 text-xs text-[var(--color-text-secondary)]">
                                                 <Paperclip className="w-3 h-3" />{log.files.length}
                                             </span>
                                         )}
@@ -1343,8 +1343,8 @@ export default function HealthbookPage() {
                                     </div>
                                     {isOwner(log) && (
                                         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                            <button onClick={() => setLogModal({ open: true, editing: log })} className="p-1 rounded hover:bg-gray-100" title="Edit">
-                                                <Edit2 className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+                                            <button onClick={() => setLogModal({ open: true, editing: log })} className="p-1 rounded hover:bg-[var(--color-primary-light)]" title="Edit">
+                                                <Edit2 className="w-3.5 h-3.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text)]" />
                                             </button>
                                             <button onClick={() => handleDuplicateLog(log)} className="p-1 rounded hover:bg-blue-50" title="Duplicate">
                                                 <Copy className="w-3.5 h-3.5 text-blue-500 hover:text-blue-600" />
@@ -1389,7 +1389,7 @@ function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onCon
             <div onMouseDown={(e) => e.stopPropagation()} className="rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4" style={{ backgroundColor: 'var(--color-surface)' }}>
                 <p className="text-sm mb-4" style={{ color: 'var(--color-text)' }}>{message}</p>
                 <div className="flex gap-3 justify-end">
-                    <button onClick={onCancel} className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>Cancel</button>
+                    <button onClick={onCancel} className="px-4 py-2 text-sm rounded-lg border hover:bg-[var(--color-primary-light)]" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>Cancel</button>
                     <button onClick={onConfirm} className="px-4 py-2 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600">Delete</button>
                 </div>
             </div>
