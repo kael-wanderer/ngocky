@@ -25,3 +25,7 @@ apps/desktop/src-tauri/resources/prisma/
 apps/desktop/src-tauri/resources/migrations/
 apps/api/prisma/desktop-client/
 apps/api/prisma/schema.desktop.prisma
+
+# Local agent/tool state
+.superpowers/brainstorm/
+data/
