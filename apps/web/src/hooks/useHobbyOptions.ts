@@ -24,7 +24,10 @@ export function useHobbyOptions(): { options: HobbyOptions; usage: HobbyUsage; i
 }
 
 export function labelsOf(options: HobbyOptions, field: HobbyField): string[] {
-    return options[field].map(({ label }) => label);
+    const labels = options[field].map(({ label }) => label);
+    if (field !== 'tag') return labels;
+    return [...labels.filter((label) => label.trim().toLowerCase() === 'stock'),
+        ...labels.filter((label) => label.trim().toLowerCase() !== 'stock')];
 }
 
 export function colorOf(options: HobbyOptions, field: HobbyField, label: string): string | undefined {
