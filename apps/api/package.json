@@ -14,6 +14,7 @@
         "build:sidecar": "node scripts/build-sidecar.mjs",
         "package:sidecar": "scripts/package-sidecar.sh",
         "lint": "tsc --noEmit",
+        "pretest": "node scripts/generate-test-schema.mjs && prisma generate --schema prisma/schema.test.prisma",
         "test": "vitest run"
     },
     "dependencies": {
