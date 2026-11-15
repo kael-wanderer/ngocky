@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NgốcKý: improvements and feature proposals</title>
+<style>
+  :root {
+    --bg: #f7f6f2; --surface: #ffffff; --text: #1d1f23; --muted: #5d6470;
+    --border: #dedbd2; --accent: #2f6f5e; --accent-soft: #e3efea;
+    --warn: #9a5b00; --warn-soft: #fbf0d9; --danger: #a3302a; --danger-soft: #f9e3e1;
+    --code: #efece4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15171a; --surface: #1d2024; --text: #e8e6e1; --muted: #a0a6b0;
+      --border: #32363d; --accent: #7cc4ae; --accent-soft: #1f3a33;
+      --warn: #e5b566; --warn-soft: #3a2f18; --danger: #ee8f88; --danger-soft: #3d2221;
+      --code: #272b31;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 40px 16px 80px; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; }
+  h2 { font-size: 22px; margin: 48px 0 12px; padding-top: 16px; border-top: 1px solid var(--border); }
+  h3 { font-size: 17px; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .lede { color: var(--muted); margin-bottom: 24px; }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: 0.88em; overflow-wrap: anywhere; }
+  ul { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin: 0 0 16px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+  .tag { font-size: 12px; padding: 2px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .tag.warn { background: var(--warn-soft); color: var(--warn); }
+  .tag.danger { background: var(--danger-soft); color: var(--danger); }
+  dl { margin: 0; }
+  dt { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 10px; }
+  dd { margin: 2px 0 0; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  .note { background: var(--accent-soft); padding: 12px 16px; border-radius: 8px; margin: 0 0 16px; }
+  .note.warn { background: var(--warn-soft); }
+  nav a { color: var(--accent); margin-right: 14px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>NgốcKý: improvements and feature proposals</h1>
+<p class="lede">Written 2026-11-15, after a full workspace review and a security and hygiene release (commits <code>5ec5185</code> and <code>a63ec5c</code> on <code>main</code>, deployed to production). This is a proposal list for the owner to pick from. Nothing here is decided or scheduled.</p>
+
+<nav>
+  <a href="#reader">For the next session</a>
+  <a href="#backlog">Open issues</a>
+  <a href="#improve">Improve existing</a>
+  <a href="#new">New features</a>
+  <a href="#order">Suggested order</a>
+  <a href="#decisions">Owner decisions</a>
+</nav>
+
+<h2 id="reader">1. Context for whoever picks this up</h2>
+
+<p>NgốcKý is a family productivity app: an npm-workspaces monorepo with an Express + Prisma + Zod API (<code>apps/api</code>), a React + Vite + Tailwind web app (<code>apps/web</code>), and a Tauri desktop shell (<code>apps/desktop</code>) that runs the API as a bundled sidecar. Production is PostgreSQL on a VPS behind Docker; the desktop app can also run offline on SQLite or against a shared PostgreSQL. A Telegram assistant and reminders run through n8n, or through an in-process scheduler on desktop.</p>
+
+<div class="note">
+  <strong>How to work in this repo.</strong> Read the repo <code>CLAUDE.md</code> first; it was corrected on 2026-11-15 and is accurate. Typecheck with <code>npm run lint</code>. API tests: <code>npm test -w apps/api</code> (SQLite, isolated). Web tests: <code>npm test -w apps/web</code>. A push to <code>main</code> runs a <code>verify</code> job (typecheck and both suites) and then deploys to production, so never push a half-finished change to <code>main</code>.
+</div>
+
+<p>State at the time of writing: API 134 tests passing, web 30 passing, both apps typecheck with zero errors.</p>
+
+<p>Two owner rules apply to everything below. A spec for anything with a UI must include an HTML mockup of its screens. Durable documents go under <code>docs/</code> as self-contained HTML.</p>
+
+<p>Every item below states what was checked in the code. Where it says "not checked", confirm the current state before designing.</p>
+
+<h2 id="backlog">2. Open issues left from the review</h2>
+<p>These were found on 2026-11-15 and deliberately not fixed, because each needs a decision, a design, or a test environment that was not available. They are defects and risks, separate from the feature ideas in sections 3 and 4.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Issue</th><th>Where</th><th>Why it was left</th></tr></thead>
+<tbody>
+<tr><td>Production PostgreSQL is published on all interfaces</td><td><code>docker-compose.prod.yml</code>, the <code>ports: "5432:5432"</code> entry</td><td>The desktop "shared PostgreSQL" mode may depend on it. Owner must say whether any desktop connects to the VPS database. The host and user name were in git history until this release, so rotating the database password is worth considering either way.</td></tr>
+<tr><td>About 45 <code>window.confirm</code>, <code>confirm</code> and <code>alert</code> calls</td><td>Most pages under <code>apps/web/src/pages</code></td><td>Project notes record that <code>window.confirm</code> does nothing inside the Tauri webview, so delete confirmations do not work on desktop. Needs a shared dialog component (item 3.2).</td></tr>
+<tr><td>Server-side timezone handling</td><td><code>apps/api/src/routes/service.ts</code>, <code>apps/api/src/utils/reminders.ts</code></td><td>Mixes a hardcoded UTC+7 with server-local time, and ignores the stored <code>user.timezone</code>. Changes when notifications fire, so it needs its own tested change (item 3.3).</td></tr>
+<tr><td>Access token kept in <code>localStorage</code></td><td><code>apps/web/src/api/client.ts</code>, <code>apps/web/src/stores/auth.ts</code></td><td>The stored-XSS path that made this dangerous is closed. Moving the token to memory changes session restore, which is fragile in the desktop webview.</td></tr>
+<tr><td>Hardcoded personal email addresses grant edit rights</td><td><code>apps/api/src/routes/cakeos.ts</code>, <code>CAKEO_EDITOR_EMAILS</code></td><td>Moving them to configuration or a database flag needs the value set in production first, or those users lose access.</td></tr>
+<tr><td>Desktop n8n scheduler mode has no key</td><td><code>apps/desktop/src-tauri/src/lib.rs</code>, <code>apps/api/src/config/env.ts</code></td><td><code>ASSISTANT_API_KEY</code> no longer has a public default; the sidecar generates a random one per start. The in-process scheduler works, but an external n8n cannot authenticate until the desktop config has a key field.</td></tr>
+<tr><td>Desktop release workflow does not build the sidecar</td><td><code>.github/workflows/desktop.yml</code>, <code>apps/api/scripts/package-sidecar.sh</code></td><td>The Tauri bundle needs <code>binaries/ngocky-api</code>, which is gitignored and never built in CI. The Windows matrix entry cannot work with the bash-only script.</td></tr>
+<tr><td>Tauri CSP is disabled; sidecar may be started with any arguments</td><td><code>apps/desktop/src-tauri/tauri.conf.json</code>, <code>capabilities/default.json</code></td><td>Could not be tested without a desktop build.</td></tr>
+<tr><td>Desktop secrets stored as plain JSON</td><td><code>lib.rs</code>, <code>desktop-config.json</code> in the app data directory</td><td>JWT secrets, database URL and Telegram token. Should move to the OS keychain.</td></tr>
+<tr><td>Containers run as root on floating image tags; Node 20 base image</td><td><code>apps/api/Dockerfile</code>, <code>apps/web/Dockerfile</code></td><td>Running as a non-root user would break writes to the existing uploads volume without a one-time ownership fix on the VPS.</td></tr>
+<tr><td>Many routes skip the <code>validate()</code> middleware</td><td><code>foods.ts</code>, <code>cakeos.ts</code>, <code>reports/index.ts</code>, <code>service.ts</code>, <code>dashboard.ts</code>, the profile route in <code>settings.ts</code></td><td>Mechanical but wide. Reported by the review; the full list was not re-verified route by route.</td></tr>
+<tr><td>Scheduler can re-send a notification</td><td><code>apps/api/src/services/scheduler.ts</code></td><td>It sends to Telegram, then marks the item as sent, and does not check that the mark succeeded (item 3.4).</td></tr>
+<tr><td>Reports on day 29 to 31 never fire in shorter months</td><td><code>apps/api/src/routes/service.ts</code>, the due-reports logic</td><td>Reported by the review, not re-verified.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="improve">3. Improvements to existing features</h2>
+
+<div class="card">
+  <h3>3.1 Budgets in Expenses</h3>
+  <div class="meta"><span class="tag">Effort: small to medium</span><span class="tag">Backend exists</span></div>
+  <dl>
+    <dt>Current state (checked)</dt>
+    <dd>The <code>BudgetSetting</code> model and CRUD routes exist at <code>/api/settings/budgets</code> (category, period of weekly, monthly or yearly, amount, active). They gained validation and ownership checks in this release. The web app never calls them: there is no budget screen. Separately, the Alerts page offers a "Budget Exceeded" rule based on a single threshold number, unrelated to these per-category budgets.</dd>
+    <dt>Proposal</dt>
+    <dd>A budget section in Expenses: set a budget per category and period, and show spent versus budget as a bar per category for the current period. Notify at 80% and at 100%, using the existing alert and notification path. Decide whether the existing threshold alert should be replaced by this or kept alongside.</dd>
+    <dt>Things to settle in the spec</dt>
+    <dd>Whether a budget covers personal expenses, shared ones, or both (expenses have a scope and an <code>isShared</code> flag). Whether categories come from a fixed list or free text. Amounts are integer VND, formatted with <code>vi-VN</code>; the model currently stores a float.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>3.2 Shared confirm dialog and toast messages</h3>
+  <div class="meta"><span class="tag">Effort: medium</span><span class="tag danger">Fixes desktop</span></div>
+  <dl>
+    <dt>Current state (checked)</dt>
+    <dd>About 45 native dialog calls across roughly 15 pages, no shared confirm component, and no toast library. Errors surface three different ways: <code>alert()</code>, inline state, or not at all.</dd>
+    <dt>Proposal</dt>
+    <dd>One promise-based <code>confirmDialog()</code> and one toast helper, both styled with the theme CSS variables. Replace every native call. Handlers become <code>async</code> and await the confirmation.</dd>
+    <dt>Risk</dt>
+    <dd>Wide but mechanical. There are almost no web tests for these pages, so add a test for the dialog itself and check a delete flow on each page by hand, on web and on a desktop build.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>3.3 Per-user timezone, end to end</h3>
+  <div class="meta"><span class="tag">Effort: medium</span><span class="tag warn">Changes notification timing</span></div>
+  <dl>
+    <dt>Current state (checked in part)</dt>
+    <dd>Users have a <code>timezone</code> field (default <code>Asia/Ho_Chi_Minh</code>) that is only read and written by the Settings page. On the server, day and month boundaries use server-local time, which is UTC in the Docker image, while schedule times use a hardcoded +7 offset. On the web, the "today" defaults in Goals and Healthbook were fixed in this release to use the browser's local date.</dd>
+    <dt>Proposal</dt>
+    <dd>One server helper that returns start of day, week, month and period for a given user timezone, used by due-notifications, due-reports, goal period rollover and the dashboard buckets. Tests should pin the clock at 23:30 and 00:30 Vietnam time and at a month boundary.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>3.4 Reliable notification delivery</h3>
+  <div class="meta"><span class="tag">Effort: medium</span></div>
+  <dl>
+    <dt>Current state (reported by the review, not re-verified line by line)</dt>
+    <dd>The scheduler sends first and marks as sent afterwards. Each poll loads every active goal, open task, calendar event and housework item for all users before checking whether any rule is due.</dd>
+    <dt>Proposal</dt>
+    <dd>Claim an item before sending, as scheduled reports already do with <code>lastSentAt</code>. Record each attempt (channel, result, error) in a delivery log and show it on the Notifications page. Only load data for rules that are actually due.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>3.5 Report export</h3>
+  <div class="meta"><span class="tag">Effort: small</span></div>
+  <dl>
+    <dt>Current state (checked)</dt>
+    <dd>The API has CSV export for tasks and expenses (<code>/api/reports/export/tasks</code> and <code>/export/expenses</code>). The Reports page prints by copying its own HTML into a new window. The unused PDF libraries were removed from the web app in this release.</dd>
+    <dt>Proposal</dt>
+    <dd>Confirm whether the CSV endpoints are reachable from the UI and add buttons if not. Extend CSV to funds and goals. For PDF, a print stylesheet on the Reports page is cheaper and more faithful than generating a PDF in code.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>3.6 Break up the largest pages</h3>
+  <div class="meta"><span class="tag">Effort: large, can be done one page at a time</span></div>
+  <dl>
+    <dt>Current state (checked)</dt>
+    <dd>Reports is about 2,400 lines in one file, Goals 1,700, Healthbook 1,400, Projects and Assets about 1,200 each. The web app has around 400 uses of <code>any</code>.</dd>
+    <dt>Proposal</dt>
+    <dd>No user-visible change. Split each page into a data hook, a form, and list or detail components before adding features to it. Do this as the first step of whichever feature touches the page, not as a standalone project.</dd>
+  </dl>
+</div>
+
+<h2 id="new">4. New features</h2>
+
+<div class="card">
+  <h3>4.1 Faster capture through the Telegram assistant</h3>
+  <div class="meta"><span class="tag">Effort: medium</span><span class="tag">Highest daily value</span></div>
+  <dl>
+    <dt>Current state (checked)</dt>
+    <dd>The assistant already parses intents including <code>create_expense</code>, <code>create_task</code>, <code>goal_checkin</code>, <code>create_health_log</code>, and several queries (<code>apps/api/src/services/assistant/</code>). It uses a language model for parsing with a keyword fallback. The web app has a compact amount parser that understands <code>45k</code> and <code>1.2M</code> (<code>apps/web/src/utils/amount.ts</code>); whether the assistant accepts the same shorthand was not checked.</dd>
+    <dt>Proposal</dt>
+    <dd>Make the short forms dependable without a model call: "cafe 45k" creates an expense, "remind dentist Friday 9am" creates a calendar event with a reminder. Add an undo reply for the last action. Then add receipt photos: the user sends a picture, the model extracts amount, date and merchant, and the user confirms before anything is saved. The pending-action mechanism for confirmation already exists.</dd>
+    <dt>Things to settle</dt>
+    <dd>Whether calendar event creation is already an intent (not seen in the fallback list). Cost and privacy of sending receipt images to the model provider.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>4.2 Recurring expenses and subscriptions</h3>
+  <div class="meta"><span class="tag">Effort: medium</span></div>
+  <dl>
+    <dt>Current state (checked)</dt>
+    <dd><code>Expense</code> has a <code>recurring</code> boolean that the API accepts, but no code generates the next occurrence; the only uses found are the schema field and its validator. Calendar events and housework already have real repeat logic (<code>repeatFrequency</code>, <code>repeatEndType</code>, <code>repeatUntil</code>).</dd>
+    <dt>Proposal</dt>
+    <dd>A recurring expense definition (amount, category, frequency, next due date, end date) that creates the expense each period and reminds a set number of days before. A subscriptions view showing monthly and yearly totals. Reuse the repeat fields and enums from calendar events for consistency. Works best together with budgets (3.1).</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>4.3 Weekly family digest</h3>
+  <div class="meta"><span class="tag">Effort: small to medium</span></div>
+  <dl>
+    <dt>Current state (checked)</dt>
+    <dd>Scheduled reports exist with daily, weekly and monthly frequencies, a plain-text formatter (<code>apps/api/src/services/reportFormatter.ts</code>), and Telegram delivery with duplicate protection.</dd>
+    <dt>Proposal</dt>
+    <dd>A ready-made report type, one message per person: overdue items, this week's events, housework due, goal progress, and spending against budget. Offer it as a one-click preset on the Scheduled Reports page.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>4.4 Global search</h3>
+  <div class="meta"><span class="tag">Effort: medium</span></div>
+  <dl>
+    <dt>Current state (checked)</dt>
+    <dd>No cross-module search endpoint or UI was found.</dd>
+    <dt>Proposal</dt>
+    <dd>One search box in the layout that queries tasks, project tasks, ideas, learning items, health logs, assets, expenses and calendar events, grouped by module. Every query must apply the same ownership and sharing rules as the module's own list route. A helper for case-insensitive matching across PostgreSQL and SQLite already exists in <code>apps/api/src/config/database.ts</code>.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>4.5 Backup and export</h3>
+  <div class="meta"><span class="tag">Effort: medium</span><span class="tag warn">Protects everything else</span></div>
+  <dl>
+    <dt>Current state (checked in part)</dt>
+    <dd>No backup code was found in the repo. Whether the VPS has its own backup job outside the repo is not known. Project notes record one disk-full incident on the VPS in July 2026. The desktop SQLite mode has a "reset data" button but no export.</dd>
+    <dt>Proposal</dt>
+    <dd>Three parts, in this order: a scheduled <code>pg_dump</code> on the VPS with retention and an off-server copy; a per-user "export my data" download as JSON plus uploaded files; a backup and restore button for the desktop SQLite file. Include a written and tested restore procedure, since an untested backup is not a backup.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>4.6 Calendar feed for phones</h3>
+  <div class="meta"><span class="tag">Effort: small</span></div>
+  <dl>
+    <dt>Current state (checked)</dt>
+    <dd>No ICS or calendar-feed code was found.</dd>
+    <dt>Proposal</dt>
+    <dd>A read-only ICS URL per user, with a long random token that can be regenerated, so events appear in the phone's own calendar app. Read-only avoids all two-way sync problems. Hosted mode only; a desktop-only install has no public address.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>4.7 Medication and vaccination schedules in Healthbook</h3>
+  <div class="meta"><span class="tag">Effort: medium</span></div>
+  <dl>
+    <dt>Current state (checked)</dt>
+    <dd>Health logs can create a linked calendar event for the next checkup and a linked expense for the cost. There is no concept of a repeating medication or a vaccination plan.</dd>
+    <dt>Proposal</dt>
+    <dd>Per person: medications with dose, times of day and an end date, and a vaccination list with due dates. Reminders go through the shared notification fields used by other modules. Health data is sensitive, so follow the ownership pattern added in this release and keep reminder text free of medical detail on shared channels.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>4.8 Housework rotation</h3>
+  <div class="meta"><span class="tag">Effort: small to medium</span></div>
+  <dl>
+    <dt>Current state (checked)</dt>
+    <dd>Housework items have a single optional assignee and a frequency; completing a recurring item advances its next due date.</dd>
+    <dt>Proposal</dt>
+    <dd>An optional rotation list per item: on completion, the next person in the list becomes the assignee. A small fairness summary showing completed chores per person per month.</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h3>4.9 Installable web app with push notifications</h3>
+  <div class="meta"><span class="tag">Effort: medium</span></div>
+  <dl>
+    <dt>Current state (checked)</dt>
+    <dd>No web manifest or service worker; <code>apps/web/public</code> holds only the logo. The app has a configurable mobile navigation bar, so phone use is clearly intended. Fonts load from Google Fonts, which also means the desktop build needs network for them.</dd>
+    <dt>Proposal</dt>
+    <dd>Add a manifest and icons so the app can be installed to the home screen, self-host the font, and add web push as a third notification channel next to email and Telegram.</dd>
+  </dl>
+</div>
+
+<h2 id="order">5. Suggested order</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>#</th><th>Item</th><th>Reason</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>3.2 Confirm dialog and toasts</td><td>Desktop deletes are broken today, and every later UI change benefits.</td></tr>
+<tr><td>2</td><td>3.1 Budgets</td><td>Backend is already there; small, visible result.</td></tr>
+<tr><td>3</td><td>4.5 Backup, VPS part first</td><td>No feature matters if the data is lost.</td></tr>
+<tr><td>4</td><td>3.3 Timezone and 3.4 delivery reliability</td><td>Both touch the same notification code; do them together, with tests.</td></tr>
+<tr><td>5</td><td>4.1 Telegram capture</td><td>Largest gain in daily use.</td></tr>
+<tr><td>6</td><td>4.2 Recurring expenses, then 4.3 digest</td><td>Both build on budgets and reliable delivery.</td></tr>
+<tr><td>7</td><td>The rest, by preference</td><td>Search, calendar feed, health schedules, housework rotation, installable app are independent of each other.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="decisions">6. Decisions needed from the owner</h2>
+<ul>
+  <li>Does any desktop install connect to the production PostgreSQL? If not, close port 5432 to the internet. Rotate the database password in either case?</li>
+  <li>Is the desktop "n8n scheduler" mode in use by anyone? If yes, it needs a key field before the next desktop release.</li>
+  <li>Is Windows a real target for the desktop app, or can it leave the release workflow?</li>
+  <li>Budgets: personal, shared, or both? Replace the single-threshold alert or keep it?</li>
+  <li>Receipt photos: acceptable to send images to the model provider?</li>
+  <li>Is there a backup job on the VPS today that is not in this repo?</li>
+  <li>Old executed plans under <code>docs/superpowers/plans/</code> and the leftover files in <code>docs/artifacts/</code>: keep, archive, or delete?</li>
+</ul>
+
+</main>
+</body>
+</html>
