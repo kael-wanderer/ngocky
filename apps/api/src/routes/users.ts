@@ -73,9 +73,13 @@ router.patch('/:id', validate(updateUserSchema), async (req: Request, res: Respo
             if (target.role === 'OWNER' && currentUser.role !== 'OWNER') throw new ForbiddenError('Cannot modify owner');
         }
 
+        // Never pass the body straight through: a user must not change their own role.
+        const data = { ...req.body };
+        if (currentUser.userId === targetId) delete data.role;
+
         const user = await prisma.user.update({
             where: { id: targetId },
-            data: req.body,
+            data,
             select: { id: true, email: true, name: true, role: true, active: true, theme: true, notificationEnabled: true, notificationChannel: true },
         });
 

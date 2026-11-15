@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-11-15] - Security and Hygiene Review
+
+### Security
+
+- **Role escalation**: a user can no longer change their own role through `PATCH /api/users/:id`.
+- **MFA bypass**: the pre-TOTP challenge token is no longer accepted as an access token.
+- **Ownership checks**: goal check-ins, budget settings, and health log creation are scoped to the owner (or a shared record).
+- **Rate limits** on `/api/auth/verify-mfa` and `/api/auth/refresh`.
+- **Assistant API key**: no built-in default; compared in constant time. When unset, a random key is generated per start.
+- **Stored XSS**: project, idea, and health rich text is sanitized with DOMPurify before rendering.
+- **Security headers** via `helmet`; budget routes validated with Zod.
+- **Desktop sidecar** binds to `127.0.0.1` unless the scheduler mode is `n8n`.
+
+### Fixed
+
+- Parallel 401s share one token refresh instead of logging the user out.
+- "Today" defaults in Goals and Healthbook use the local date, not UTC.
+- API build no longer ignores type errors; deploys are gated on typecheck and tests.
+
+### Removed
+
+- Dead `collections` route, unused web dependencies, tracked command output, the stale `apps/api/package-lock.json`, and `docker-compose.vps.yml`.
+
 ## [2026-10-17] - Hobby Field Management
 
 ### Added

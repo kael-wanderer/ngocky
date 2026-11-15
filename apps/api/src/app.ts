@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import { config, corsOrigins } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -39,6 +40,14 @@ import healthbookRoutes from './routes/healthbook';
 const app = express();
 
 // Middleware
+app.disable('x-powered-by');
+// Security headers. This is a JSON API consumed cross-origin (web app, desktop
+// webview), so resources must stay loadable cross-origin and a document CSP
+// has nothing to protect.
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 app.use(cors({ origin: corsOrigins, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());

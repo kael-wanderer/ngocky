@@ -228,6 +228,16 @@ fn spawn_sidecar(app: &tauri::AppHandle, cfg: &DesktopConfig) -> CommandChild {
     if let Some(t) = &cfg.telegram_bot_token {
         envs.push(("TELEGRAM_BOT_TOKEN".into(), t.clone()));
     }
+    // Keep the sidecar off the LAN. Only the "n8n" scheduler mode needs outside
+    // callers (the user's own n8n polls /api/service/*), so it alone binds wide.
+    envs.push((
+        "HOST".into(),
+        if cfg.scheduler_mode.as_deref() == Some("n8n") {
+            "0.0.0.0".into()
+        } else {
+            "127.0.0.1".into()
+        },
+    ));
     let (_rx, child) = app
         .shell()
         .sidecar("ngocky-api")

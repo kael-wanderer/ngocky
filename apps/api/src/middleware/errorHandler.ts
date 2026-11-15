@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/errors';
 import { ZodError } from 'zod';
+import { config } from '../config/env';
 
 export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
     // Zod validation errors
@@ -47,7 +48,7 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
     console.error('Unhandled error:', err);
     return res.status(500).json({
         success: false,
-        message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
+        message: config.NODE_ENV === 'production' ? 'Internal server error' : err.message,
         code: 'INTERNAL_ERROR',
     });
 }

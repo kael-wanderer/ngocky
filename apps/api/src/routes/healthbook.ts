@@ -315,8 +315,13 @@ router.post('/:personId/logs', validate(createHealthLogSchema), async (req: Requ
     try {
         const personId = paramStr(req, 'personId');
         const { addExpense, addToCalendar, ...logData } = req.body;
-        const person = await prisma.healthPerson.findUnique({ where: { id: personId }, select: { name: true } });
         const userId = req.user!.userId;
+        // Logs may only be added to a person the caller owns or one that is shared.
+        const person = await prisma.healthPerson.findFirst({
+            where: { id: personId, OR: [{ userId }, { isShared: true }] },
+            select: { name: true },
+        });
+        if (!person) throw new NotFoundError('Health person not found');
         const cost = req.body.cost ? Number(req.body.cost) : 0;
 
         const log = await prisma.$transaction(async (tx) => {

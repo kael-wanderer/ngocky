@@ -26,7 +26,9 @@ export function authenticate(req: Request, _res: Response, next: NextFunction) {
 
     const token = header.slice(7);
     try {
-        const payload = jwt.verify(token, config.JWT_SECRET) as AuthPayload;
+        const payload = jwt.verify(token, config.JWT_SECRET) as AuthPayload & { stage?: string };
+        // MFA challenge tokens share the signing secret but are not access tokens.
+        if (payload.stage) throw new Error('Not an access token');
         req.user = payload;
         next();
     } catch {

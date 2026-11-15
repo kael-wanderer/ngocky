@@ -5,8 +5,8 @@ import { validate } from '../middleware/validate';
 import { sendSuccess, sendMessage } from '../utils/response';
 import { config } from '../config/env';
 import { buildOtpAuthUrl, buildQrCodeUrl, generateTotpSecret, verifyTotpCode } from '../utils/mfa';
-import { UnauthorizedError, ValidationError } from '../utils/errors';
-import { updateOwnModuleColorSchema } from '../validators/settings';
+import { NotFoundError, UnauthorizedError, ValidationError } from '../utils/errors';
+import { createBudgetSchema, updateBudgetSchema, updateOwnModuleColorSchema } from '../validators/settings';
 import { CAKEO_COLOR_MODULE, CALENDAR_COLOR_MODULE, getModuleColorSettings, resetOwnModuleColorSetting, saveOwnModuleColorSetting } from '../utils/colorSettings';
 
 const router = Router();
@@ -278,7 +278,7 @@ router.get('/budgets', async (req: Request, res: Response, next: NextFunction) =
     } catch (err) { next(err); }
 });
 
-router.post('/budgets', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/budgets', validate(createBudgetSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const budget = await prisma.budgetSetting.create({
             data: { ...req.body, userId: req.user!.userId },
@@ -287,10 +287,12 @@ router.post('/budgets', async (req: Request, res: Response, next: NextFunction) 
     } catch (err) { next(err); }
 });
 
-router.patch('/budgets/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/budgets/:id', validate(updateBudgetSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const owned = await prisma.budgetSetting.findFirst({ where: { id: req.params.id, userId: req.user!.userId } });
+        if (!owned) throw new NotFoundError('Budget');
         const budget = await prisma.budgetSetting.update({
-            where: { id: req.params.id },
+            where: { id: owned.id },
             data: req.body,
         });
         sendSuccess(res, budget);
@@ -299,7 +301,8 @@ router.patch('/budgets/:id', async (req: Request, res: Response, next: NextFunct
 
 router.delete('/budgets/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        await prisma.budgetSetting.delete({ where: { id: req.params.id } });
+        const { count } = await prisma.budgetSetting.deleteMany({ where: { id: req.params.id, userId: req.user!.userId } });
+        if (count === 0) throw new NotFoundError('Budget');
         sendMessage(res, 'Budget deleted');
     } catch (err) { next(err); }
 });

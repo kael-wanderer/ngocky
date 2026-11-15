@@ -4,6 +4,7 @@ import { authenticate, authorize } from '../middleware/auth';
 import { config } from '../config/env';
 import { sendSuccess } from '../utils/response';
 import { ValidationError } from '../utils/errors';
+import { isAssistantApiKey } from '../utils/assistantKey';
 import { getGoalPeriodEnd, getReminderCutoff, isReminderDue } from '../utils/reminders';
 
 const router = Router();
@@ -11,7 +12,7 @@ const router = Router();
 // the assistant API key; interactive OWNER/ADMIN sessions use their JWT.
 router.use((req: Request, res: Response, next: NextFunction) => {
     const key = req.headers['x-assistant-api-key'];
-    if (key && key === config.ASSISTANT_API_KEY) return next();
+    if (isAssistantApiKey(key)) return next();
     authenticate(req, res, (err?: unknown) => {
         if (err) return next(err);
         authorize('OWNER', 'ADMIN')(req, res, next);

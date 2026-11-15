@@ -10,6 +10,7 @@ import { parseCompactAmountInput } from '../../utils/amount';
 import { useAuthStore } from '../../stores/auth';
 import { useSearchParams } from 'react-router-dom';
 import { getSharedOwnerName } from '../../utils/sharedOwnership';
+import { toRichTextHtml } from '../../utils/richText';
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -156,7 +157,7 @@ function DraggableTaskCard({ task, todayStart, userId, onOpen, onDuplicate, onTo
                 <div
                     className="rich-text text-xs mt-2 leading-5 overflow-hidden"
                     style={{ color: 'var(--color-text-secondary)' }}
-                    dangerouslySetInnerHTML={{ __html: task.description }}
+                    dangerouslySetInnerHTML={{ __html: toRichTextHtml(task.description) }}
                 />
             )}
             <div className="flex items-center gap-2 flex-wrap mt-2">
@@ -1153,7 +1154,7 @@ export default function ProjectsPage({ instanceId, pageTitle }: ProjectsPageProp
                                         <td className="px-4 py-2.5">
                                             <span className={`font-medium text-sm ${t.status === 'DONE' || t.status === 'ARCHIVED' ? 'line-through opacity-50' : ''}`} style={{ color: 'var(--color-text)' }}>{t.title}</span>
                                             {t.description && (
-                                                <div className="rich-text text-xs mt-1 leading-5" style={{ color: 'var(--color-text-secondary)' }} dangerouslySetInnerHTML={{ __html: t.description }} />
+                                                <div className="rich-text text-xs mt-1 leading-5" style={{ color: 'var(--color-text-secondary)' }} dangerouslySetInnerHTML={{ __html: toRichTextHtml(t.description) }} />
                                             )}
                                             {(() => {
                                                 const notifBadges = formatProjectTaskNotification(t);

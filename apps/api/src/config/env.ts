@@ -22,8 +22,21 @@ function devSecret(name: 'JWT_SECRET' | 'JWT_REFRESH_SECRET') {
     return generated;
 }
 
+// No well-known default: when unset, each process gets a random key. The desktop
+// sidecar's in-process scheduler still works; n8n needs the key set explicitly.
+function assistantApiKey() {
+    const existing = emptyToUndefined(rawEnv.ASSISTANT_API_KEY);
+    if (existing) return existing;
+    if (nodeEnv !== 'test') {
+        console.warn('⚠️ ASSISTANT_API_KEY is unset; generated an ephemeral key. Set it to let n8n call the assistant and service routes.');
+    }
+    return crypto.randomBytes(32).toString('hex');
+}
+
 const envSchema = z.object({
     APP_PORT: z.string().default('3001'),
+    // Bind address. The desktop shell sets 127.0.0.1 so the sidecar is not exposed to the LAN.
+    HOST: z.string().default('0.0.0.0'),
     APP_VERSION: z.string().default('1.1.0'),
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
     DATABASE_URL: z.string(),
@@ -35,7 +48,7 @@ const envSchema = z.object({
     OWNER_EMAIL: z.preprocess(emptyToUndefined, z.string().email().optional()),
     OWNER_PASSWORD: z.preprocess(emptyToUndefined, z.string().min(8).optional()),
     CORS_ORIGIN: z.string().default('http://localhost:5173'),
-    ASSISTANT_API_KEY: z.string().min(16).default('dev-assistant-key-change-me'),
+    ASSISTANT_API_KEY: z.string().min(16),
     OPENAI_API_KEY: z.string().optional(),
     APP_ENCRYPTION_KEY: z.preprocess(emptyToUndefined, z.string().min(16).optional()),
     ALLOW_PRIVATE_AGENT_ENDPOINTS: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
@@ -45,6 +58,7 @@ const parsed = envSchema.safeParse({
     ...rawEnv,
     JWT_SECRET: devSecret('JWT_SECRET'),
     JWT_REFRESH_SECRET: devSecret('JWT_REFRESH_SECRET'),
+    ASSISTANT_API_KEY: assistantApiKey(),
 });
 
 if (!parsed.success) {

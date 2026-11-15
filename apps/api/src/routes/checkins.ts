@@ -51,7 +51,7 @@ router.post('/', validate(createCheckInSchema), async (req: Request, res: Respon
         const { goalId, quantity, note, date } = req.body;
 
         const goal = await prisma.goal.findUnique({ where: { id: goalId } });
-        if (!goal) throw new NotFoundError('Goal');
+        if (!goal || (goal.userId !== req.user!.userId && !goal.isShared)) throw new NotFoundError('Goal');
 
         const checkIn = await prisma.goalCheckIn.create({
             data: {
@@ -83,6 +83,8 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
             include: { goal: true },
         });
         if (checkIn) {
+            const userId = req.user!.userId;
+            if (checkIn.userId !== userId && checkIn.goal.userId !== userId) throw new NotFoundError('Check-in');
             await prisma.goalCheckIn.delete({ where: { id: req.params.id } });
             // Mirror the creation logic: BY_FREQUENCY always counts as 1
             const decrement = checkIn.goal.trackingType === 'BY_FREQUENCY' ? 1 : checkIn.quantity;

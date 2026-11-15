@@ -98,7 +98,7 @@ Open <http://localhost:5173>.
 
 ## Desktop App
 
-The desktop app is a thin Tauri v2 shell around the existing React build. It does not add a local database, offline mode, embedded server, updater, or business logic. The app connects to the production API at `https://api.ngocky.kael.io.vn`.
+The desktop app is a Tauri v2 shell around the existing React build. On first launch it asks for a mode: connect to a hosted API, run fully offline on a built-in SQLite database, or run a local API against a shared PostgreSQL database. In the last two modes the API runs as a bundled sidecar on `127.0.0.1:21473`. See the "Deployment Modes" section of `docs/DESIGN.md`.
 
 Build locally on macOS or Windows:
 
@@ -137,10 +137,14 @@ npm run build
 ```text
 NgocKy/
 ├── apps/
-│   ├── api/           # Express, Prisma, PostgreSQL
-│   └── web/           # React, Vite, Tailwind CSS
-├── docs/              # Project plans and notes
-├── docker-compose.yml
+│   ├── api/           # Express, Prisma, PostgreSQL (SQLite for desktop and tests)
+│   ├── web/           # React, Vite, Tailwind CSS
+│   └── desktop/       # Tauri shell, runs the API as a sidecar
+├── docs/              # Design, changelog, plans and specs
+├── wiki/              # Project history, architecture, lessons
+├── n8n/               # n8n workflows (Telegram assistant, reminders)
+├── docker-compose.yml       # local build
+├── docker-compose.prod.yml  # production (prebuilt images)
 ├── .env.example
 └── README.md
 ```

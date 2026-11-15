@@ -36,6 +36,7 @@ RUN echo 'server { \
     try_files $uri =404; \
     } \
     location /api { \
+    client_max_body_size 25m; \
     proxy_pass http://api:3001; \
     proxy_set_header Host $host; \
     proxy_set_header X-Real-IP $remote_addr; \

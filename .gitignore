@@ -26,6 +26,18 @@ apps/desktop/src-tauri/resources/migrations/
 apps/api/prisma/desktop-client/
 apps/api/prisma/schema.desktop.prisma
 
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# User uploads (health documents) written by the API in dev and desktop runs
+uploads/
+
+# Captured command output
+seed_output.txt
+seed_error.txt
+test_output.txt
+
 # Local agent/tool state
-.superpowers/brainstorm/
+.superpowers/
+.remember/
 data/

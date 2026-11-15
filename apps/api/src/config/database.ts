@@ -1,12 +1,6 @@
 import type { PrismaClient as PrismaClientType } from '@prisma/client';
 
-type PrismaClientWithLegacyCollections = PrismaClientType & {
-    collection: any;
-    collectionItem: any;
-    collectionView: any;
-};
-
-type PrismaClientConstructor = new () => PrismaClientWithLegacyCollections;
+type PrismaClientConstructor = new () => PrismaClientType;
 
 const isTestDatabase = process.env.NODE_ENV === 'test' || process.env.DATABASE_URL?.startsWith('file:');
 const isDesktopSqlite = process.env.DB_PROVIDER === 'sqlite' && process.env.NODE_ENV !== 'test';
@@ -23,7 +17,7 @@ const { PrismaClient } = (
             : require('@prisma/client')
 ) as { PrismaClient: PrismaClientConstructor };
 
-export const prisma: PrismaClientWithLegacyCollections = new PrismaClient();
+export const prisma: PrismaClientType = new PrismaClient();
 
 // Case-insensitive `contains` filter. Postgres needs mode: 'insensitive';
 // the SQLite client (tests, desktop builds) rejects `mode`, and SQLite's

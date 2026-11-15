@@ -8,14 +8,15 @@ import { sendSuccess, sendMessage } from '../utils/response';
 import { prisma } from '../config/database';
 import { verifyTotpCode } from '../utils/mfa';
 import { UnauthorizedError } from '../utils/errors';
+import { config } from '../config/env';
 
 const REFRESH_TOKEN_COOKIE = 'ngocky_refresh_token';
 
 const setRefreshTokenCookie = (res: Response, token: string) => {
     res.cookie(REFRESH_TOKEN_COOKIE, token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        secure: config.NODE_ENV === 'production',
+        sameSite: config.NODE_ENV === 'production' ? 'none' : 'lax',
         path: '/api/auth', // Only sent to auth routes
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
@@ -53,7 +54,20 @@ router.post('/login', loginLimiter, validate(loginSchema), async (req: Request, 
     } catch (err) { next(err); }
 });
 
-router.post('/verify-mfa', validate(verifyMfaSchema), async (req: Request, res: Response, next: NextFunction) => {
+// A 6-digit TOTP is brute-forceable without a limit.
+const mfaLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { success: false, message: 'Too many verification attempts, try again later' },
+});
+
+const refreshLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 120,
+    message: { success: false, message: 'Too many requests, try again later' },
+});
+
+router.post('/verify-mfa', mfaLimiter, validate(verifyMfaSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const challenge = AuthService.verifyMfaChallengeToken(req.body.mfaToken);
         const payload: any = await prisma.user.findUnique({
@@ -70,7 +84,7 @@ router.post('/verify-mfa', validate(verifyMfaSchema), async (req: Request, res: 
     } catch (err) { next(err); }
 });
 
-router.post('/refresh', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/refresh', refreshLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE];
         const { accessToken, refreshToken: newRefreshToken, user } = await AuthService.refresh(refreshToken);

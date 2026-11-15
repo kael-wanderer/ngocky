@@ -17,20 +17,11 @@ function SortHeader({ label, col, sort, onSort, className }: { label: string; co
 }
 import { useAuthStore } from '../stores/auth';
 import { getSharedOwnerName } from '../utils/sharedOwnership';
+import { toRichTextHtml } from '../utils/richText';
 
 const emptyTopicForm = () => ({ title: '', description: '', isShared: false });
 const ideaFieldOptions = ['Project', 'Blog', 'App', 'Collection', 'Hobby', 'Creative', 'Other'] as const;
 const emptyLogForm = () => ({ title: '', content: '', category: '', field: 'Other', status: 'OPEN', tags: [] as string[] });
-
-function toRichTextHtml(value?: string | null) {
-    if (!value) return '';
-    if (/<\/?[a-z][\s\S]*>/i.test(value)) return value;
-    return value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\n/g, '<br />');
-}
 
 export default function IdeasPage({ instanceId, pageTitle }: { instanceId?: string; pageTitle?: string }) {
     const qc = useQueryClient();

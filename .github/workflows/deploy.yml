@@ -14,7 +14,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Typecheck
+        run: npm run lint
+
+      - name: API tests
+        run: npm test -w apps/api
+
+      - name: Web tests
+        run: npm test -w apps/web
+
+      - name: Dependency audit (report only)
+        run: npm audit --omit=dev --audit-level=high || true
+
   build-and-deploy:
+    needs: verify
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -92,11 +125,12 @@ jobs:
             trap 'docker compose ps; docker compose logs --tail=100 api web' ERR
 
             # Safely rewrite production .env using GitHub Secrets
-            cat <<EOF > .env
+            # Quoted delimiter: secret values are written literally, never shell-expanded.
+            cat <<'EOF' > .env
             GITHUB_REPOSITORY=${{ github.repository }}
             IMAGE_TAG=${{ github.sha }}
             APP_PORT=3001
-            APP_VERSION=1.0.0
+            APP_VERSION=1.1.0
             NODE_ENV=production
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             DATABASE_URL=postgresql://ngocky:${{ secrets.DB_PASSWORD }}@postgres:5432/ngocky?schema=public
@@ -123,7 +157,10 @@ jobs:
             docker compose up -d postgres
 
             # Ensure DB role password matches the deployment secret (handles drift on persistent volumes)
-            docker exec ngocky-db psql -U ngocky -d postgres -c "ALTER ROLE ngocky WITH PASSWORD '${{ secrets.DB_PASSWORD }}';"
+            # Same quoting rule as .env above, so both always hold the identical value.
+            docker exec -i ngocky-db psql -U ngocky -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+            ALTER ROLE ngocky WITH PASSWORD '${{ secrets.DB_PASSWORD }}';
+            SQL
 
             # Run DB operations in one-off containers to avoid OOM from docker exec on running api
             docker compose run --rm api npx prisma migrate deploy

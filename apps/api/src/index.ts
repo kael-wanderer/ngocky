@@ -25,8 +25,8 @@ async function main() {
     await AuthService.seedOwner();
 
     // Start server
-    app.listen(parseInt(config.APP_PORT), '0.0.0.0', () => {
-        console.log(`🚀 NgocKy API running on port ${config.APP_PORT} (${config.NODE_ENV})`);
+    app.listen(parseInt(config.APP_PORT), config.HOST, () => {
+        console.log(`🚀 NgocKy API running on ${config.HOST}:${config.APP_PORT} (${config.NODE_ENV})`);
     });
 
     // Desktop modes 2/3 run the reminder scheduler in-process (replaces n8n).

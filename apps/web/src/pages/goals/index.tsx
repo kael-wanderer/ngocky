@@ -25,6 +25,7 @@ import {
     type SharedTaskTypeFilter,
 } from '../../config/taskFilters';
 import { DEFAULT_GOAL_PERIOD_FILTER, GOAL_PERIOD_FILTER_OPTIONS, type SharedGoalPeriodFilter } from '../../config/goalFilters';
+import { toLocalDateInput } from '../../utils/dates';
 import { DEFAULT_PAY_CATEGORY, EXPENSE_PAY_CATEGORIES, EXPENSE_SCOPE_OPTIONS } from '../../config/expenseFilters';
 
 const unitOptions = [
@@ -506,7 +507,7 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
     const [editTask, setEditTask] = useState<any>(null);
     const [checkInGoalId, setCheckInGoalId] = useState<string | null>(null);
     const [note, setNote] = useState('');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState(toLocalDateInput());
     const [dateError, setDateError] = useState('');
     const [duration, setDuration] = useState<number | ''>('');
     const [quantity, setQuantity] = useState<number | ''>('');
@@ -594,7 +595,7 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
             qc.invalidateQueries({ queryKey: ['goals'] });
             setCheckInGoalId(null);
             setNote('');
-            setDate(new Date().toISOString().split('T')[0]);
+            setDate(toLocalDateInput());
             setQuantity('');
             setDuration('');
             setDateError('');
@@ -760,10 +761,10 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
         });
     }, [filteredTasks, taskGridSort]);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalDateInput();
     const minDateObj = new Date();
     minDateObj.setDate(minDateObj.getDate() - 45);
-    const minDate = minDateObj.toISOString().split('T')[0];
+    const minDate = toLocalDateInput(minDateObj);
 
     const handleDateChange = (val: string) => {
         setDate(val);
@@ -862,7 +863,7 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
 
     const openCheckIn = (goalId: string) => {
         setCheckInGoalId(goalId);
-        setDate(new Date().toISOString().split('T')[0]);
+        setDate(toLocalDateInput());
         setQuantity('');
         setDuration('');
         setNote('');
@@ -1533,7 +1534,7 @@ export default function GoalsPage({ forcedTab, instanceId, pageTitle }: GoalsPag
                                                     <div className="flex items-center justify-between text-xs">
                                                         <span style={{ color: 'var(--color-text-secondary)' }}>Amount</span>
                                                         <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
-                                                            {task.amount != null ? Number(task.amount).toLocaleString('en-US') : '-'} VND
+                                                            {task.amount != null ? Number(task.amount).toLocaleString('vi-VN') : '-'} VND
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center justify-between text-xs">

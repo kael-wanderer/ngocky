@@ -14,6 +14,8 @@ import { useAuthStore } from '../../stores/auth';
 import { getFundsDateRange } from '../../config/fundsFilters';
 import NotificationFields, { buildNotificationPayload, emptyNotification, loadNotificationState } from '../../components/NotificationFields';
 import RichTextEditor from '../../components/RichTextEditor';
+import { toRichTextHtml } from '../../utils/richText';
+import { toLocalDateInput } from '../../utils/dates';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -141,7 +143,7 @@ const EMPTY_PERSON = {
 };
 
 const EMPTY_LOG = {
-    date: new Date().toISOString().slice(0, 10),
+    date: toLocalDateInput(),
     type: 'DOCTOR_VISIT', location: '', doctor: '', symptoms: '',
     description: '', cost: '', prescription: '', nextCheckupDate: '', addExpense: false, addToCalendar: false,
     pinToDashboard: false,
@@ -194,16 +196,6 @@ function formatLogNotificationBadges(log: HealthLog): string[] {
         return [label, ...(time ? [time] : [])];
     }
     return [];
-}
-
-function toRichTextHtml(value?: string | null) {
-    if (!value) return '';
-    if (/<\/?[a-z][\s\S]*>/i.test(value)) return value;
-    return value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\n/g, '<br />');
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -578,7 +570,7 @@ function LogModal({ personId, editing, onClose, onSaved }: { personId: string; e
     });
     const [optionsOpen, setOptionsOpen] = useState(false);
     const [form, setForm] = useState(editing ? {
-        date: editing.date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+        date: editing.date?.slice(0, 10) ?? toLocalDateInput(),
         type: editing.type, location: editing.location ?? '', doctor: editing.doctor ?? '',
         symptoms: editing.symptoms ?? '', description: editing.description ?? '',
         cost: editing.cost != null ? String(editing.cost) : '', prescription: editing.prescription ?? '',

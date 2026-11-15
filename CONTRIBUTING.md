@@ -29,7 +29,7 @@ cd apps/api && npm test
 cd apps/web && npm test && npx tsc --noEmit && npm run build
 ```
 
-The API currently has some legacy strict TypeScript errors outside newer feature work, so call out any unrelated typecheck failures in your PR.
+Both apps typecheck cleanly (`npm run lint` from the repo root) and the deploy workflow runs the typecheck and both test suites before building, so a failure there blocks the release.
 
 ## Pull Requests
 
